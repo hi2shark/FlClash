@@ -74,6 +74,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Apply FlClash core patches
+        run: bash core/apply_patches.sh
+
       - name: Setup Android Signing
         if: startsWith(matrix.platform,'android')
         run: |

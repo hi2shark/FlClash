@@ -1,0 +1,138 @@
+diff --git a/adapter/adapter.go b/adapter/adapter.go
+index 6f20c08a..22054f07 100644
+--- a/adapter/adapter.go
++++ b/adapter/adapter.go
+@@ -167,6 +167,10 @@ func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.In
+ 	var satisfied bool
+ 
+ 	defer func() {
++		if UrlTestHook != nil {
++			UrlTestHook(url, p.Name(), t)
++		}
++
+ 		alive := err == nil
+ 		record := C.DelayHistory{Time: time.Now()}
+ 		if alive {
+diff --git a/adapter/patch.go b/adapter/patch.go
+new file mode 100644
+index 00000000..4391c56b
+--- /dev/null
++++ b/adapter/patch.go
+@@ -0,0 +1,5 @@
++package adapter
++
++type UrlTestCheck func(url string, name string, delay uint16)
++
++var UrlTestHook UrlTestCheck
+diff --git a/component/updater/patch.go b/component/updater/patch.go
+new file mode 100644
+index 00000000..ca589ff6
+--- /dev/null
++++ b/component/updater/patch.go
+@@ -0,0 +1,11 @@
++package updater
++
++var (
++	GeoUpdateHook func(geoType string, updating bool, updateErr error)
++)
++
++func sendGeoUpdateStatus(geoType string, updating bool, updateErr error) {
++	if GeoUpdateHook != nil {
++		GeoUpdateHook(geoType, updating, updateErr)
++	}
++}
+diff --git a/component/updater/update_geo.go b/component/updater/update_geo.go
+index 63e6d150..e999147a 100644
+--- a/component/updater/update_geo.go
++++ b/component/updater/update_geo.go
+@@ -45,6 +45,9 @@ func SetGeoUpdateInterval(newGeoUpdateInterval int) {
+ }
+ 
+ func UpdateMMDB() (err error) {
++	sendGeoUpdateStatus("MMDB", true, nil)
++	defer func() { sendGeoUpdateStatus("MMDB", false, err) }()
++
+ 	vehicle := resource.NewHTTPVehicle(geodata.MmdbUrl(), C.Path.MMDB(), "", nil, defaultHttpTimeout, 0)
+ 	var oldHash utils.HashType
+ 	if buf, err := os.ReadFile(vehicle.Path()); err == nil {
+@@ -76,6 +79,9 @@ func UpdateMMDB() (err error) {
+ }
+ 
+ func UpdateASN() (err error) {
++	sendGeoUpdateStatus("ASN", true, nil)
++	defer func() { sendGeoUpdateStatus("ASN", false, err) }()
++
+ 	vehicle := resource.NewHTTPVehicle(geodata.ASNUrl(), C.Path.ASN(), "", nil, defaultHttpTimeout, 0)
+ 	var oldHash utils.HashType
+ 	if buf, err := os.ReadFile(vehicle.Path()); err == nil {
+@@ -107,6 +113,9 @@ func UpdateASN() (err error) {
+ }
+ 
+ func UpdateGeoIp() (err error) {
++	sendGeoUpdateStatus("GEOIP", true, nil)
++	defer func() { sendGeoUpdateStatus("GEOIP", false, err) }()
++
+ 	geoLoader, err := geodata.GetGeoDataLoader("standard")
+ 
+ 	vehicle := resource.NewHTTPVehicle(geodata.GeoIpUrl(), C.Path.GeoIP(), "", nil, defaultHttpTimeout, 0)
+@@ -137,6 +146,9 @@ func UpdateGeoIp() (err error) {
+ }
+ 
+ func UpdateGeoSite() (err error) {
++	sendGeoUpdateStatus("GEOSITE", true, nil)
++	defer func() { sendGeoUpdateStatus("GEOSITE", false, err) }()
++
+ 	geoLoader, err := geodata.GetGeoDataLoader("standard")
+ 
+ 	vehicle := resource.NewHTTPVehicle(geodata.GeoSiteUrl(), C.Path.GeoSite(), "", nil, defaultHttpTimeout, 0)
+diff --git a/hub/executor/executor.go b/hub/executor/executor.go
+index d3b5eb81..6e41492c 100644
+--- a/hub/executor/executor.go
++++ b/hub/executor/executor.go
+@@ -335,6 +335,10 @@ func loadProvider[T P.Provider](providers map[string]T) {
+ 					log.Errorln("initial rule provider %s error: %v", name, err)
+ 				}
+ 			}
++		} else {
++			if DefaultProviderLoadedHook != nil {
++				DefaultProviderLoadedHook(name)
++			}
+ 		}
+ 	}
+ 
+diff --git a/hub/executor/patch.go b/hub/executor/patch.go
+new file mode 100644
+index 00000000..1cbbbbc0
+--- /dev/null
++++ b/hub/executor/patch.go
+@@ -0,0 +1,5 @@
++package executor
++
++type ProviderLoadedHook func(providerName string)
++
++var DefaultProviderLoadedHook ProviderLoadedHook
+diff --git a/tunnel/statistic/manager.go b/tunnel/statistic/manager.go
+index c69746db..6bf22414 100644
+--- a/tunnel/statistic/manager.go
++++ b/tunnel/statistic/manager.go
+@@ -38,6 +38,9 @@ type Manager struct {
+ }
+ 
+ func (m *Manager) Join(c Tracker) {
++	if DefaultRequestNotify != nil {
++		DefaultRequestNotify(c)
++	}
+ 	m.connections.Store(c.ID(), c)
+ }
+ 
+diff --git a/tunnel/statistic/patch.go b/tunnel/statistic/patch.go
+new file mode 100644
+index 00000000..4429c904
+--- /dev/null
++++ b/tunnel/statistic/patch.go
+@@ -0,0 +1,5 @@
++package statistic
++
++type RequestNotify func(c Tracker)
++
++var DefaultRequestNotify RequestNotify
