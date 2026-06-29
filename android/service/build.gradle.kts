@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.follow.clash.service"
+    namespace = "com.hi2shark.flclash_nw.service"
     compileSdk = 36
 
     defaultConfig {

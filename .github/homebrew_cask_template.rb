@@ -28,12 +28,12 @@ cask "flclash" do
                    args: ["-rd", "com.apple.quarantine", "#{appdir}/FlClash.app"]
   end
 
-  uninstall quit: "com.follow.clash"
+  uninstall quit: "com.hi2shark.flclash_nw"
 
   zap trash: [
-    "~/Library/Application Support/com.follow.clash",
-    "~/Library/Caches/com.follow.clash",
-    "~/Library/Preferences/com.follow.clash.plist",
-    "~/Library/Saved Application State/com.follow.clash.savedState",
+    "~/Library/Application Support/com.hi2shark.flclash_nw",
+    "~/Library/Caches/com.hi2shark.flclash_nw",
+    "~/Library/Preferences/com.hi2shark.flclash_nw.plist",
+    "~/Library/Saved Application State/com.hi2shark.flclash_nw.savedState",
   ]
 end

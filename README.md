@@ -50,11 +50,11 @@ on Mobile:
 Support the following actions
 
    ```bash
-    com.follow.clash.action.START
+    com.hi2shark.flclash_nw.action.START
     
-    com.follow.clash.action.STOP
+    com.hi2shark.flclash_nw.action.STOP
     
-    com.follow.clash.action.TOGGLE
+    com.hi2shark.flclash_nw.action.TOGGLE
    ```
 
 ## Download

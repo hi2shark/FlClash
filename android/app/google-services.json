@@ -8,7 +8,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
         "android_client_info": {
-          "package_name": "com.follow.clash"
+          "package_name": "com.hi2shark.flclash_nw"
         }
       },
       "oauth_client": [],
@@ -27,7 +27,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
         "android_client_info": {
-          "package_name": "com.follow.clash.debug"
+          "package_name": "com.hi2shark.flclash_nw.debug"
         }
       },
       "oauth_client": [],
@@ -46,7 +46,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
         "android_client_info": {
-          "package_name": "com.follow.clash.dev"
+          "package_name": "com.hi2shark.flclash_nw.dev"
         }
       },
       "oauth_client": [],

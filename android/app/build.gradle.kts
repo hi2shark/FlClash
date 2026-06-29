@@ -24,7 +24,7 @@ val isRelease =
 
 
 android {
-    namespace = "com.follow.clash"
+    namespace = "com.hi2shark.flclash_nw"
     compileSdk = libs.versions.compileSdk.get().toInt()
     ndkVersion = libs.versions.ndkVersion.get()
 
@@ -36,7 +36,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.follow.clash"
+        applicationId = "com.hi2shark.flclash_nw"
         minSdk = flutter.minSdkVersion
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = flutter.versionCode
