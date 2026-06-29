@@ -13,7 +13,6 @@ import (
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
-	"github.com/metacubex/mihomo/constant/features"
 	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/listener"
@@ -62,7 +61,7 @@ func handleStopListener() bool {
 	runLock.Lock()
 	defer runLock.Unlock()
 	isRunning = false
-	listener.StopListener()
+	listener.Cleanup()
 	resolver.ResetConnection()
 	return true
 }
@@ -74,7 +73,7 @@ func handleGetIsInit() bool {
 func handleForceGC() {
 	log.Infoln("[APP] request force GC")
 	runtime.GC()
-	if features.Android {
+	if isAndroid {
 		debug.FreeOSMemory()
 	}
 }
@@ -100,9 +99,9 @@ func handleGetProxies() ProxiesData {
 	runLock.Lock()
 	defer runLock.Unlock()
 
-	nameList := config.GetProxyNameList()
+	nameList := getProxyNameList()
 
-	proxies := tunnel.AllProxies()
+	proxies := tunnel.Proxies()
 
 	hasGlobal := false
 
@@ -148,7 +147,7 @@ func handleChangeProxy(data string, fn func(string string)) {
 		}
 		groupName := *params.GroupName
 		proxyName := *params.ProxyName
-		proxies := tunnel.AllProxies()
+		proxies := tunnel.Proxies()
 		group, ok := proxies[groupName]
 		if !ok {
 			fn("Not found group")
@@ -176,7 +175,7 @@ func handleChangeProxy(data string, fn func(string string)) {
 }
 
 func handleGetTraffic(onlyStatisticsProxy bool) string {
-	up, down := statistic.DefaultManager.NowTraffic(onlyStatisticsProxy)
+	up, down := statistic.DefaultManager.Now()
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
@@ -190,7 +189,7 @@ func handleGetTraffic(onlyStatisticsProxy bool) string {
 }
 
 func handleGetTotalTraffic(onlyStatisticsProxy bool) string {
-	up, down := statistic.DefaultManager.TotalTraffic(onlyStatisticsProxy)
+	up, down := statistic.DefaultManager.Total()
 	traffic := map[string]int64{
 		"up":   up,
 		"down": down,
@@ -225,7 +224,7 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(params.Timeout))
 		defer cancel()
 
-		proxies := tunnel.AllProxies()
+		proxies := tunnel.Proxies()
 		proxy := proxies[params.ProxyName]
 
 		delayData := &Delay{
@@ -239,7 +238,7 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 			return false, nil
 		}
 
-		testUrl := constant.DefaultTestURL
+		testUrl := testURL
 
 		if params.TestUrl != "" {
 			testUrl = params.TestUrl
