@@ -62,10 +62,10 @@ class AboutView extends StatelessWidget {
           trailing: const Icon(Icons.launch),
         ),
         ListItem(
-          title: Text(appLocalizations.core),
+          title: Text('${appLocalizations.core} (nowhere)'),
           onTap: () {
             globalState.openUrl(
-              'https://github.com/chen08209/Clash.Meta/tree/FlClash',
+              'https://github.com/hi2shark/meta-kernel-nowhere/tree/Alpha',
             );
           },
           trailing: const Icon(Icons.launch),
