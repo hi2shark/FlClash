@@ -101,7 +101,7 @@ func handleGetProxies() ProxiesData {
 
 	nameList := getProxyNameList()
 
-	proxies := tunnel.Proxies()
+	proxies := getProxiesWithProviders()
 
 	hasGlobal := false
 
@@ -133,6 +133,19 @@ func handleGetProxies() ProxiesData {
 		All:     allNames,
 		Proxies: proxies,
 	}
+}
+
+func getProxiesWithProviders() map[string]constant.Proxy {
+	proxies := make(map[string]constant.Proxy)
+	for name, proxy := range tunnel.Proxies() {
+		proxies[name] = proxy
+	}
+	for _, provider := range tunnel.Providers() {
+		for _, proxy := range provider.Proxies() {
+			proxies[proxy.Name()] = proxy
+		}
+	}
+	return proxies
 }
 
 func handleChangeProxy(data string, fn func(string string)) {
@@ -224,7 +237,7 @@ func handleAsyncTestDelay(paramsString string, fn func(string)) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*time.Duration(params.Timeout))
 		defer cancel()
 
-		proxies := tunnel.Proxies()
+		proxies := getProxiesWithProviders()
 		proxy := proxies[params.ProxyName]
 
 		delayData := &Delay{
