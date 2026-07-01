@@ -139,7 +139,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     if (file == null) {
       return;
     }
-    final res = utf8.decode(file.bytes?.toList() ?? []);
+    final res = utf8.decode(await file.readBytes());
     _controller.text = res;
   }
 

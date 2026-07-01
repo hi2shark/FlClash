@@ -910,14 +910,14 @@ class ProfilesAction extends _$ProfilesAction {
 
   Future<void> addProfileFormFile() async {
     final platformFile = await globalState.safeRun(picker.pickerFile);
-    final bytes = platformFile?.bytes;
-    if (bytes == null) return;
+    if (platformFile == null) return;
+    final bytes = await platformFile.readBytes();
     globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     ref.read(currentPageLabelProvider.notifier).toProfiles();
     final profile = await globalState.loadingRun(
       tag: LoadingTag.profiles,
       () async {
-        return Profile.normal(label: platformFile?.name).saveFile(bytes);
+        return Profile.normal(label: platformFile.name).saveFile(bytes);
       },
       title: currentAppLocalizations.addProfile,
     );
