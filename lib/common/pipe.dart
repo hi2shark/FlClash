@@ -21,20 +21,18 @@ void _pipeIsolate(List<Object> args) {
   final pipeName = args[0] as String;
   final dataPort = args[1] as SendPort;
 
-  final namePtr = pipeName.toNativeUtf16();
-
-  final handle = CreateNamedPipe(
-    namePtr,
-    PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-    PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-    1,
-    _pipeBufferSize,
-    _pipeBufferSize,
-    0,
-    nullptr,
+  final handle = using(
+    (arena) => CreateNamedPipe(
+      arena.pcwstr(pipeName),
+      PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+      PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+      1,
+      _pipeBufferSize,
+      _pipeBufferSize,
+      0,
+      null,
+    ),
   );
-
-  calloc.free(namePtr);
 
   if (handle == INVALID_HANDLE_VALUE) {
     dataPort.send(
@@ -48,7 +46,7 @@ void _pipeIsolate(List<Object> args) {
   final readBuf = calloc<Uint8>(_pipeBufferSize);
   final bytesRead = calloc<Uint32>();
   final overlapped = calloc<OVERLAPPED>();
-  final readEvent = CreateEvent(nullptr, 1, 0, nullptr);
+  final readEvent = CreateEvent(null, true, false, null).value;
   overlapped.ref.hEvent = readEvent;
 
   var running = true;
@@ -76,17 +74,17 @@ void _pipeIsolate(List<Object> args) {
     }
   });
 
-  final connectEvent = CreateEvent(nullptr, 1, 0, nullptr);
+  final connectEvent = CreateEvent(null, true, false, null).value;
   final connectOverlapped = calloc<OVERLAPPED>();
   connectOverlapped.ref.hEvent = connectEvent;
 
   while (running) {
     final cr = ConnectNamedPipe(handle, connectOverlapped);
-    if (cr == 0) {
-      final err = GetLastError();
+    if (!cr.value) {
+      final err = cr.error;
       if (err == ERROR_IO_PENDING) {
         while (running) {
-          final wr = WaitForSingleObject(connectEvent, 100);
+          final wr = WaitForSingleObject(connectEvent, 100).value;
           if (wr == WAIT_OBJECT_0) break;
         }
         if (!running) break;
@@ -111,7 +109,7 @@ void _pipeIsolate(List<Object> args) {
           bytesRead,
           overlapped,
         );
-        if (readResult != 0) {
+        if (readResult.value) {
           if (bytesRead.value > 0) {
             dataPort.send(
               Uint8List.fromList(readBuf.asTypedList(bytesRead.value)),
@@ -120,7 +118,7 @@ void _pipeIsolate(List<Object> args) {
             break;
           }
         } else {
-          final err = GetLastError();
+          final err = readResult.error;
           if (err == ERROR_IO_PENDING) {
             readPending = true;
           } else if (bytesRead.value > 0) {
@@ -134,10 +132,15 @@ void _pipeIsolate(List<Object> args) {
       }
 
       if (readPending) {
-        final wr = WaitForSingleObject(readEvent, 100);
+        final wr = WaitForSingleObject(readEvent, 100).value;
         if (wr == WAIT_OBJECT_0) {
-          final got = GetOverlappedResult(handle, overlapped, bytesRead, 0);
-          if (got != 0 && bytesRead.value > 0) {
+          final got = GetOverlappedResult(
+            handle,
+            overlapped,
+            bytesRead,
+            false,
+          );
+          if (got.value && bytesRead.value > 0) {
             dataPort.send(
               Uint8List.fromList(readBuf.asTypedList(bytesRead.value)),
             );
