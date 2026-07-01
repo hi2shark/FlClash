@@ -2,11 +2,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
 }
 
 android {
-    namespace = "com.follow.clash.core"
+    namespace = "com.hi2shark.flclash_nw.core"
     compileSdk = libs.versions.compileSdk.get().toInt()
     ndkVersion = libs.versions.ndkVersion.get()
 

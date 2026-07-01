@@ -2,11 +2,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
 }
 
 android {
-    namespace = "com.follow.clash.common"
+    namespace = "com.hi2shark.flclash_nw.common"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {

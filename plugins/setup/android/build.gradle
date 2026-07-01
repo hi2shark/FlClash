@@ -1,4 +1,4 @@
-group 'com.follow.clash.setup'
+group 'com.hi2shark.flclash_nw.setup'
 version '1.0'
 
 buildscript {
@@ -22,18 +22,18 @@ apply plugin: 'com.android.library'
 
 android {
     if (project.android.hasProperty("namespace")) {
-        namespace 'com.follow.clash.setup'
+        namespace 'com.hi2shark.flclash_nw.setup'
     }
-    compileSdkVersion 33
+    compileSdkVersion 36
     ndkVersion android.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     defaultConfig {
-        minSdkVersion 19
+        minSdkVersion 23
     }
 }
 

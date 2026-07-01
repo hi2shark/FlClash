@@ -2,12 +2,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("kotlin-parcelize")
 }
 
 android {
-    namespace = "com.follow.clash.service"
+    namespace = "com.hi2shark.flclash_nw.service"
     compileSdk = 36
 
     defaultConfig {
