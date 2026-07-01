@@ -62,10 +62,14 @@ class GoBuilder {
       env['CGO_ENABLED'] = '0';
     }
 
+    final tags = target.goos == 'android'
+        ? '${config.tags},cmfa'
+        : config.tags;
+
     final args = [
       'build',
       '-ldflags=${config.goLdflags}',
-      '-tags=${config.tags}',
+      '-tags=$tags',
       if (target.isLib) '-buildmode=c-shared',
       '-o',
       outFile,

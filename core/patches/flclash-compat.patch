@@ -1,0 +1,543 @@
+diff --git a/adapter/adapter.go b/adapter/adapter.go
+index 6f20c08ab..22054f070 100644
+--- a/adapter/adapter.go
++++ b/adapter/adapter.go
+@@ -167,6 +167,10 @@ func (p *Proxy) URLTest(ctx context.Context, url string, expectedStatus utils.In
+ 	var satisfied bool
+ 
+ 	defer func() {
++		if UrlTestHook != nil {
++			UrlTestHook(url, p.Name(), t)
++		}
++
+ 		alive := err == nil
+ 		record := C.DelayHistory{Time: time.Now()}
+ 		if alive {
+diff --git a/adapter/patch.go b/adapter/patch.go
+new file mode 100644
+index 000000000..4391c56be
+--- /dev/null
++++ b/adapter/patch.go
+@@ -0,0 +1,5 @@
++package adapter
++
++type UrlTestCheck func(url string, name string, delay uint16)
++
++var UrlTestHook UrlTestCheck
+diff --git a/component/updater/patch.go b/component/updater/patch.go
+new file mode 100644
+index 000000000..0f93b68f1
+--- /dev/null
++++ b/component/updater/patch.go
+@@ -0,0 +1,104 @@
++package updater
++
++import (
++	"fmt"
++
++	"github.com/metacubex/mihomo/component/geodata"
++	"github.com/metacubex/mihomo/component/mmdb"
++
++	"github.com/oschwald/maxminddb-golang"
++)
++
++var (
++	GeoUpdateHook func(geoType string, updating bool, updateErr error)
++)
++
++func sendGeoUpdateStatus(geoType string, updating bool, updateErr error) {
++	if GeoUpdateHook != nil {
++		GeoUpdateHook(geoType, updating, updateErr)
++	}
++}
++
++func UpdateMMDBWithPath(path string) error {
++	data, err := downloadForBytes(geodata.MmdbUrl())
++	if err != nil {
++		return fmt.Errorf("can't download MMDB database file: %w", err)
++	}
++	if len(data) == 0 {
++		return fmt.Errorf("can't download MMDB database file: no data")
++	}
++	instance, err := maxminddb.FromBytes(data)
++	if err != nil {
++		return fmt.Errorf("invalid MMDB database file: %s", err)
++	}
++	_ = instance.Close()
++
++	defer mmdb.ReloadIP()
++	mmdb.IPInstance().Reader.Close()
++	if err = saveFile(data, path); err != nil {
++		return fmt.Errorf("can't save MMDB database file: %w", err)
++	}
++	return nil
++}
++
++func UpdateASNWithPath(path string) error {
++	data, err := downloadForBytes(geodata.ASNUrl())
++	if err != nil {
++		return fmt.Errorf("can't download ASN database file: %w", err)
++	}
++	if len(data) == 0 {
++		return fmt.Errorf("can't download ASN database file: no data")
++	}
++	instance, err := maxminddb.FromBytes(data)
++	if err != nil {
++		return fmt.Errorf("invalid ASN database file: %s", err)
++	}
++	_ = instance.Close()
++
++	defer mmdb.ReloadASN()
++	mmdb.ASNInstance().Reader.Close()
++	if err = saveFile(data, path); err != nil {
++		return fmt.Errorf("can't save ASN database file: %w", err)
++	}
++	return nil
++}
++
++func UpdateGeoIpWithPath(path string) error {
++	geoLoader, err := geodata.GetGeoDataLoader("standard")
++	data, err := downloadForBytes(geodata.GeoIpUrl())
++	if err != nil {
++		return fmt.Errorf("can't download GeoIP database file: %w", err)
++	}
++	if len(data) == 0 {
++		return fmt.Errorf("can't download GeoIP database file: no data")
++	}
++	if _, err = geoLoader.LoadIPByBytes(data, "cn"); err != nil {
++		return fmt.Errorf("invalid GeoIP database file: %s", err)
++	}
++
++	defer geodata.ClearGeoIPCache()
++	if err = saveFile(data, path); err != nil {
++		return fmt.Errorf("can't save GeoIP database file: %w", err)
++	}
++	return nil
++}
++
++func UpdateGeoSiteWithPath(path string) error {
++	geoLoader, err := geodata.GetGeoDataLoader("standard")
++	data, err := downloadForBytes(geodata.GeoSiteUrl())
++	if err != nil {
++		return fmt.Errorf("can't download GeoSite database file: %w", err)
++	}
++	if len(data) == 0 {
++		return fmt.Errorf("can't download GeoSite database file: no data")
++	}
++	if _, err = geoLoader.LoadSiteByBytes(data, "cn"); err != nil {
++		return fmt.Errorf("invalid GeoSite database file: %s", err)
++	}
++
++	defer geodata.ClearGeoSiteCache()
++	if err = saveFile(data, path); err != nil {
++		return fmt.Errorf("can't save GeoSite database file: %w", err)
++	}
++	return nil
++}
+diff --git a/component/updater/update_geo.go b/component/updater/update_geo.go
+index 63e6d1501..e999147ab 100644
+--- a/component/updater/update_geo.go
++++ b/component/updater/update_geo.go
+@@ -45,6 +45,9 @@ func SetGeoUpdateInterval(newGeoUpdateInterval int) {
+ }
+ 
+ func UpdateMMDB() (err error) {
++	sendGeoUpdateStatus("MMDB", true, nil)
++	defer func() { sendGeoUpdateStatus("MMDB", false, err) }()
++
+ 	vehicle := resource.NewHTTPVehicle(geodata.MmdbUrl(), C.Path.MMDB(), "", nil, defaultHttpTimeout, 0)
+ 	var oldHash utils.HashType
+ 	if buf, err := os.ReadFile(vehicle.Path()); err == nil {
+@@ -76,6 +79,9 @@ func UpdateMMDB() (err error) {
+ }
+ 
+ func UpdateASN() (err error) {
++	sendGeoUpdateStatus("ASN", true, nil)
++	defer func() { sendGeoUpdateStatus("ASN", false, err) }()
++
+ 	vehicle := resource.NewHTTPVehicle(geodata.ASNUrl(), C.Path.ASN(), "", nil, defaultHttpTimeout, 0)
+ 	var oldHash utils.HashType
+ 	if buf, err := os.ReadFile(vehicle.Path()); err == nil {
+@@ -107,6 +113,9 @@ func UpdateASN() (err error) {
+ }
+ 
+ func UpdateGeoIp() (err error) {
++	sendGeoUpdateStatus("GEOIP", true, nil)
++	defer func() { sendGeoUpdateStatus("GEOIP", false, err) }()
++
+ 	geoLoader, err := geodata.GetGeoDataLoader("standard")
+ 
+ 	vehicle := resource.NewHTTPVehicle(geodata.GeoIpUrl(), C.Path.GeoIP(), "", nil, defaultHttpTimeout, 0)
+@@ -137,6 +146,9 @@ func UpdateGeoIp() (err error) {
+ }
+ 
+ func UpdateGeoSite() (err error) {
++	sendGeoUpdateStatus("GEOSITE", true, nil)
++	defer func() { sendGeoUpdateStatus("GEOSITE", false, err) }()
++
+ 	geoLoader, err := geodata.GetGeoDataLoader("standard")
+ 
+ 	vehicle := resource.NewHTTPVehicle(geodata.GeoSiteUrl(), C.Path.GeoSite(), "", nil, defaultHttpTimeout, 0)
+diff --git a/hub/executor/executor.go b/hub/executor/executor.go
+index d3b5eb819..6e41492c1 100644
+--- a/hub/executor/executor.go
++++ b/hub/executor/executor.go
+@@ -335,6 +335,10 @@ func loadProvider[T P.Provider](providers map[string]T) {
+ 					log.Errorln("initial rule provider %s error: %v", name, err)
+ 				}
+ 			}
++		} else {
++			if DefaultProviderLoadedHook != nil {
++				DefaultProviderLoadedHook(name)
++			}
+ 		}
+ 	}
+ 
+diff --git a/hub/executor/patch.go b/hub/executor/patch.go
+new file mode 100644
+index 000000000..1cbbbbc0c
+--- /dev/null
++++ b/hub/executor/patch.go
+@@ -0,0 +1,5 @@
++package executor
++
++type ProviderLoadedHook func(providerName string)
++
++var DefaultProviderLoadedHook ProviderLoadedHook
+diff --git a/tunnel/statistic/manager.go b/tunnel/statistic/manager.go
+index c69746dbc..bceec2aa9 100644
+--- a/tunnel/statistic/manager.go
++++ b/tunnel/statistic/manager.go
+@@ -13,31 +13,46 @@ var DefaultManager *Manager
+ 
+ func init() {
+ 	DefaultManager = &Manager{
+-		uploadTemp:    atomic.NewInt64(0),
+-		downloadTemp:  atomic.NewInt64(0),
+-		uploadBlip:    atomic.NewInt64(0),
+-		downloadBlip:  atomic.NewInt64(0),
+-		uploadTotal:   atomic.NewInt64(0),
+-		downloadTotal: atomic.NewInt64(0),
+-		pid:           int32(os.Getpid()),
++		uploadTemp:         atomic.NewInt64(0),
++		downloadTemp:       atomic.NewInt64(0),
++		uploadBlip:         atomic.NewInt64(0),
++		downloadBlip:       atomic.NewInt64(0),
++		uploadTotal:        atomic.NewInt64(0),
++		downloadTotal:      atomic.NewInt64(0),
++		proxyUploadTemp:    atomic.NewInt64(0),
++		proxyDownloadTemp:  atomic.NewInt64(0),
++		proxyUploadBlip:    atomic.NewInt64(0),
++		proxyDownloadBlip:  atomic.NewInt64(0),
++		proxyUploadTotal:   atomic.NewInt64(0),
++		proxyDownloadTotal: atomic.NewInt64(0),
++		pid:                int32(os.Getpid()),
+ 	}
+ 
+ 	go DefaultManager.handle()
+ }
+ 
+ type Manager struct {
+-	connections   xsync.Map[string, Tracker]
+-	uploadTemp    atomic.Int64
+-	downloadTemp  atomic.Int64
+-	uploadBlip    atomic.Int64
+-	downloadBlip  atomic.Int64
+-	uploadTotal   atomic.Int64
+-	downloadTotal atomic.Int64
+-	pid           int32
+-	memory        uint64
++	connections        xsync.Map[string, Tracker]
++	uploadTemp         atomic.Int64
++	downloadTemp       atomic.Int64
++	uploadBlip         atomic.Int64
++	downloadBlip       atomic.Int64
++	uploadTotal        atomic.Int64
++	downloadTotal      atomic.Int64
++	proxyUploadTemp    atomic.Int64
++	proxyDownloadTemp  atomic.Int64
++	proxyUploadBlip    atomic.Int64
++	proxyDownloadBlip  atomic.Int64
++	proxyUploadTotal   atomic.Int64
++	proxyDownloadTotal atomic.Int64
++	pid                int32
++	memory             uint64
+ }
+ 
+ func (m *Manager) Join(c Tracker) {
++	if DefaultRequestNotify != nil {
++		DefaultRequestNotify(c)
++	}
+ 	m.connections.Store(c.ID(), c)
+ }
+ 
+@@ -58,14 +73,22 @@ func (m *Manager) Range(f func(c Tracker) bool) {
+ 	})
+ }
+ 
+-func (m *Manager) PushUploaded(size int64) {
++func (m *Manager) PushUploaded(lastChain string, size int64) {
+ 	m.uploadTemp.Add(size)
+ 	m.uploadTotal.Add(size)
++	if lastChain != "DIRECT" {
++		m.proxyUploadTemp.Add(size)
++		m.proxyUploadTotal.Add(size)
++	}
+ }
+ 
+-func (m *Manager) PushDownloaded(size int64) {
++func (m *Manager) PushDownloaded(lastChain string, size int64) {
+ 	m.downloadTemp.Add(size)
+ 	m.downloadTotal.Add(size)
++	if lastChain != "DIRECT" {
++		m.proxyDownloadTemp.Add(size)
++		m.proxyDownloadTotal.Add(size)
++	}
+ }
+ 
+ func (m *Manager) Now() (up int64, down int64) {
+@@ -110,6 +133,12 @@ func (m *Manager) ResetStatistic() {
+ 	m.downloadTemp.Store(0)
+ 	m.downloadBlip.Store(0)
+ 	m.downloadTotal.Store(0)
++	m.proxyUploadTemp.Store(0)
++	m.proxyUploadBlip.Store(0)
++	m.proxyUploadTotal.Store(0)
++	m.proxyDownloadTemp.Store(0)
++	m.proxyDownloadBlip.Store(0)
++	m.proxyDownloadTotal.Store(0)
+ }
+ 
+ func (m *Manager) handle() {
+@@ -118,6 +147,8 @@ func (m *Manager) handle() {
+ 	for range ticker.C {
+ 		m.uploadBlip.Store(m.uploadTemp.Swap(0))
+ 		m.downloadBlip.Store(m.downloadTemp.Swap(0))
++		m.proxyUploadBlip.Store(m.proxyUploadTemp.Swap(0))
++		m.proxyDownloadBlip.Store(m.proxyDownloadTemp.Swap(0))
+ 	}
+ }
+ 
+diff --git a/tunnel/statistic/patch.go b/tunnel/statistic/patch.go
+new file mode 100644
+index 000000000..75af582f4
+--- /dev/null
++++ b/tunnel/statistic/patch.go
+@@ -0,0 +1,21 @@
++package statistic
++
++type RequestNotify func(c Tracker)
++
++var DefaultRequestNotify RequestNotify
++
++func (m *Manager) NowTraffic(onlyProxy bool) (up int64, down int64) {
++	if onlyProxy {
++		return m.proxyUploadBlip.Load(), m.proxyDownloadBlip.Load()
++	}
++
++	return m.Now()
++}
++
++func (m *Manager) TotalTraffic(onlyProxy bool) (up int64, down int64) {
++	if onlyProxy {
++		return m.proxyUploadTotal.Load(), m.proxyDownloadTotal.Load()
++	}
++
++	return m.Total()
++}
+diff --git a/tunnel/statistic/patch_test.go b/tunnel/statistic/patch_test.go
+new file mode 100644
+index 000000000..f674f035a
+--- /dev/null
++++ b/tunnel/statistic/patch_test.go
+@@ -0,0 +1,75 @@
++package statistic
++
++import (
++	"testing"
++
++	"github.com/metacubex/mihomo/common/atomic"
++)
++
++func newTrafficTestManager() *Manager {
++	return &Manager{
++		uploadTemp:         atomic.NewInt64(0),
++		downloadTemp:       atomic.NewInt64(0),
++		uploadBlip:         atomic.NewInt64(0),
++		downloadBlip:       atomic.NewInt64(0),
++		uploadTotal:        atomic.NewInt64(0),
++		downloadTotal:      atomic.NewInt64(0),
++		proxyUploadTemp:    atomic.NewInt64(0),
++		proxyDownloadTemp:  atomic.NewInt64(0),
++		proxyUploadBlip:    atomic.NewInt64(0),
++		proxyDownloadBlip:  atomic.NewInt64(0),
++		proxyUploadTotal:   atomic.NewInt64(0),
++		proxyDownloadTotal: atomic.NewInt64(0),
++	}
++}
++
++func TestTotalTrafficCanReturnProxyOnlyTraffic(t *testing.T) {
++	manager := newTrafficTestManager()
++
++	manager.PushUploaded("DIRECT", 10)
++	manager.PushDownloaded("DIRECT", 20)
++	manager.PushUploaded("proxy", 30)
++	manager.PushDownloaded("proxy", 40)
++
++	up, down := manager.TotalTraffic(false)
++	if up != 40 || down != 60 {
++		t.Fatalf("expected all traffic 40/60, got %d/%d", up, down)
++	}
++
++	up, down = manager.TotalTraffic(true)
++	if up != 30 || down != 40 {
++		t.Fatalf("expected proxy traffic 30/40, got %d/%d", up, down)
++	}
++}
++
++func TestNowTrafficCanReturnProxyOnlyTraffic(t *testing.T) {
++	manager := newTrafficTestManager()
++	manager.uploadBlip.Store(11)
++	manager.downloadBlip.Store(22)
++	manager.proxyUploadBlip.Store(33)
++	manager.proxyDownloadBlip.Store(44)
++
++	up, down := manager.NowTraffic(false)
++	if up != 11 || down != 22 {
++		t.Fatalf("expected all blip 11/22, got %d/%d", up, down)
++	}
++
++	up, down = manager.NowTraffic(true)
++	if up != 33 || down != 44 {
++		t.Fatalf("expected proxy blip 33/44, got %d/%d", up, down)
++	}
++}
++
++func TestResetStatisticResetsProxyTraffic(t *testing.T) {
++	manager := newTrafficTestManager()
++	manager.PushUploaded("proxy", 30)
++	manager.PushDownloaded("proxy", 40)
++	manager.proxyUploadBlip.Store(50)
++	manager.proxyDownloadBlip.Store(60)
++	manager.ResetStatistic()
++
++	up, down := manager.TotalTraffic(true)
++	if up != 0 || down != 0 || manager.proxyUploadBlip.Load() != 0 || manager.proxyDownloadBlip.Load() != 0 {
++		t.Fatalf("expected proxy traffic to reset")
++	}
++}
+diff --git a/tunnel/statistic/tracker.go b/tunnel/statistic/tracker.go
+index 2fbb1cf9e..be13e425e 100644
+--- a/tunnel/statistic/tracker.go
++++ b/tunnel/statistic/tracker.go
+@@ -53,7 +53,7 @@ func (tt *tcpTracker) Read(b []byte) (int, error) {
+ 	n, err := tt.Conn.Read(b)
+ 	download := int64(n)
+ 	if tt.pushToManager {
+-		tt.manager.PushDownloaded(download)
++		tt.manager.PushDownloaded(tt.Chains().Last(), download)
+ 	}
+ 	tt.DownloadTotal.Add(download)
+ 	return n, err
+@@ -63,7 +63,7 @@ func (tt *tcpTracker) ReadBuffer(buffer *buf.Buffer) (err error) {
+ 	err = tt.Conn.ReadBuffer(buffer)
+ 	download := int64(buffer.Len())
+ 	if tt.pushToManager {
+-		tt.manager.PushDownloaded(download)
++		tt.manager.PushDownloaded(tt.Chains().Last(), download)
+ 	}
+ 	tt.DownloadTotal.Add(download)
+ 	return
+@@ -72,7 +72,7 @@ func (tt *tcpTracker) ReadBuffer(buffer *buf.Buffer) (err error) {
+ func (tt *tcpTracker) UnwrapReader() (io.Reader, []N.CountFunc) {
+ 	return tt.Conn, []N.CountFunc{func(download int64) {
+ 		if tt.pushToManager {
+-			tt.manager.PushDownloaded(download)
++			tt.manager.PushDownloaded(tt.Chains().Last(), download)
+ 		}
+ 		tt.DownloadTotal.Add(download)
+ 	}}
+@@ -82,7 +82,7 @@ func (tt *tcpTracker) Write(b []byte) (int, error) {
+ 	n, err := tt.Conn.Write(b)
+ 	upload := int64(n)
+ 	if tt.pushToManager {
+-		tt.manager.PushUploaded(upload)
++		tt.manager.PushUploaded(tt.Chains().Last(), upload)
+ 	}
+ 	tt.UploadTotal.Add(upload)
+ 	return n, err
+@@ -92,7 +92,7 @@ func (tt *tcpTracker) WriteBuffer(buffer *buf.Buffer) (err error) {
+ 	upload := int64(buffer.Len())
+ 	err = tt.Conn.WriteBuffer(buffer)
+ 	if tt.pushToManager {
+-		tt.manager.PushUploaded(upload)
++		tt.manager.PushUploaded(tt.Chains().Last(), upload)
+ 	}
+ 	tt.UploadTotal.Add(upload)
+ 	return
+@@ -101,7 +101,7 @@ func (tt *tcpTracker) WriteBuffer(buffer *buf.Buffer) (err error) {
+ func (tt *tcpTracker) UnwrapWriter() (io.Writer, []N.CountFunc) {
+ 	return tt.Conn, []N.CountFunc{func(upload int64) {
+ 		if tt.pushToManager {
+-			tt.manager.PushUploaded(upload)
++			tt.manager.PushUploaded(tt.Chains().Last(), upload)
+ 		}
+ 		tt.UploadTotal.Add(upload)
+ 	}}
+@@ -136,11 +136,12 @@ func NewTCPTracker(conn C.Conn, manager *Manager, metadata *C.Metadata, rule C.R
+ 	}
+ 
+ 	if pushToManager {
++		lastChain := conn.Chains().Last()
+ 		if uploadTotal > 0 {
+-			manager.PushUploaded(uploadTotal)
++			manager.PushUploaded(lastChain, uploadTotal)
+ 		}
+ 		if downloadTotal > 0 {
+-			manager.PushDownloaded(downloadTotal)
++			manager.PushDownloaded(lastChain, downloadTotal)
+ 		}
+ 	}
+ 
+@@ -173,7 +174,7 @@ func (ut *udpTracker) ReadFrom(b []byte) (int, net.Addr, error) {
+ 	n, addr, err := ut.PacketConn.ReadFrom(b)
+ 	download := int64(n)
+ 	if ut.pushToManager {
+-		ut.manager.PushDownloaded(download)
++		ut.manager.PushDownloaded(ut.Chains().Last(), download)
+ 	}
+ 	ut.DownloadTotal.Add(download)
+ 	return n, addr, err
+@@ -183,7 +184,7 @@ func (ut *udpTracker) WaitReadFrom() (data []byte, put func(), addr net.Addr, er
+ 	data, put, addr, err = ut.PacketConn.WaitReadFrom()
+ 	download := int64(len(data))
+ 	if ut.pushToManager {
+-		ut.manager.PushDownloaded(download)
++		ut.manager.PushDownloaded(ut.Chains().Last(), download)
+ 	}
+ 	ut.DownloadTotal.Add(download)
+ 	return
+@@ -193,7 +194,7 @@ func (ut *udpTracker) WriteTo(b []byte, addr net.Addr) (int, error) {
+ 	n, err := ut.PacketConn.WriteTo(b, addr)
+ 	upload := int64(n)
+ 	if ut.pushToManager {
+-		ut.manager.PushUploaded(upload)
++		ut.manager.PushUploaded(ut.Chains().Last(), upload)
+ 	}
+ 	ut.UploadTotal.Add(upload)
+ 	return n, err
+@@ -228,11 +229,12 @@ func NewUDPTracker(conn C.PacketConn, manager *Manager, metadata *C.Metadata, ru
+ 	}
+ 
+ 	if pushToManager {
++		lastChain := conn.Chains().Last()
+ 		if uploadTotal > 0 {
+-			manager.PushUploaded(uploadTotal)
++			manager.PushUploaded(lastChain, uploadTotal)
+ 		}
+ 		if downloadTotal > 0 {
+-			manager.PushDownloaded(downloadTotal)
++			manager.PushDownloaded(lastChain, downloadTotal)
+ 		}
+ 	}
+ 
