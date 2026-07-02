@@ -6,6 +6,7 @@ import android.os.PowerManager
 import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.receiveBroadcastFlow
 import com.hi2shark.flclash_nw.core.Core
+import com.hi2shark.flclash_nw.service.IBaseService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -31,6 +32,11 @@ class SuspendModule(private val service: Service) : Module() {
         }
 
     private fun onUpdate(isScreenOn: Boolean) {
+        val baseService = service as? IBaseService
+        if (baseService?.wifiSuspended == true) {
+            Core.suspended(true)
+            return
+        }
         if (isScreenOn) {
             Core.suspended(false)
             return

@@ -45,6 +45,9 @@ class VpnService : SystemVpnService(), IBaseService,
     override var isSuspended: Boolean = false
         private set
 
+    override var wifiSuspended: Boolean = false
+        private set
+
     override fun onCreate() {
         super.onCreate()
         handleCreate()
@@ -254,6 +257,7 @@ class VpnService : SystemVpnService(), IBaseService,
             } ?: return ServiceStartResult.failure("VPN options empty")
             isRunning = true
             isSuspended = false
+            wifiSuspended = false
             ServiceStartResult.success()
         } catch (e: Exception) {
             GlobalState.log("VpnService start failed $e")
@@ -267,14 +271,9 @@ class VpnService : SystemVpnService(), IBaseService,
             return ServiceStartResult.failure("VPN service is not running")
         }
         return try {
-            if (suspended) {
-                Core.stopTun()
-            } else {
-                State.options?.let {
-                    handleStart(it)
-                } ?: return ServiceStartResult.failure("VPN options empty")
-            }
+            Core.suspended(suspended)
             isSuspended = suspended
+            wifiSuspended = suspended
             ServiceStartResult.success()
         } catch (e: Exception) {
             GlobalState.log("VpnService suspend update failed $e")
@@ -285,6 +284,7 @@ class VpnService : SystemVpnService(), IBaseService,
     override fun stop() {
         isRunning = false
         isSuspended = false
+        wifiSuspended = false
         loader.cancel()
         Core.stopTun()
         stopSelf()

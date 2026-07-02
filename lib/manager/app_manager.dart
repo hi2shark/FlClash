@@ -50,14 +50,24 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
       final isStart = ref.read(isStartProvider);
       if (prev != next && isStart) {
         debouncer.call(FunctionTag.suspend, () async {
-          if (system.isAndroid) {
-            await service?.setSuspended(next);
-          } else {
-            if (next == true) {
-              await coreController.stopListener();
-            } else {
-              await coreController.startListener();
+          final success = await () async {
+            if (system.isAndroid) {
+              return await service?.setSuspended(next) ?? false;
             }
+            if (next == true) {
+              return await coreController.stopListener();
+            }
+            return await coreController.startListener();
+          }();
+          if (!success) {
+            commonPrint.log(
+              'Failed to set service suspended state to $next',
+              logLevel: LogLevel.error,
+            );
+            globalState.showNotifier(
+              currentAppLocalizations.unknownNetworkError,
+            );
+            return;
           }
           ref.read(checkIpNumProvider.notifier).add();
         });

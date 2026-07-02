@@ -9,6 +9,12 @@ interface IBaseService {
 
     val isSuspended: Boolean
 
+    /**
+     * When true, the service should remain suspended regardless of screen/idle state.
+     * Currently driven by the WiFi-watch feature (exclude SSID list).
+     */
+    val wifiSuspended: Boolean
+
     fun handleCreate() {
         GlobalState.log("Service create")
         BroadcastAction.SERVICE_CREATED.sendBroadcast()

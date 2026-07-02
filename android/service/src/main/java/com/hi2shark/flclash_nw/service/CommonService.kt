@@ -31,6 +31,9 @@ class CommonService : Service(), IBaseService,
     override var isSuspended: Boolean = false
         private set
 
+    override var wifiSuspended: Boolean = false
+        private set
+
     override fun onCreate() {
         super.onCreate()
         handleCreate()
@@ -67,6 +70,7 @@ class CommonService : Service(), IBaseService,
             loader.load()
             isRunning = true
             isSuspended = false
+            wifiSuspended = false
             ServiceStartResult.success()
         } catch (_: Exception) {
             stop()
@@ -78,21 +82,21 @@ class CommonService : Service(), IBaseService,
         if (!isRunning) {
             return ServiceStartResult.failure("Common service is not running")
         }
-        val success = when (suspended) {
-            true -> AndroidCoreActions.stopListener()
-            false -> AndroidCoreActions.startListener()
+        return try {
+            Core.suspended(suspended)
+            isSuspended = suspended
+            wifiSuspended = suspended
+            ServiceStartResult.success()
+        } catch (e: Exception) {
+            GlobalState.log("Common service suspend update failed $e")
+            ServiceStartResult.failure(e.message ?: "Common service suspend update failed")
         }
-        if (!success) {
-            return ServiceStartResult.failure("Common service suspend update failed")
-        }
-        isSuspended = suspended
-        return ServiceStartResult.success()
     }
 
     override fun stop() {
-        AndroidCoreActions.stopListener()
         isRunning = false
         isSuspended = false
+        wifiSuspended = false
         loader.cancel()
         stopSelf()
     }
