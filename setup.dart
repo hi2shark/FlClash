@@ -56,6 +56,7 @@ Future<void> main(List<String> args) async {
   final arch = _detectArch();
   final targets = _getTargets(platform, arch, results['targets']);
   final androidArch = results['arch'] as String?;
+  final overrideVersion = results['version'] as String?;
   final verbose = results['verbose'] as bool;
 
   final exitCode = await _package(
@@ -65,6 +66,7 @@ Future<void> main(List<String> args) async {
     rootDir,
     arch,
     androidArch: androidArch,
+    overrideVersion: overrideVersion,
     verbose: verbose,
   );
   exit(exitCode);
@@ -88,6 +90,12 @@ ArgParser createSetupArgParser() {
       valueHelp: 'arm,arm64,amd64',
       allowed: ['arm', 'arm64', 'amd64'],
       help: 'Target architecture (Android only)',
+    )
+    ..addOption(
+      'version',
+      valueHelp: 'x.y.z+build',
+      help: 'Override the app version in pubspec.yaml (e.g. 0.8.95 or v0.8.95). '
+          'If the value has no build number, the existing build number is preserved.',
     )
     ..addFlag(
       'verbose',
@@ -134,6 +142,7 @@ Future<int> _package(
   String rootDir,
   String arch, {
   String? androidArch,
+  String? overrideVersion,
   required bool verbose,
 }) async {
   final distributorDir = p.join(
@@ -154,6 +163,10 @@ Future<int> _package(
   if (activateResult.exitCode != 0) {
     stderr.write(activateResult.stderr);
     return activateResult.exitCode;
+  }
+
+  if (overrideVersion != null) {
+    await _patchPubspecVersion(rootDir, overrideVersion);
   }
 
   final coreSha256 = platform == 'windows' ? await _buildGoCore(rootDir) : null;
@@ -204,6 +217,34 @@ Future<int> _package(
   });
   final exitCode = await process.exitCode;
   return exitCode;
+}
+
+Future<void> _patchPubspecVersion(String rootDir, String version) async {
+  final pubspecFile = File(p.join(rootDir, 'pubspec.yaml'));
+  var content = await pubspecFile.readAsString();
+
+  var cleanVersion = version;
+  if (cleanVersion.startsWith('v') || cleanVersion.startsWith('V')) {
+    cleanVersion = cleanVersion.substring(1);
+  }
+
+  final versionPattern = RegExp(r'^version:\s*(\S+)', multiLine: true);
+  final match = versionPattern.firstMatch(content);
+  if (match == null) {
+    stderr.writeln('Could not find version field in pubspec.yaml');
+    return;
+  }
+
+  final currentVersion = match.group(1)!;
+  final newVersion = cleanVersion.contains('+')
+      ? cleanVersion
+      : currentVersion.contains('+')
+          ? '$cleanVersion${currentVersion.substring(currentVersion.indexOf('+'))}'
+          : cleanVersion;
+
+  content = content.replaceFirst(versionPattern, 'version: $newVersion');
+  await pubspecFile.writeAsString(content);
+  stdout.writeln('Patched pubspec.yaml version to $newVersion');
 }
 
 Future<String?> _buildGoCore(String rootDir) async {
