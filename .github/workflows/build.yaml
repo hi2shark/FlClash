@@ -176,8 +176,8 @@ jobs:
           git add CHANGELOG.md
           if ! git diff --cached --quiet; then
             echo "Commit pushing"
-            git config --local user.email "chen08209@gmail.com"
-            git config --local user.name "chen08209"
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
             git commit -m "Update changelog"
             git push
             if [ $? -eq 0 ]; then
@@ -211,7 +211,7 @@ jobs:
       - name: Generate release.md
         run: |
           tags=($(git tag --merged HEAD --sort=-creatordate))
-          preTag=$(curl -s "https://api.github.com/repos/chen08209/FlClash/releases/latest" | \
+          preTag=$(curl -s "https://api.github.com/repos/hi2shark/FlClash/releases/latest" | \
           sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p')
           
           [ -z "$preTag" ] && preTag=""
