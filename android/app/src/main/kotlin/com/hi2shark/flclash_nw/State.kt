@@ -10,8 +10,10 @@ import com.google.gson.Gson
 import io.flutter.embedding.engine.FlutterEngine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.resume
 
 enum class RunState {
     START, PENDING, STOP
@@ -79,6 +81,9 @@ object State {
     }
 
     suspend fun handleStopServiceAction() {
+        if (flutterEngine == null && runStateFlow.value != RunState.START) {
+            handleSyncState()
+        }
         runLock.withLock {
             if (runStateFlow.value != RunState.START) {
                 return
@@ -88,19 +93,38 @@ object State {
                 return
             }
             GlobalState.application.showToast(sharedState.stopTip)
-            handleStopService()
+            shouldStopService()
         }
     }
 
-    fun handleStartService() {
+    private suspend fun AppPlugin.awaitNotificationsPermission(): Boolean {
+        return suspendCancellableCoroutine { continuation ->
+            requestNotificationsPermission {
+                if (continuation.isActive) {
+                    continuation.resume(it)
+                }
+            }
+        }
+    }
+
+    private suspend fun AppPlugin.awaitPrepare(needPrepare: Boolean): Boolean {
+        return suspendCancellableCoroutine { continuation ->
+            prepare(needPrepare) {
+                if (continuation.isActive) {
+                    continuation.resume(it)
+                }
+            }
+        }
+    }
+
+    suspend fun handleStartService(): Boolean {
         val appPlugin = flutterEngine?.plugin<AppPlugin>()
         if (appPlugin != null) {
-            appPlugin.requestNotificationsPermission {
-                startService()
+            if (!appPlugin.awaitNotificationsPermission()) {
+                return false
             }
-            return
         }
-        startService()
+        return startService()
     }
 
     private fun startServiceWithPref() {
@@ -140,7 +164,9 @@ object State {
             initParamsString,
             setupParamsString,
             onStarted = {
-                startService()
+                GlobalState.launch {
+                    startService()
+                }
             },
             onResult = {
                 if (it.isNotEmpty()) {
@@ -150,56 +176,58 @@ object State {
         )
     }
 
-    private fun startService() {
-        GlobalState.launch {
-            runLock.withLock {
-                if (runStateFlow.value != RunState.STOP) {
-                    return@launch
+    private suspend fun startService(): Boolean {
+        return runLock.withLock {
+            if (runStateFlow.value != RunState.STOP) {
+                return@withLock false
+            }
+            try {
+                runStateFlow.tryEmit(RunState.PENDING)
+                val options = sharedState.vpnOptions ?: return@withLock false
+                val prepared = appPlugin?.awaitPrepare(options.enable) ?: when {
+                    options.enable -> VpnService.prepare(GlobalState.application) == null
+                    else -> true
                 }
-                try {
-                    runStateFlow.tryEmit(RunState.PENDING)
-                    val options = sharedState.vpnOptions ?: return@launch
-                    appPlugin?.let {
-                        it.prepare(options.enable) {
-                            runTime = Service.startService(options, runTime)
-                            runStateFlow.tryEmit(RunState.START)
-                        }
-                    } ?: run {
-                        val intent = VpnService.prepare(GlobalState.application)
-                        if (intent != null) {
-                            return@launch
-                        }
-                        runTime = Service.startService(options, runTime)
-                        runStateFlow.tryEmit(RunState.START)
-                    }
-                } finally {
-                    if (runStateFlow.value == RunState.PENDING) {
-                        runStateFlow.tryEmit(RunState.STOP)
-                    }
+                if (!prepared) {
+                    return@withLock false
+                }
+                val nextRunTime = Service.startService(options, runTime)
+                if (nextRunTime == 0L) {
+                    return@withLock false
+                }
+                runTime = nextRunTime
+                runStateFlow.tryEmit(RunState.START)
+                true
+            } finally {
+                if (runStateFlow.value == RunState.PENDING) {
+                    runStateFlow.tryEmit(RunState.STOP)
                 }
             }
         }
     }
 
-    fun handleStopService() {
+    private fun shouldStopService() {
         GlobalState.launch {
-            runLock.withLock {
-                if (runStateFlow.value != RunState.START) {
-                    return@launch
-                }
-                try {
-                    runStateFlow.tryEmit(RunState.PENDING)
-                    runTime = Service.stopService()
-                    runStateFlow.tryEmit(RunState.STOP)
-                } finally {
-                    if (runStateFlow.value == RunState.PENDING) {
-                        runStateFlow.tryEmit(RunState.START)
-                    }
+            handleStopService()
+        }
+    }
+
+    suspend fun handleStopService(): Boolean {
+        return runLock.withLock {
+            if (runStateFlow.value != RunState.START) {
+                return@withLock false
+            }
+            try {
+                runStateFlow.tryEmit(RunState.PENDING)
+                runTime = Service.stopService()
+                runStateFlow.tryEmit(RunState.STOP)
+                true
+            } finally {
+                if (runStateFlow.value == RunState.PENDING) {
+                    runStateFlow.tryEmit(RunState.START)
                 }
             }
         }
     }
 }
-
-
 

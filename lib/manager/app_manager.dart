@@ -4,6 +4,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/window_manager.dart';
+import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/foundation.dart';
@@ -49,10 +50,14 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
       final isStart = ref.read(isStartProvider);
       if (prev != next && isStart) {
         debouncer.call(FunctionTag.suspend, () async {
-          if (next == true) {
-            await coreController.stopListener();
+          if (system.isAndroid) {
+            await service?.setSuspended(next);
           } else {
-            await coreController.startListener();
+            if (next == true) {
+              await coreController.stopListener();
+            } else {
+              await coreController.startListener();
+            }
           }
           ref.read(checkIpNumProvider.notifier).add();
         });

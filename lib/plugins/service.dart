@@ -69,6 +69,11 @@ class Service {
     return await methodChannel.invokeMethod<bool>('stop') ?? false;
   }
 
+  Future<bool> setSuspended(bool suspended) async {
+    return await methodChannel.invokeMethod<bool>('setSuspended', suspended) ??
+        false;
+  }
+
   Future<String> init() async {
     return await methodChannel.invokeMethod<String>('init') ?? '';
   }

@@ -5,6 +5,10 @@ import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.common.sendBroadcast
 
 interface IBaseService {
+    val isRunning: Boolean
+
+    val isSuspended: Boolean
+
     fun handleCreate() {
         GlobalState.log("Service create")
         BroadcastAction.SERVICE_CREATED.sendBroadcast()
@@ -15,7 +19,9 @@ interface IBaseService {
         BroadcastAction.SERVICE_DESTROYED.sendBroadcast()
     }
 
-    fun start()
+    fun start(): ServiceStartResult
+
+    fun setSuspended(suspended: Boolean): ServiceStartResult
 
     fun stop()
 }

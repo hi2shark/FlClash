@@ -57,9 +57,9 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     private lateinit var scope: CoroutineScope
 
-    private var vpnPrepareCallback: (suspend () -> Unit)? = null
+    private var vpnPrepareCallback: (suspend (Boolean) -> Unit)? = null
 
-    private var requestNotificationCallback: (() -> Unit)? = null
+    private var requestNotificationCallback: ((Boolean) -> Unit)? = null
 
     private val packages = mutableListOf<Package>()
 
@@ -292,14 +292,14 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         }
     }
 
-    fun requestNotificationsPermission(callBack: () -> Unit) {
+    fun requestNotificationsPermission(callBack: (Boolean) -> Unit) {
         requestNotificationCallback = callBack
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val permission = ContextCompat.checkSelfPermission(
                 GlobalState.application, Manifest.permission.POST_NOTIFICATIONS
             )
             if (permission == PackageManager.PERMISSION_GRANTED || isBlockNotification) {
-                invokeRequestNotificationCallback()
+                invokeRequestNotificationCallback(true)
                 return
             }
             activityRef?.get()?.let {
@@ -308,36 +308,37 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                     NOTIFICATION_PERMISSION_REQUEST_CODE
                 )
-            }
+            } ?: invokeRequestNotificationCallback(false)
             return
         } else {
-            invokeRequestNotificationCallback()
+            invokeRequestNotificationCallback(true)
         }
 
     }
 
-    fun invokeRequestNotificationCallback() {
-        requestNotificationCallback?.invoke()
+    fun invokeRequestNotificationCallback(granted: Boolean) {
+        requestNotificationCallback?.invoke(granted)
         requestNotificationCallback = null
     }
 
-    fun prepare(needPrepare: Boolean, callBack: (suspend () -> Unit)) {
+    fun prepare(needPrepare: Boolean, callBack: (suspend (Boolean) -> Unit)) {
         vpnPrepareCallback = callBack
         if (!needPrepare) {
-            invokeVpnPrepareCallback()
+            invokeVpnPrepareCallback(true)
             return
         }
         val intent = VpnService.prepare(GlobalState.application)
         if (intent != null) {
             activityRef?.get()?.startActivityForResult(intent, VPN_PERMISSION_REQUEST_CODE)
+                ?: invokeVpnPrepareCallback(false)
             return
         }
-        invokeVpnPrepareCallback()
+        invokeVpnPrepareCallback(true)
     }
 
-    fun invokeVpnPrepareCallback() {
+    fun invokeVpnPrepareCallback(granted: Boolean) {
         GlobalState.launch {
-            vpnPrepareCallback?.invoke()
+            vpnPrepareCallback?.invoke(granted)
             vpnPrepareCallback = null
         }
     }
@@ -441,9 +442,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
 
     private fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode == VPN_PERMISSION_REQUEST_CODE) {
-            if (resultCode == FlutterActivity.RESULT_OK) {
-                invokeVpnPrepareCallback()
-            }
+            invokeVpnPrepareCallback(resultCode == FlutterActivity.RESULT_OK)
         }
         return true
     }
@@ -452,9 +451,11 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         requestCode: Int, permissions: Array<String>, grantResults: IntArray
     ): Boolean {
         if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
-            isBlockNotification = true
+            val granted = grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
+            isBlockNotification = !granted
+            invokeRequestNotificationCallback(granted)
+            return true
         }
-        invokeRequestNotificationCallback()
-        return true
+        return false
     }
 }

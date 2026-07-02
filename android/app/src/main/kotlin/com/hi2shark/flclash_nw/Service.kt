@@ -179,6 +179,14 @@ object Service {
         }.getOrNull() ?: 0L
     }
 
+    suspend fun setSuspended(suspended: Boolean): Long {
+        return delegate.useService {
+            awaitIResultInterface { callback ->
+                it.setSuspended(suspended, callback)
+            }
+        }.getOrNull() ?: 0L
+    }
+
     suspend fun getRunTime(): Long {
         return delegate.useService {
             it.runTime

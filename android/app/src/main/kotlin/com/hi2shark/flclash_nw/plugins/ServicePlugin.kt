@@ -61,6 +61,10 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
             handleStop(result)
         }
 
+        "setSuspended" -> {
+            handleSetSuspended(call, result)
+        }
+
         else -> {
             result.notImplemented()
         }
@@ -81,13 +85,22 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
     }
 
     private fun handleStart(result: MethodChannel.Result) {
-        State.handleStartService()
-        result.success(true)
+        launch {
+            result.success(State.handleStartService())
+        }
     }
 
     private fun handleStop(result: MethodChannel.Result) {
-        State.handleStopService()
-        result.success(true)
+        launch {
+            result.success(State.handleStopService())
+        }
+    }
+
+    private fun handleSetSuspended(call: MethodCall, result: MethodChannel.Result) {
+        launch {
+            val suspended = call.arguments<Boolean>() == true
+            result.success(Service.setSuspended(suspended) != 0L)
+        }
     }
 
     val semaphore = Semaphore(10)
@@ -101,6 +114,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
     }
 
     private fun onServiceDisconnected(message: String) {
+        State.runTime = 0
         State.runStateFlow.tryEmit(RunState.STOP)
         flutterMethodChannel.invokeMethodOnMainThread<Any>("crash", message)
     }

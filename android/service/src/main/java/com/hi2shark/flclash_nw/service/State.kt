@@ -14,7 +14,17 @@ object State {
     )
 
     val runLock = Mutex()
-    var runTime: Long = 0L
+    val runtimeState = ServiceRuntimeState()
+
+    var runTime: Long
+        get() = runtimeState.runTime
+        set(value) {
+            if (value == 0L) {
+                runtimeState.markStopped()
+            } else {
+                runtimeState.markStarted(value)
+            }
+        }
 
     var delegate: ServiceDelegate<IBaseService>? = null
 

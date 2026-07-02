@@ -1,5 +1,6 @@
 package com.hi2shark.flclash_nw.service.modules
 
+import android.app.Notification
 import android.app.Notification.FOREGROUND_SERVICE_IMMEDIATE
 import android.app.Service
 import android.app.Service.STOP_FOREGROUND_REMOVE
@@ -43,6 +44,50 @@ val NotificationParams.extended: ExtendedNotificationParams
         title, stopText, onlyStatisticsProxy, Core.getSpeedTrafficText(onlyStatisticsProxy)
     )
 
+private fun Service.isScreenOn(): Boolean {
+    val pm = getSystemService<PowerManager>()
+    return when (pm != null) {
+        true -> pm.isInteractive
+        false -> true
+    }
+}
+
+private fun Service.buildServiceNotification(
+    params: ExtendedNotificationParams,
+): Notification {
+    val intent = Intent().setComponent(Components.MAIN_ACTIVITY)
+    return NotificationCompat.Builder(
+        this, GlobalState.NOTIFICATION_CHANNEL
+    ).apply {
+        setSmallIcon(R.drawable.ic_service)
+        setContentTitle("FlClash")
+        setContentIntent(intent.toPendingIntent)
+        setPriority(NotificationCompat.PRIORITY_HIGH)
+        setCategory(NotificationCompat.CATEGORY_SERVICE)
+        setOngoing(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
+        }
+        setShowWhen(true)
+        setOnlyAlertOnce(true)
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+//                setRequestPromotedOngoing(true)
+//            }
+        clearActions()
+        addAction(
+            0, params.stopText, QuickAction.STOP.quickIntent.toPendingIntent
+        )
+        setContentTitle(params.title)
+        setContentText(params.contentText)
+    }.build()
+}
+
+fun Service.startForegroundWithNotification(
+    params: ExtendedNotificationParams = (State.notificationParamsFlow.value ?: NotificationParams()).extended,
+) {
+    startForeground(buildServiceNotification(params))
+}
+
 class NotificationModule(private val service: Service) : Module() {
     private val scope = CoroutineScope(Dispatchers.Default)
 
@@ -54,7 +99,7 @@ class NotificationModule(private val service: Service) : Module() {
             }.map { intent ->
                 intent.action == Intent.ACTION_SCREEN_ON
             }.onStart {
-                emit(isScreenOn())
+                emit(service.isScreenOn())
             }
 
             combine(
@@ -75,47 +120,8 @@ class NotificationModule(private val service: Service) : Module() {
         }
     }
 
-    private fun isScreenOn(): Boolean {
-        val pm = service.getSystemService<PowerManager>()
-        return when (pm != null) {
-            true -> pm.isInteractive
-            false -> true
-        }
-    }
-
-    private val notificationBuilder: NotificationCompat.Builder by lazy {
-        val intent = Intent().setComponent(Components.MAIN_ACTIVITY)
-
-        NotificationCompat.Builder(
-            service, GlobalState.NOTIFICATION_CHANNEL
-        ).apply {
-            setSmallIcon(R.drawable.ic_service)
-            setContentTitle("FlClash")
-            setContentIntent(intent.toPendingIntent)
-            setPriority(NotificationCompat.PRIORITY_HIGH)
-            setCategory(NotificationCompat.CATEGORY_SERVICE)
-            setOngoing(true)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
-            }
-            setShowWhen(true)
-            setOnlyAlertOnce(true)
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-//                setRequestPromotedOngoing(true)
-//            }
-        }
-    }
-
     private fun update(params: ExtendedNotificationParams) {
-        service.startForeground(
-            with(notificationBuilder) {
-                setContentTitle(params.title)
-                setContentText(params.contentText)
-                clearActions()
-                addAction(
-                    0, params.stopText, QuickAction.STOP.quickIntent.toPendingIntent
-                ).build()
-            })
+        service.startForegroundWithNotification(params)
     }
 
     override fun onUninstall() {

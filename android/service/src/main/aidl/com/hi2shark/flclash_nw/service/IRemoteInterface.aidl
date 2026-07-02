@@ -14,6 +14,7 @@ interface IRemoteInterface {
     void updateNotificationParams(in NotificationParams params);
     void startService(in VpnOptions options, in long runTime, in IResultInterface result);
     void stopService(in IResultInterface result);
+    void setSuspended(in boolean suspended, in IResultInterface result);
     void setEventListener(in IEventInterface event);
     void setCrashlytics(in boolean enable);
     long getRunTime();

@@ -21,6 +21,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.RemoteException
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -32,13 +33,9 @@ import kotlinx.coroutines.withContext
 import java.nio.charset.Charset
 import kotlin.reflect.KClass
 
-//fun Context.startForegroundServiceCompat(intent: Intent?) {
-//    if (Build.VERSION.SDK_INT >= 26) {
-//        startForegroundService(intent)
-//    } else {
-//        startService(intent)
-//    }
-//}
+fun Context.startForegroundServiceCompat(intent: Intent) {
+    ContextCompat.startForegroundService(this, intent)
+}
 
 val KClass<*>.intent: Intent
     get() = Intent(GlobalState.application, this.java)

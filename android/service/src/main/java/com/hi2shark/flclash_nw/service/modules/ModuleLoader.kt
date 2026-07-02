@@ -26,6 +26,9 @@ fun CoroutineScope.moduleLoader(block: suspend ModuleLoaderScope.() -> Unit): Mo
         override fun load() {
             job = launch(Dispatchers.IO) {
                 mutex.withLock {
+                    if (modules.isNotEmpty()) {
+                        return@withLock
+                    }
                     val scope = object : ModuleLoaderScope {
                         override fun <T : Module> install(module: T): T {
                             modules.add(module)

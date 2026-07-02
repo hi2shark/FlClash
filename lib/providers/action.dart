@@ -136,18 +136,24 @@ class SetupAction extends _$SetupAction {
     ref.read(requestsProvider.notifier).value = FixedList(500);
   }
 
-  Future<void> _handleStart() async {
+  Future<bool> _handleStart() async {
     startTime ??= DateTime.now();
     //The local status must be updated when performing the run task
     ref.read(commonActionProvider.notifier).updateRunTime();
     ref.read(commonActionProvider.notifier).updateTraffic();
     if (!ref.read(suspendProvider)) {
-      await coreController.startListener();
+      final started = await coreController.startListener();
+      if (!started) {
+        startTime = null;
+        ref.read(runTimeProvider.notifier).value = null;
+        return false;
+      }
     }
     _updateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       ref.read(commonActionProvider.notifier).updateRunTime();
       ref.read(commonActionProvider.notifier).updateTraffic();
     });
+    return true;
   }
 
   Future _updateStartTime() async {
@@ -188,7 +194,8 @@ class SetupAction extends _$SetupAction {
             .tryStartCore(true);
         if (res) return;
         if (!ref.read(initProvider)) return;
-        await _handleStart();
+        final started = await _handleStart();
+        if (!started) return;
         applyProfileDebounce(force: true, silence: true);
       } else {
         globalState.needInitStatus = false;
@@ -197,7 +204,8 @@ class SetupAction extends _$SetupAction {
           await applyProfile(
             force: true,
             preloadInvoke: () async {
-              await _handleStart();
+              final started = await _handleStart();
+              if (!started) throw currentAppLocalizations.unknownNetworkError;
             },
           );
         } catch (_) {

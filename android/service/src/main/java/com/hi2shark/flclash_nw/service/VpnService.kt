@@ -21,6 +21,7 @@ import com.hi2shark.flclash_nw.service.modules.NetworkObserveModule
 import com.hi2shark.flclash_nw.service.modules.NotificationModule
 import com.hi2shark.flclash_nw.service.modules.SuspendModule
 import com.hi2shark.flclash_nw.service.modules.moduleLoader
+import com.hi2shark.flclash_nw.service.modules.startForegroundWithNotification
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.net.InetSocketAddress
@@ -38,9 +39,20 @@ class VpnService : SystemVpnService(), IBaseService,
         install(SuspendModule(self))
     }
 
+    override var isRunning: Boolean = false
+        private set
+
+    override var isSuspended: Boolean = false
+        private set
+
     override fun onCreate() {
         super.onCreate()
         handleCreate()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        startForegroundWithNotification()
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
@@ -233,18 +245,46 @@ class VpnService : SystemVpnService(), IBaseService,
         )
     }
 
-    override fun start() {
-        try {
+    override fun start(): ServiceStartResult {
+        return try {
+            startForegroundWithNotification()
             loader.load()
             State.options?.let {
                 handleStart(it)
-            }
-        } catch (_: Exception) {
+            } ?: return ServiceStartResult.failure("VPN options empty")
+            isRunning = true
+            isSuspended = false
+            ServiceStartResult.success()
+        } catch (e: Exception) {
+            GlobalState.log("VpnService start failed $e")
             stop()
+            ServiceStartResult.failure(e.message ?: "VPN service start failed")
+        }
+    }
+
+    override fun setSuspended(suspended: Boolean): ServiceStartResult {
+        if (!isRunning) {
+            return ServiceStartResult.failure("VPN service is not running")
+        }
+        return try {
+            if (suspended) {
+                Core.stopTun()
+            } else {
+                State.options?.let {
+                    handleStart(it)
+                } ?: return ServiceStartResult.failure("VPN options empty")
+            }
+            isSuspended = suspended
+            ServiceStartResult.success()
+        } catch (e: Exception) {
+            GlobalState.log("VpnService suspend update failed $e")
+            ServiceStartResult.failure(e.message ?: "VPN suspend update failed")
         }
     }
 
     override fun stop() {
+        isRunning = false
+        isSuspended = false
         loader.cancel()
         Core.stopTun()
         stopSelf()
