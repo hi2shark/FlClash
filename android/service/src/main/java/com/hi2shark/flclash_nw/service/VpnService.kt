@@ -48,6 +48,12 @@ class VpnService : SystemVpnService(), IBaseService,
     override var wifiSuspended: Boolean = false
         private set
 
+    private val suspendController = VpnSuspendController(
+        currentOptions = { State.options },
+        stopTun = Core::stopTun,
+        startTun = ::handleStart,
+    )
+
     override fun onCreate() {
         super.onCreate()
         handleCreate()
@@ -271,7 +277,8 @@ class VpnService : SystemVpnService(), IBaseService,
             return ServiceStartResult.failure("VPN service is not running")
         }
         return try {
-            Core.suspended(suspended)
+            val suspendResult = suspendController.setSuspended(suspended)
+            if (!suspendResult.success) return suspendResult
             isSuspended = suspended
             wifiSuspended = suspended
             ServiceStartResult.success()

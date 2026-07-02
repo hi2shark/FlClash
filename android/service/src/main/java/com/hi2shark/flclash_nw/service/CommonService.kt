@@ -4,7 +4,6 @@ import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
-import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.core.Core
 import com.hi2shark.flclash_nw.service.modules.NetworkObserveModule
 import com.hi2shark.flclash_nw.service.modules.NotificationModule
@@ -83,18 +82,20 @@ class CommonService : Service(), IBaseService,
         if (!isRunning) {
             return ServiceStartResult.failure("Common service is not running")
         }
-        return try {
-            Core.suspended(suspended)
-            isSuspended = suspended
-            wifiSuspended = suspended
-            ServiceStartResult.success()
-        } catch (e: Exception) {
-            GlobalState.log("Common service suspend update failed $e")
-            ServiceStartResult.failure(e.message ?: "Common service suspend update failed")
+        val success = when (suspended) {
+            true -> AndroidCoreActions.stopListener()
+            false -> AndroidCoreActions.startListener()
         }
+        if (!success) {
+            return ServiceStartResult.failure("Common service suspend update failed")
+        }
+        isSuspended = suspended
+        wifiSuspended = suspended
+        return ServiceStartResult.success()
     }
 
     override fun stop() {
+        AndroidCoreActions.stopListener()
         isRunning = false
         isSuspended = false
         wifiSuspended = false
