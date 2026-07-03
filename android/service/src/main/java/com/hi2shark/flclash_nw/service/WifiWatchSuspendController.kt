@@ -16,14 +16,23 @@ internal class WifiWatchSuspendController(
     private var wifiSsid: String? = null
     private var wifiValidated = false
     private var wifiPresent = false
+    private var wifiResolutionPending = false
     private var pendingSuspend: Cancellable? = null
+    private var pendingResolutionFallback: Cancellable? = null
     private var generation = 0
 
     fun updateSuspendOnWifiSsids(value: Set<String>) {
         val action = synchronized(lock) {
             suspendOnWifiSsids = value
             logLocked("suspend-on SSIDs updated count=${value.size}")
-            if (wifiNetworkObserved) evaluateLocked() else null
+            when {
+                !wifiNetworkObserved -> null
+                wifiResolutionPending -> {
+                    logLocked("SSID resolution pending — defer suspend-on SSID re-evaluation")
+                    null
+                }
+                else -> evaluateLocked()
+            }
         }
         action?.invoke()
     }
@@ -44,18 +53,31 @@ internal class WifiWatchSuspendController(
 
             // Transient null SSID while a WiFi transport is still present: this
             // is an AP switch / location-info-not-yet-resolved blip, not a real
-            // state change. Keep the last known SSID/validation and leave any
-            // pending suspend untouched so the in-flight decision stays valid.
-            // The next event (SSID resolves, a named untrusted AP, or WiFi
-            // genuinely going away) drives the real transition.
+            // state change. Keep the current suspend state briefly while
+            // waiting for a concrete SSID or a full WiFi loss signal.
             if (ssid == null && wifiPresent) {
-                logLocked(
-                    "transient null SSID while WiFi present — hold state " +
-                        "(pendingSuspend=${pendingSuspend != null})"
-                )
+                val wasWifiPresent = this.wifiPresent
+                if (wifiResolutionPending) {
+                    this.wifiPresent = true
+                    logLocked(
+                        "transient null SSID while WiFi present — continue waiting " +
+                            "(pendingSuspend=${pendingSuspend != null})"
+                    )
+                    return@synchronized null
+                }
+                if (wifiSsid == null && wasWifiPresent) {
+                    this.wifiPresent = true
+                    logLocked("unresolved WiFi without SSID already fell back — keep active")
+                    return@synchronized null
+                }
+                this.wifiPresent = true
+                wifiResolutionPending = true
+                scheduleResolutionFallbackLocked()
                 return@synchronized null
             }
 
+            cancelResolutionFallbackLocked("WiFi state resolved")
+            wifiResolutionPending = false
             wifiSsid = ssid
             wifiValidated = validated
             this.wifiPresent = wifiPresent
@@ -66,6 +88,7 @@ internal class WifiWatchSuspendController(
 
     fun cancel() {
         synchronized(lock) {
+            cancelResolutionFallbackLocked("controller cancelled")
             cancelPendingLocked("controller cancelled")
             generation++
         }
@@ -73,6 +96,7 @@ internal class WifiWatchSuspendController(
 
     private fun evaluateLocked(): (() -> Unit)? {
         val currentGeneration = ++generation
+        cancelResolutionFallbackLocked("state changed")
         cancelPendingLocked("state changed")
 
         val ssid = wifiSsid
@@ -107,6 +131,34 @@ internal class WifiWatchSuspendController(
         return null
     }
 
+    private fun scheduleResolutionFallbackLocked() {
+        if (pendingResolutionFallback != null) {
+            logLocked("SSID resolution grace already pending")
+            return
+        }
+        logLocked(
+            "transient null SSID while WiFi present — hold state for " +
+                "${SSID_RESOLUTION_GRACE_MILLIS}ms (pendingSuspend=${pendingSuspend != null})"
+        )
+        pendingResolutionFallback = scheduler(SSID_RESOLUTION_GRACE_MILLIS) {
+            val action = synchronized(lock) {
+                if (!wifiResolutionPending) {
+                    pendingResolutionFallback = null
+                    return@synchronized null
+                }
+                pendingResolutionFallback = null
+                wifiResolutionPending = false
+                wifiSsid = null
+                wifiValidated = false
+                generation++
+                cancelPendingLocked("SSID resolution grace expired")
+                logLocked("SSID resolution grace expired — resume to safe default")
+                { setWifiSuspended(false) }
+            }
+            action?.invoke()
+        }
+    }
+
     private fun isTrustedWifiLocked(): Boolean {
         val ssid = wifiSsid ?: return false
         return wifiValidated && suspendOnWifiSsids.contains(ssid)
@@ -120,11 +172,20 @@ internal class WifiWatchSuspendController(
         pendingSuspend = null
     }
 
+    private fun cancelResolutionFallbackLocked(reason: String) {
+        if (pendingResolutionFallback != null) {
+            logLocked("cancel SSID resolution grace: $reason")
+        }
+        pendingResolutionFallback?.cancel()
+        pendingResolutionFallback = null
+    }
+
     private fun logLocked(message: String) {
         logger("WiFi-watch $message")
     }
 
     companion object {
         const val SUSPEND_DELAY_MILLIS = 5000L
+        const val SSID_RESOLUTION_GRACE_MILLIS = 2000L
     }
 }

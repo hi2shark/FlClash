@@ -127,7 +127,7 @@ class WifiWatchSuspendControllerTest {
     // --- Regression: transient null SSID during an AP switch (wifi still present) ---
 
     @Test
-    fun transientNullSsidWhileWifiPresentHoldsPendingSuspend() {
+    fun transientNullSsidFallsBackToActiveWhenResolutionNeverArrives() {
         val scheduler = FakeScheduler()
         val events = mutableListOf<Boolean>()
         val controller = WifiWatchSuspendController(
@@ -141,13 +141,20 @@ class WifiWatchSuspendControllerTest {
         controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = true)
         assertEquals(emptyList(), events)
 
-        // Pending suspend must survive the blip and still fire after the delay.
-        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
-        assertEquals(listOf(true), events)
+        scheduler.advanceBy(WifiWatchSuspendController.SSID_RESOLUTION_GRACE_MILLIS - 1)
+        assertEquals(emptyList(), events)
+
+        // If the SSID never resolves, fall back to the safe default: keep the
+        // proxy active and cancel any stale pending suspend.
+        scheduler.advanceBy(1)
+        assertEquals(listOf(false), events)
+
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS * 2)
+        assertEquals(listOf(false), events)
     }
 
     @Test
-    fun transientNullSsidWhileSuspendedKeepsSuspended() {
+    fun transientNullSsidWhileSuspendedFallsBackToActiveAfterGracePeriod() {
         val scheduler = FakeScheduler()
         val events = mutableListOf<Boolean>()
         val controller = WifiWatchSuspendController(
@@ -160,10 +167,15 @@ class WifiWatchSuspendControllerTest {
         scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
         assertEquals(listOf(true), events)
 
-        // Switching APs while suspended: blip must NOT resume.
+        // Switching APs while suspended: keep the current state briefly while
+        // waiting for the SSID to resolve.
         controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = true)
-        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS * 2)
+        scheduler.advanceBy(WifiWatchSuspendController.SSID_RESOLUTION_GRACE_MILLIS - 1)
         assertEquals(listOf(true), events)
+
+        // If it never resolves, actively resume instead of hanging forever.
+        scheduler.advanceBy(1)
+        assertEquals(listOf(true, false), events)
     }
 
     @Test
@@ -187,6 +199,30 @@ class WifiWatchSuspendControllerTest {
         controller.updateWifiNetwork(ssid = "Cafe", validated = true, wifiPresent = true)
 
         assertEquals(listOf(true, false), events)
+    }
+
+    @Test
+    fun transientNullThenTrustedNamedSsidCancelsGraceFallbackAndSuspendsAfterDelay() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SSID_RESOLUTION_GRACE_MILLIS - 1)
+        assertEquals(emptyList(), events)
+
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(1)
+        assertEquals(emptyList(), events)
+
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS - 1)
+        assertEquals(emptyList(), events)
+        scheduler.advanceBy(1)
+        assertEquals(listOf(true), events)
     }
 
     @Test
