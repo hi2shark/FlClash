@@ -12,6 +12,11 @@ enum class QuickAction {
 enum class BroadcastAction {
     SERVICE_CREATED,
     SERVICE_DESTROYED,
+    SERVICE_SUSPENDED_CHANGED,
+}
+
+object BroadcastExtra {
+    const val SUSPENDED = "suspended"
 }
 
 enum class AccessControlMode {

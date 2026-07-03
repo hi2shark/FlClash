@@ -62,6 +62,12 @@ class _AndroidContainerState extends ConsumerState<AndroidManager>
   }
 
   @override
+  void onServiceSuspended(bool suspended) {
+    ref.read(androidServiceSuspendedProvider.notifier).value = suspended;
+    super.onServiceSuspended(suspended);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return widget.child;
   }

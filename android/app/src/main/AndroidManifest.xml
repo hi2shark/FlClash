@@ -108,6 +108,7 @@
             <intent-filter>
                 <action android:name="${applicationId}.intent.action.SERVICE_CREATED" />
                 <action android:name="${applicationId}.intent.action.SERVICE_DESTROYED" />
+                <action android:name="${applicationId}.intent.action.SERVICE_SUSPENDED_CHANGED" />
             </intent-filter>
         </receiver>
 

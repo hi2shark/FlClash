@@ -133,6 +133,14 @@ object Service {
         }
     }
 
+    suspend fun updateSuspendOnWifiSsids(
+        ssids: List<String>
+    ): Result<Unit> {
+        return delegate.useService {
+            it.updateSuspendOnWifiSsids(ssids.toTypedArray())
+        }
+    }
+
     suspend fun setCrashlytics(
         enable: Boolean
     ): Result<Unit> {
@@ -191,5 +199,11 @@ object Service {
         return delegate.useService {
             it.runTime
         }.getOrNull() ?: 0L
+    }
+
+    suspend fun getSuspended(): Boolean {
+        return delegate.useService {
+            it.suspended
+        }.getOrNull() ?: false
     }
 }

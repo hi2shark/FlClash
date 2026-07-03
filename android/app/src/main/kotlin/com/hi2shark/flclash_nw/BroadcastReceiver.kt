@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.hi2shark.flclash_nw.common.BroadcastAction
+import com.hi2shark.flclash_nw.common.BroadcastExtra
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.common.action
 import kotlinx.coroutines.launch
@@ -20,9 +21,15 @@ class BroadcastReceiver : BroadcastReceiver() {
 
             BroadcastAction.SERVICE_DESTROYED.action -> {
                 GlobalState.log("Receiver service destroyed")
+                State.handleServiceSuspendedChanged(false)
                 GlobalState.launch {
                     State.handleStopServiceAction()
                 }
+            }
+
+            BroadcastAction.SERVICE_SUSPENDED_CHANGED.action -> {
+                val suspended = intent.getBooleanExtra(BroadcastExtra.SUSPENDED, false)
+                State.handleServiceSuspendedChanged(suspended)
             }
         }
     }

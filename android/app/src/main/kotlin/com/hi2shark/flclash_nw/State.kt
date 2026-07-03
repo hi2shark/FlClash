@@ -4,6 +4,7 @@ import android.net.VpnService
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.models.SharedState
 import com.hi2shark.flclash_nw.plugins.AppPlugin
+import com.hi2shark.flclash_nw.plugins.ServicePlugin
 import com.hi2shark.flclash_nw.plugins.TilePlugin
 import com.hi2shark.flclash_nw.service.models.NotificationParams
 import com.google.gson.Gson
@@ -38,6 +39,17 @@ object State {
     val tilePlugin: TilePlugin?
         get() = flutterEngine?.plugin<TilePlugin>()
 
+    val servicePlugin: ServicePlugin?
+        get() = flutterEngine?.plugin<ServicePlugin>()
+
+    var serviceSuspended: Boolean = false
+        private set
+
+    fun handleServiceSuspendedChanged(suspended: Boolean) {
+        serviceSuspended = suspended
+        servicePlugin?.handleSuspended(suspended)
+    }
+
     suspend fun handleToggleAction() {
         var action: (suspend () -> Unit)?
         runLock.withLock {
@@ -55,12 +67,14 @@ object State {
             try {
                 Service.bind()
                 runTime = Service.getRunTime()
+                serviceSuspended = Service.getSuspended()
                 val runState = when (runTime == 0L) {
                     true -> RunState.STOP
                     false -> RunState.START
                 }
                 runStateFlow.tryEmit(runState)
             } catch (_: Exception) {
+                serviceSuspended = false
                 runStateFlow.tryEmit(RunState.STOP)
             }
         }
@@ -148,6 +162,7 @@ object State {
                 onlyStatisticsProxy = sharedState.onlyStatisticsProxy
             )
         )
+        Service.updateSuspendOnWifiSsids(sharedState.suspendOnWifiSsids)
         Service.setCrashlytics(sharedState.crashlytics)
     }
 
@@ -230,4 +245,3 @@ object State {
         }
     }
 }
-

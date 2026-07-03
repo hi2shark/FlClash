@@ -113,9 +113,14 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
         }
     }
 
+    fun handleSuspended(suspended: Boolean) {
+        flutterMethodChannel.invokeMethodOnMainThread<Any>("suspended", suspended)
+    }
+
     private fun onServiceDisconnected(message: String) {
         State.runTime = 0
         State.runStateFlow.tryEmit(RunState.STOP)
+        State.handleServiceSuspendedChanged(false)
         flutterMethodChannel.invokeMethodOnMainThread<Any>("crash", message)
     }
 
@@ -135,6 +140,8 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
             Service.setEventListener {
                 handleSendEvent(it)
             }.onSuccess {
+                State.handleSyncState()
+                handleSuspended(State.serviceSuspended)
                 result.success("")
             }.onFailure {
                 result.success(it.message)

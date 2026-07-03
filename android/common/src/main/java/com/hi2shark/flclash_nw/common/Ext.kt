@@ -81,11 +81,12 @@ val BroadcastAction.quickIntent: Intent
         action = this@quickIntent.action
     }
 
-fun BroadcastAction.sendBroadcast() {
+fun BroadcastAction.sendBroadcast(configure: Intent.() -> Unit = {}) {
     val intent = Intent().apply {
         action = this@sendBroadcast.action
         Log.d("[sendBroadcast]", "$action")
         setPackage(GlobalState.packageName)
+        configure()
     }
     GlobalState.application.sendBroadcast(
         intent, GlobalState.RECEIVE_BROADCASTS_PERMISSIONS

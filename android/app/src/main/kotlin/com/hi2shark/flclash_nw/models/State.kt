@@ -1,7 +1,7 @@
 package com.hi2shark.flclash_nw.models
 
-import com.hi2shark.flclash_nw.service.models.VpnOptions
 import com.google.gson.annotations.SerializedName
+import com.hi2shark.flclash_nw.service.models.VpnOptions
 
 data class SharedState(
     val startTip: String = "Starting VPN...",
@@ -12,6 +12,8 @@ data class SharedState(
     val onlyStatisticsProxy: Boolean = false,
     val vpnOptions: VpnOptions? = null,
     val setupParams: SetupParams? = null,
+    @SerializedName(value = "suspendOnWifiSsids", alternate = ["excludeSSIDs"])
+    val suspendOnWifiSsids: List<String> = emptyList(),
 )
 
 data class SetupParams(
