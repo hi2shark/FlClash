@@ -153,7 +153,7 @@ internal class WifiWatchSuspendController(
                 generation++
                 cancelPendingLocked("SSID resolution grace expired")
                 logLocked("SSID resolution grace expired — resume to safe default")
-                { setWifiSuspended(false) }
+                return@synchronized { setWifiSuspended(false) }
             }
             action?.invoke()
         }
