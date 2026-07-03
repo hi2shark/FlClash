@@ -300,6 +300,10 @@ abstract class VpnState with _$VpnState {
   }) = _VpnState;
 }
 
+Object? _readSuspendOnWifiSsids(Map json, String key) {
+  return json[key] ?? json['excludeSSIDs'];
+}
+
 @freezed
 abstract class SharedState with _$SharedState {
   const factory SharedState({
@@ -311,6 +315,9 @@ abstract class SharedState with _$SharedState {
     required String stopText,
     required bool onlyStatisticsProxy,
     required bool crashlytics,
+    @JsonKey(readValue: _readSuspendOnWifiSsids)
+    @Default([])
+    List<String> suspendOnWifiSsids,
   }) = _SharedState;
 
   factory SharedState.fromJson(Map<String, Object?> json) =>

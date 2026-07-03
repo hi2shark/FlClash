@@ -101,7 +101,9 @@ UpdateParams updateParams(Ref ref) {
 
 @riverpod
 ProxyState proxyState(Ref ref) {
-  final suspend = ref.watch(suspendProvider);
+  final suspend = system.isAndroid
+      ? ref.watch(androidServiceSuspendedProvider)
+      : ref.watch(suspendProvider);
   final isStart = ref.watch(runTimeProvider.select((state) => state != null));
   final vm2 = ref.watch(
     networkSettingProvider.select(
@@ -610,6 +612,7 @@ SharedState sharedState(Ref ref) {
     ),
   );
   final vpnSetting = ref.watch(vpnSettingProvider);
+  final suspendOnWifiSsids = ref.watch(excludeSSIDsProvider);
   final currentProfileName = currentProfileVM2.a;
   final selectedMap = currentProfileVM2.b;
   final onlyStatisticsProxy = appSettingVM3.a;
@@ -636,6 +639,7 @@ SharedState sharedState(Ref ref) {
       allowBypass: vpnSetting.allowBypass,
       bypassDomain: bypassDomain,
     ),
+    suspendOnWifiSsids: suspendOnWifiSsids,
   );
 }
 

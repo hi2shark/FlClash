@@ -22,6 +22,15 @@ class RealTunEnable extends _$RealTunEnable with AutoDisposeNotifierMixin {
 }
 
 @Riverpod(keepAlive: true)
+class AndroidServiceSuspended extends _$AndroidServiceSuspended
+    with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return false;
+  }
+}
+
+@Riverpod(keepAlive: true)
 class Logs extends _$Logs with AutoDisposeNotifierMixin {
   @override
   FixedList<Log> build() {

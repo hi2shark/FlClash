@@ -61,6 +61,59 @@ abstract class _$RealTunEnable extends $Notifier<bool> {
   }
 }
 
+@ProviderFor(AndroidServiceSuspended)
+final androidServiceSuspendedProvider = AndroidServiceSuspendedProvider._();
+
+final class AndroidServiceSuspendedProvider
+    extends $NotifierProvider<AndroidServiceSuspended, bool> {
+  AndroidServiceSuspendedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'androidServiceSuspendedProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$androidServiceSuspendedHash();
+
+  @$internal
+  @override
+  AndroidServiceSuspended create() => AndroidServiceSuspended();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$androidServiceSuspendedHash() =>
+    r'7d64617f8ebbf6b6df87d59707d556f312bbd2df';
+
+abstract class _$AndroidServiceSuspended extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(Logs)
 final logsProvider = LogsProvider._();
 

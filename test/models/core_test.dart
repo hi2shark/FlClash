@@ -202,4 +202,59 @@ void main() {
       expect(result.message, 'something went wrong');
     });
   });
+
+  group('SharedState', () {
+    test('round trip includes suspend-on WiFi SSIDs', () {
+      const state = SharedState(
+        currentProfileName: 'Profile',
+        stopText: 'Stop',
+        stopTip: 'Stopping VPN...',
+        startTip: 'Starting VPN...',
+        onlyStatisticsProxy: false,
+        crashlytics: true,
+        suspendOnWifiSsids: ['Home', 'Office'],
+      );
+
+      final restored = SharedState.fromJson(
+        jsonDecode(jsonEncode(state.toJson())) as Map<String, Object?>,
+      );
+
+      expect(restored.suspendOnWifiSsids, ['Home', 'Office']);
+    });
+
+    test('reads legacy excludeSSIDs key into suspend-on WiFi SSIDs', () {
+      final restored = SharedState.fromJson({
+        'currentProfileName': 'Profile',
+        'stopText': 'Stop',
+        'stopTip': 'Stopping VPN...',
+        'startTip': 'Starting VPN...',
+        'onlyStatisticsProxy': false,
+        'crashlytics': true,
+        'excludeSSIDs': ['Home'],
+      });
+
+      expect(restored.suspendOnWifiSsids, ['Home']);
+    });
+
+    test('needSyncSharedState keeps suspend-on WiFi SSIDs', () {
+      const state = SharedState(
+        setupParams: SetupParams(
+          selectedMap: {'Proxy': 'Auto'},
+          testUrl: 'https://example.com',
+        ),
+        currentProfileName: 'Profile',
+        stopText: 'Stop',
+        stopTip: 'Stopping VPN...',
+        startTip: 'Starting VPN...',
+        onlyStatisticsProxy: false,
+        crashlytics: true,
+        suspendOnWifiSsids: ['Home'],
+      );
+
+      final synced = state.needSyncSharedState;
+
+      expect(synced.setupParams, null);
+      expect(synced.suspendOnWifiSsids, ['Home']);
+    });
+  });
 }

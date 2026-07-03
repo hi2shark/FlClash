@@ -33,6 +33,19 @@ void main() {
     });
   });
 
+  group('AndroidServiceSuspended provider', () {
+    test('default is false', () {
+      expect(container.read(androidServiceSuspendedProvider), false);
+    });
+
+    test('can update from service callback', () {
+      container
+          .read(androidServiceSuspendedProvider.notifier)
+          .update((_) => true);
+      expect(container.read(androidServiceSuspendedProvider), true);
+    });
+  });
+
   group('Packages provider', () {
     test('default is empty list', () {
       expect(container.read(packagesProvider), isEmpty);
