@@ -18,7 +18,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class WifiWatchModule(private val service: Service) : Module() {
@@ -42,7 +41,7 @@ class WifiWatchModule(private val service: Service) : Module() {
 
     override fun onInstall() {
         scope.launch {
-            State.suspendOnWifiSsidsFlow.distinctUntilChanged().collect {
+            State.suspendOnWifiSsidsFlow.collect {
                 controller.updateSuspendOnWifiSsids(it)
             }
         }
