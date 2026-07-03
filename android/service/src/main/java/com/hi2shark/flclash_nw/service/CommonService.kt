@@ -8,6 +8,7 @@ import com.hi2shark.flclash_nw.core.Core
 import com.hi2shark.flclash_nw.service.modules.NetworkObserveModule
 import com.hi2shark.flclash_nw.service.modules.NotificationModule
 import com.hi2shark.flclash_nw.service.modules.SuspendModule
+import com.hi2shark.flclash_nw.service.modules.WifiWatchModule
 import com.hi2shark.flclash_nw.service.modules.moduleLoader
 import com.hi2shark.flclash_nw.service.modules.startForegroundWithNotification
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +24,7 @@ class CommonService : Service(), IBaseService,
         install(NetworkObserveModule(self))
         install(NotificationModule(self))
         install(SuspendModule(self))
+        install(WifiWatchModule(self))
     }
 
     override var isRunning: Boolean = false
@@ -31,8 +33,10 @@ class CommonService : Service(), IBaseService,
     override var isSuspended: Boolean = false
         private set
 
-    override var wifiSuspended: Boolean = false
-        private set
+    override val wifiSuspended: Boolean
+        get() = suspensionReasons.wifiSuspended
+
+    private val suspensionReasons = ServiceSuspensionReasons()
 
     override fun onCreate() {
         super.onCreate()
@@ -70,7 +74,8 @@ class CommonService : Service(), IBaseService,
             loader.load()
             isRunning = true
             isSuspended = false
-            wifiSuspended = false
+            suspensionReasons.reset()
+            notifySuspendedChanged(false)
             ServiceStartResult.success()
         } catch (_: Exception) {
             stop()
@@ -79,8 +84,35 @@ class CommonService : Service(), IBaseService,
     }
 
     override fun setSuspended(suspended: Boolean): ServiceStartResult {
+        val previous = suspensionReasons.externalSuspended
+        suspensionReasons.setExternalSuspended(suspended)
+        val result = applyDesiredSuspended()
+        if (!result.success) {
+            suspensionReasons.setExternalSuspended(previous)
+        }
+        return result
+    }
+
+    override fun setWifiSuspended(suspended: Boolean): ServiceStartResult {
+        val previous = suspensionReasons.wifiSuspended
+        suspensionReasons.setWifiSuspended(suspended)
+        val result = applyDesiredSuspended()
+        if (!result.success) {
+            suspensionReasons.setWifiSuspended(previous)
+        }
+        return result
+    }
+
+    private fun applyDesiredSuspended(): ServiceStartResult {
+        return applySuspended(suspensionReasons.shouldSuspend)
+    }
+
+    private fun applySuspended(suspended: Boolean): ServiceStartResult {
         if (!isRunning) {
             return ServiceStartResult.failure("Common service is not running")
+        }
+        if (isSuspended == suspended) {
+            return ServiceStartResult.success()
         }
         val success = when (suspended) {
             true -> AndroidCoreActions.stopListener()
@@ -90,7 +122,7 @@ class CommonService : Service(), IBaseService,
             return ServiceStartResult.failure("Common service suspend update failed")
         }
         isSuspended = suspended
-        wifiSuspended = suspended
+        notifySuspendedChanged(suspended)
         return ServiceStartResult.success()
     }
 
@@ -98,7 +130,8 @@ class CommonService : Service(), IBaseService,
         AndroidCoreActions.stopListener()
         isRunning = false
         isSuspended = false
-        wifiSuspended = false
+        suspensionReasons.reset()
+        notifySuspendedChanged(false)
         loader.cancel()
         stopSelf()
     }

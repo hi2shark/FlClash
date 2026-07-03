@@ -1,6 +1,7 @@
 package com.hi2shark.flclash_nw.service
 
 import com.hi2shark.flclash_nw.common.BroadcastAction
+import com.hi2shark.flclash_nw.common.BroadcastExtra
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.common.sendBroadcast
 
@@ -28,6 +29,15 @@ interface IBaseService {
     fun start(): ServiceStartResult
 
     fun setSuspended(suspended: Boolean): ServiceStartResult
+
+    fun setWifiSuspended(suspended: Boolean): ServiceStartResult
+
+    fun notifySuspendedChanged(suspended: Boolean) {
+        State.runtimeState.setSuspended(suspended)
+        BroadcastAction.SERVICE_SUSPENDED_CHANGED.sendBroadcast {
+            putExtra(BroadcastExtra.SUSPENDED, suspended)
+        }
+    }
 
     fun stop()
 }

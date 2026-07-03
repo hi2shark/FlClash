@@ -12,6 +12,7 @@ object State {
     var notificationParamsFlow: MutableStateFlow<NotificationParams?> = MutableStateFlow(
         NotificationParams()
     )
+    var suspendOnWifiSsidsFlow: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
 
     val runLock = Mutex()
     val runtimeState = ServiceRuntimeState()

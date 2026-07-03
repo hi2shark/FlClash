@@ -4,8 +4,12 @@ internal class VpnSuspendController<T>(
     private val currentOptions: () -> T?,
     private val stopTun: () -> Unit,
     private val startTun: (T) -> Unit,
+    private val isSuspended: (() -> Boolean)? = null,
 ) {
     fun setSuspended(suspended: Boolean): ServiceStartResult {
+        if (isSuspended?.invoke() == suspended) {
+            return ServiceStartResult.success()
+        }
         if (suspended) {
             stopTun()
             return ServiceStartResult.success()

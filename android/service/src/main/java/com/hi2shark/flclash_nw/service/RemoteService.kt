@@ -126,7 +126,7 @@ class RemoteService : Service(),
                         service.setSuspended(suspended)
                     }?.getOrNull()
                     if (suspendResult?.success == true) {
-                        result.onResult(State.runtimeState.setSuspended(suspended))
+                        result.onResult(State.runTime)
                     } else {
                         GlobalState.log("Set service suspended failed: ${suspendResult?.message}")
                         result.onResult(0)
@@ -196,6 +196,10 @@ class RemoteService : Service(),
             State.notificationParamsFlow.tryEmit(params)
         }
 
+        override fun updateSuspendOnWifiSsids(ssids: Array<String>?) {
+            State.suspendOnWifiSsidsFlow.tryEmit(ssids?.toSet() ?: emptySet())
+        }
+
 
         override fun startService(
             options: VpnOptions,
@@ -254,6 +258,10 @@ class RemoteService : Service(),
                 return 0
             }
             return State.runTime
+        }
+
+        override fun getSuspended(): Boolean {
+            return State.runtimeState.isSuspended
         }
     }
 

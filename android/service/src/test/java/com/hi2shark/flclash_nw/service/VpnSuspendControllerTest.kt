@@ -37,6 +37,22 @@ class VpnSuspendControllerTest {
     }
 
     @Test
+    fun unchangedSuspendStateDoesNotRestartTun() {
+        val events = mutableListOf<String>()
+        val controller = VpnSuspendController(
+            currentOptions = { "vpn-options" },
+            stopTun = { events += "stopTun" },
+            startTun = { options -> events += "startTun:$options" },
+            isSuspended = { true },
+        )
+
+        val result = controller.setSuspended(true)
+
+        assertTrue(result.success)
+        assertEquals(emptyList(), events)
+    }
+
+    @Test
     fun resumeFailsWhenVpnOptionsAreMissing() {
         val events = mutableListOf<String>()
         val controller = VpnSuspendController<String>(
