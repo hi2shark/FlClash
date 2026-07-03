@@ -48,7 +48,7 @@ class WifiWatchModule(private val service: Service) : Module() {
 
         val manager = connectivity
         if (manager == null) {
-            controller.updateWifiNetwork(ssid = null, validated = false)
+            controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = false)
             return
         }
         runCatching {
@@ -57,7 +57,7 @@ class WifiWatchModule(private val service: Service) : Module() {
             updateKnownWifiNetworks(manager)
         }.onFailure {
             GlobalState.log("WiFi-watch registerNetworkCallback failed: ${it.message}")
-            controller.updateWifiNetwork(ssid = null, validated = false)
+            controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = false)
         }
     }
 
@@ -195,6 +195,7 @@ class WifiWatchModule(private val service: Service) : Module() {
         controller.updateWifiNetwork(
             ssid = status?.ssid,
             validated = trusted,
+            wifiPresent = status != null,
         )
     }
 

@@ -15,6 +15,7 @@ internal class WifiWatchSuspendController(
     private var wifiNetworkObserved = false
     private var wifiSsid: String? = null
     private var wifiValidated = false
+    private var wifiPresent = false
     private var pendingSuspend: Cancellable? = null
     private var generation = 0
 
@@ -27,11 +28,37 @@ internal class WifiWatchSuspendController(
         action?.invoke()
     }
 
-    fun updateWifiNetwork(ssid: String?, validated: Boolean) {
+    /**
+     * @param ssid current WiFi SSID, or null while it is being resolved
+     * @param validated whether the current network should be treated as trusted
+     * @param wifiPresent whether any WiFi network is still tracked by the
+     *     module. This distinguishes a transient null SSID (an AP switch in
+     *     progress — location info not yet populated, but a WiFi transport is
+     *     still present) from the WiFi genuinely going away (all networks
+     *     lost/unavailable). The former must not perturb the suspend state;
+     *     the latter resumes immediately.
+     */
+    fun updateWifiNetwork(ssid: String?, validated: Boolean, wifiPresent: Boolean) {
         val action = synchronized(lock) {
             wifiNetworkObserved = true
+
+            // Transient null SSID while a WiFi transport is still present: this
+            // is an AP switch / location-info-not-yet-resolved blip, not a real
+            // state change. Keep the last known SSID/validation and leave any
+            // pending suspend untouched so the in-flight decision stays valid.
+            // The next event (SSID resolves, a named untrusted AP, or WiFi
+            // genuinely going away) drives the real transition.
+            if (ssid == null && wifiPresent) {
+                logLocked(
+                    "transient null SSID while WiFi present — hold state " +
+                        "(pendingSuspend=${pendingSuspend != null})"
+                )
+                return@synchronized null
+            }
+
             wifiSsid = ssid
             wifiValidated = validated
+            this.wifiPresent = wifiPresent
             evaluateLocked()
         }
         action?.invoke()
@@ -52,7 +79,7 @@ internal class WifiWatchSuspendController(
         val trusted = isTrustedWifiLocked()
         logLocked(
             "evaluate ssid=${ssid ?: "<none>"} validated=$wifiValidated " +
-                "trusted=$trusted delay=${suspendDelayMillis}ms"
+                "trusted=$trusted wifiPresent=$wifiPresent delay=${suspendDelayMillis}ms"
         )
 
         if (!trusted) {
