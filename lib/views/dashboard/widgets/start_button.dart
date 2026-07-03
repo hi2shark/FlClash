@@ -74,7 +74,9 @@ class _StartButtonState extends ConsumerState<StartButton>
     if (!hasProfile) {
       return Container();
     }
-    final suspend = ref.watch(suspendProvider);
+    final suspend = system.isAndroid
+        ? ref.watch(androidServiceSuspendedProvider)
+        : ref.watch(suspendProvider);
     final theme = Theme.of(context);
     final appLocalizations = context.appLocalizations;
     return RepaintBoundary(

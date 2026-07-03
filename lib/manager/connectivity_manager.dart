@@ -24,17 +24,36 @@ class ConnectivityManager extends StatefulWidget {
 
 class _ConnectivityManagerState extends State<ConnectivityManager> {
   late StreamSubscription subscription;
+  StreamSubscription<String?>? validatedWifiSsidSubscription;
 
   @override
   void initState() {
     super.initState();
+    if (system.isAndroid) {
+      validatedWifiSsidSubscription = WifiSsidManager.instance
+          .watchValidatedWifiSsid()
+          .listen(
+            (ssid) {
+              globalState.container.read(currentSSIDProvider.notifier).value =
+                  ssid;
+              commonPrint.log(
+                'Validated Wi-fi SSID: $ssid',
+                logLevel: LogLevel.info,
+              );
+            },
+            onError: (_) {
+              globalState.container.read(currentSSIDProvider.notifier).value =
+                  null;
+            },
+          );
+    }
     subscription = Connectivity().onConnectivityChanged.listen((results) {
-      if (results.contains(ConnectivityResult.wifi)) {
+      if (!system.isAndroid && results.contains(ConnectivityResult.wifi)) {
         WifiSsidManager.instance.getSsid().then((ssid) {
           globalState.container.read(currentSSIDProvider.notifier).value = ssid;
           commonPrint.log('Wi-fi SSID: $ssid ', logLevel: LogLevel.info);
         });
-      } else {
+      } else if (!system.isAndroid) {
         globalState.container.read(currentSSIDProvider.notifier).value = null;
       }
       if (widget.onConnectivityChanged != null) {
@@ -46,6 +65,7 @@ class _ConnectivityManagerState extends State<ConnectivityManager> {
   @override
   void dispose() {
     subscription.cancel();
+    validatedWifiSsidSubscription?.cancel();
     super.dispose();
   }
 
