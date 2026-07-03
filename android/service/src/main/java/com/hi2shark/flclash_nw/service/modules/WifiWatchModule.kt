@@ -132,6 +132,7 @@ class WifiWatchModule(private val service: Service) : Module() {
     }
 
     private fun updateKnownWifiNetworks(manager: ConnectivityManager) {
+        val verdict = wifiVerdict()
         val status = synchronized(wifiNetworksLock) {
             wifiNetworks.clear()
             manager.allNetworks.forEach { network ->
@@ -140,9 +141,9 @@ class WifiWatchModule(private val service: Service) : Module() {
                     wifiNetworks[network] = networkStatus
                 }
             }
-            currentWifiNetworkStatusLocked()
+            currentWifiNetworkStatusLocked(verdict)
         }
-        publishWifiNetwork(status)
+        publishWifiNetwork(status, verdict)
     }
 
     private fun updateWifiNetwork(network: Network) {
@@ -152,47 +153,58 @@ class WifiWatchModule(private val service: Service) : Module() {
 
     private fun updateWifiNetwork(network: Network, capabilities: NetworkCapabilities?) {
         val status = capabilities.wifiNetworkStatus()
+        val verdict = wifiVerdict()
         val currentStatus = synchronized(wifiNetworksLock) {
             if (status == null) {
                 wifiNetworks.remove(network)
             } else {
                 wifiNetworks[network] = status
             }
-            currentWifiNetworkStatusLocked()
+            currentWifiNetworkStatusLocked(verdict)
         }
-        publishWifiNetwork(currentStatus)
+        publishWifiNetwork(currentStatus, verdict)
     }
 
     private fun removeWifiNetwork(network: Network) {
+        val verdict = wifiVerdict()
         val status = synchronized(wifiNetworksLock) {
             wifiNetworks.remove(network)
-            currentWifiNetworkStatusLocked()
+            currentWifiNetworkStatusLocked(verdict)
         }
-        publishWifiNetwork(status)
+        publishWifiNetwork(status, verdict)
     }
 
     private fun clearWifiNetworks() {
+        val verdict = wifiVerdict()
         val status = synchronized(wifiNetworksLock) {
             wifiNetworks.clear()
-            currentWifiNetworkStatusLocked()
+            currentWifiNetworkStatusLocked(verdict)
         }
-        publishWifiNetwork(status)
+        publishWifiNetwork(status, verdict)
     }
 
-    private fun publishWifiNetwork(status: WifiNetworkStatus?) {
+    private fun publishWifiNetwork(status: WifiNetworkStatus?, verdict: WifiVerdict) {
+        val trusted = status?.isTrusted(verdict) == true
         GlobalState.log(
             "WiFi-watch wifi status ssid=${status?.ssid ?: "<none>"} " +
-                "validated=${status?.validated == true}"
+                "rssi=${status?.rssi ?: "<none>"} " +
+                "systemValidated=${status?.systemValidated == true} " +
+                "verdict=$verdict trusted=$trusted " +
+                "(${status?.trustedLabel(verdict) ?: "<none>"})"
         )
         controller.updateWifiNetwork(
             ssid = status?.ssid,
-            validated = status?.validated == true,
+            validated = trusted,
         )
     }
 
-    private fun currentWifiNetworkStatusLocked(): WifiNetworkStatus? {
+    private fun currentWifiNetworkStatusLocked(verdict: WifiVerdict): WifiNetworkStatus? {
+        // Prefer a network that already reads as trusted under the active
+        // verdict (validated when no VPN, or strong RSSI when a VPN is active),
+        // otherwise fall back to the first known WiFi network so the controller
+        // still observes the SSID change (e.g. switching between access points).
         return wifiNetworks.values.firstOrNull {
-            it.validated && it.ssid != null
+            it.isTrusted(verdict) && it.ssid != null
         } ?: wifiNetworks.values.firstOrNull()
     }
 
@@ -200,26 +212,63 @@ class WifiWatchModule(private val service: Service) : Module() {
         if (this == null) return null
         if (!hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return null
         if (!hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) return null
+        val info = readWifiInfo()
         return WifiNetworkStatus(
-            ssid = readWifiSsid(),
-            validated = hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
+            ssid = normalizeSsid(info?.ssid),
+            rssi = info?.rssi?.takeIf { it != INVALID_RSSI },
+            systemValidated = hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
         )
     }
 
-    private fun NetworkCapabilities.readWifiSsid(): String? {
-        val ssid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            (transportInfo as? WifiInfo)?.ssid
+    private fun NetworkCapabilities.readWifiInfo(): WifiInfo? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            transportInfo as? WifiInfo
         } else {
             @Suppress("DEPRECATION")
-            wifiManager?.connectionInfo?.ssid
+            wifiManager?.connectionInfo
         }
-        return normalizeSsid(ssid)
+    }
+
+    /**
+     * Resolves how the current WiFi network should be judged as trusted.
+     *
+     * While a VPN tunnel is the default network, Android stops reporting
+     * NET_CAPABILITY_VALIDATED for the underlying WiFi (it validates the VPN
+     * instead). In that case fall back to the WiFi signal strength (RSSI):
+     * a strong signal implies a usable direct connection, so suspending the
+     * proxy is safe; a weak or unknown signal keeps the proxy active.
+     */
+    private fun wifiVerdict(): WifiVerdict {
+        return if (isVpnActive()) WifiVerdict.Rssi else WifiVerdict.SystemValidated
+    }
+
+    private fun isVpnActive(): Boolean {
+        val manager = connectivity ?: return false
+        val capabilities = manager.getNetworkCapabilities(manager.activeNetwork)
+        return capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
     }
 
     private data class WifiNetworkStatus(
         val ssid: String?,
-        val validated: Boolean,
+        val rssi: Int?,
+        val systemValidated: Boolean,
     )
+
+    private enum class WifiVerdict { SystemValidated, Rssi }
+
+    private fun WifiNetworkStatus.isTrusted(verdict: WifiVerdict): Boolean {
+        return when (verdict) {
+            WifiVerdict.SystemValidated -> systemValidated
+            WifiVerdict.Rssi -> rssi != null && rssi >= WEAK_RSSI_THRESHOLD_DBM
+        }
+    }
+
+    private fun WifiNetworkStatus.trustedLabel(verdict: WifiVerdict): String {
+        return when (verdict) {
+            WifiVerdict.SystemValidated -> systemValidated.toString()
+            WifiVerdict.Rssi -> "rssi=${rssi ?: "<none>"} >= $WEAK_RSSI_THRESHOLD_DBM"
+        }
+    }
 
     private fun normalizeSsid(ssid: String?): String? {
         return if (ssid == null || ssid == "<unknown ssid>" || ssid == "0x") {
@@ -238,5 +287,16 @@ class WifiWatchModule(private val service: Service) : Module() {
         }
         controller.cancel()
         scope.cancel()
+    }
+
+    companion object {
+        // Sentinel returned by WifiInfo.getRssi() when the value is unknown.
+        private const val INVALID_RSSI = -127
+
+        // Minimum RSSI (dBm) treated as a strong-enough WiFi signal to suspend
+        // the proxy while a VPN tunnel is active. -80 dBm is the widely cited
+        // floor for reliable packet delivery; below it the connection is
+        // considered weak and the proxy stays active.
+        const val WEAK_RSSI_THRESHOLD_DBM = -80
     }
 }

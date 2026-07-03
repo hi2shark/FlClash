@@ -46,6 +46,14 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         private const val PERMISSION_GRANTED = 0
         private const val PERMISSION_DENIED = 1
         private const val PERMISSION_PERMANENTLY_DENIED = 2
+
+        // Sentinel returned by WifiInfo.getRssi() when the value is unknown.
+        private const val INVALID_RSSI = -127
+
+        // Minimum RSSI (dBm) treated as a trustworthy WiFi signal while a VPN
+        // tunnel is active (see wifiVerdict()). Below it the SSID is reported
+        // as untrusted so the UI/service keep the proxy active.
+        private const val WEAK_RSSI_THRESHOLD_DBM = -80
     }
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -265,6 +273,7 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     }
 
     private fun updateKnownWifiNetworks(cm: ConnectivityManager) {
+        val verdict = wifiVerdict()
         val ssid = synchronized(wifiNetworksLock) {
             wifiNetworks.clear()
             cm.allNetworks.forEach { network ->
@@ -273,7 +282,7 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
                     wifiNetworks[network] = status
                 }
             }
-            currentValidatedWifiSsidLocked()
+            currentValidatedWifiSsidLocked(verdict)
         }
         emitValidatedWifiSsid(ssid)
     }
@@ -285,29 +294,32 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
 
     private fun updateWifiNetwork(network: Network, caps: NetworkCapabilities?) {
         val status = caps.wifiNetworkStatus()
+        val verdict = wifiVerdict()
         val ssid = synchronized(wifiNetworksLock) {
             if (status == null) {
                 wifiNetworks.remove(network)
             } else {
                 wifiNetworks[network] = status
             }
-            currentValidatedWifiSsidLocked()
+            currentValidatedWifiSsidLocked(verdict)
         }
         emitValidatedWifiSsid(ssid)
     }
 
     private fun removeWifiNetwork(network: Network) {
+        val verdict = wifiVerdict()
         val ssid = synchronized(wifiNetworksLock) {
             wifiNetworks.remove(network)
-            currentValidatedWifiSsidLocked()
+            currentValidatedWifiSsidLocked(verdict)
         }
         emitValidatedWifiSsid(ssid)
     }
 
     private fun clearWifiNetworks() {
+        val verdict = wifiVerdict()
         val ssid = synchronized(wifiNetworksLock) {
             wifiNetworks.clear()
-            currentValidatedWifiSsidLocked()
+            currentValidatedWifiSsidLocked(verdict)
         }
         emitValidatedWifiSsid(ssid)
     }
@@ -322,33 +334,57 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         if (this == null) return null
         if (!hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return null
         if (!hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) return null
+        val info = readWifiInfo()
         return WifiNetworkStatus(
-            ssid = readWifiSsid(),
-            validated = hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
+            ssid = normalizeSsid(info?.ssid),
+            rssi = info?.rssi?.takeIf { it != INVALID_RSSI },
+            systemValidated = hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
         )
     }
 
-    private fun currentValidatedWifiSsidLocked(): String? {
+    private fun currentValidatedWifiSsidLocked(verdict: WifiVerdict): String? {
+        // When a VPN is the default network, NET_CAPABILITY_VALIDATED is no
+        // longer reliable for the underlying WiFi (Android validates the VPN).
+        // Fall back to RSSI so the UI still reports the connected SSID when the
+        // direct signal is strong enough to be trustworthy.
         return wifiNetworks.values.firstOrNull {
-            it.validated && it.ssid != null
+            it.isTrusted(verdict) && it.ssid != null
         }?.ssid
     }
 
-    private fun NetworkCapabilities.readWifiSsid(): String? {
-        if (!hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) return null
-        val ssid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            (transportInfo as? WifiInfo)?.ssid
+    private fun NetworkCapabilities.readWifiInfo(): WifiInfo? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            transportInfo as? WifiInfo
         } else {
             @Suppress("DEPRECATION")
-            wifiManager?.connectionInfo?.ssid
+            wifiManager?.connectionInfo
         }
-        return normalizeSsid(ssid)
+    }
+
+    private fun wifiVerdict(): WifiVerdict {
+        return if (isVpnActive()) WifiVerdict.Rssi else WifiVerdict.SystemValidated
+    }
+
+    private fun isVpnActive(): Boolean {
+        val cm = connectivityManager ?: return false
+        val capabilities = cm.getNetworkCapabilities(cm.activeNetwork)
+        return capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
     }
 
     private data class WifiNetworkStatus(
         val ssid: String?,
-        val validated: Boolean,
+        val rssi: Int?,
+        val systemValidated: Boolean,
     )
+
+    private enum class WifiVerdict { SystemValidated, Rssi }
+
+    private fun WifiNetworkStatus.isTrusted(verdict: WifiVerdict): Boolean {
+        return when (verdict) {
+            WifiVerdict.SystemValidated -> systemValidated
+            WifiVerdict.Rssi -> rssi != null && rssi >= WEAK_RSSI_THRESHOLD_DBM
+        }
+    }
 
     private fun normalizeSsid(ssid: String?): String? {
         return if (ssid == null || ssid == "<unknown ssid>" || ssid == "0x") {
