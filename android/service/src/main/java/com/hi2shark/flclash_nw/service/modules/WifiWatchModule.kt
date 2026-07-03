@@ -16,6 +16,7 @@ import com.hi2shark.flclash_nw.service.State
 import com.hi2shark.flclash_nw.service.WifiWatchSuspendController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -38,6 +39,7 @@ class WifiWatchModule(private val service: Service) : Module() {
     private val wifiNetworksLock = Any()
     private val wifiNetworks = linkedMapOf<Network, WifiNetworkStatus>()
     private val callback = createWifiNetworkCallback()
+    private var wifiResolutionReconcileJob: Job? = null
 
     override fun onInstall() {
         scope.launch {
@@ -89,7 +91,7 @@ class WifiWatchModule(private val service: Service) : Module() {
                 ConnectivityManager.NetworkCallback.FLAG_INCLUDE_LOCATION_INFO
             ) {
                 override fun onAvailable(network: Network) {
-                    updateWifiNetwork(network)
+                    markWifiNetworkAvailable(network)
                 }
 
                 override fun onCapabilitiesChanged(
@@ -110,7 +112,7 @@ class WifiWatchModule(private val service: Service) : Module() {
         } else {
             object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
-                    updateWifiNetwork(network)
+                    markWifiNetworkAvailable(network)
                 }
 
                 override fun onCapabilitiesChanged(
@@ -131,6 +133,21 @@ class WifiWatchModule(private val service: Service) : Module() {
         }
     }
 
+    private fun markWifiNetworkAvailable(network: Network) {
+        val verdict = wifiVerdict()
+        val currentStatus = synchronized(wifiNetworksLock) {
+            if (!wifiNetworks.containsKey(network)) {
+                wifiNetworks[network] = WifiNetworkStatus(
+                    ssid = null,
+                    rssi = null,
+                    systemValidated = false,
+                )
+            }
+            currentWifiNetworkStatusLocked(verdict)
+        }
+        publishWifiNetwork(currentStatus, verdict)
+    }
+
     private fun updateKnownWifiNetworks(manager: ConnectivityManager) {
         val verdict = wifiVerdict()
         val status = synchronized(wifiNetworksLock) {
@@ -144,11 +161,6 @@ class WifiWatchModule(private val service: Service) : Module() {
             currentWifiNetworkStatusLocked(verdict)
         }
         publishWifiNetwork(status, verdict)
-    }
-
-    private fun updateWifiNetwork(network: Network) {
-        val capabilities = connectivity?.getNetworkCapabilities(network)
-        updateWifiNetwork(network, capabilities)
     }
 
     private fun updateWifiNetwork(network: Network, capabilities: NetworkCapabilities?) {
@@ -185,6 +197,7 @@ class WifiWatchModule(private val service: Service) : Module() {
 
     private fun publishWifiNetwork(status: WifiNetworkStatus?, verdict: WifiVerdict) {
         val trusted = status?.isTrusted(verdict) == true
+        val unresolvedSsid = status != null && status.ssid == null
         GlobalState.log(
             "WiFi-watch wifi status ssid=${status?.ssid ?: "<none>"} " +
                 "rssi=${status?.rssi ?: "<none>"} " +
@@ -197,6 +210,58 @@ class WifiWatchModule(private val service: Service) : Module() {
             validated = trusted,
             wifiPresent = status != null,
         )
+        when {
+            unresolvedSsid -> scheduleWifiResolutionReconcile("SSID unresolved while WiFi present")
+            else -> cancelWifiResolutionReconcile("WiFi state resolved")
+        }
+    }
+
+    private fun scheduleWifiResolutionReconcile(reason: String) {
+        if (wifiResolutionReconcileJob != null) {
+            return
+        }
+        GlobalState.log(
+            "WiFi-watch start unresolved SSID reconcile reason=$reason " +
+                "interval=${SSID_RECONCILE_INTERVAL_MILLIS}ms maxAttempts=$MAX_SSID_RECONCILE_ATTEMPTS"
+        )
+        wifiResolutionReconcileJob = scope.launch {
+            repeat(MAX_SSID_RECONCILE_ATTEMPTS) { attempt ->
+                delay(SSID_RECONCILE_INTERVAL_MILLIS)
+                val manager = connectivity ?: return@launch
+                GlobalState.log(
+                    "WiFi-watch unresolved SSID reconcile attempt=${attempt + 1}/" +
+                        MAX_SSID_RECONCILE_ATTEMPTS
+                )
+                updateKnownWifiNetworks(manager)
+                if (!shouldRetryWifiResolution()) {
+                    GlobalState.log(
+                        "WiFi-watch stop unresolved SSID reconcile after attempt=${attempt + 1}"
+                    )
+                    wifiResolutionReconcileJob = null
+                    return@launch
+                }
+            }
+            GlobalState.log(
+                "WiFi-watch unresolved SSID reconcile exhausted attempts — " +
+                    "controller grace fallback will decide final suspend state"
+            )
+            wifiResolutionReconcileJob = null
+        }
+    }
+
+    private fun shouldRetryWifiResolution(): Boolean {
+        val verdict = wifiVerdict()
+        return synchronized(wifiNetworksLock) {
+            val status = currentWifiNetworkStatusLocked(verdict)
+            status != null && status.ssid == null
+        }
+    }
+
+    private fun cancelWifiResolutionReconcile(reason: String) {
+        val job = wifiResolutionReconcileJob ?: return
+        GlobalState.log("WiFi-watch cancel unresolved SSID reconcile: $reason")
+        wifiResolutionReconcileJob = null
+        job.cancel()
     }
 
     private fun currentWifiNetworkStatusLocked(verdict: WifiVerdict): WifiNetworkStatus? {
@@ -280,6 +345,7 @@ class WifiWatchModule(private val service: Service) : Module() {
     }
 
     override fun onUninstall() {
+        cancelWifiResolutionReconcile("module uninstall")
         runCatching {
             connectivity?.unregisterNetworkCallback(callback)
         }
@@ -299,5 +365,7 @@ class WifiWatchModule(private val service: Service) : Module() {
         // floor for reliable packet delivery; below it the connection is
         // considered weak and the proxy stays active.
         const val WEAK_RSSI_THRESHOLD_DBM = -80
+        private const val SSID_RECONCILE_INTERVAL_MILLIS = 500L
+        private const val MAX_SSID_RECONCILE_ATTEMPTS = 4
     }
 }
