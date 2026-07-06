@@ -45,6 +45,7 @@ class WifiWatchCard extends StatelessWidget {
     bool isExcluded,
   ) {
     final appLocalizations = context.appLocalizations;
+    final hasKnownSsid = state.ssid != null || state.rawSsid != null;
     if (state.suspended) {
       return appLocalizations.suspended;
     }
@@ -61,10 +62,10 @@ class WifiWatchCard extends StatelessWidget {
       }
       return appLocalizations.wifiWatchWillSuspend(remaining.toString());
     }
-    if (!state.wifiPresent) {
+    if (!state.wifiPresent && !hasKnownSsid) {
       return appLocalizations.wifiWatchNoWifi;
     }
-    if (state.ssid == null) {
+    if (!hasKnownSsid) {
       return appLocalizations.wifiWatchResolving;
     }
     if (isExcluded) {
