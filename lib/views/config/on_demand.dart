@@ -533,6 +533,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                 onReorderItem: _handleReorder,
               ),
             ),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
         ],
       ),
       title: appLocalizations.onDemand,
