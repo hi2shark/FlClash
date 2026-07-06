@@ -477,11 +477,19 @@ class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
   Future<void> _fetch() async {
     try {
       final data = await service?.getWifiWatchState();
+      String? rawSsid;
+      try {
+        rawSsid = await WifiSsidManager.instance.getSsid();
+      } catch (_) {
+        // Ignore raw SSID lookup failures; the service state is authoritative
+        // when it is available.
+      }
       if (data == null || data.isEmpty) {
+        value = state.copyWith(rawSsid: rawSsid);
         return;
       }
       final json = jsonDecode(data) as Map<String, dynamic>;
-      value = WifiWatchState.fromJson(json);
+      value = WifiWatchState.fromJson(json).copyWith(rawSsid: rawSsid);
     } catch (_) {
       // Keep the previous state on failure so the UI does not flicker.
     }
