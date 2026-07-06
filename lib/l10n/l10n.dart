@@ -4294,6 +4294,26 @@ class AppLocalizations {
     );
   }
 
+  /// `Background Location Permission`
+  String get backgroundLocationPermission {
+    return Intl.message(
+      'Background Location Permission',
+      name: 'backgroundLocationPermission',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Required to obtain the Wi-Fi name while the app is in the background, so that On Demand can trigger reliably.`
+  String get backgroundLocationPermissionDesc {
+    return Intl.message(
+      'Required to obtain the Wi-Fi name while the app is in the background, so that On Demand can trigger reliably.',
+      name: 'backgroundLocationPermissionDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Exclude SSIDs`
   String get excludeSsids {
     return Intl.message(

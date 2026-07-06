@@ -18,14 +18,24 @@ class WifiWatchState {
   });
 
   factory WifiWatchState.fromJson(Map<String, dynamic> json) {
-    final deadline = json['pendingSuspendDeadline'] as int?;
+    int? toInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is double) return value.toInt();
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
+    bool toBool(dynamic value) => value == true;
+
+    final deadline = toInt(json['pendingSuspendDeadline']);
     return WifiWatchState(
-      ssid: json['ssid'] as String?,
-      rawSsid: json['rawSsid'] as String?,
-      rssi: json['rssi'] as int?,
-      validated: json['validated'] as bool? ?? false,
-      wifiPresent: json['wifiPresent'] as bool? ?? false,
-      suspended: json['suspended'] as bool? ?? false,
+      ssid: json['ssid']?.toString(),
+      rawSsid: json['rawSsid']?.toString(),
+      rssi: toInt(json['rssi']),
+      validated: toBool(json['validated']),
+      wifiPresent: toBool(json['wifiPresent']),
+      suspended: toBool(json['suspended']),
       pendingSuspendDeadline:
           deadline == null ? null : DateTime.fromMillisecondsSinceEpoch(deadline),
     );

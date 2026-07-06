@@ -23,6 +23,7 @@ class Permissions {
 
   void check() {
     checkLocationPermissions();
+    checkBackgroundLocationPermissions();
     checkBatteryOptimizationDisable();
   }
 
@@ -82,6 +83,16 @@ class Permissions {
         _isRequestingLocation = false;
       }
     }
+  }
+
+  Future<void> checkBackgroundLocationPermissions() async {
+    if (!system.isAndroid) {
+      return;
+    }
+    final res = await WifiSsidManager.instance.checkBackgroundPermission();
+    globalState.container
+        .read(backgroundLocationPermissionsProvider.notifier)
+        .value = res;
   }
 }
 

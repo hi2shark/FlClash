@@ -42,6 +42,19 @@ class WifiSsidManager {
     final result = await _channel.invokeMethod<int>('requestPermission');
     return WifiSsidPermission.values[result ?? 1];
   }
+
+  /// Checks whether background location permission has been granted
+  /// (Android 10+). On older Android versions this always returns [granted].
+  Future<WifiSsidPermission> checkBackgroundPermission() async {
+    final result = await _channel.invokeMethod<int>('checkBackgroundPermission');
+    return WifiSsidPermission.values[result ?? 1];
+  }
+
+  /// Requests background location permission from the user (Android 10+).
+  Future<WifiSsidPermission> requestBackgroundPermission() async {
+    final result = await _channel.invokeMethod<int>('requestBackgroundPermission');
+    return WifiSsidPermission.values[result ?? 1];
+  }
 }
 
 final wifiSsidManager = WifiSsidManager.instance;

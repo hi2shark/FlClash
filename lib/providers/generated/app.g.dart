@@ -2074,3 +2074,58 @@ abstract class _$LocationPermissions extends $Notifier<WifiSsidPermission> {
     element.handleCreate(ref, build);
   }
 }
+
+@ProviderFor(BackgroundLocationPermissions)
+final backgroundLocationPermissionsProvider =
+    BackgroundLocationPermissionsProvider._();
+
+final class BackgroundLocationPermissionsProvider
+    extends $NotifierProvider<BackgroundLocationPermissions, WifiSsidPermission> {
+  BackgroundLocationPermissionsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'backgroundLocationPermissionsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$backgroundLocationPermissionsHash();
+
+  @$internal
+  @override
+  BackgroundLocationPermissions create() => BackgroundLocationPermissions();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WifiSsidPermission value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WifiSsidPermission>(value),
+    );
+  }
+}
+
+String _$backgroundLocationPermissionsHash() =>
+    r'a1b2c3d4e5f6789012345678901234567890abcd';
+
+abstract class _$BackgroundLocationPermissions
+    extends $Notifier<WifiSsidPermission> {
+  WifiSsidPermission build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<WifiSsidPermission, WifiSsidPermission>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<WifiSsidPermission, WifiSsidPermission>,
+              WifiSsidPermission,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

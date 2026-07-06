@@ -9,6 +9,7 @@ import android.net.NetworkRequest
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.PowerManager
 import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.service.IBaseService
@@ -29,6 +30,12 @@ class WifiWatchModule(private val service: Service) : Module() {
     }
     private val wifiManager by lazy {
         service.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+    }
+
+    private val wakeLock by lazy {
+        (service.applicationContext.getSystemService(Context.POWER_SERVICE) as? PowerManager)
+            ?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FlClash:WifiWatch")
+            ?.apply { setReferenceCounted(false) }
     }
 
     private val controller = WifiWatchSuspendController(
@@ -67,10 +74,24 @@ class WifiWatchModule(private val service: Service) : Module() {
 
     private fun schedule(delayMillis: Long, action: () -> Unit): WifiWatchSuspendController.Cancellable {
         val job = scope.launch {
+            // Keep the CPU awake while waiting for the delayed suspend so that
+            // Doze / app-standby does not defer the timer.
+            val lock = wakeLock
+            runCatching {
+                lock?.acquire(delayMillis + 1000)
+            }
             delay(delayMillis)
             action()
+            runCatching {
+                if (lock?.isHeld == true) lock.release()
+            }
         }
-        return WifiWatchSuspendController.Cancellable { job.cancel() }
+        return WifiWatchSuspendController.Cancellable {
+            job.cancel()
+            runCatching {
+                if (wakeLock?.isHeld == true) wakeLock?.release()
+            }
+        }
     }
 
     private fun setWifiSuspended(suspended: Boolean) {
@@ -384,9 +405,17 @@ class WifiWatchModule(private val service: Service) : Module() {
     fun currentState(serviceSuspended: Boolean): WifiWatchState {
         val controllerStatus = controller.currentStatus()
         val status = synchronized(wifiNetworksLock) { lastPublishedStatus }
+        // Some devices do not expose RSSI through NetworkCapabilities; use the
+        // legacy WifiManager fallback for the UI if a WiFi transport is still
+        // present.
+        val fallback = if (status?.rssi == null && hasWifiTransport()) {
+            readWifiManagerFallback()
+        } else {
+            null
+        }
         return WifiWatchState(
-            ssid = controllerStatus.ssid ?: status?.ssid,
-            rssi = status?.rssi,
+            ssid = controllerStatus.ssid ?: status?.ssid ?: fallback?.ssid,
+            rssi = status?.rssi ?: fallback?.rssi,
             validated = controllerStatus.validated,
             wifiPresent = controllerStatus.wifiPresent,
             suspended = serviceSuspended,

@@ -147,6 +147,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoSetSystemDns": MessageLookupByLibrary.simpleMessage("オートセットシステムDNS"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自動更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自動更新間隔（分）"),
+    "backgroundLocationPermission": MessageLookupByLibrary.simpleMessage(
+      "Background Location Permission",
+    ),
+    "backgroundLocationPermissionDesc": MessageLookupByLibrary.simpleMessage(
+      "Required to obtain the Wi-Fi name while the app is in the background, so that On Demand can trigger reliably.",
+    ),
     "backup": MessageLookupByLibrary.simpleMessage("バックアップ"),
     "backupAndRestore": MessageLookupByLibrary.simpleMessage("バックアップと復元"),
     "backupAndRestoreDesc": MessageLookupByLibrary.simpleMessage(

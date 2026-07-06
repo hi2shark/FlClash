@@ -139,6 +139,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoSetSystemDns": MessageLookupByLibrary.simpleMessage("自动设置系统DNS"),
     "autoUpdate": MessageLookupByLibrary.simpleMessage("自动更新"),
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage("自动更新间隔（分钟）"),
+    "backgroundLocationPermission": MessageLookupByLibrary.simpleMessage(
+      "后台位置权限",
+    ),
+    "backgroundLocationPermissionDesc": MessageLookupByLibrary.simpleMessage(
+      "应用处于后台时获取 Wi-Fi 名称，确保按需运行能够正常触发。",
+    ),
     "backup": MessageLookupByLibrary.simpleMessage("备份"),
     "backupAndRestore": MessageLookupByLibrary.simpleMessage("备份与恢复"),
     "backupAndRestoreDesc": MessageLookupByLibrary.simpleMessage(

@@ -63,6 +63,21 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     app?.openAppSettings();
   }
 
+  Future<void> _handleRequestBackgroundLocationPermission() async {
+    final permission = ref.read(backgroundLocationPermissionsProvider);
+    if (permission == WifiSsidPermission.granted) {
+      return;
+    }
+    if (permission == WifiSsidPermission.permanentlyDenied) {
+      app?.openAppSettings();
+      return;
+    }
+    final res = await wifiSsidManager.requestBackgroundPermission();
+    globalState.container
+        .read(backgroundLocationPermissionsProvider.notifier)
+        .value = res;
+  }
+
   void _handleOpenBatteryOptimizationSettings() {
     final isDisabled = ref.read(batteryOptimizationDisableProvider);
     if (isDisabled) {
@@ -295,6 +310,11 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
         (state) => state == WifiSsidPermission.granted,
       ),
     );
+    final backgroundLocationGranted = ref.watch(
+      backgroundLocationPermissionsProvider.select(
+        (state) => state == WifiSsidPermission.granted,
+      ),
+    );
     final selectedItems = ref.watch(itemsProvider(key));
     return CommonScaffold(
       body: CustomScrollView(
@@ -373,6 +393,31 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                           onPressed: _handleRequestLocationPermission,
                           child: Text(
                             locationPermissionsGranted
+                                ? appLocalizations.authorized
+                                : appLocalizations.tapToAuthorize,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (system.isAndroid)
+                    DecorationListItem(
+                      minVerticalPadding: 8,
+                      title: Text(appLocalizations.backgroundLocationPermission),
+                      subtitle: Text(
+                        appLocalizations.backgroundLocationPermissionDesc,
+                      ),
+                      trailing: CommonMinFilledButtonTheme(
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: backgroundLocationGranted
+                                ? null
+                                : context.colorScheme.error,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            minimumSize: const Size(80, 40),
+                          ),
+                          onPressed: _handleRequestBackgroundLocationPermission,
+                          child: Text(
+                            backgroundLocationGranted
                                 ? appLocalizations.authorized
                                 : appLocalizations.tapToAuthorize,
                           ),

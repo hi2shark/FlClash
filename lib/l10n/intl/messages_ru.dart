@@ -195,6 +195,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "autoUpdateInterval": MessageLookupByLibrary.simpleMessage(
       "Интервал автообновления (минуты)",
     ),
+    "backgroundLocationPermission": MessageLookupByLibrary.simpleMessage(
+      "Background Location Permission",
+    ),
+    "backgroundLocationPermissionDesc": MessageLookupByLibrary.simpleMessage(
+      "Required to obtain the Wi-Fi name while the app is in the background, so that On Demand can trigger reliably.",
+    ),
     "backup": MessageLookupByLibrary.simpleMessage("Резервное копирование"),
     "backupAndRestore": MessageLookupByLibrary.simpleMessage(
       "Резервное копирование и восстановление",
