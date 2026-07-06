@@ -51,9 +51,6 @@ class WifiWatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    final titleStyle = context.textTheme.titleSmall?.copyWith(
-      color: context.colorScheme.onSurfaceVariant,
-    );
     return SizedBox(
       height: getWidgetHeight(2),
       child: CommonCard(

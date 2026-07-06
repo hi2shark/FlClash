@@ -41,7 +41,6 @@ class WifiWatchModule(private val service: Service) : Module() {
     private val callback = createWifiNetworkCallback()
     private var wifiResolutionReconcileJob: Job? = null
     private var lastPublishedStatus: WifiNetworkStatus? = null
-    private var lastPublishedTrusted = false
 
     override fun onInstall() {
         scope.launch {
@@ -202,7 +201,6 @@ class WifiWatchModule(private val service: Service) : Module() {
         val unresolvedSsid = status != null && status.ssid == null
         synchronized(wifiNetworksLock) {
             lastPublishedStatus = status
-            lastPublishedTrusted = trusted
         }
         GlobalState.log(
             "WiFi-watch wifi status ssid=${status?.ssid ?: "<none>"} " +
