@@ -135,7 +135,7 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
                 },
                 itemExtent: ruleItemHeight,
                 itemCount: rules.length,
-                onReorder: ref.read(globalRulesProvider.notifier).order,
+                onReorderItem: ref.read(globalRulesProvider.notifier).order,
               ),
       ),
     );
