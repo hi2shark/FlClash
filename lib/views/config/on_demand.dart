@@ -169,7 +169,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
 
   Widget _buildCurrentWifiSection() {
     return SliverPadding(
-      padding: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(top: 16),
       sliver: SliverToBoxAdapter(
         child: Consumer(
           builder: (context, ref, _) {
