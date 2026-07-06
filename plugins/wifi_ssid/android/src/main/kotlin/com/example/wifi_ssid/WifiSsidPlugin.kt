@@ -140,6 +140,7 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         when (call.method) {
             "getSsid" -> getSsid(result)
+            "getCurrentWifiInfo" -> getCurrentWifiInfo(result)
             "checkPermission" -> checkPermission(result)
             "requestPermission" -> requestPermission(result)
             "checkBackgroundPermission" -> checkBackgroundPermission(result)
@@ -245,6 +246,75 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         @Suppress("DEPRECATION")
         val info = wm.connectionInfo
         result.success(normalizeSsid(info.ssid))
+    }
+
+    private fun getCurrentWifiInfo(result: Result) {
+        val status = currentWifiInfo()
+        if (status == null) {
+            result.success(null)
+            return
+        }
+        result.success(
+            mapOf(
+                "ssid" to status.ssid,
+                "rssi" to status.rssi,
+            )
+        )
+    }
+
+    private fun currentWifiInfo(): WifiNetworkStatus? {
+        val status = readCurrentNetworkStatus()
+        val fallback = if (status?.ssid == null || status?.rssi == null) {
+            readWifiManagerStatus()
+        } else {
+            null
+        }
+        val rssi = status?.rssi
+            ?: fallback?.rssi
+            ?: readSignalStrengthFromAllNetworks()
+            ?: readScanResultRssi()
+        val ssid = status?.ssid ?: fallback?.ssid
+        if (ssid == null && rssi == null) {
+            return null
+        }
+        return WifiNetworkStatus(
+            ssid = ssid,
+            rssi = rssi,
+            systemValidated = status?.systemValidated
+                ?: fallback?.systemValidated
+                ?: false,
+        )
+    }
+
+    private fun readCurrentNetworkStatus(): WifiNetworkStatus? {
+        val cm = connectivityManager ?: return null
+        var firstStatus: WifiNetworkStatus? = null
+        for (network in cm.allNetworks) {
+            val status = cm.getNetworkCapabilities(network).wifiNetworkStatus() ?: continue
+            if (firstStatus == null) {
+                firstStatus = status
+            }
+            if (status.ssid != null) {
+                return status
+            }
+        }
+        return firstStatus
+    }
+
+    @Suppress("DEPRECATION")
+    private fun readWifiManagerStatus(): WifiNetworkStatus? {
+        val info = runCatching { wifiManager?.connectionInfo }.getOrNull()
+            ?: return null
+        val ssid = normalizeSsid(info.ssid)
+        val rssi = resolveRssi(info)
+        if (ssid == null && rssi == null) {
+            return null
+        }
+        return WifiNetworkStatus(
+            ssid = ssid,
+            rssi = rssi,
+            systemValidated = false,
+        )
     }
 
     private fun startWifiNetworkWatch() {
@@ -493,9 +563,53 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         val info = readWifiInfo()
         return WifiNetworkStatus(
             ssid = normalizeSsid(info?.ssid),
-            rssi = info?.rssi?.takeIf { it != INVALID_RSSI },
+            rssi = resolveRssi(info) ?: signalStrengthOrNull(),
             systemValidated = hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
         )
+    }
+
+    private fun NetworkCapabilities.signalStrengthOrNull(): Int? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            signalStrength.takeIf { it != NetworkCapabilities.SIGNAL_STRENGTH_UNSPECIFIED }
+        } else {
+            null
+        }
+    }
+
+    private fun readSignalStrengthFromAllNetworks(): Int? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
+        val cm = connectivityManager ?: return null
+        for (network in cm.allNetworks) {
+            val rssi = cm.getNetworkCapabilities(network)
+                ?.takeIf { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) }
+                ?.signalStrength
+                ?.takeIf { it != NetworkCapabilities.SIGNAL_STRENGTH_UNSPECIFIED }
+            if (rssi != null) {
+                return rssi
+            }
+        }
+        return null
+    }
+
+    @Suppress("DEPRECATION")
+    private fun readScanResultRssi(): Int? {
+        val wm = wifiManager ?: return null
+        val info = runCatching { wm.connectionInfo }.getOrNull() ?: return null
+        val connectedSsid = normalizeSsid(info.ssid) ?: return null
+        val connectedBssid = info.bssid?.takeIf { it != "02:00:00:00:00:00" }
+        runCatching { wm.startScan() }
+        val results = runCatching { wm.scanResults }.getOrNull() ?: return null
+        return results.firstOrNull { result ->
+            if (connectedBssid != null && result.BSSID != null) {
+                result.BSSID == connectedBssid
+            } else {
+                normalizeSsid(result.SSID) == connectedSsid
+            }
+        }?.level
+    }
+
+    private fun resolveRssi(info: WifiInfo?): Int? {
+        return info?.rssi?.takeIf { it != INVALID_RSSI }
     }
 
     private fun currentWifiNetworkStatusLocked(verdict: WifiVerdict): WifiNetworkStatus? {

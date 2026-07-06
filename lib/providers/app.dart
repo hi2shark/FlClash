@@ -477,24 +477,53 @@ class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
   Future<void> _fetch() async {
     try {
       final data = await service?.getWifiWatchState();
-      String? rawSsid;
-      try {
-        rawSsid = await WifiSsidManager.instance.getSsid();
-      } catch (_) {
-        // Ignore raw SSID lookup failures; the service state is authoritative
-        // when it is available.
-      }
+      final currentWifiInfo = await _getCurrentWifiInfo();
       if (data == null || data.isEmpty) {
-        value = state.copyWith(rawSsid: rawSsid);
+        value = _stateFromDeviceInfo(currentWifiInfo);
         return;
       }
       final json = jsonDecode(data) as Map<String, dynamic>;
-      value = WifiWatchState.fromJson(json).copyWith(rawSsid: rawSsid);
+      if (json.isEmpty) {
+        value = _stateFromDeviceInfo(currentWifiInfo);
+        return;
+      }
+      final serviceState = WifiWatchState.fromJson(json);
+      final hasDeviceInfo =
+          currentWifiInfo.ssid != null || currentWifiInfo.rssi != null;
+      value = serviceState.copyWith(
+        rawSsid: currentWifiInfo.ssid,
+        rssi: serviceState.rssi == null ? currentWifiInfo.rssi : null,
+        wifiPresent: serviceState.wifiPresent || hasDeviceInfo,
+      );
     } catch (e, stack) {
       // Keep the previous state on failure so the UI does not flicker, but
       // log the error so malformed service JSON does not stay hidden.
       commonPrint.log('WifiWatch fetch failed: $e\n$stack');
     }
+  }
+
+  Future<WifiConnectionInfo> _getCurrentWifiInfo() async {
+    try {
+      return await WifiSsidManager.instance.getCurrentWifiInfo();
+    } catch (_) {
+      try {
+        return WifiConnectionInfo(
+          ssid: await WifiSsidManager.instance.getSsid(),
+        );
+      } catch (_) {
+        return const WifiConnectionInfo();
+      }
+    }
+  }
+
+  WifiWatchState _stateFromDeviceInfo(WifiConnectionInfo info) {
+    final hasDeviceInfo = info.ssid != null || info.rssi != null;
+    return WifiWatchState(
+      ssid: info.ssid,
+      rawSsid: info.ssid,
+      rssi: info.rssi,
+      wifiPresent: hasDeviceInfo,
+    );
   }
 }
 

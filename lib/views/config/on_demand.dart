@@ -129,15 +129,30 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     });
   }
 
-  IconData _signalIcon(int? rssi) {
-    if (rssi == null) return Icons.signal_wifi_0_bar;
+  IconData _signalIcon(int? rssi, bool hasNetwork) {
+    if (rssi == null) {
+      return hasNetwork ? Icons.wifi : Icons.signal_wifi_0_bar;
+    }
     if (rssi >= -55) return Icons.signal_wifi_4_bar;
     if (rssi >= -70) return Icons.wifi;
     return Icons.signal_wifi_0_bar;
   }
 
-  Color _signalColor(BuildContext context, int? rssi) {
-    if (rssi == null) return context.colorScheme.outline;
+  Color _signalColor(
+    BuildContext context,
+    int? rssi,
+    bool hasNetwork,
+    bool isExcluded,
+    bool validated,
+  ) {
+    if (isExcluded && validated) {
+      return context.colorScheme.error;
+    }
+    if (rssi == null) {
+      return hasNetwork
+          ? context.colorScheme.primary
+          : context.colorScheme.outline;
+    }
     if (rssi >= -60) return Colors.green;
     if (rssi >= -75) return Colors.orange;
     return context.colorScheme.error;
@@ -149,6 +164,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     bool isExcluded,
   ) {
     final appLocalizations = context.appLocalizations;
+    final hasKnownSsid = state.ssid != null || state.rawSsid != null;
     if (state.suspended) {
       return appLocalizations.suspended;
     }
@@ -165,10 +181,10 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       }
       return appLocalizations.wifiWatchWillSuspend(remaining.toString());
     }
-    if (!state.wifiPresent) {
+    if (!state.wifiPresent && !hasKnownSsid) {
       return appLocalizations.wifiWatchNoWifi;
     }
-    if (state.ssid == null) {
+    if (!hasKnownSsid) {
       return appLocalizations.wifiWatchResolving;
     }
     if (isExcluded) {
@@ -192,15 +208,19 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
             final state = ref.watch(wifiWatchProvider);
             final excludeSSIDs = ref.watch(excludeSSIDsProvider);
             final ssid = state.ssid ?? state.rawSsid;
-            final hasNetwork = ssid != null;
-            final isExcluded = hasNetwork && excludeSSIDs.contains(ssid);
+            final hasSsid = ssid != null;
+            final hasNetwork = hasSsid || state.wifiPresent;
+            final isExcluded = hasSsid && excludeSSIDs.contains(ssid);
             return generateSectionV3(
               title: appLocalizations.currentWifiConnection,
               items: [
                 DecorationListItem(
                   title: Text(appLocalizations.currentWifiSsid),
                   trailing: Text(
-                    hasNetwork ? ssid : appLocalizations.wifiWatchNoWifi,
+                    ssid ??
+                        (hasNetwork
+                            ? appLocalizations.wifiWatchResolving
+                            : appLocalizations.wifiWatchNoWifi),
                     style: context.textTheme.bodyMedium?.toLight,
                   ),
                 ),
@@ -209,11 +229,17 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (state.rssi != null) ...[
+                      if (hasNetwork) ...[
                         Icon(
-                          _signalIcon(state.rssi),
+                          _signalIcon(state.rssi, hasNetwork),
                           size: 16.ap,
-                          color: _signalColor(context, state.rssi),
+                          color: _signalColor(
+                            context,
+                            state.rssi,
+                            hasNetwork,
+                            isExcluded,
+                            state.validated,
+                          ),
                         ),
                         const SizedBox(width: 6),
                       ],
