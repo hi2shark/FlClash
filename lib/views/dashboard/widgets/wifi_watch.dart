@@ -11,10 +11,8 @@ class WifiWatchCard extends StatelessWidget {
 
   IconData _signalIcon(int? rssi) {
     if (rssi == null) return Icons.signal_wifi_0_bar;
-    if (rssi >= -50) return Icons.signal_wifi_4_bar;
-    if (rssi >= -60) return Icons.signal_wifi_3_bar;
-    if (rssi >= -70) return Icons.signal_wifi_2_bar;
-    if (rssi >= -80) return Icons.signal_wifi_1_bar;
+    if (rssi >= -55) return Icons.signal_wifi_4_bar;
+    if (rssi >= -70) return Icons.wifi;
     return Icons.signal_wifi_0_bar;
   }
 
