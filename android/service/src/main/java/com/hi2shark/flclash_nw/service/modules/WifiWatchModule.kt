@@ -84,7 +84,6 @@ class WifiWatchModule(private val service: Service) : Module() {
     private val wifiNetworkRequest: NetworkRequest
         get() = NetworkRequest.Builder()
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .build()
 
     private fun createWifiNetworkCallback(): ConnectivityManager.NetworkCallback {
@@ -274,20 +273,53 @@ class WifiWatchModule(private val service: Service) : Module() {
         // verdict (validated when no VPN, or strong RSSI when a VPN is active),
         // otherwise fall back to the first known WiFi network so the controller
         // still observes the SSID change (e.g. switching between access points).
-        return wifiNetworks.values.firstOrNull {
+        val status = wifiNetworks.values.firstOrNull {
             it.isTrusted(verdict) && it.ssid != null
         } ?: wifiNetworks.values.firstOrNull()
+        if (status?.ssid != null) return status
+        // If ConnectivityManager cannot see the underlying WiFi (common when a
+        // VPN tunnel is the default network) but a WiFi transport is still
+        // reported, fall back to WifiManager. Avoid the fallback when the
+        // system no longer reports any WiFi transport (real WiFi loss).
+        if (hasWifiTransport()) {
+            readWifiManagerFallback()?.let { return it }
+        }
+        return status
+    }
+
+    private fun hasWifiTransport(): Boolean {
+        val manager = connectivity ?: return false
+        return manager.allNetworks.any {
+            manager.getNetworkCapabilities(it)
+                ?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+        }
     }
 
     private fun NetworkCapabilities?.wifiNetworkStatus(): WifiNetworkStatus? {
         if (this == null) return null
         if (!hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return null
-        if (!hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) return null
         val info = readWifiInfo()
         return WifiNetworkStatus(
             ssid = normalizeSsid(info?.ssid),
             rssi = info?.rssi?.takeIf { it != INVALID_RSSI },
             systemValidated = hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
+        )
+    }
+
+    /**
+     * Fallback to the legacy WiFi connection info when the ConnectivityManager
+     * view is restricted (for example while our own VPN tunnel is the default
+     * network). This keeps the suspend-on-WiFi logic working as long as the
+     * system still exposes the current SSID/RSSI.
+     */
+    @Suppress("DEPRECATION")
+    private fun readWifiManagerFallback(): WifiNetworkStatus? {
+        val info = runCatching { wifiManager?.connectionInfo }.getOrNull() ?: return null
+        val ssid = normalizeSsid(info.ssid) ?: return null
+        return WifiNetworkStatus(
+            ssid = ssid,
+            rssi = info.rssi.takeIf { it != INVALID_RSSI },
+            systemValidated = false,
         )
     }
 
