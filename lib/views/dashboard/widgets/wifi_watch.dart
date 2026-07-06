@@ -85,7 +85,7 @@ class WifiWatchCard extends StatelessWidget {
                     final hasNetwork = ssid != null;
                     final display = hasServiceInfo && hasNetwork
                         ? '$ssid · $status'
-                        : (hasNetwork ? ssid! : status);
+                        : (hasNetwork ? ssid : status);
                     return FadeThroughBox(
                       child: Row(
                         children: [

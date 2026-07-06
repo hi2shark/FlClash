@@ -127,7 +127,7 @@ class _ExternalDismissibleState extends State<ExternalDismissible>
     }
 
     return SizeTransition(
-      axisAlignment: 0.5,
+      alignment: const Alignment(0.0, 0.5),
       sizeFactor: _resizeAnimation,
       axis: Axis.vertical,
       child: content,
