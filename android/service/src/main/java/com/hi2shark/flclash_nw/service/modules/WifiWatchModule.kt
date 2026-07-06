@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.net.wifi.ScanResult
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -322,9 +323,17 @@ class WifiWatchModule(private val service: Service) : Module() {
         val info = readWifiInfo()
         return WifiNetworkStatus(
             ssid = normalizeSsid(info?.ssid),
-            rssi = info?.rssi?.takeIf { it != INVALID_RSSI },
+            rssi = resolveRssi(info) ?: signalStrengthOrNull(),
             systemValidated = hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
         )
+    }
+
+    private fun NetworkCapabilities.signalStrengthOrNull(): Int? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            signalStrength.takeIf { it != NetworkCapabilities.SIGNAL_STRENGTH_UNSPECIFIED }
+        } else {
+            null
+        }
     }
 
     /**
@@ -337,11 +346,21 @@ class WifiWatchModule(private val service: Service) : Module() {
     private fun readWifiManagerFallback(): WifiNetworkStatus? {
         val info = runCatching { wifiManager?.connectionInfo }.getOrNull() ?: return null
         val ssid = normalizeSsid(info.ssid) ?: return null
+        val rssi = resolveRssi(info)
+        GlobalState.log(
+            "WiFi-watch WifiManager fallback ssid=$ssid rssi=${rssi ?: "<none>"}"
+        )
         return WifiNetworkStatus(
             ssid = ssid,
-            rssi = info.rssi.takeIf { it != INVALID_RSSI },
+            rssi = rssi,
             systemValidated = false,
         )
+    }
+
+    private fun resolveRssi(info: WifiInfo?): Int? {
+        val fromWifiInfo = info?.rssi?.takeIf { it != INVALID_RSSI }
+        if (fromWifiInfo != null) return fromWifiInfo
+        return null
     }
 
     private fun NetworkCapabilities.readWifiInfo(): WifiInfo? {
@@ -413,14 +432,66 @@ class WifiWatchModule(private val service: Service) : Module() {
         } else {
             null
         }
+        val signalStrengthRssi = readSignalStrengthFromAllNetworks()
+        val scanRssi = readScanResultRssi()
+        val rssi = status?.rssi
+            ?: fallback?.rssi
+            ?: signalStrengthRssi
+            ?: scanRssi
+        GlobalState.log(
+            "WiFi-watch currentState ssid=${controllerStatus.ssid ?: status?.ssid ?: fallback?.ssid ?: "<none>"} " +
+                "rssi=${rssi ?: "<none>"} " +
+                "sources=(status=${status?.rssi ?: "x"}, fallback=${fallback?.rssi ?: "x"}, " +
+                "signalStrength=${signalStrengthRssi ?: "x"}, scan=${scanRssi ?: "x"})"
+        )
         return WifiWatchState(
             ssid = controllerStatus.ssid ?: status?.ssid ?: fallback?.ssid,
-            rssi = status?.rssi ?: fallback?.rssi,
+            rssi = rssi,
             validated = controllerStatus.validated,
             wifiPresent = controllerStatus.wifiPresent,
             suspended = serviceSuspended,
             pendingSuspendDeadline = controllerStatus.pendingSuspendDeadline,
         )
+    }
+
+    private fun readSignalStrengthFromAllNetworks(): Int? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
+        val manager = connectivity ?: return null
+        return manager.allNetworks.firstNotNullOfOrNull { network ->
+            manager.getNetworkCapabilities(network)?.takeIf {
+                it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+            }?.signalStrength?.takeIf {
+                it != NetworkCapabilities.SIGNAL_STRENGTH_UNSPECIFIED
+            }
+        }
+    }
+
+    /**
+     * Last-resort RSSI source: the most recent WiFi scan results. This matches
+     * what apps like Cellular-Z use to display signal strength when the
+     * simplified APIs above return invalid values.
+     */
+    @Suppress("DEPRECATION")
+    private fun readScanResultRssi(): Int? {
+        val wm = wifiManager ?: return null
+        val info = runCatching { wm.connectionInfo }.getOrNull() ?: return null
+        val connectedSsid = normalizeSsid(info.ssid) ?: return null
+        val connectedBssid = info.bssid?.takeIf { it != "02:00:00:00:00:00" }
+        // Best-effort refresh. Scanning is throttled by the system; if it fails
+        // we still fall back to the last cached results.
+        runCatching { wm.startScan() }
+        val results = runCatching { wm.scanResults }.getOrNull()
+        val rssi = results?.firstOrNull { result ->
+            if (connectedBssid != null && result.BSSID != null) {
+                result.BSSID == connectedBssid
+            } else {
+                normalizeSsid(result.SSID) == connectedSsid
+            }
+        }?.level
+        GlobalState.log(
+            "WiFi-watch scan result count=${results?.size ?: 0} rssi=${rssi ?: "<none>"}"
+        )
+        return rssi
     }
 
     override fun onUninstall() {
