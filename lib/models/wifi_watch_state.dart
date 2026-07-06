@@ -1,5 +1,6 @@
 class WifiWatchState {
   final String? ssid;
+  final String? rawSsid;
   final int? rssi;
   final bool validated;
   final bool wifiPresent;
@@ -8,6 +9,7 @@ class WifiWatchState {
 
   const WifiWatchState({
     this.ssid,
+    this.rawSsid,
     this.rssi,
     this.validated = false,
     this.wifiPresent = false,
@@ -19,6 +21,7 @@ class WifiWatchState {
     final deadline = json['pendingSuspendDeadline'] as int?;
     return WifiWatchState(
       ssid: json['ssid'] as String?,
+      rawSsid: json['rawSsid'] as String?,
       rssi: json['rssi'] as int?,
       validated: json['validated'] as bool? ?? false,
       wifiPresent: json['wifiPresent'] as bool? ?? false,
@@ -31,6 +34,7 @@ class WifiWatchState {
   Map<String, dynamic> toJson() {
     return {
       'ssid': ssid,
+      'rawSsid': rawSsid,
       'rssi': rssi,
       'validated': validated,
       'wifiPresent': wifiPresent,
@@ -41,6 +45,7 @@ class WifiWatchState {
 
   WifiWatchState copyWith({
     String? ssid,
+    String? rawSsid,
     int? rssi,
     bool? validated,
     bool? wifiPresent,
@@ -49,6 +54,7 @@ class WifiWatchState {
   }) {
     return WifiWatchState(
       ssid: ssid ?? this.ssid,
+      rawSsid: rawSsid ?? this.rawSsid,
       rssi: rssi ?? this.rssi,
       validated: validated ?? this.validated,
       wifiPresent: wifiPresent ?? this.wifiPresent,
