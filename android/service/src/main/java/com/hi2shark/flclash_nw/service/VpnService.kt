@@ -10,6 +10,8 @@ import android.os.Parcel
 import android.os.RemoteException
 import android.util.Log
 import androidx.core.content.getSystemService
+import com.google.gson.Gson
+import com.hi2shark.flclash_nw.service.WifiWatchState
 import com.hi2shark.flclash_nw.common.AccessControlMode
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.core.Core
@@ -38,7 +40,23 @@ class VpnService : SystemVpnService(), IBaseService,
         install(NetworkObserveModule(self))
         install(NotificationModule(self))
         install(SuspendModule(self))
-        install(WifiWatchModule(self))
+        val wifiWatchModule = install(WifiWatchModule(self))
+        this@VpnService.wifiWatchModule = wifiWatchModule
+    }
+
+    @Volatile
+    private var wifiWatchModule: WifiWatchModule? = null
+
+    override fun getWifiWatchStateJson(): String {
+        val state = wifiWatchModule?.currentState(isSuspended) ?: WifiWatchState(
+            ssid = null,
+            rssi = null,
+            validated = false,
+            wifiPresent = false,
+            suspended = isSuspended,
+            pendingSuspendDeadline = null,
+        )
+        return Gson().toJson(state)
     }
 
     override var isRunning: Boolean = false

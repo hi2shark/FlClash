@@ -68,7 +68,11 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m22(label) => "${label}はURLである必要があります";
 
-  static String m23(count) => "${count}年前";
+  static String m23(rssi) => "Signal: ${rssi} dBm";
+
+  static String m24(seconds) => "Suspend in ${seconds}s";
+
+  static String m25(count) => "${count}年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -966,7 +970,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnTip": MessageLookupByLibrary.simpleMessage("変更はVPN再起動後に有効"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
-    "yearsAgo": m23,
+    "wifiWatchListening": MessageLookupByLibrary.simpleMessage("Watching..."),
+    "wifiWatchNoWifi": MessageLookupByLibrary.simpleMessage("No WiFi"),
+    "wifiWatchResolving": MessageLookupByLibrary.simpleMessage(
+      "Resolving SSID...",
+    ),
+    "wifiWatchSignal": m23,
+    "wifiWatchSuspendingNow": MessageLookupByLibrary.simpleMessage(
+      "Suspending...",
+    ),
+    "wifiWatchTitle": MessageLookupByLibrary.simpleMessage("On Demand"),
+    "wifiWatchTrusted": MessageLookupByLibrary.simpleMessage("Trusted network"),
+    "wifiWatchWillSuspend": m24,
+    "yearsAgo": m25,
     "zh_CN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
   };
 }

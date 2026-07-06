@@ -40,6 +40,8 @@ class WifiWatchModule(private val service: Service) : Module() {
     private val wifiNetworks = linkedMapOf<Network, WifiNetworkStatus>()
     private val callback = createWifiNetworkCallback()
     private var wifiResolutionReconcileJob: Job? = null
+    private var lastPublishedStatus: WifiNetworkStatus? = null
+    private var lastPublishedTrusted = false
 
     override fun onInstall() {
         scope.launch {
@@ -198,6 +200,10 @@ class WifiWatchModule(private val service: Service) : Module() {
     private fun publishWifiNetwork(status: WifiNetworkStatus?, verdict: WifiVerdict) {
         val trusted = status?.isTrusted(verdict) == true
         val unresolvedSsid = status != null && status.ssid == null
+        synchronized(wifiNetworksLock) {
+            lastPublishedStatus = status
+            lastPublishedTrusted = trusted
+        }
         GlobalState.log(
             "WiFi-watch wifi status ssid=${status?.ssid ?: "<none>"} " +
                 "rssi=${status?.rssi ?: "<none>"} " +
@@ -342,6 +348,19 @@ class WifiWatchModule(private val service: Service) : Module() {
         } else {
             ssid.removeSurrounding("\"")
         }
+    }
+
+    fun currentState(serviceSuspended: Boolean): WifiWatchState {
+        val controllerStatus = controller.currentStatus()
+        val status = synchronized(wifiNetworksLock) { lastPublishedStatus }
+        return WifiWatchState(
+            ssid = controllerStatus.ssid ?: status?.ssid,
+            rssi = status?.rssi,
+            validated = controllerStatus.validated,
+            wifiPresent = controllerStatus.wifiPresent,
+            suspended = serviceSuspended,
+            pendingSuspendDeadline = controllerStatus.pendingSuspendDeadline,
+        )
     }
 
     override fun onUninstall() {

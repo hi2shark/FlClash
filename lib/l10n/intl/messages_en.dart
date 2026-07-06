@@ -77,7 +77,11 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m22(label) => "${label} must be a url";
 
-  static String m23(count) =>
+  static String m23(rssi) => "Signal: ${rssi} dBm";
+
+  static String m24(seconds) => "Suspend in ${seconds}s";
+
+  static String m25(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -1190,7 +1194,19 @@ class MessageLookup extends MessageLookupByLibrary {
       "WebDAV configuration",
     ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
-    "yearsAgo": m23,
+    "wifiWatchListening": MessageLookupByLibrary.simpleMessage("Watching..."),
+    "wifiWatchNoWifi": MessageLookupByLibrary.simpleMessage("No WiFi"),
+    "wifiWatchResolving": MessageLookupByLibrary.simpleMessage(
+      "Resolving SSID...",
+    ),
+    "wifiWatchSignal": m23,
+    "wifiWatchSuspendingNow": MessageLookupByLibrary.simpleMessage(
+      "Suspending...",
+    ),
+    "wifiWatchTitle": MessageLookupByLibrary.simpleMessage("On Demand"),
+    "wifiWatchTrusted": MessageLookupByLibrary.simpleMessage("Trusted network"),
+    "wifiWatchWillSuspend": m24,
+    "yearsAgo": m25,
     "zh_CN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };
 }

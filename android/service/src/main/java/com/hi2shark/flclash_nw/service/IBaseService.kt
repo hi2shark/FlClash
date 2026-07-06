@@ -32,6 +32,13 @@ interface IBaseService {
 
     fun setWifiSuspended(suspended: Boolean): ServiceStartResult
 
+    /**
+     * Returns a JSON representation of the current WiFi-watch state.
+     */
+    fun getWifiWatchStateJson(): String {
+        return "{}"
+    }
+
     fun notifySuspendedChanged(suspended: Boolean) {
         State.runtimeState.setSuspended(suspended)
         BroadcastAction.SERVICE_SUSPENDED_CHANGED.sendBroadcast {

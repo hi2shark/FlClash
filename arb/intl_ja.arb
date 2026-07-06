@@ -653,5 +653,13 @@
   "localProxyNowhereKeyEmpty": "Nowhere キーを入力してください",
   "localProxyCarrierInvalid": "キャリアは tcp または udp です",
   "localProxyPoolInvalid": "プールは 0-9 です",
-  "proxy": "プロキシ"
+  "proxy": "プロキシ",
+  "wifiWatchTitle": "On Demand",
+  "wifiWatchSignal": "Signal: {rssi} dBm",
+  "wifiWatchNoWifi": "No WiFi",
+  "wifiWatchResolving": "Resolving SSID...",
+  "wifiWatchTrusted": "Trusted network",
+  "wifiWatchWillSuspend": "Suspend in {seconds}s",
+  "wifiWatchSuspendingNow": "Suspending...",
+  "wifiWatchListening": "Watching..."
 }

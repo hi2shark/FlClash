@@ -65,6 +65,10 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
             handleSetSuspended(call, result)
         }
 
+        "getWifiWatchState" -> {
+            handleGetWifiWatchState(result)
+        }
+
         else -> {
             result.notImplemented()
         }
@@ -155,6 +159,12 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
         launch {
             State.handleSyncState()
             result.success(State.runTime)
+        }
+    }
+
+    private fun handleGetWifiWatchState(result: MethodChannel.Result) {
+        launch {
+            result.success(Service.getWifiWatchState())
         }
     }
 }

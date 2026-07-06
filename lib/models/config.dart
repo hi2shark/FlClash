@@ -44,6 +44,7 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.networkDetection,
   DashboardWidget.trafficUsage,
   DashboardWidget.intranetIp,
+  DashboardWidget.wifiWatchCard,
 ];
 
 List<DashboardWidget> dashboardWidgetsSafeFormJson(

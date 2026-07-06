@@ -653,5 +653,13 @@
   "localProxyNowhereKeyEmpty": "Введите ключ Nowhere",
   "localProxyCarrierInvalid": "Канал должен быть tcp или udp",
   "localProxyPoolInvalid": "Пул должен быть 0-9",
-  "proxy": "Прокси"
+  "proxy": "Прокси",
+  "wifiWatchTitle": "On Demand",
+  "wifiWatchSignal": "Signal: {rssi} dBm",
+  "wifiWatchNoWifi": "No WiFi",
+  "wifiWatchResolving": "Resolving SSID...",
+  "wifiWatchTrusted": "Trusted network",
+  "wifiWatchWillSuspend": "Suspend in {seconds}s",
+  "wifiWatchSuspendingNow": "Suspending...",
+  "wifiWatchListening": "Watching..."
 }

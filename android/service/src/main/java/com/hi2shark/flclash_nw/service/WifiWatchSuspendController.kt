@@ -10,6 +10,13 @@ internal class WifiWatchSuspendController(
         fun cancel()
     }
 
+    data class Status(
+        val ssid: String?,
+        val validated: Boolean,
+        val wifiPresent: Boolean,
+        val pendingSuspendDeadline: Long?,
+    )
+
     private val lock = Any()
     private var suspendOnWifiSsids: Set<String> = emptySet()
     private var wifiNetworkObserved = false
@@ -19,7 +26,17 @@ internal class WifiWatchSuspendController(
     private var wifiResolutionPending = false
     private var pendingSuspend: Cancellable? = null
     private var pendingResolutionFallback: Cancellable? = null
+    private var pendingSuspendDeadline: Long? = null
     private var generation = 0
+
+    fun currentStatus(): Status = synchronized(lock) {
+        Status(
+            ssid = wifiSsid,
+            validated = wifiValidated,
+            wifiPresent = wifiPresent,
+            pendingSuspendDeadline = pendingSuspendDeadline,
+        )
+    }
 
     fun updateSuspendOnWifiSsids(value: Set<String>) {
         val action = synchronized(lock) {
@@ -112,9 +129,12 @@ internal class WifiWatchSuspendController(
         }
 
         logLocked("schedule suspend in ${suspendDelayMillis}ms")
+        val deadline = System.currentTimeMillis() + suspendDelayMillis
+        pendingSuspendDeadline = deadline
         pendingSuspend = scheduler(suspendDelayMillis) {
             val action = synchronized(lock) {
                 pendingSuspend = null
+                pendingSuspendDeadline = null
                 val stillTrusted = currentGeneration == generation && isTrustedWifiLocked()
                 logLocked(
                     "delayed suspend fired generation=$currentGeneration " +
@@ -170,6 +190,7 @@ internal class WifiWatchSuspendController(
         }
         pendingSuspend?.cancel()
         pendingSuspend = null
+        pendingSuspendDeadline = null
     }
 
     private fun cancelResolutionFallbackLocked(reason: String) {

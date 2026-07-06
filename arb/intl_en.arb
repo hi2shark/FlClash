@@ -653,5 +653,13 @@
   "localProxyNowhereKeyEmpty": "Nowhere key is required",
   "localProxyCarrierInvalid": "Carrier must be tcp or udp",
   "localProxyPoolInvalid": "Pool must be 0-9",
-  "proxy": "Proxy"
+  "proxy": "Proxy",
+  "wifiWatchTitle": "On Demand",
+  "wifiWatchSignal": "Signal: {rssi} dBm",
+  "wifiWatchNoWifi": "No WiFi",
+  "wifiWatchResolving": "Resolving SSID...",
+  "wifiWatchTrusted": "Trusted network",
+  "wifiWatchWillSuspend": "Suspend in {seconds}s",
+  "wifiWatchSuspendingNow": "Suspending...",
+  "wifiWatchListening": "Watching..."
 }

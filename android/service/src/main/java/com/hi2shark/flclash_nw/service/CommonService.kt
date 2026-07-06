@@ -4,6 +4,8 @@ import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
+import com.google.gson.Gson
+import com.hi2shark.flclash_nw.service.WifiWatchState
 import com.hi2shark.flclash_nw.core.Core
 import com.hi2shark.flclash_nw.service.modules.NetworkObserveModule
 import com.hi2shark.flclash_nw.service.modules.NotificationModule
@@ -24,7 +26,23 @@ class CommonService : Service(), IBaseService,
         install(NetworkObserveModule(self))
         install(NotificationModule(self))
         install(SuspendModule(self))
-        install(WifiWatchModule(self))
+        val wifiWatchModule = install(WifiWatchModule(self))
+        this@CommonService.wifiWatchModule = wifiWatchModule
+    }
+
+    @Volatile
+    private var wifiWatchModule: WifiWatchModule? = null
+
+    override fun getWifiWatchStateJson(): String {
+        val state = wifiWatchModule?.currentState(isSuspended) ?: WifiWatchState(
+            ssid = null,
+            rssi = null,
+            validated = false,
+            wifiPresent = false,
+            suspended = isSuspended,
+            pendingSuspendDeadline = null,
+        )
+        return Gson().toJson(state)
     }
 
     override var isRunning: Boolean = false

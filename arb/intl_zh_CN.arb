@@ -653,5 +653,13 @@
   "localProxyNowhereKeyEmpty": "Nowhere 密钥不能为空",
   "localProxyCarrierInvalid": "传输层必须是 tcp 或 udp",
   "localProxyPoolInvalid": "连接池必须是 0-9",
-  "proxy": "节点"
+  "proxy": "节点",
+  "wifiWatchTitle": "按需运行",
+  "wifiWatchSignal": "信号：{rssi} dBm",
+  "wifiWatchNoWifi": "未连接 WiFi",
+  "wifiWatchResolving": "正在解析 SSID...",
+  "wifiWatchTrusted": "可信网络",
+  "wifiWatchWillSuspend": "{seconds} 秒后挂起",
+  "wifiWatchSuspendingNow": "正在挂起...",
+  "wifiWatchListening": "监听中..."
 }
