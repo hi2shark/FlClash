@@ -54,9 +54,9 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
         debouncer.call(FunctionTag.suspend, () async {
           final success = await () async {
             if (next == true) {
-              return await coreController.stopListener();
+              return coreController.stopListener();
             }
-            return await coreController.startListener();
+            return coreController.startListener();
           }();
           if (!success) {
             commonPrint.log(
