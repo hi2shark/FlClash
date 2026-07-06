@@ -167,7 +167,7 @@ class _CustomProxyGroupsViewState extends ConsumerState<CustomProxyGroupsView> {
                     globalState.measure.bodyLargeHeight +
                     globalState.measure.bodyMediumHeight +
                     16,
-                onReorder: (oldIndex, newIndex) {
+                onReorderItem: (oldIndex, newIndex) {
                   _handleReorder(oldIndex, newIndex);
                 },
               ),
