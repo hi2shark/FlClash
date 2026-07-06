@@ -106,6 +106,10 @@ class Service {
     return DateTime.fromMillisecondsSinceEpoch(ms);
   }
 
+  Future<String> getWifiWatchState() async {
+    return await methodChannel.invokeMethod<String>('getWifiWatchState') ?? '{}';
+  }
+
   bool get hasListeners {
     return _listeners.isNotEmpty;
   }
