@@ -77,11 +77,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m22(label) => "${label} must be a url";
 
-  static String m23(rssi) => "Signal: ${rssi} dBm";
+  static String m23(seconds) => "Suspend in ${seconds}s";
 
-  static String m24(seconds) => "Suspend in ${seconds}s";
+  static String m24(rssi) => "Signal: ${rssi} dBm";
 
-  static String m25(count) =>
+  static String m25(seconds) => "Suspend in ${seconds}s";
+
+  static String m26(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -301,6 +303,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "create": MessageLookupByLibrary.simpleMessage("Create"),
     "createProfile": MessageLookupByLibrary.simpleMessage("Create Profile"),
     "creationTime": MessageLookupByLibrary.simpleMessage("Creation time"),
+    "currentWifiConnection": MessageLookupByLibrary.simpleMessage(
+      "Current Connection",
+    ),
+    "currentWifiSignal": MessageLookupByLibrary.simpleMessage(
+      "Signal Strength",
+    ),
+    "currentWifiSsid": MessageLookupByLibrary.simpleMessage("SSID"),
+    "currentWifiStatus": MessageLookupByLibrary.simpleMessage("Status"),
     "custom": MessageLookupByLibrary.simpleMessage("Custom"),
     "cut": MessageLookupByLibrary.simpleMessage("Cut"),
     "cwnd": MessageLookupByLibrary.simpleMessage("CWND"),
@@ -1194,19 +1204,24 @@ class MessageLookup extends MessageLookupByLibrary {
       "WebDAV configuration",
     ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
+    "wifiWatchExcluded": MessageLookupByLibrary.simpleMessage("Excluded"),
+    "wifiWatchExcludedInactive": MessageLookupByLibrary.simpleMessage(
+      "Excluded (inactive)",
+    ),
+    "wifiWatchExcludedWillSuspend": m23,
     "wifiWatchListening": MessageLookupByLibrary.simpleMessage("Watching..."),
     "wifiWatchNoWifi": MessageLookupByLibrary.simpleMessage("No WiFi"),
     "wifiWatchResolving": MessageLookupByLibrary.simpleMessage(
       "Resolving SSID...",
     ),
-    "wifiWatchSignal": m23,
+    "wifiWatchSignal": m24,
     "wifiWatchSuspendingNow": MessageLookupByLibrary.simpleMessage(
       "Suspending...",
     ),
     "wifiWatchTitle": MessageLookupByLibrary.simpleMessage("On Demand"),
     "wifiWatchTrusted": MessageLookupByLibrary.simpleMessage("Trusted network"),
-    "wifiWatchWillSuspend": m24,
-    "yearsAgo": m25,
+    "wifiWatchWillSuspend": m25,
+    "yearsAgo": m26,
     "zh_CN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };
 }

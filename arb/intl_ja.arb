@@ -661,5 +661,12 @@
   "wifiWatchTrusted": "Trusted network",
   "wifiWatchWillSuspend": "Suspend in {seconds}s",
   "wifiWatchSuspendingNow": "Suspending...",
-  "wifiWatchListening": "Watching..."
+  "wifiWatchListening": "Watching...",
+  "currentWifiConnection": "現在の接続",
+  "currentWifiSsid": "SSID",
+  "currentWifiSignal": "信号強度",
+  "currentWifiStatus": "状態",
+  "wifiWatchExcluded": "除外対象",
+  "wifiWatchExcludedInactive": "除外対象（非アクティブ）",
+  "wifiWatchExcludedWillSuspend": "{seconds}秒後に一時停止"
 }

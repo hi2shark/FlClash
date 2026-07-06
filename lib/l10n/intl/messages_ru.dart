@@ -75,11 +75,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m22(label) => "${label} должен быть URL";
 
-  static String m23(rssi) => "Signal: ${rssi} dBm";
+  static String m23(seconds) => "Приостановка через ${seconds} с";
 
-  static String m24(seconds) => "Suspend in ${seconds}s";
+  static String m24(rssi) => "Signal: ${rssi} dBm";
 
-  static String m25(count) =>
+  static String m25(seconds) => "Suspend in ${seconds}s";
+
+  static String m26(count) =>
       "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -309,6 +311,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "create": MessageLookupByLibrary.simpleMessage("Создать"),
     "createProfile": MessageLookupByLibrary.simpleMessage("Create Profile"),
     "creationTime": MessageLookupByLibrary.simpleMessage("Время создания"),
+    "currentWifiConnection": MessageLookupByLibrary.simpleMessage(
+      "Текущее подключение",
+    ),
+    "currentWifiSignal": MessageLookupByLibrary.simpleMessage("Сила сигнала"),
+    "currentWifiSsid": MessageLookupByLibrary.simpleMessage("SSID"),
+    "currentWifiStatus": MessageLookupByLibrary.simpleMessage("Состояние"),
     "custom": MessageLookupByLibrary.simpleMessage("Пользовательский"),
     "cut": MessageLookupByLibrary.simpleMessage("Вырезать"),
     "cwnd": MessageLookupByLibrary.simpleMessage("CWND"),
@@ -1268,19 +1276,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
     ),
+    "wifiWatchExcluded": MessageLookupByLibrary.simpleMessage("Исключено"),
+    "wifiWatchExcludedInactive": MessageLookupByLibrary.simpleMessage(
+      "Исключено (неактивно)",
+    ),
+    "wifiWatchExcludedWillSuspend": m23,
     "wifiWatchListening": MessageLookupByLibrary.simpleMessage("Watching..."),
     "wifiWatchNoWifi": MessageLookupByLibrary.simpleMessage("No WiFi"),
     "wifiWatchResolving": MessageLookupByLibrary.simpleMessage(
       "Resolving SSID...",
     ),
-    "wifiWatchSignal": m23,
+    "wifiWatchSignal": m24,
     "wifiWatchSuspendingNow": MessageLookupByLibrary.simpleMessage(
       "Suspending...",
     ),
     "wifiWatchTitle": MessageLookupByLibrary.simpleMessage("On Demand"),
     "wifiWatchTrusted": MessageLookupByLibrary.simpleMessage("Trusted network"),
-    "wifiWatchWillSuspend": m24,
-    "yearsAgo": m25,
+    "wifiWatchWillSuspend": m25,
+    "yearsAgo": m26,
     "zh_CN": MessageLookupByLibrary.simpleMessage("Упрощенный китайский"),
   };
 }

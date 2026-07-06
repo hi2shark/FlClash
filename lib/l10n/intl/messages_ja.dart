@@ -68,11 +68,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m22(label) => "${label}はURLである必要があります";
 
-  static String m23(rssi) => "Signal: ${rssi} dBm";
+  static String m23(seconds) => "${seconds}秒後に一時停止";
 
-  static String m24(seconds) => "Suspend in ${seconds}s";
+  static String m24(rssi) => "Signal: ${rssi} dBm";
 
-  static String m25(count) => "${count}年前";
+  static String m25(seconds) => "Suspend in ${seconds}s";
+
+  static String m26(count) => "${count}年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -235,6 +237,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "create": MessageLookupByLibrary.simpleMessage("作成"),
     "createProfile": MessageLookupByLibrary.simpleMessage("Create Profile"),
     "creationTime": MessageLookupByLibrary.simpleMessage("作成時間"),
+    "currentWifiConnection": MessageLookupByLibrary.simpleMessage("現在の接続"),
+    "currentWifiSignal": MessageLookupByLibrary.simpleMessage("信号強度"),
+    "currentWifiSsid": MessageLookupByLibrary.simpleMessage("SSID"),
+    "currentWifiStatus": MessageLookupByLibrary.simpleMessage("状態"),
     "custom": MessageLookupByLibrary.simpleMessage("カスタム"),
     "cut": MessageLookupByLibrary.simpleMessage("切り取り"),
     "cwnd": MessageLookupByLibrary.simpleMessage("CWND"),
@@ -970,19 +976,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnTip": MessageLookupByLibrary.simpleMessage("変更はVPN再起動後に有効"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
+    "wifiWatchExcluded": MessageLookupByLibrary.simpleMessage("除外対象"),
+    "wifiWatchExcludedInactive": MessageLookupByLibrary.simpleMessage(
+      "除外対象（非アクティブ）",
+    ),
+    "wifiWatchExcludedWillSuspend": m23,
     "wifiWatchListening": MessageLookupByLibrary.simpleMessage("Watching..."),
     "wifiWatchNoWifi": MessageLookupByLibrary.simpleMessage("No WiFi"),
     "wifiWatchResolving": MessageLookupByLibrary.simpleMessage(
       "Resolving SSID...",
     ),
-    "wifiWatchSignal": m23,
+    "wifiWatchSignal": m24,
     "wifiWatchSuspendingNow": MessageLookupByLibrary.simpleMessage(
       "Suspending...",
     ),
     "wifiWatchTitle": MessageLookupByLibrary.simpleMessage("On Demand"),
     "wifiWatchTrusted": MessageLookupByLibrary.simpleMessage("Trusted network"),
-    "wifiWatchWillSuspend": m24,
-    "yearsAgo": m25,
+    "wifiWatchWillSuspend": m25,
+    "yearsAgo": m26,
     "zh_CN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
   };
 }

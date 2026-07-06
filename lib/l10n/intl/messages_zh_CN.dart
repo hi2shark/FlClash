@@ -68,11 +68,13 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m22(label) => "${label}必须为URL";
 
-  static String m23(rssi) => "信号：${rssi} dBm";
+  static String m23(seconds) => "${seconds} 秒后挂起";
 
-  static String m24(seconds) => "${seconds} 秒后挂起";
+  static String m24(rssi) => "信号：${rssi} dBm";
 
-  static String m25(count) => "${count} 年前";
+  static String m25(seconds) => "${seconds} 秒后挂起";
+
+  static String m26(count) => "${count} 年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -211,6 +213,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "create": MessageLookupByLibrary.simpleMessage("创建"),
     "createProfile": MessageLookupByLibrary.simpleMessage("创建配置"),
     "creationTime": MessageLookupByLibrary.simpleMessage("创建时间"),
+    "currentWifiConnection": MessageLookupByLibrary.simpleMessage("当前连接"),
+    "currentWifiSignal": MessageLookupByLibrary.simpleMessage("信号强度"),
+    "currentWifiSsid": MessageLookupByLibrary.simpleMessage("SSID"),
+    "currentWifiStatus": MessageLookupByLibrary.simpleMessage("状态"),
     "custom": MessageLookupByLibrary.simpleMessage("自定义"),
     "cut": MessageLookupByLibrary.simpleMessage("剪切"),
     "cwnd": MessageLookupByLibrary.simpleMessage("CWND"),
@@ -836,15 +842,20 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnTip": MessageLookupByLibrary.simpleMessage("重启VPN后改变生效"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV配置"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
+    "wifiWatchExcluded": MessageLookupByLibrary.simpleMessage("已命中排除"),
+    "wifiWatchExcludedInactive": MessageLookupByLibrary.simpleMessage(
+      "已命中排除（未生效）",
+    ),
+    "wifiWatchExcludedWillSuspend": m23,
     "wifiWatchListening": MessageLookupByLibrary.simpleMessage("监听中..."),
     "wifiWatchNoWifi": MessageLookupByLibrary.simpleMessage("未连接 WiFi"),
     "wifiWatchResolving": MessageLookupByLibrary.simpleMessage("正在解析 SSID..."),
-    "wifiWatchSignal": m23,
+    "wifiWatchSignal": m24,
     "wifiWatchSuspendingNow": MessageLookupByLibrary.simpleMessage("正在挂起..."),
     "wifiWatchTitle": MessageLookupByLibrary.simpleMessage("按需运行"),
     "wifiWatchTrusted": MessageLookupByLibrary.simpleMessage("可信网络"),
-    "wifiWatchWillSuspend": m24,
-    "yearsAgo": m25,
+    "wifiWatchWillSuspend": m25,
+    "yearsAgo": m26,
     "zh_CN": MessageLookupByLibrary.simpleMessage("中文简体"),
   };
 }

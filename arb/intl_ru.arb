@@ -661,5 +661,12 @@
   "wifiWatchTrusted": "Trusted network",
   "wifiWatchWillSuspend": "Suspend in {seconds}s",
   "wifiWatchSuspendingNow": "Suspending...",
-  "wifiWatchListening": "Watching..."
+  "wifiWatchListening": "Watching...",
+  "currentWifiConnection": "Текущее подключение",
+  "currentWifiSsid": "SSID",
+  "currentWifiSignal": "Сила сигнала",
+  "currentWifiStatus": "Состояние",
+  "wifiWatchExcluded": "Исключено",
+  "wifiWatchExcludedInactive": "Исключено (неактивно)",
+  "wifiWatchExcludedWillSuspend": "Приостановка через {seconds} с"
 }
