@@ -527,6 +527,8 @@
   "batteryOptimizationStatusTip": "受系统影响，不代表一定准确",
   "locationPermission": "位置权限",
   "locationPermissionDesc": "根据系统要求，获取Wi-Fi名称需要您授予位置权限。",
+  "backgroundLocationPermission": "后台位置权限",
+  "backgroundLocationPermissionDesc": "应用处于后台时获取 Wi-Fi 名称，确保按需运行能够正常触发。",
   "excludeSsids": "排除SSIDs",
   "excludeSsidsDesc": "连接到被排除SSID的WIFI时，将会自动切换应用运行状态",
   "ssidsEmpty": "SSIDs为空",

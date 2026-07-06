@@ -490,8 +490,10 @@ class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
       }
       final json = jsonDecode(data) as Map<String, dynamic>;
       value = WifiWatchState.fromJson(json).copyWith(rawSsid: rawSsid);
-    } catch (_) {
-      // Keep the previous state on failure so the UI does not flicker.
+    } catch (e, stack) {
+      // Keep the previous state on failure so the UI does not flicker, but
+      // log the error so malformed service JSON does not stay hidden.
+      commonPrint.log('WifiWatch fetch failed: $e\n$stack');
     }
   }
 }
@@ -507,6 +509,15 @@ class BatteryOptimizationDisable extends _$BatteryOptimizationDisable
 
 @Riverpod(keepAlive: true)
 class LocationPermissions extends _$LocationPermissions
+    with AutoDisposeNotifierMixin {
+  @override
+  WifiSsidPermission build() {
+    return WifiSsidPermission.denied;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class BackgroundLocationPermissions extends _$BackgroundLocationPermissions
     with AutoDisposeNotifierMixin {
   @override
   WifiSsidPermission build() {

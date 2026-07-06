@@ -35,6 +35,7 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     private var wifiManager: WifiManager? = null
     private var connectivityManager: ConnectivityManager? = null
     private var pendingPermissionResult: Result? = null
+    private var pendingBackgroundPermissionResult: Result? = null
     private var eventSink: EventChannel.EventSink? = null
     private var wifiNetworkCallback: ConnectivityManager.NetworkCallback? = null
     private val wifiNetworksLock = Any()
@@ -46,6 +47,7 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     companion object {
         private const val TAG = "WifiSsidPlugin"
         private const val REQUEST_CODE_LOCATION = 1001
+        private const val REQUEST_CODE_BACKGROUND_LOCATION = 1002
         // Values must match WifiSsidPermission enum index in Dart
         private const val PERMISSION_GRANTED = 0
         private const val PERMISSION_DENIED = 1
@@ -86,22 +88,39 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
-        binding.addRequestPermissionsResultListener { requestCode, _, grantResults ->
-            if (requestCode == REQUEST_CODE_LOCATION) {
-                val result = pendingPermissionResult ?: return@addRequestPermissionsResultListener false
-                pendingPermissionResult = null
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    result.success(PERMISSION_GRANTED)
-                } else {
-                    if (!ActivityCompat.shouldShowRequestPermissionRationale(binding.activity, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                        result.success(PERMISSION_PERMANENTLY_DENIED)
+        binding.addRequestPermissionsResultListener { requestCode, permissions, grantResults ->
+            when (requestCode) {
+                REQUEST_CODE_LOCATION -> {
+                    val result = pendingPermissionResult ?: return@addRequestPermissionsResultListener false
+                    pendingPermissionResult = null
+                    if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        result.success(PERMISSION_GRANTED)
                     } else {
-                        result.success(PERMISSION_DENIED)
+                        if (!ActivityCompat.shouldShowRequestPermissionRationale(binding.activity, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                            result.success(PERMISSION_PERMANENTLY_DENIED)
+                        } else {
+                            result.success(PERMISSION_DENIED)
+                        }
                     }
+                    true
                 }
-                true
-            } else {
-                false
+                REQUEST_CODE_BACKGROUND_LOCATION -> {
+                    val result = pendingBackgroundPermissionResult ?: return@addRequestPermissionsResultListener false
+                    pendingBackgroundPermissionResult = null
+                    val index = permissions?.indexOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION) ?: -1
+                    val granted = index >= 0 && index < grantResults.size && grantResults[index] == PackageManager.PERMISSION_GRANTED
+                    if (granted) {
+                        result.success(PERMISSION_GRANTED)
+                    } else {
+                        if (!ActivityCompat.shouldShowRequestPermissionRationale(binding.activity, Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+                            result.success(PERMISSION_PERMANENTLY_DENIED)
+                        } else {
+                            result.success(PERMISSION_DENIED)
+                        }
+                    }
+                    true
+                }
+                else -> false
             }
         }
     }
@@ -123,6 +142,8 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
             "getSsid" -> getSsid(result)
             "checkPermission" -> checkPermission(result)
             "requestPermission" -> requestPermission(result)
+            "checkBackgroundPermission" -> checkBackgroundPermission(result)
+            "requestBackgroundPermission" -> requestBackgroundPermission(result)
             else -> result.notImplemented()
         }
     }
@@ -163,6 +184,40 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         }
         pendingPermissionResult = result
         ActivityCompat.requestPermissions(act, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_CODE_LOCATION)
+    }
+
+    private fun checkBackgroundPermission(result: Result) {
+        val ctx = context ?: run {
+            result.error("UNAVAILABLE", "Context not available", null)
+            return
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            result.success(PERMISSION_GRANTED)
+            return
+        }
+        val granted = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
+        result.success(if (granted) PERMISSION_GRANTED else PERMISSION_DENIED)
+    }
+
+    private fun requestBackgroundPermission(result: Result) {
+        val act = activity ?: run {
+            result.error("UNAVAILABLE", "Activity not available", null)
+            return
+        }
+        val ctx = context ?: run {
+            result.error("UNAVAILABLE", "Context not available", null)
+            return
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            result.success(PERMISSION_GRANTED)
+            return
+        }
+        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            result.success(PERMISSION_GRANTED)
+            return
+        }
+        pendingBackgroundPermissionResult = result
+        ActivityCompat.requestPermissions(act, arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), REQUEST_CODE_BACKGROUND_LOCATION)
     }
 
     // MARK: - SSID

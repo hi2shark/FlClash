@@ -343,6 +343,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "根据系统要求，获取Wi-Fi名称需要您授予位置权限。",
     ),
+    "backgroundLocationPermission": MessageLookupByLibrary.simpleMessage(
+      "后台位置权限",
+    ),
+    "backgroundLocationPermissionDesc": MessageLookupByLibrary.simpleMessage(
+      "应用处于后台时获取 Wi-Fi 名称，确保按需运行能够正常触发。",
+    ),
     "locationPermissionGuide": m11,
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "需要位置权限",

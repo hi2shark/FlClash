@@ -527,6 +527,8 @@
   "batteryOptimizationStatusTip": "Из-за особенностей системы этот статус не всегда может быть точным.",
   "locationPermission": "Location Permission",
   "locationPermissionDesc": "According to system requirements, obtaining the Wi-Fi name requires you to grant location permission.",
+  "backgroundLocationPermission": "Background Location Permission",
+  "backgroundLocationPermissionDesc": "Required to obtain the Wi-Fi name while the app is in the background, so that On Demand can trigger reliably.",
   "excludeSsids": "Exclude SSIDs",
   "excludeSsidsDesc": "When connected to an excluded SSID Wi-Fi, the app running state will be automatically switched.",
   "ssidsEmpty": "SSIDs is empty",
