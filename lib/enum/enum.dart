@@ -309,7 +309,7 @@ enum DashboardWidget {
     platforms: [SupportPlatform.Android],
   ),
   wifiWatchCard(
-    GridItem(crossAxisCellCount: 4, child: WifiWatchCard()),
+    GridItem(crossAxisCellCount: 8, child: WifiWatchCard()),
     platforms: [SupportPlatform.Android],
   ),
   systemProxyButton(
