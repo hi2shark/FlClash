@@ -545,5 +545,12 @@
   "wifiWatchTrusted": "Trusted network",
   "wifiWatchWillSuspend": "Suspend in {seconds}s",
   "wifiWatchSuspendingNow": "Suspending...",
-  "wifiWatchListening": "Watching..."
+  "wifiWatchListening": "Watching...",
+  "currentWifiConnection": "Current Connection",
+  "currentWifiSsid": "SSID",
+  "currentWifiSignal": "Signal Strength",
+  "currentWifiStatus": "Status",
+  "wifiWatchExcluded": "Excluded",
+  "wifiWatchExcludedInactive": "Excluded (inactive)",
+  "wifiWatchExcludedWillSuspend": "Suspend in {seconds}s"
 }

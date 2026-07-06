@@ -4448,6 +4448,66 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Current Connection`
+  String get currentWifiConnection {
+    return Intl.message(
+      'Current Connection',
+      name: 'currentWifiConnection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `SSID`
+  String get currentWifiSsid {
+    return Intl.message('SSID', name: 'currentWifiSsid', desc: '', args: []);
+  }
+
+  /// `Signal Strength`
+  String get currentWifiSignal {
+    return Intl.message(
+      'Signal Strength',
+      name: 'currentWifiSignal',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Status`
+  String get currentWifiStatus {
+    return Intl.message('Status', name: 'currentWifiStatus', desc: '', args: []);
+  }
+
+  /// `Excluded`
+  String get wifiWatchExcluded {
+    return Intl.message(
+      'Excluded',
+      name: 'wifiWatchExcluded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Excluded (inactive)`
+  String get wifiWatchExcludedInactive {
+    return Intl.message(
+      'Excluded (inactive)',
+      name: 'wifiWatchExcludedInactive',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Suspend in {seconds}s`
+  String wifiWatchExcludedWillSuspend(String seconds) {
+    return Intl.message(
+      'Suspend in ${seconds}s',
+      name: 'wifiWatchExcludedWillSuspend',
+      desc: '',
+      args: [seconds],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

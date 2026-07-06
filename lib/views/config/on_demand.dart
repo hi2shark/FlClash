@@ -4,6 +4,7 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -111,6 +112,116 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       nextItems.insert(newIndex, item);
       return nextItems;
     });
+  }
+
+  IconData _signalIcon(int? rssi) {
+    if (rssi == null) return Icons.signal_wifi_0_bar;
+    if (rssi >= -55) return Icons.signal_wifi_4_bar;
+    if (rssi >= -70) return Icons.wifi;
+    return Icons.signal_wifi_0_bar;
+  }
+
+  Color _signalColor(BuildContext context, int? rssi) {
+    if (rssi == null) return context.colorScheme.outline;
+    if (rssi >= -60) return Colors.green;
+    if (rssi >= -75) return Colors.orange;
+    return context.colorScheme.error;
+  }
+
+  String _currentWifiStatus(
+    BuildContext context,
+    WifiWatchState state,
+    bool isExcluded,
+  ) {
+    final appLocalizations = context.appLocalizations;
+    if (state.suspended) {
+      return appLocalizations.suspended;
+    }
+    final deadline = state.pendingSuspendDeadline;
+    if (deadline != null) {
+      final remaining = deadline.difference(DateTime.now()).inSeconds;
+      if (remaining <= 0) {
+        return appLocalizations.wifiWatchSuspendingNow;
+      }
+      if (isExcluded) {
+        return appLocalizations.wifiWatchExcludedWillSuspend(
+          remaining.toString(),
+        );
+      }
+      return appLocalizations.wifiWatchWillSuspend(remaining.toString());
+    }
+    if (!state.wifiPresent) {
+      return appLocalizations.wifiWatchNoWifi;
+    }
+    if (state.ssid == null) {
+      return appLocalizations.wifiWatchResolving;
+    }
+    if (isExcluded) {
+      return state.validated
+          ? appLocalizations.wifiWatchExcluded
+          : appLocalizations.wifiWatchExcludedInactive;
+    }
+    if (state.validated) {
+      return appLocalizations.wifiWatchTrusted;
+    }
+    return appLocalizations.wifiWatchListening;
+  }
+
+  Widget _buildCurrentWifiSection() {
+    return SliverPadding(
+      padding: const EdgeInsets.only(top: 16),
+      sliver: SliverToBoxAdapter(
+        child: Consumer(
+          builder: (context, ref, _) {
+            final appLocalizations = context.appLocalizations;
+            final state = ref.watch(wifiWatchProvider);
+            final excludeSSIDs = ref.watch(excludeSSIDsProvider);
+            final ssid = state.ssid ?? state.rawSsid;
+            final hasNetwork = ssid != null;
+            final isExcluded = hasNetwork && excludeSSIDs.contains(ssid);
+            return generateSectionV3(
+              title: appLocalizations.currentWifiConnection,
+              items: [
+                DecorationListItem(
+                  title: Text(appLocalizations.currentWifiSsid),
+                  trailing: Text(
+                    hasNetwork ? ssid : appLocalizations.wifiWatchNoWifi,
+                    style: context.textTheme.bodyMedium?.toLight,
+                  ),
+                ),
+                DecorationListItem(
+                  title: Text(appLocalizations.currentWifiSignal),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (state.rssi != null) ...[
+                        Icon(
+                          _signalIcon(state.rssi),
+                          size: 16.ap,
+                          color: _signalColor(context, state.rssi),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      Text(
+                        state.rssi != null ? '${state.rssi} dBm' : '-',
+                        style: context.textTheme.bodyMedium?.toLight,
+                      ),
+                    ],
+                  ),
+                ),
+                DecorationListItem(
+                  title: Text(appLocalizations.currentWifiStatus),
+                  trailing: Text(
+                    _currentWifiStatus(context, state, isExcluded),
+                    style: context.textTheme.bodyMedium?.toLight,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
   }
 
   Widget _buildItem({
@@ -272,6 +383,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
               ),
             ),
           ),
+          _buildCurrentWifiSection(),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverToBoxAdapter(

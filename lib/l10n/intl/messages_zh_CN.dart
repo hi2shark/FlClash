@@ -720,6 +720,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "wifiWatchTitle": MessageLookupByLibrary.simpleMessage("按需运行"),
     "wifiWatchTrusted": MessageLookupByLibrary.simpleMessage("可信网络"),
     "wifiWatchWillSuspend": (seconds) => "${seconds} 秒后挂起",
+    "currentWifiConnection": MessageLookupByLibrary.simpleMessage("当前连接"),
+    "currentWifiSsid": MessageLookupByLibrary.simpleMessage("SSID"),
+    "currentWifiSignal": MessageLookupByLibrary.simpleMessage("信号强度"),
+    "currentWifiStatus": MessageLookupByLibrary.simpleMessage("状态"),
+    "wifiWatchExcluded": MessageLookupByLibrary.simpleMessage("已命中排除"),
+    "wifiWatchExcludedInactive": MessageLookupByLibrary.simpleMessage("已命中排除（未生效）"),
+    "wifiWatchExcludedWillSuspend": (seconds) => "${seconds} 秒后挂起",
     "yearsAgo": m19,
     "zh_CN": MessageLookupByLibrary.simpleMessage("中文简体"),
   };

@@ -545,5 +545,12 @@
   "wifiWatchTrusted": "可信网络",
   "wifiWatchWillSuspend": "{seconds} 秒后挂起",
   "wifiWatchSuspendingNow": "正在挂起...",
-  "wifiWatchListening": "监听中..."
+  "wifiWatchListening": "监听中...",
+  "currentWifiConnection": "当前连接",
+  "currentWifiSsid": "SSID",
+  "currentWifiSignal": "信号强度",
+  "currentWifiStatus": "状态",
+  "wifiWatchExcluded": "已命中排除",
+  "wifiWatchExcludedInactive": "已命中排除（未生效）",
+  "wifiWatchExcludedWillSuspend": "{seconds} 秒后挂起"
 }

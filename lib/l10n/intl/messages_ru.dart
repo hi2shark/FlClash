@@ -1095,6 +1095,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "wifiWatchTitle": MessageLookupByLibrary.simpleMessage("On Demand"),
     "wifiWatchTrusted": MessageLookupByLibrary.simpleMessage("Trusted network"),
     "wifiWatchWillSuspend": (seconds) => "Suspend in ${seconds}s",
+    "currentWifiConnection": MessageLookupByLibrary.simpleMessage("Текущее подключение"),
+    "currentWifiSsid": MessageLookupByLibrary.simpleMessage("SSID"),
+    "currentWifiSignal": MessageLookupByLibrary.simpleMessage("Сила сигнала"),
+    "currentWifiStatus": MessageLookupByLibrary.simpleMessage("Состояние"),
+    "wifiWatchExcluded": MessageLookupByLibrary.simpleMessage("Исключено"),
+    "wifiWatchExcludedInactive": MessageLookupByLibrary.simpleMessage("Исключено (неактивно)"),
+    "wifiWatchExcludedWillSuspend": (seconds) => "Приостановка через ${seconds} с",
     "yearsAgo": m19,
     "zh_CN": MessageLookupByLibrary.simpleMessage("Упрощенный китайский"),
   };

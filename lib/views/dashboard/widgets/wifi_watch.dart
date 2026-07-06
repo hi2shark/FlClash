@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,16 @@ class WifiWatchCard extends StatelessWidget {
     return Icons.signal_wifi_0_bar;
   }
 
-  Color _signalColor(BuildContext context, int? rssi, bool hasNetwork) {
+  Color _signalColor(
+    BuildContext context,
+    int? rssi,
+    bool hasNetwork,
+    bool isExcluded,
+    bool validated,
+  ) {
+    if (isExcluded && validated) {
+      return context.colorScheme.error;
+    }
     if (rssi == null) {
       return hasNetwork
           ? context.colorScheme.primary
@@ -29,7 +39,11 @@ class WifiWatchCard extends StatelessWidget {
     return context.colorScheme.error;
   }
 
-  String _statusText(BuildContext context, WifiWatchState state) {
+  String _statusText(
+    BuildContext context,
+    WifiWatchState state,
+    bool isExcluded,
+  ) {
     final appLocalizations = context.appLocalizations;
     if (state.suspended) {
       return appLocalizations.suspended;
@@ -40,6 +54,11 @@ class WifiWatchCard extends StatelessWidget {
       if (remaining <= 0) {
         return appLocalizations.wifiWatchSuspendingNow;
       }
+      if (isExcluded) {
+        return appLocalizations.wifiWatchExcludedWillSuspend(
+          remaining.toString(),
+        );
+      }
       return appLocalizations.wifiWatchWillSuspend(remaining.toString());
     }
     if (!state.wifiPresent) {
@@ -47,6 +66,11 @@ class WifiWatchCard extends StatelessWidget {
     }
     if (state.ssid == null) {
       return appLocalizations.wifiWatchResolving;
+    }
+    if (isExcluded) {
+      return state.validated
+          ? appLocalizations.wifiWatchExcluded
+          : appLocalizations.wifiWatchExcludedInactive;
     }
     if (state.validated) {
       return appLocalizations.wifiWatchTrusted;
@@ -78,11 +102,14 @@ class WifiWatchCard extends StatelessWidget {
                   builder: (_, ref, __) {
                     final state = ref.watch(wifiWatchProvider);
                     final currentSsid = ref.watch(currentSSIDProvider);
+                    final excludeSSIDs = ref.watch(excludeSSIDsProvider);
                     final ssid = state.ssid ?? state.rawSsid ?? currentSsid;
                     final hasServiceInfo =
                         state.wifiPresent || state.suspended || state.pendingSuspendDeadline != null;
-                    final status = _statusText(context, state);
                     final hasNetwork = ssid != null;
+                    final isExcluded =
+                        hasNetwork && excludeSSIDs.contains(ssid);
+                    final status = _statusText(context, state, isExcluded);
                     final display = hasServiceInfo && hasNetwork
                         ? '$ssid · $status'
                         : (hasNetwork ? ssid : status);
@@ -92,7 +119,13 @@ class WifiWatchCard extends StatelessWidget {
                           Icon(
                             _signalIcon(state.rssi, hasNetwork),
                             size: 16.ap,
-                            color: _signalColor(context, state.rssi, hasNetwork),
+                            color: _signalColor(
+                              context,
+                              state.rssi,
+                              hasNetwork,
+                              isExcluded,
+                              state.validated,
+                            ),
                           ),
                           const SizedBox(width: 6),
                           Expanded(
