@@ -13,6 +13,7 @@ import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.service.IBaseService
 import com.hi2shark.flclash_nw.service.State
+import com.hi2shark.flclash_nw.service.WifiWatchState
 import com.hi2shark.flclash_nw.service.WifiWatchSuspendController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
