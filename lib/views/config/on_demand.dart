@@ -8,6 +8,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/views/profiles/overwrite/custom/widgets.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
@@ -20,6 +21,16 @@ class OnDemandView extends ConsumerStatefulWidget {
 
 class _OnDemandViewState extends ConsumerState<OnDemandView>
     with UniqueKeyStateMixin {
+  Future<void> _handleCopySsid(BuildContext context, String? ssid) async {
+    if (ssid == null || ssid.isEmpty) {
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: ssid));
+    if (context.mounted) {
+      context.showNotifier(context.appLocalizations.copySuccess);
+    }
+  }
+
   void _handlePermanentlyDeniedLocationPermission() {
     if (system.isMacOS) {
       final appLocalizations = context.appLocalizations;
@@ -223,6 +234,8 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                             : appLocalizations.wifiWatchNoWifi),
                     style: context.textTheme.bodyMedium?.toLight,
                   ),
+                  onPressed:
+                      hasSsid ? () => _handleCopySsid(context, ssid) : null,
                 ),
                 DecorationListItem(
                   title: Text(appLocalizations.currentWifiSignal),
