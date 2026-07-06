@@ -206,4 +206,10 @@ object Service {
             it.suspended
         }.getOrNull() ?: false
     }
+
+    suspend fun getWifiWatchState(): String {
+        return delegate.useService {
+            it.wifiWatchState
+        }.getOrNull() ?: "{}"
+    }
 }

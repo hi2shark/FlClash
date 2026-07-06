@@ -4378,6 +4378,76 @@ class AppLocalizations {
   String get suspended {
     return Intl.message('Suspended...', name: 'suspended', desc: '', args: []);
   }
+
+  /// `On Demand`
+  String get wifiWatchTitle {
+    return Intl.message('On Demand', name: 'wifiWatchTitle', desc: '', args: []);
+  }
+
+  /// `Signal: {rssi} dBm`
+  String wifiWatchSignal(String rssi) {
+    return Intl.message(
+      'Signal: $rssi dBm',
+      name: 'wifiWatchSignal',
+      desc: '',
+      args: [rssi],
+    );
+  }
+
+  /// `No WiFi`
+  String get wifiWatchNoWifi {
+    return Intl.message('No WiFi', name: 'wifiWatchNoWifi', desc: '', args: []);
+  }
+
+  /// `Resolving SSID...`
+  String get wifiWatchResolving {
+    return Intl.message(
+      'Resolving SSID...',
+      name: 'wifiWatchResolving',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Trusted network`
+  String get wifiWatchTrusted {
+    return Intl.message(
+      'Trusted network',
+      name: 'wifiWatchTrusted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Suspend in {seconds}s`
+  String wifiWatchWillSuspend(String seconds) {
+    return Intl.message(
+      'Suspend in ${seconds}s',
+      name: 'wifiWatchWillSuspend',
+      desc: '',
+      args: [seconds],
+    );
+  }
+
+  /// `Suspending...`
+  String get wifiWatchSuspendingNow {
+    return Intl.message(
+      'Suspending...',
+      name: 'wifiWatchSuspendingNow',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Watching...`
+  String get wifiWatchListening {
+    return Intl.message(
+      'Watching...',
+      name: 'wifiWatchListening',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

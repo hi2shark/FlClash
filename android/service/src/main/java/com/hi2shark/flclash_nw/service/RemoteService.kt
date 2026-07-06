@@ -263,6 +263,12 @@ class RemoteService : Service(),
         override fun getSuspended(): Boolean {
             return State.runtimeState.isSuspended
         }
+
+        override fun getWifiWatchState(): String {
+            return delegate?.useService { service ->
+                service.getWifiWatchStateJson()
+            }?.getOrNull() ?: "{}"
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder {

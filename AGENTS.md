@@ -116,7 +116,7 @@ Go core key files: `core/hub.go` (handler functions), `core/action.go` (dispatch
 
 Provider files in `lib/providers/`:
 
-- `app.dart` - Runtime/UI state (logs, traffic, delays, loading, navigation)
+- `app.dart` - Runtime/UI state (logs, traffic, delays, loading, navigation, Android WiFi-watch/on-demand state via `wifiWatchProvider`)
 - `config.dart` - Persistent config providers (app settings, theme, VPN, proxy style)
 - `state.dart` - Derived/computed providers (navigation, proxy, tray, color scheme)
 - `action.dart` - Business logic notifiers (setup, backup, core lifecycle, proxy selection)

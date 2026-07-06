@@ -537,5 +537,13 @@
   "editSsid": "编辑SSID",
   "authorized": "已授权",
   "tapToAuthorize": "点击授权",
-  "suspended": "挂起中..."
+  "suspended": "挂起中...",
+  "wifiWatchTitle": "按需运行",
+  "wifiWatchSignal": "信号：{rssi} dBm",
+  "wifiWatchNoWifi": "未连接 WiFi",
+  "wifiWatchResolving": "正在解析 SSID...",
+  "wifiWatchTrusted": "可信网络",
+  "wifiWatchWillSuspend": "{seconds} 秒后挂起",
+  "wifiWatchSuspendingNow": "正在挂起...",
+  "wifiWatchListening": "监听中..."
 }

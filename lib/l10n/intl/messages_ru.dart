@@ -1087,6 +1087,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
     ),
+    "wifiWatchListening": MessageLookupByLibrary.simpleMessage("Watching..."),
+    "wifiWatchNoWifi": MessageLookupByLibrary.simpleMessage("No WiFi"),
+    "wifiWatchResolving": MessageLookupByLibrary.simpleMessage("Resolving SSID..."),
+    "wifiWatchSignal": (rssi) => "Signal: ${rssi} dBm",
+    "wifiWatchSuspendingNow": MessageLookupByLibrary.simpleMessage("Suspending..."),
+    "wifiWatchTitle": MessageLookupByLibrary.simpleMessage("On Demand"),
+    "wifiWatchTrusted": MessageLookupByLibrary.simpleMessage("Trusted network"),
+    "wifiWatchWillSuspend": (seconds) => "Suspend in ${seconds}s",
     "yearsAgo": m19,
     "zh_CN": MessageLookupByLibrary.simpleMessage("Упрощенный китайский"),
   };

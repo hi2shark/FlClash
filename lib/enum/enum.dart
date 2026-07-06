@@ -308,6 +308,10 @@ enum DashboardWidget {
     GridItem(crossAxisCellCount: 4, child: VpnButton()),
     platforms: [SupportPlatform.Android],
   ),
+  wifiWatchCard(
+    GridItem(crossAxisCellCount: 4, child: WifiWatchCard()),
+    platforms: [SupportPlatform.Android],
+  ),
   systemProxyButton(
     GridItem(crossAxisCellCount: 4, child: SystemProxyButton()),
     platforms: desktopPlatforms,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -6,6 +7,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -448,6 +450,41 @@ class CurrentSSID extends _$CurrentSSID with AutoDisposeNotifierMixin {
   @override
   String? build() {
     return null;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
+  Timer? _timer;
+
+  @override
+  WifiWatchState build() {
+    if (!system.isAndroid) {
+      return const WifiWatchState();
+    }
+    _fetch();
+    _timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _fetch(),
+    );
+    ref.onDispose(() {
+      _timer?.cancel();
+      _timer = null;
+    });
+    return const WifiWatchState();
+  }
+
+  Future<void> _fetch() async {
+    try {
+      final data = await service?.getWifiWatchState();
+      if (data == null || data.isEmpty) {
+        return;
+      }
+      final json = jsonDecode(data) as Map<String, dynamic>;
+      value = WifiWatchState.fromJson(json);
+    } catch (_) {
+      // Keep the previous state on failure so the UI does not flicker.
+    }
   }
 }
 

@@ -537,5 +537,13 @@
   "editSsid": "SSIDを編集",
   "authorized": "許可済み",
   "tapToAuthorize": "タップして許可",
-  "suspended": "一時停止中..."
+  "suspended": "一時停止中...",
+  "wifiWatchTitle": "On Demand",
+  "wifiWatchSignal": "Signal: {rssi} dBm",
+  "wifiWatchNoWifi": "No WiFi",
+  "wifiWatchResolving": "Resolving SSID...",
+  "wifiWatchTrusted": "Trusted network",
+  "wifiWatchWillSuspend": "Suspend in {seconds}s",
+  "wifiWatchSuspendingNow": "Suspending...",
+  "wifiWatchListening": "Watching..."
 }

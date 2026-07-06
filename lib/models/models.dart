@@ -5,3 +5,4 @@ export 'config.dart';
 export 'core.dart';
 export 'profile.dart';
 export 'state.dart';
+export 'wifi_watch_state.dart';

@@ -537,5 +537,13 @@
   "editSsid": "Изменить SSID",
   "authorized": "Разрешено",
   "tapToAuthorize": "Нажмите, чтобы разрешить",
-  "suspended": "Приостановлено..."
+  "suspended": "Приостановлено...",
+  "wifiWatchTitle": "On Demand",
+  "wifiWatchSignal": "Signal: {rssi} dBm",
+  "wifiWatchNoWifi": "No WiFi",
+  "wifiWatchResolving": "Resolving SSID...",
+  "wifiWatchTrusted": "Trusted network",
+  "wifiWatchWillSuspend": "Suspend in {seconds}s",
+  "wifiWatchSuspendingNow": "Suspending...",
+  "wifiWatchListening": "Watching..."
 }

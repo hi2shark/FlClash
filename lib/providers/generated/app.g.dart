@@ -1916,6 +1916,58 @@ abstract class _$CurrentSSID extends $Notifier<String?> {
   }
 }
 
+@ProviderFor(WifiWatch)
+final wifiWatchProvider = WifiWatchProvider._();
+
+final class WifiWatchProvider
+    extends $NotifierProvider<WifiWatch, WifiWatchState> {
+  WifiWatchProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'wifiWatchProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$wifiWatchHash();
+
+  @$internal
+  @override
+  WifiWatch create() => WifiWatch();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WifiWatchState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WifiWatchState>(value),
+    );
+  }
+}
+
+String _$wifiWatchHash() => r'0000000000000000000000000000000000000000';
+
+abstract class _$WifiWatch extends $Notifier<WifiWatchState> {
+  WifiWatchState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<WifiWatchState, WifiWatchState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<WifiWatchState, WifiWatchState>,
+              WifiWatchState,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(BatteryOptimizationDisable)
 final batteryOptimizationDisableProvider =
     BatteryOptimizationDisableProvider._();

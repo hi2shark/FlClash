@@ -20,4 +20,5 @@ interface IRemoteInterface {
     void setCrashlytics(in boolean enable);
     long getRunTime();
     boolean getSuspended();
+    String getWifiWatchState();
 }
