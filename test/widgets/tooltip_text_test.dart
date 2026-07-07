@@ -26,14 +26,19 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Builder(
-          builder: (context) {
-            globalState.measure = Measure.of(context, 1);
-            return SizedBox(
-              width: 20,
-              child: TooltipText(text: richText),
-            );
-          },
+        // Center loosens the route's tight width so SizedBox(width: 20)
+        // actually caps LayoutBuilder constraints; as MaterialApp.home the
+        // route otherwise forces ~800px and overflow is never detected.
+        home: Center(
+          child: Builder(
+            builder: (context) {
+              globalState.measure = Measure.of(context, 1);
+              return SizedBox(
+                width: 20,
+                child: TooltipText(text: richText),
+              );
+            },
+          ),
         ),
       ),
     );
