@@ -17,6 +17,7 @@ _SharedState _$SharedStateFromJson(Map<String, dynamic> json) => _SharedState(
   startTip: json['startTip'] as String,
   currentProfileName: json['currentProfileName'] as String,
   stopText: json['stopText'] as String,
+  suspendedText: json['suspendedText'] as String? ?? 'Suspended...',
   onlyStatisticsProxy: json['onlyStatisticsProxy'] as bool,
   crashlytics: json['crashlytics'] as bool,
   suspendOnWifiSsids:
@@ -34,6 +35,7 @@ Map<String, dynamic> _$SharedStateToJson(_SharedState instance) =>
       'startTip': instance.startTip,
       'currentProfileName': instance.currentProfileName,
       'stopText': instance.stopText,
+      'suspendedText': instance.suspendedText,
       'onlyStatisticsProxy': instance.onlyStatisticsProxy,
       'crashlytics': instance.crashlytics,
       'suspendOnWifiSsids': instance.suspendOnWifiSsids,

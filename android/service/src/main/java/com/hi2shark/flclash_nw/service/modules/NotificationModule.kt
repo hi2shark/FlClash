@@ -37,12 +37,31 @@ data class ExtendedNotificationParams(
     val stopText: String,
     val onlyStatisticsProxy: Boolean,
     val contentText: String,
+    val suspendedText: String,
 )
 
+/**
+ * Builds the notification-facing params. When the service is suspended (whether
+ * by the user, WiFi-watch, or Doze idle), the contentText is replaced with the
+ * localized "Suspended..." text instead of the live speed/traffic.
+ *
+ * [NotificationModule] includes `runtimeState.isSuspendedFlow` in its combine,
+ * so this is re-evaluated the moment suspend state changes (no 1s ticker
+ * latency), and also once per second by the ticker to refresh the live
+ * speed/traffic text while not suspended.
+ */
 val NotificationParams.extended: ExtendedNotificationParams
-    get() = ExtendedNotificationParams(
-        title, stopText, onlyStatisticsProxy, Core.getSpeedTrafficText(onlyStatisticsProxy)
-    )
+    get() {
+        val suspended = State.runtimeState.isSuspended
+        return ExtendedNotificationParams(
+            title = title,
+            stopText = stopText,
+            onlyStatisticsProxy = onlyStatisticsProxy,
+            contentText = if (suspended) suspendedText
+                else Core.getSpeedTrafficText(onlyStatisticsProxy),
+            suspendedText = suspendedText,
+        )
+    }
 
 private fun Service.isScreenOn(): Boolean {
     val pm = getSystemService<PowerManager>()
@@ -103,8 +122,16 @@ class NotificationModule(private val service: Service) : Module() {
             }
 
             combine(
-                tickerFlow(1000, 0), State.notificationParamsFlow, screenFlow
-            ) { _, params, screenOn ->
+                tickerFlow(1000, 0),
+                State.notificationParamsFlow,
+                screenFlow,
+                State.runtimeState.isSuspendedFlow,
+            ) { _, params, screenOn, _ ->
+                // Re-derive extended on every tick, param change, screen toggle,
+                // AND suspend/resume transition. The `extended` getter reads
+                // State.runtimeState.isSuspended internally, which is already
+                // up to date by the time isSuspendedFlow re-emits, so the
+                // resulting ExtendedNotificationParams reflects the new state.
                 params?.extended to screenOn
             }.filter { (params, screenOn) -> params != null && screenOn }
                 .distinctUntilChanged { old, new -> old.first == new.first && old.second == new.second }

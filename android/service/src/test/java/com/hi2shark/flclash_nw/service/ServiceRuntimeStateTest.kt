@@ -69,4 +69,35 @@ class ServiceRuntimeStateTest {
         assertTrue(state.isRunning)
         assertFalse(state.isSuspended)
     }
+
+    @Test
+    fun isSuspendedFlowReflectsInitialValue() {
+        val state = ServiceRuntimeState(now = { 1000L })
+
+        assertEquals(false, state.isSuspendedFlow.value)
+    }
+
+    @Test
+    fun setSuspendedEmitsNewValueToFlow() {
+        val state = ServiceRuntimeState(now = { 1000L })
+        state.markStarted()
+
+        assertEquals(false, state.isSuspendedFlow.value)
+        state.setSuspended(true)
+        // The value must be observable through the flow (not just the getter),
+        // otherwise NotificationModule's combine would never re-emit.
+        assertEquals(true, state.isSuspendedFlow.value)
+    }
+
+    @Test
+    fun markStoppedResetsSuspendedFlowToFalse() {
+        val state = ServiceRuntimeState(now = { 1000L })
+        state.markStarted()
+        state.setSuspended(true)
+
+        state.markStopped()
+
+        assertEquals(false, state.isSuspendedFlow.value)
+        assertEquals(false, state.isSuspended)
+    }
 }

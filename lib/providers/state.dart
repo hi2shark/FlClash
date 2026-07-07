@@ -624,6 +624,7 @@ SharedState sharedState(Ref ref) {
     currentProfileName: currentProfileName,
     onlyStatisticsProxy: onlyStatisticsProxy,
     stopText: currentAppLocalizations.stop,
+    suspendedText: currentAppLocalizations.suspended,
     crashlytics: crashlytics,
     stopTip: currentAppLocalizations.stopVpn,
     startTip: currentAppLocalizations.startVpn,

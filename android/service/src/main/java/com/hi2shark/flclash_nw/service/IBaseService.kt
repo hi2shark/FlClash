@@ -62,6 +62,10 @@ interface IBaseService {
         BroadcastAction.SERVICE_SUSPENDED_CHANGED.sendBroadcast {
             putExtra(BroadcastExtra.SUSPENDED, suspended)
         }
+        // Notification refresh on suspend/resume is handled by
+        // NotificationModule subscribing to runtimeState.isSuspendedFlow, so
+        // no extra kick is needed here — the StateFlow emission from
+        // setSuspended above drives the combine immediately.
     }
 
     /**
