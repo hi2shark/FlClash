@@ -15,7 +15,15 @@ class Measure {
     final defaultStyle = text.style ?? style;
     final textSpan = text.textSpan;
     if (textSpan != null) {
-      return TextSpan(style: defaultStyle, children: [textSpan]);
+      if (defaultStyle == null || textSpan is! TextSpan) {
+        return textSpan;
+      }
+      final span = textSpan;
+      return TextSpan(
+        style: defaultStyle,
+        text: span.text,
+        children: span.children,
+      );
     }
     return TextSpan(text: text.data, style: defaultStyle);
   }
