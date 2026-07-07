@@ -222,6 +222,11 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
             final hasSsid = ssid != null;
             final hasNetwork = hasSsid || state.wifiPresent;
             final isExcluded = hasSsid && excludeSSIDs.contains(ssid);
+            final ssidTextStyle = context.textTheme.bodyMedium?.toLight;
+            final matchedSsidTextStyle = (ssidTextStyle ?? const TextStyle()).copyWith(
+              color: Colors.green,
+              fontWeight: FontWeight.bold,
+            );
             return generateSectionV3(
               title: appLocalizations.currentWifiConnection,
               items: [
@@ -232,7 +237,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                         (hasNetwork
                             ? appLocalizations.wifiWatchResolving
                             : appLocalizations.wifiWatchNoWifi),
-                    style: context.textTheme.bodyMedium?.toLight,
+                    style: isExcluded ? matchedSsidTextStyle : ssidTextStyle,
                   ),
                   onPressed:
                       hasSsid ? () => _handleCopySsid(context, ssid) : null,
