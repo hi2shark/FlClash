@@ -28,6 +28,10 @@ internal class WifiWatchSuspendController(
     private var pendingResolutionFallback: Cancellable? = null
     private var pendingSuspendDeadline: Long? = null
     private var generation = 0
+    // When true, the proxy is forced to resume regardless of WiFi trust, e.g.
+    // because the system default network switched to Cellular. Stays in effect
+    // until clearForceResume() is called (default network leaves Cellular).
+    private var forceResumed = false
 
     fun currentStatus(): Status = synchronized(lock) {
         Status(
@@ -103,6 +107,44 @@ internal class WifiWatchSuspendController(
         action?.invoke()
     }
 
+    /**
+     * Force the proxy to resume immediately and stay resumed regardless of WiFi
+     * trust, until [clearForceResume] is called. Used when the system default
+     * network switches to Cellular (e.g. WiFi still connected but the OS routed
+     * traffic via mobile data) — in that case the user clearly needs the proxy
+     * back even if the WiFi SSID is on the suspend-on list. Cancels any pending
+     * delayed suspend. Idempotent.
+     */
+    fun forceResume(reason: String) {
+        val action = synchronized(lock) {
+            if (forceResumed) {
+                logLocked("force resume already active — $reason")
+                return@synchronized null
+            }
+            forceResumed = true
+            logLocked("force resume — $reason")
+            evaluateLocked()
+        }
+        action?.invoke()
+    }
+
+    /**
+     * Lift the [forceResume] hold and re-evaluate the suspend decision based on
+     * the current WiFi state. Called when the system default network leaves
+     * Cellular (back to WiFi or VPN). Idempotent.
+     */
+    fun clearForceResume(reason: String) {
+        val action = synchronized(lock) {
+            if (!forceResumed) {
+                return@synchronized null
+            }
+            forceResumed = false
+            logLocked("clear force resume — $reason")
+            evaluateLocked()
+        }
+        action?.invoke()
+    }
+
     fun cancel() {
         synchronized(lock) {
             cancelResolutionFallbackLocked("controller cancelled")
@@ -120,8 +162,14 @@ internal class WifiWatchSuspendController(
         val trusted = isTrustedWifiLocked()
         logLocked(
             "evaluate ssid=${ssid ?: "<none>"} validated=$wifiValidated " +
-                "trusted=$trusted wifiPresent=$wifiPresent delay=${suspendDelayMillis}ms"
+                "trusted=$trusted wifiPresent=$wifiPresent " +
+                "forceResumed=$forceResumed delay=${suspendDelayMillis}ms"
         )
+
+        if (forceResumed) {
+            logLocked("resume immediately (forced)")
+            return { setWifiSuspended(false) }
+        }
 
         if (!trusted) {
             logLocked("resume immediately")

@@ -64,6 +64,11 @@ class WifiWatchModule(
     private val callback = createWifiNetworkCallback()
     private var wifiResolutionReconcileJob: Job? = null
     private var lastPublishedStatus: WifiNetworkStatus? = null
+    // Default-network callback for immediate Cellular detection. Only
+    // registered on API 24+; null on older devices, where Cellular detection
+    // falls back to reconsiderForceResumeFromActiveNetwork() called from the
+    // WiFi callback path.
+    private var defaultNetworkCallback: ConnectivityManager.NetworkCallback? = null
 
     override fun onInstall() {
         scope.launch {
@@ -85,6 +90,7 @@ class WifiWatchModule(
             GlobalState.log("WiFi-watch registerNetworkCallback failed: ${it.message}")
             controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = false)
         }
+        registerDefaultNetworkWatch(manager)
     }
 
     private fun schedule(delayMillis: Long, action: () -> Unit): WifiWatchSuspendController.Cancellable {
@@ -174,6 +180,99 @@ class WifiWatchModule(
         }
     }
 
+    /**
+     * Watches the system default network. When the OS routes traffic through a
+     * Cellular network (e.g. WiFi still associated but the system prefers
+     * mobile data, or WiFi lost internet validation and the OS fell back to
+     * mobile), the proxy is forced back on regardless of WiFi SSID trust — the
+     * user clearly needs proxying on the metered/active path. The force hold is
+     * lifted once the default network is no longer Cellular.
+     *
+     * Two paths feed the cellular check:
+     *  - API 24+ ([registerDefaultNetworkCallback]): immediate, event-driven.
+     *  - All versions (including API 23 where the default callback is absent):
+     *    a best-effort poll on every WiFi capability update via
+     *    [reconsiderForceResumeFromActiveNetwork], which catches the common
+     *    case where the WiFi callback fires around the same time the OS
+     *    switches the default network.
+     *
+     * Per Android guidance, [ConnectivityManager.NetworkCallback.onAvailable]
+     * only marks a network as candidate; its capabilities may not be populated
+     * yet. We therefore defer the transport check to [onCapabilitiesChanged]
+     * and only seed the initial state from the active network synchronously
+     * (where capabilities are already known).
+     */
+    private fun registerDefaultNetworkWatch(manager: ConnectivityManager) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val cb = object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    // Intentionally no capability read here: onAvailable may
+                    // arrive before the network's capabilities are populated.
+                    // Wait for onCapabilitiesChanged.
+                }
+
+                override fun onCapabilitiesChanged(
+                    network: Network,
+                    networkCapabilities: NetworkCapabilities,
+                ) {
+                    handleDefaultNetworkCapabilities(networkCapabilities)
+                }
+
+                override fun onLost(network: Network) {
+                    // Default network lost; the OS will soon nominate a new one.
+                    // Lift any Cellular force-resume so the next default
+                    // network's callback decides the state from scratch.
+                    controller.clearForceResume("default network lost")
+                }
+            }
+            runCatching {
+                manager.registerDefaultNetworkCallback(cb)
+            }.onSuccess {
+                defaultNetworkCallback = cb
+            }.onFailure {
+                GlobalState.log("WiFi-watch registerDefaultNetworkCallback failed: ${it.message}")
+            }
+        }
+        // Seed the initial state on all versions. On API 24+ this covers the
+        // case where the default network is already stable and no callback
+        // fires right after registration; on API 23 this is the primary signal.
+        reconsiderForceResumeFromActiveNetwork()
+    }
+
+    private fun handleDefaultNetworkCapabilities(caps: NetworkCapabilities) {
+        val isCellular = caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+        if (isCellular) {
+            controller.forceResume("default network is Cellular")
+        } else {
+            controller.clearForceResume("default network is no longer Cellular")
+        }
+    }
+
+    /**
+     * Best-effort check of the active default network via the synchronous
+     * [ConnectivityManager.getActiveNetwork] + [getNetworkCapabilities] (both
+     * available since API 21/23, well within our minSdk = 23). Called on
+     * registration and from the WiFi callback path so devices without
+     * [registerDefaultNetworkCallback] (API 23) still detect a Cellular
+     * default network when the OS switches while WiFi stays associated.
+     *
+     * Returns early (leaving the current force-resume state untouched) when
+     * there is no active network or its capabilities are not yet populated —
+     * the next WiFi capability callback will retry.
+     */
+    private fun reconsiderForceResumeFromActiveNetwork() {
+        val manager = connectivity ?: return
+        val active = manager.activeNetwork ?: return
+        val caps = manager.getNetworkCapabilities(active)
+            ?: return // capabilities not yet ready; wait for callback
+        val isCellular = caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+        if (isCellular) {
+            controller.forceResume("active network is Cellular")
+        } else {
+            controller.clearForceResume("active network is not Cellular")
+        }
+    }
+
     private fun markWifiNetworkAvailable(network: Network) {
         val verdict = wifiVerdict()
         val currentStatus = synchronized(wifiNetworksLock) {
@@ -258,6 +357,13 @@ class WifiWatchModule(
             unresolvedSsid -> scheduleWifiResolutionReconcile("SSID unresolved while WiFi present")
             else -> cancelWifiResolutionReconcile("WiFi state resolved")
         }
+        // Best-effort default-network recheck. On API 24+ the dedicated default
+        // network callback drives forceResume immediately; this is a cheap
+        // secondary signal. On API 23 (no registerDefaultNetworkCallback) this
+        // is the primary signal — without it, API 23 users would never
+        // force-resume when the OS switches the default to Cellular while WiFi
+        // stays associated.
+        reconsiderForceResumeFromActiveNetwork()
         onStateChanged()
     }
 
@@ -525,6 +631,12 @@ class WifiWatchModule(
         runCatching {
             connectivity?.unregisterNetworkCallback(callback)
         }
+        defaultNetworkCallback?.let { cb ->
+            runCatching {
+                connectivity?.unregisterNetworkCallback(cb)
+            }
+        }
+        defaultNetworkCallback = null
         synchronized(wifiNetworksLock) {
             wifiNetworks.clear()
         }
