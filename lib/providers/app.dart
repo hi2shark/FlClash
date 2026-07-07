@@ -471,7 +471,9 @@ class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
       _timer?.cancel();
       _timer = null;
     });
-    return const WifiWatchState();
+    return WifiWatchState(
+      suspended: ref.read(androidServiceSuspendedProvider),
+    );
   }
 
   Future<void> _fetch() async {
@@ -479,27 +481,35 @@ class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
       final data = await service?.getWifiWatchState();
       final currentWifiInfo = await _getCurrentWifiInfo();
       if (data == null || data.isEmpty) {
-        value = _stateFromDeviceInfo(currentWifiInfo);
+        _publish(_stateFromDeviceInfo(currentWifiInfo));
         return;
       }
       final json = jsonDecode(data) as Map<String, dynamic>;
       if (json.isEmpty) {
-        value = _stateFromDeviceInfo(currentWifiInfo);
+        _publish(_stateFromDeviceInfo(currentWifiInfo));
         return;
       }
       final serviceState = WifiWatchState.fromJson(json);
       final hasDeviceInfo =
           currentWifiInfo.ssid != null || currentWifiInfo.rssi != null;
-      value = serviceState.copyWith(
-        rawSsid: currentWifiInfo.ssid,
-        rssi: serviceState.rssi == null ? currentWifiInfo.rssi : null,
-        wifiPresent: serviceState.wifiPresent || hasDeviceInfo,
+      _publish(
+        serviceState.copyWith(
+          rawSsid: currentWifiInfo.ssid,
+          rssi: serviceState.rssi == null ? currentWifiInfo.rssi : null,
+          wifiPresent: serviceState.wifiPresent || hasDeviceInfo,
+        ),
       );
     } catch (e, stack) {
       // Keep the previous state on failure so the UI does not flicker, but
       // log the error so malformed service JSON does not stay hidden.
       commonPrint.log('WifiWatch fetch failed: $e\n$stack');
     }
+  }
+
+  void _publish(WifiWatchState serviceState) {
+    value = serviceState.withAndroidServiceSuspended(
+      ref.read(androidServiceSuspendedProvider),
+    );
   }
 
   Future<WifiConnectionInfo> _getCurrentWifiInfo() async {

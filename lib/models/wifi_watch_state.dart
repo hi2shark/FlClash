@@ -73,4 +73,11 @@ class WifiWatchState {
           pendingSuspendDeadline ?? this.pendingSuspendDeadline,
     );
   }
+
+  bool get prioritizeActionStatus =>
+      suspended || pendingSuspendDeadline != null;
+
+  WifiWatchState withAndroidServiceSuspended(bool androidServiceSuspended) {
+    return copyWith(suspended: suspended || androidServiceSuspended);
+  }
 }
