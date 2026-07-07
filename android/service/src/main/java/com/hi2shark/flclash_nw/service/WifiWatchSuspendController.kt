@@ -3,7 +3,10 @@ package com.hi2shark.flclash_nw.service
 internal class WifiWatchSuspendController(
     private val suspendDelayMillis: Long = SUSPEND_DELAY_MILLIS,
     private val scheduler: (Long, () -> Unit) -> Cancellable,
-    private val setWifiSuspended: (Boolean) -> Unit,
+    // Applies the desired wifi-suspend state. Returns true if the service
+    // ended up in the requested state, so the controller can track whether a
+    // suspend actually took effect (which gates RSSI-based maintenance).
+    private val setWifiSuspended: (Boolean) -> Boolean,
     private val logger: (String) -> Unit = {},
 ) {
     fun interface Cancellable {
@@ -15,6 +18,7 @@ internal class WifiWatchSuspendController(
         val validated: Boolean,
         val wifiPresent: Boolean,
         val pendingSuspendDeadline: Long?,
+        val forceResumed: Boolean,
     )
 
     private val lock = Any()
@@ -32,6 +36,14 @@ internal class WifiWatchSuspendController(
     // because the system default network switched to Cellular. Stays in effect
     // until clearForceResume() is called (default network leaves Cellular).
     private var forceResumed = false
+    // Tracks whether the current trusted judgment is based on RSSI fallback
+    // (true) rather than system validation (false). RSSI only reflects signal
+    // strength, not actual reachability (portal, broken DNS, packet loss), so
+    // it must never initiate a NEW suspend — only maintain an existing one.
+    private var rssiBasedTrust = false
+    // Tracks whether the service is currently wifi-suspended, so that an
+    // RSSI-based trust can be allowed to CONTINUE suspending but not to start.
+    private var wifiSuspendedNow = false
 
     fun currentStatus(): Status = synchronized(lock) {
         Status(
@@ -39,6 +51,7 @@ internal class WifiWatchSuspendController(
             validated = wifiValidated,
             wifiPresent = wifiPresent,
             pendingSuspendDeadline = pendingSuspendDeadline,
+            forceResumed = forceResumed,
         )
     }
 
@@ -67,8 +80,18 @@ internal class WifiWatchSuspendController(
      *     still present) from the WiFi genuinely going away (all networks
      *     lost/unavailable). The former must not perturb the suspend state;
      *     the latter resumes immediately.
+     * @param rssiBasedTrust whether [validated] was derived from an RSSI
+     *     fallback rather than the system's NET_CAPABILITY_VALIDATED. RSSI
+     *     only reflects signal strength, so it is trusted to MAINTAIN an
+     *     existing suspend but not to initiate a new one (see [evaluateLocked]
+     *     and [isInitiationAllowedLocked]).
      */
-    fun updateWifiNetwork(ssid: String?, validated: Boolean, wifiPresent: Boolean) {
+    fun updateWifiNetwork(
+        ssid: String?,
+        validated: Boolean,
+        wifiPresent: Boolean,
+        rssiBasedTrust: Boolean = false,
+    ) {
         val action = synchronized(lock) {
             wifiNetworkObserved = true
 
@@ -102,6 +125,7 @@ internal class WifiWatchSuspendController(
             wifiSsid = ssid
             wifiValidated = validated
             this.wifiPresent = wifiPresent
+            this.rssiBasedTrust = rssiBasedTrust
             evaluateLocked()
         }
         action?.invoke()
@@ -149,6 +173,7 @@ internal class WifiWatchSuspendController(
         synchronized(lock) {
             cancelResolutionFallbackLocked("controller cancelled")
             cancelPendingLocked("controller cancelled")
+            wifiSuspendedNow = false
             generation++
         }
     }
@@ -160,20 +185,33 @@ internal class WifiWatchSuspendController(
 
         val ssid = wifiSsid
         val trusted = isTrustedWifiLocked()
+        val initiationAllowed = isInitiationAllowedLocked()
         logLocked(
             "evaluate ssid=${ssid ?: "<none>"} validated=$wifiValidated " +
-                "trusted=$trusted wifiPresent=$wifiPresent " +
-                "forceResumed=$forceResumed delay=${suspendDelayMillis}ms"
+                "trusted=$trusted rssiBasedTrust=$rssiBasedTrust " +
+                "wifiSuspendedNow=$wifiSuspendedNow initiationAllowed=$initiationAllowed " +
+                "wifiPresent=$wifiPresent forceResumed=$forceResumed delay=${suspendDelayMillis}ms"
         )
 
         if (forceResumed) {
             logLocked("resume immediately (forced)")
-            return { setWifiSuspended(false) }
+            return { applySuspended(false) }
         }
 
         if (!trusted) {
             logLocked("resume immediately")
-            return { setWifiSuspended(false) }
+            return { applySuspended(false) }
+        }
+
+        // Trusted, but the trust comes from RSSI fallback and we are not
+        // currently wifi-suspended. RSSI only proves signal strength, not
+        // reachability (captive portal, broken gateway/DNS, heavy loss), so it
+        // must not be allowed to initiate a new suspend — only to maintain one
+        // already in effect. Keep the proxy active until the system validates
+        // the WiFi (which flips rssiBasedTrust back to false).
+        if (!initiationAllowed) {
+            logLocked("trusted via RSSI but not currently suspended — do not initiate suspend")
+            return { applySuspended(false) }
         }
 
         logLocked("schedule suspend in ${suspendDelayMillis}ms")
@@ -184,12 +222,17 @@ internal class WifiWatchSuspendController(
                 pendingSuspend = null
                 pendingSuspendDeadline = null
                 val stillTrusted = currentGeneration == generation && isTrustedWifiLocked()
+                // Re-check initiation at fire time: the trust basis may have
+                // degraded from systemValidated to RSSI during the delay, in
+                // which case the suspend must still not initiate.
+                val canSuspend = stillTrusted && isInitiationAllowedLocked()
                 logLocked(
                     "delayed suspend fired generation=$currentGeneration " +
-                        "current=$generation trusted=$stillTrusted"
+                        "current=$generation trusted=$stillTrusted " +
+                        "canSuspend=$canSuspend"
                 )
-                if (stillTrusted) {
-                    { setWifiSuspended(true) }
+                if (canSuspend) {
+                    { applySuspended(true) }
                 } else {
                     null
                 }
@@ -197,6 +240,27 @@ internal class WifiWatchSuspendController(
             action?.invoke()
         }
         return null
+    }
+
+    /**
+     * Applies the suspend decision and tracks whether it took effect, so that
+     * [isInitiationAllowedLocked] can tell "initiate" apart from "maintain".
+     */
+    private fun applySuspended(suspended: Boolean) {
+        val tookEffect = setWifiSuspended(suspended)
+        synchronized(lock) {
+            wifiSuspendedNow = suspended && tookEffect
+        }
+    }
+
+    /**
+     * Whether a suspend is allowed to be INITIATED (or re-initiated after a
+     * resume) under the current trust basis. RSSI-based trust may only
+     * MAINTAIN an existing suspend, never start one — so it is allowed only
+     * when the service is already wifi-suspended.
+     */
+    private fun isInitiationAllowedLocked(): Boolean {
+        return !rssiBasedTrust || wifiSuspendedNow
     }
 
     private fun scheduleResolutionFallbackLocked() {
@@ -221,7 +285,7 @@ internal class WifiWatchSuspendController(
                 generation++
                 cancelPendingLocked("SSID resolution grace expired")
                 logLocked("SSID resolution grace expired — resume to safe default")
-                return@synchronized { setWifiSuspended(false) }
+                return@synchronized { applySuspended(false) }
             }
             action?.invoke()
         }

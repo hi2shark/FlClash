@@ -6,6 +6,8 @@ class WifiWatchState {
   final bool wifiPresent;
   final bool suspended;
   final DateTime? pendingSuspendDeadline;
+  final bool forceResumed;
+  final String? reason;
 
   const WifiWatchState({
     this.ssid,
@@ -15,6 +17,8 @@ class WifiWatchState {
     this.wifiPresent = false,
     this.suspended = false,
     this.pendingSuspendDeadline,
+    this.forceResumed = false,
+    this.reason,
   });
 
   factory WifiWatchState.fromJson(Map<String, dynamic> json) {
@@ -38,6 +42,8 @@ class WifiWatchState {
       suspended: toBool(json['suspended']),
       pendingSuspendDeadline:
           deadline == null ? null : DateTime.fromMillisecondsSinceEpoch(deadline),
+      forceResumed: toBool(json['forceResumed']),
+      reason: json['reason']?.toString(),
     );
   }
 
@@ -50,6 +56,8 @@ class WifiWatchState {
       'wifiPresent': wifiPresent,
       'suspended': suspended,
       'pendingSuspendDeadline': pendingSuspendDeadline?.millisecondsSinceEpoch,
+      'forceResumed': forceResumed,
+      'reason': reason,
     };
   }
 
@@ -61,6 +69,8 @@ class WifiWatchState {
     bool? wifiPresent,
     bool? suspended,
     DateTime? pendingSuspendDeadline,
+    bool? forceResumed,
+    String? reason,
   }) {
     return WifiWatchState(
       ssid: ssid ?? this.ssid,
@@ -71,6 +81,8 @@ class WifiWatchState {
       suspended: suspended ?? this.suspended,
       pendingSuspendDeadline:
           pendingSuspendDeadline ?? this.pendingSuspendDeadline,
+      forceResumed: forceResumed ?? this.forceResumed,
+      reason: reason ?? this.reason,
     );
   }
 

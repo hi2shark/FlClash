@@ -69,6 +69,19 @@ class WifiWatchModule(
     // falls back to reconsiderForceResumeFromActiveNetwork() called from the
     // WiFi callback path.
     private var defaultNetworkCallback: ConnectivityManager.NetworkCallback? = null
+    // Cached transport of the current default network. Only transitions are
+    // logged and pushed to the controller, so a stable network does not
+    // generate per-callback chatter.
+    @Volatile
+    private var lastDefaultTransport: DefaultTransport? = null
+    // Human-readable reason for the current force-resume (null when not forced).
+    // Surfaced to the UI via WifiWatchState.reason for diagnostics.
+    @Volatile
+    private var forceResumeReason: String? = null
+    // Pending deferred re-evaluation scheduled on default-network loss. The OS
+    // may take a moment to nominate a new default; we hold the current
+    // force-resume state through that gap instead of flipping immediately.
+    private var defaultLostReconsiderJob: Job? = null
 
     override fun onInstall() {
         scope.launch {
@@ -115,8 +128,8 @@ class WifiWatchModule(
         }
     }
 
-    private fun setWifiSuspended(suspended: Boolean) {
-        val baseService = service as? IBaseService ?: return
+    private fun setWifiSuspended(suspended: Boolean): Boolean {
+        val baseService = service as? IBaseService ?: return false
         val result = baseService.setWifiSuspended(suspended)
         if (!result.success) {
             GlobalState.log("WiFi-watch setWifiSuspended($suspended) failed: ${result.message}")
@@ -125,6 +138,7 @@ class WifiWatchModule(
         // the UI reflects the new suspended/pendingDeadline immediately rather
         // than waiting for the next poll.
         onStateChanged()
+        return result.success
     }
 
     private val wifiNetworkRequest: NetworkRequest
@@ -215,14 +229,21 @@ class WifiWatchModule(
                     network: Network,
                     networkCapabilities: NetworkCapabilities,
                 ) {
-                    handleDefaultNetworkCapabilities(networkCapabilities)
+                    // A new default network is confirmed; cancel any pending
+                    // post-loss re-evaluation and apply the fresh transport.
+                    cancelDefaultLostReconsider()
+                    applyDefaultTransport(DefaultTransport.from(networkCapabilities))
                 }
 
                 override fun onLost(network: Network) {
-                    // Default network lost; the OS will soon nominate a new one.
-                    // Lift any Cellular force-resume so the next default
-                    // network's callback decides the state from scratch.
-                    controller.clearForceResume("default network lost")
+                    // The OS has not nominated a successor yet. Clearing
+                    // force-resume immediately would re-enter WiFi suspend
+                    // judgment in the gap and could cause a suspend/resume
+                    // flap. Instead, hold the current state and re-read the
+                    // active network after a short delay — by then the OS has
+                    // usually picked a new default, whose capabilities drive
+                    // the final decision (and cancel this job).
+                    scheduleDefaultLostReconsider()
                 }
             }
             runCatching {
@@ -236,41 +257,76 @@ class WifiWatchModule(
         // Seed the initial state on all versions. On API 24+ this covers the
         // case where the default network is already stable and no callback
         // fires right after registration; on API 23 this is the primary signal.
-        reconsiderForceResumeFromActiveNetwork()
-    }
-
-    private fun handleDefaultNetworkCapabilities(caps: NetworkCapabilities) {
-        val isCellular = caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-        if (isCellular) {
-            controller.forceResume("default network is Cellular")
-        } else {
-            controller.clearForceResume("default network is no longer Cellular")
-        }
+        applyDefaultTransport(currentDefaultTransport())
     }
 
     /**
-     * Best-effort check of the active default network via the synchronous
+     * Snapshots the current default-network transport from the synchronous
      * [ConnectivityManager.getActiveNetwork] + [getNetworkCapabilities] (both
-     * available since API 21/23, well within our minSdk = 23). Called on
-     * registration and from the WiFi callback path so devices without
-     * [registerDefaultNetworkCallback] (API 23) still detect a Cellular
-     * default network when the OS switches while WiFi stays associated.
-     *
-     * Returns early (leaving the current force-resume state untouched) when
-     * there is no active network or its capabilities are not yet populated —
-     * the next WiFi capability callback will retry.
+     * available since API 21/23, within minSdk = 23). Returns null when there
+     * is no active network or capabilities are not yet ready — callers treat
+     * null as "no change" so the next callback retries.
+     */
+    private fun currentDefaultTransport(): DefaultTransport? {
+        val manager = connectivity ?: return null
+        val active = manager.activeNetwork ?: return null
+        return DefaultTransport.from(manager.getNetworkCapabilities(active))
+    }
+
+    /**
+     * Applies the default-network transport to the controller and the cached
+     * [lastDefaultTransport]. Idempotent: a repeated identical transport is a
+     * no-op (no log, no controller call), so a stable network does not
+     * generate per-callback chatter. Also feeds [forceResumeReason] for UI.
+     */
+    private fun applyDefaultTransport(transport: DefaultTransport?) {
+        if (transport == null) return
+        if (transport == lastDefaultTransport) return
+        val previous = lastDefaultTransport
+        lastDefaultTransport = transport
+        forceResumeReason = if (transport == DefaultTransport.CELLULAR) {
+            "default network is Cellular"
+        } else {
+            null
+        }
+        GlobalState.log(
+            "WiFi-watch default transport $previous -> $transport" +
+                (forceResumeReason?.let { " ($it)" } ?: "")
+        )
+        if (transport == DefaultTransport.CELLULAR) {
+            controller.forceResume(forceResumeReason!!)
+        } else {
+            controller.clearForceResume("default transport is $transport")
+        }
+        onStateChanged()
+    }
+
+    /**
+     * Best-effort re-evaluation of the active default network, called from
+     * the WiFi callback path so devices without registerDefaultNetworkCallback
+     * (API 23) still detect a Cellular default network when the OS switches
+     * while WiFi stays associated. Routes through [applyDefaultTransport] so
+     * the transport cache and dedup logic are shared.
      */
     private fun reconsiderForceResumeFromActiveNetwork() {
-        val manager = connectivity ?: return
-        val active = manager.activeNetwork ?: return
-        val caps = manager.getNetworkCapabilities(active)
-            ?: return // capabilities not yet ready; wait for callback
-        val isCellular = caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-        if (isCellular) {
-            controller.forceResume("active network is Cellular")
-        } else {
-            controller.clearForceResume("active network is not Cellular")
+        applyDefaultTransport(currentDefaultTransport())
+    }
+
+    private fun scheduleDefaultLostReconsider() {
+        cancelDefaultLostReconsider()
+        defaultLostReconsiderJob = scope.launch {
+            delay(DEFAULT_LOST_RECONSIDER_MILLIS)
+            // By now the OS has usually nominated a new default network; read
+            // it and let applyDefaultTransport decide. If there is still no
+            // active network, leave the current state as-is rather than
+            // optimistically clearing force-resume.
+            reconsiderForceResumeFromActiveNetwork()
         }
+    }
+
+    private fun cancelDefaultLostReconsider() {
+        defaultLostReconsiderJob?.cancel()
+        defaultLostReconsiderJob = null
     }
 
     private fun markWifiNetworkAvailable(network: Network) {
@@ -352,6 +408,10 @@ class WifiWatchModule(
             ssid = status?.ssid,
             validated = trusted,
             wifiPresent = status != null,
+            // RSSI verdict means trust is inferred from signal strength, not
+            // from the system's NET_CAPABILITY_VALIDATED. The controller uses
+            // this to forbid RSSI from initiating a new suspend.
+            rssiBasedTrust = verdict == WifiVerdict.Rssi,
         )
         when {
             unresolvedSsid -> scheduleWifiResolutionReconcile("SSID unresolved while WiFi present")
@@ -531,6 +591,28 @@ class WifiWatchModule(
 
     private enum class WifiVerdict { SystemValidated, Rssi }
 
+    /**
+     * Coarse classification of the system default network's transport, used to
+     * (a) decide Cellular force-resume and (b) surface the reason to the UI.
+     * Only the dominant transport is recorded.
+     */
+    private enum class DefaultTransport {
+        WIFI, CELLULAR, VPN, ETHERNET, OTHER;
+
+        companion object {
+            fun from(caps: NetworkCapabilities?): DefaultTransport? {
+                if (caps == null) return null
+                return when {
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> CELLULAR
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> WIFI
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> VPN
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> ETHERNET
+                    else -> OTHER
+                }
+            }
+        }
+    }
+
     private fun WifiNetworkStatus.isTrusted(verdict: WifiVerdict): Boolean {
         return when (verdict) {
             WifiVerdict.SystemValidated -> systemValidated
@@ -583,6 +665,8 @@ class WifiWatchModule(
             wifiPresent = controllerStatus.wifiPresent,
             suspended = serviceSuspended,
             pendingSuspendDeadline = controllerStatus.pendingSuspendDeadline,
+            forceResumed = controllerStatus.forceResumed,
+            reason = forceResumeReason,
         )
     }
 
@@ -628,6 +712,7 @@ class WifiWatchModule(
 
     override fun onUninstall() {
         cancelWifiResolutionReconcile("module uninstall")
+        cancelDefaultLostReconsider()
         runCatching {
             connectivity?.unregisterNetworkCallback(callback)
         }
@@ -655,5 +740,11 @@ class WifiWatchModule(
         const val WEAK_RSSI_THRESHOLD_DBM = -80
         private const val SSID_RECONCILE_INTERVAL_MILLIS = 500L
         private const val MAX_SSID_RECONCILE_ATTEMPTS = 4
+
+        // Grace period after the default network is lost before re-reading the
+        // active network. The OS usually nominates a successor within this
+        // window; holding the current force-resume state through it avoids a
+        // suspend/resume flap during the handoff.
+        private const val DEFAULT_LOST_RECONSIDER_MILLIS = 1500L
     }
 }

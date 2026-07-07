@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
 
@@ -33,6 +35,26 @@ void main() {
             .prioritizeActionStatus,
         false,
       );
+    });
+
+    test('round-trips forceResumed and reason through JSON', () {
+      const state = WifiWatchState(
+        ssid: 'Home',
+        forceResumed: true,
+        reason: 'default network is Cellular',
+      );
+      final encoded = jsonEncode(state.toJson());
+      final decoded = WifiWatchState.fromJson(
+        jsonDecode(encoded) as Map<String, dynamic>,
+      );
+      expect(decoded.forceResumed, true);
+      expect(decoded.reason, 'default network is Cellular');
+    });
+
+    test('forceResumed defaults to false and reason to null', () {
+      const state = WifiWatchState();
+      expect(state.forceResumed, false);
+      expect(state.reason, isNull);
     });
   });
 }

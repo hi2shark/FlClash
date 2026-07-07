@@ -333,6 +333,83 @@ class WifiWatchSuspendControllerTest {
 
         assertEquals(listOf(false, true), events)
     }
+
+    @Test
+    fun rssiBasedTrustCannotInitiateSuspend() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        // Trusted only by RSSI fallback (signal strong but the system has not
+        // validated the WiFi, e.g. portal/broken gateway). Must NOT suspend.
+        controller.updateWifiNetwork(
+            ssid = "Home",
+            validated = true,
+            wifiPresent = true,
+            rssiBasedTrust = true,
+        )
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        // Proxy stays active: no suspend event, only the resume action.
+        assertEquals(listOf(false), events)
+    }
+
+    @Test
+    fun rssiBasedTrustMaintainsExistingSystemValidatedSuspend() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        // First, suspend via system validation — this is allowed to initiate.
+        controller.updateWifiNetwork(
+            ssid = "Home",
+            validated = true,
+            wifiPresent = true,
+            rssiBasedTrust = false,
+        )
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        assertEquals(listOf(true), events)
+
+        // Now the trust basis degrades to RSSI (e.g. our own VPN came up and
+        // obscured system validation). Already suspended, so RSSI may KEEP it
+        // suspended rather than resuming.
+        controller.updateWifiNetwork(
+            ssid = "Home",
+            validated = true,
+            wifiPresent = true,
+            rssiBasedTrust = true,
+        )
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        // No resume fired — suspend maintained via RSSI.
+        assertEquals(listOf(true), events)
+    }
+
+    @Test
+    fun statusExposesForceResumedFlag() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        assertEquals(false, controller.currentStatus().forceResumed)
+
+        controller.forceResume("default network is Cellular")
+        assertEquals(true, controller.currentStatus().forceResumed)
+
+        controller.clearForceResume("default network is WiFi")
+        assertEquals(false, controller.currentStatus().forceResumed)
+    }
 }
 
 private class FakeScheduler {
