@@ -29,9 +29,8 @@ void main() {
         home: Builder(
           builder: (context) {
             globalState.measure = Measure.of(context, 1);
-            return SizedBox(
-              width: 20,
-              child: TooltipText(text: richText),
+            return Center(
+              child: SizedBox(width: 20, child: TooltipText(text: richText)),
             );
           },
         ),
@@ -57,9 +56,11 @@ void main() {
         home: Builder(
           builder: (context) {
             globalState.measure = Measure.of(context, 1);
-            return SizedBox(
-              width: 1000,
-              child: const TooltipText(text: text),
+            return Center(
+              child: SizedBox(
+                width: 1000,
+                child: const TooltipText(text: text),
+              ),
             );
           },
         ),
