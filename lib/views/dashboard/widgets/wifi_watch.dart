@@ -79,6 +79,57 @@ class WifiWatchCard extends StatelessWidget {
     return appLocalizations.wifiWatchListening;
   }
 
+  Text _displayText(
+    BuildContext context, {
+    required String? ssid,
+    required String status,
+    required bool hasServiceInfo,
+    required bool hasNetwork,
+    required bool isExcluded,
+    required bool prioritizeActionStatus,
+  }) {
+    final style = context.textTheme.bodyMedium?.toLight.adjustSize(1);
+    const maxLines = 1;
+    const overflow = TextOverflow.ellipsis;
+
+    if (!hasNetwork || ssid == null || prioritizeActionStatus) {
+      return Text(
+        status,
+        style: style,
+        maxLines: maxLines,
+        overflow: overflow,
+      );
+    }
+
+    final display = hasServiceInfo ? '$ssid · $status' : ssid;
+    if (!isExcluded) {
+      return Text(
+        display,
+        style: style,
+        maxLines: maxLines,
+        overflow: overflow,
+      );
+    }
+
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: ssid,
+            style: (style ?? const TextStyle()).copyWith(
+              color: Colors.green,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (hasServiceInfo) TextSpan(text: ' · $status'),
+        ],
+      ),
+      style: style,
+      maxLines: maxLines,
+      overflow: overflow,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
@@ -112,11 +163,6 @@ class WifiWatchCard extends StatelessWidget {
                     final isExcluded =
                         hasNetwork && excludeSSIDs.contains(ssid);
                     final status = _statusText(context, state, isExcluded);
-                    final display = hasServiceInfo && hasNetwork
-                        ? state.prioritizeActionStatus
-                            ? status
-                            : '$ssid · $status'
-                        : (hasNetwork ? ssid : status);
                     return FadeThroughBox(
                       child: Row(
                         children: [
@@ -134,13 +180,15 @@ class WifiWatchCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Expanded(
                             child: TooltipText(
-                              text: Text(
-                                display,
-                                style: context.textTheme.bodyMedium
-                                    ?.toLight
-                                    .adjustSize(1),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                              text: _displayText(
+                                context,
+                                ssid: ssid,
+                                status: status,
+                                hasServiceInfo: hasServiceInfo,
+                                hasNetwork: hasNetwork,
+                                isExcluded: isExcluded,
+                                prioritizeActionStatus:
+                                    state.prioritizeActionStatus,
                               ),
                             ),
                           ),

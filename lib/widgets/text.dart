@@ -9,6 +9,8 @@ class TooltipText extends StatelessWidget {
 
   const TooltipText({super.key, required this.text});
 
+  String get _message => text.data ?? text.textSpan?.toPlainText() ?? '';
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -22,7 +24,7 @@ class TooltipText extends StatelessWidget {
           return Tooltip(
             triggerMode: TooltipTriggerMode.longPress,
             preferBelow: false,
-            message: text.data,
+            message: _message,
             child: text,
           );
         }
@@ -43,6 +45,9 @@ class TooltipTextV2 extends StatefulWidget {
 
 class _TooltipTextV2State extends State<TooltipTextV2> {
   bool _isOverflow = false;
+
+  String get _message =>
+      widget.text.data ?? widget.text.textSpan?.toPlainText() ?? '';
 
   @override
   void initState() {
@@ -71,7 +76,7 @@ class _TooltipTextV2State extends State<TooltipTextV2> {
     return Tooltip(
       triggerMode: TooltipTriggerMode.longPress,
       preferBelow: false,
-      message: _isOverflow ? widget.text.data : '',
+      message: _isOverflow ? _message : '',
       child: widget.text,
     );
   }
