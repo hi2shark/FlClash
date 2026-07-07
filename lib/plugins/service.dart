@@ -13,6 +13,8 @@ abstract mixin class ServiceListener {
   void onServiceCrash(String message) {}
 
   void onServiceSuspended(bool suspended) {}
+
+  void onWifiWatchState(String stateJson) {}
 }
 
 class Service {
@@ -49,6 +51,12 @@ class Service {
           final suspended = call.arguments as bool? ?? false;
           for (final listener in _listeners) {
             listener.onServiceSuspended(suspended);
+          }
+          break;
+        case 'wifiWatchState':
+          final stateJson = call.arguments as String? ?? '{}';
+          for (final listener in _listeners) {
+            listener.onWifiWatchState(stateJson);
           }
           break;
         default:

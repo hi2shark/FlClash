@@ -50,6 +50,10 @@ object State {
         servicePlugin?.handleSuspended(suspended)
     }
 
+    fun handleWifiWatchStateChanged(stateJson: String) {
+        servicePlugin?.handleWifiWatchState(stateJson)
+    }
+
     suspend fun handleToggleAction() {
         var action: (suspend () -> Unit)?
         runLock.withLock {

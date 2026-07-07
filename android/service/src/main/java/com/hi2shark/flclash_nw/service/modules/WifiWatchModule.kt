@@ -24,7 +24,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class WifiWatchModule(private val service: Service) : Module() {
+class WifiWatchModule(
+    private val service: Service,
+    private val onStateChanged: () -> Unit = {},
+) : Module() {
     private val scope = CoroutineScope(Dispatchers.Default)
     private val connectivity by lazy {
         service.getSystemService<ConnectivityManager>()
@@ -32,6 +35,17 @@ class WifiWatchModule(private val service: Service) : Module() {
     private val wifiManager by lazy {
         service.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
     }
+
+    /**
+     * Whether this service drives a system VPN tunnel. Cached at construction
+     * (the service type never changes). Only when this is true AND a VPN
+     * transport is the active network do we fall back to RSSI-based trust,
+     * because our own tunnel obscures the underlying WiFi's validated state.
+     * Third-party VPNs or the proxy-only CommonService must not trigger the
+     * RSSI fallback.
+     */
+    private val isOwnVpnService: Boolean =
+        (service as? IBaseService)?.isVpn == true
 
     private val wakeLock by lazy {
         (service.applicationContext.getSystemService(Context.POWER_SERVICE) as? PowerManager)
@@ -101,6 +115,10 @@ class WifiWatchModule(private val service: Service) : Module() {
         if (!result.success) {
             GlobalState.log("WiFi-watch setWifiSuspended($suspended) failed: ${result.message}")
         }
+        // The actual suspend decision changed (or was attempted); push state so
+        // the UI reflects the new suspended/pendingDeadline immediately rather
+        // than waiting for the next poll.
+        onStateChanged()
     }
 
     private val wifiNetworkRequest: NetworkRequest
@@ -240,6 +258,7 @@ class WifiWatchModule(private val service: Service) : Module() {
             unresolvedSsid -> scheduleWifiResolutionReconcile("SSID unresolved while WiFi present")
             else -> cancelWifiResolutionReconcile("WiFi state resolved")
         }
+        onStateChanged()
     }
 
     private fun scheduleWifiResolutionReconcile(reason: String) {
@@ -375,14 +394,21 @@ class WifiWatchModule(private val service: Service) : Module() {
     /**
      * Resolves how the current WiFi network should be judged as trusted.
      *
-     * While a VPN tunnel is the default network, Android stops reporting
+     * While our own VPN tunnel is the default network, Android stops reporting
      * NET_CAPABILITY_VALIDATED for the underlying WiFi (it validates the VPN
      * instead). In that case fall back to the WiFi signal strength (RSSI):
      * a strong signal implies a usable direct connection, so suspending the
      * proxy is safe; a weak or unknown signal keeps the proxy active.
+     *
+     * The fallback applies only when this module runs inside the VpnService
+     * ([isOwnVpnService]) AND a VPN transport is the active network. A
+     * third-party VPN running alongside the proxy-only CommonService does not
+     * obscure our view of WiFi validation, so we keep using SystemValidated
+     * and avoid a false-positive suspend.
      */
     private fun wifiVerdict(): WifiVerdict {
-        return if (isVpnActive()) WifiVerdict.Rssi else WifiVerdict.SystemValidated
+        return if (isOwnVpnService && isVpnActive()) WifiVerdict.Rssi
+        else WifiVerdict.SystemValidated
     }
 
     private fun isVpnActive(): Boolean {

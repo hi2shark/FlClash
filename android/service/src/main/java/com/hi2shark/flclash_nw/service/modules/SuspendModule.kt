@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.PowerManager
 import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.receiveBroadcastFlow
-import com.hi2shark.flclash_nw.core.Core
 import com.hi2shark.flclash_nw.service.IBaseService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,17 +30,23 @@ class SuspendModule(private val service: Service) : Module() {
             return service.getSystemService<PowerManager>()?.isDeviceIdleMode ?: true
         }
 
+    /**
+     * Screen/idle suspension is now routed through the service's idle-suspend
+     * channel (setIdleSuspended) so it composes with external and WiFi-watch
+     * suspensions via the shared ServiceSuspensionReasons arbiter, instead of
+     * calling Core.suspended directly. Routing everything through
+     * applyDesiredSuspended guarantees Core state, the isSuspended flag and the
+     * SERVICE_SUSPENDED_CHANGED broadcast all stay in sync.
+     *
+     * When the screen is on the service is never idle-suspended. When off, the
+     * service is idle-suspended only if the device has entered Doze
+     * (isDeviceIdleMode). WiFi-watch and user suspensions are evaluated
+     * independently by the arbiter.
+     */
     private fun onUpdate(isScreenOn: Boolean) {
-        val baseService = service as? IBaseService
-        if (baseService?.wifiSuspended == true) {
-            Core.suspended(true)
-            return
-        }
-        if (isScreenOn) {
-            Core.suspended(false)
-            return
-        }
-        Core.suspended(isDeviceIdleMode)
+        val baseService = service as? IBaseService ?: return
+        val idleSuspended = !isScreenOn && isDeviceIdleMode
+        baseService.setIdleSuspended(idleSuspended)
     }
 
     override fun onInstall() {

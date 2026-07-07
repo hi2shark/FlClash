@@ -13,10 +13,12 @@ enum class BroadcastAction {
     SERVICE_CREATED,
     SERVICE_DESTROYED,
     SERVICE_SUSPENDED_CHANGED,
+    WIFI_WATCH_STATE_CHANGED,
 }
 
 object BroadcastExtra {
     const val SUSPENDED = "suspended"
+    const val WIFI_WATCH_STATE = "wifiWatchState"
 }
 
 enum class AccessControlMode {

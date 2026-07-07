@@ -26,8 +26,16 @@ class CommonService : Service(), IBaseService,
         install(NetworkObserveModule(self))
         install(NotificationModule(self))
         install(SuspendModule(self))
-        val wifiWatchModule = install(WifiWatchModule(self))
+        // Assign the field before install(): install() runs onInstall()
+        // synchronously, which can register the network callback and fire the
+        // first onStateChanged() before this block continues. If the field
+        // were assigned after install(), getWifiWatchStateJson() would read
+        // wifiWatchModule == null and drop SSID/RSSI from the first push.
+        val wifiWatchModule = WifiWatchModule(self) {
+            notifyWifiWatchStateChanged(getWifiWatchStateJson())
+        }
         this@CommonService.wifiWatchModule = wifiWatchModule
+        install(wifiWatchModule)
     }
 
     @Volatile
@@ -50,6 +58,8 @@ class CommonService : Service(), IBaseService,
 
     override var isSuspended: Boolean = false
         private set
+
+    override val isVpn: Boolean = false
 
     override val wifiSuspended: Boolean
         get() = suspensionReasons.wifiSuspended
@@ -117,6 +127,16 @@ class CommonService : Service(), IBaseService,
         val result = applyDesiredSuspended()
         if (!result.success) {
             suspensionReasons.setWifiSuspended(previous)
+        }
+        return result
+    }
+
+    override fun setIdleSuspended(suspended: Boolean): ServiceStartResult {
+        val previous = suspensionReasons.idleSuspended
+        suspensionReasons.setIdleSuspended(suspended)
+        val result = applyDesiredSuspended()
+        if (!result.success) {
+            suspensionReasons.setIdleSuspended(previous)
         }
         return result
     }

@@ -31,6 +31,11 @@ class BroadcastReceiver : BroadcastReceiver() {
                 val suspended = intent.getBooleanExtra(BroadcastExtra.SUSPENDED, false)
                 State.handleServiceSuspendedChanged(suspended)
             }
+
+            BroadcastAction.WIFI_WATCH_STATE_CHANGED.action -> {
+                val stateJson = intent.getStringExtra(BroadcastExtra.WIFI_WATCH_STATE) ?: "{}"
+                State.handleWifiWatchStateChanged(stateJson)
+            }
         }
     }
 }
