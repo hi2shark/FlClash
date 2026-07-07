@@ -163,7 +163,8 @@ object State {
             NotificationParams(
                 title = sharedState.currentProfileName,
                 stopText = sharedState.stopText,
-                onlyStatisticsProxy = sharedState.onlyStatisticsProxy
+                onlyStatisticsProxy = sharedState.onlyStatisticsProxy,
+                suspendedText = sharedState.suspendedText,
             )
         )
         Service.updateSuspendOnWifiSsids(sharedState.suspendOnWifiSsids)

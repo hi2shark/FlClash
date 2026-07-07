@@ -114,59 +114,6 @@ abstract class _$AndroidServiceSuspended extends $Notifier<bool> {
   }
 }
 
-@ProviderFor(WifiWatchStateJson)
-final wifiWatchStateJsonProvider = WifiWatchStateJsonProvider._();
-
-final class WifiWatchStateJsonProvider
-    extends $NotifierProvider<WifiWatchStateJson, String> {
-  WifiWatchStateJsonProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'wifiWatchStateJsonProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$wifiWatchStateJsonHash();
-
-  @$internal
-  @override
-  WifiWatchStateJson create() => WifiWatchStateJson();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(String value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<String>(value),
-    );
-  }
-}
-
-String _$wifiWatchStateJsonHash() =>
-    r'0000000000000000000000000000000000000000';
-
-abstract class _$WifiWatchStateJson extends $Notifier<String> {
-  String build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final ref = this.ref as $Ref<String, String>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<String, String>,
-              String,
-              Object?,
-              Object?
-            >;
-    element.handleCreate(ref, build);
-  }
-}
-
 @ProviderFor(Logs)
 final logsProvider = LogsProvider._();
 
@@ -1969,6 +1916,77 @@ abstract class _$CurrentSSID extends $Notifier<String?> {
   }
 }
 
+/// Raw WiFi-watch state JSON pushed by the native side via
+/// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
+/// Empty until the first push/poll lands. [WifiWatch] watches this so it can
+/// refresh on native events without a high-frequency poll.
+
+@ProviderFor(WifiWatchStateJson)
+final wifiWatchStateJsonProvider = WifiWatchStateJsonProvider._();
+
+/// Raw WiFi-watch state JSON pushed by the native side via
+/// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
+/// Empty until the first push/poll lands. [WifiWatch] watches this so it can
+/// refresh on native events without a high-frequency poll.
+final class WifiWatchStateJsonProvider
+    extends $NotifierProvider<WifiWatchStateJson, String> {
+  /// Raw WiFi-watch state JSON pushed by the native side via
+  /// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
+  /// Empty until the first push/poll lands. [WifiWatch] watches this so it can
+  /// refresh on native events without a high-frequency poll.
+  WifiWatchStateJsonProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'wifiWatchStateJsonProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$wifiWatchStateJsonHash();
+
+  @$internal
+  @override
+  WifiWatchStateJson create() => WifiWatchStateJson();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$wifiWatchStateJsonHash() =>
+    r'cbc42dc367a053f128bbcf0fb1efcb0f26e91f4e';
+
+/// Raw WiFi-watch state JSON pushed by the native side via
+/// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
+/// Empty until the first push/poll lands. [WifiWatch] watches this so it can
+/// refresh on native events without a high-frequency poll.
+
+abstract class _$WifiWatchStateJson extends $Notifier<String> {
+  String build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(WifiWatch)
 final wifiWatchProvider = WifiWatchProvider._();
 
@@ -2001,7 +2019,7 @@ final class WifiWatchProvider
   }
 }
 
-String _$wifiWatchHash() => r'0000000000000000000000000000000000000000';
+String _$wifiWatchHash() => r'6cd48613cfdf8e8146f8c7ea3b2f409516886cf8';
 
 abstract class _$WifiWatch extends $Notifier<WifiWatchState> {
   WifiWatchState build();
@@ -2133,7 +2151,8 @@ final backgroundLocationPermissionsProvider =
     BackgroundLocationPermissionsProvider._();
 
 final class BackgroundLocationPermissionsProvider
-    extends $NotifierProvider<BackgroundLocationPermissions, WifiSsidPermission> {
+    extends
+        $NotifierProvider<BackgroundLocationPermissions, WifiSsidPermission> {
   BackgroundLocationPermissionsProvider._()
     : super(
         from: null,
@@ -2162,7 +2181,7 @@ final class BackgroundLocationPermissionsProvider
 }
 
 String _$backgroundLocationPermissionsHash() =>
-    r'a1b2c3d4e5f6789012345678901234567890abcd';
+    r'e55d0ea9d762e0ee1f9bff45eed76cab6c1cfbd7';
 
 abstract class _$BackgroundLocationPermissions
     extends $Notifier<WifiSsidPermission> {

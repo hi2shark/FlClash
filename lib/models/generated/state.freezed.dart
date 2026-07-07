@@ -8432,7 +8432,7 @@ $VpnPropsCopyWith<$Res> get vpnProps {
 /// @nodoc
 mixin _$SharedState {
 
- SetupParams? get setupParams; VpnOptions? get vpnOptions; String get stopTip; String get startTip; String get currentProfileName; String get stopText; bool get onlyStatisticsProxy; bool get crashlytics;@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> get suspendOnWifiSsids;
+ SetupParams? get setupParams; VpnOptions? get vpnOptions; String get stopTip; String get startTip; String get currentProfileName; String get stopText; String get suspendedText; bool get onlyStatisticsProxy; bool get crashlytics;@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> get suspendOnWifiSsids;
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -8445,16 +8445,16 @@ $SharedStateCopyWith<SharedState> get copyWith => _$SharedStateCopyWithImpl<Shar
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.crashlytics, crashlytics) || other.crashlytics == crashlytics)&&const DeepCollectionEquality().equals(other.suspendOnWifiSsids, suspendOnWifiSsids));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.suspendedText, suspendedText) || other.suspendedText == suspendedText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.crashlytics, crashlytics) || other.crashlytics == crashlytics)&&const DeepCollectionEquality().equals(other.suspendOnWifiSsids, suspendOnWifiSsids));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,currentProfileName,stopText,onlyStatisticsProxy,crashlytics,const DeepCollectionEquality().hash(suspendOnWifiSsids));
+int get hashCode => Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,currentProfileName,stopText,suspendedText,onlyStatisticsProxy,crashlytics,const DeepCollectionEquality().hash(suspendOnWifiSsids));
 
 @override
 String toString() {
-  return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, currentProfileName: $currentProfileName, stopText: $stopText, onlyStatisticsProxy: $onlyStatisticsProxy, crashlytics: $crashlytics, suspendOnWifiSsids: $suspendOnWifiSsids)';
+  return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, currentProfileName: $currentProfileName, stopText: $stopText, suspendedText: $suspendedText, onlyStatisticsProxy: $onlyStatisticsProxy, crashlytics: $crashlytics, suspendOnWifiSsids: $suspendOnWifiSsids)';
 }
 
 
@@ -8465,7 +8465,7 @@ abstract mixin class $SharedStateCopyWith<$Res>  {
   factory $SharedStateCopyWith(SharedState value, $Res Function(SharedState) _then) = _$SharedStateCopyWithImpl;
 @useResult
 $Res call({
- SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool crashlytics,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
+ SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, String suspendedText, bool onlyStatisticsProxy, bool crashlytics,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
 });
 
 
@@ -8482,7 +8482,7 @@ class _$SharedStateCopyWithImpl<$Res>
 
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? currentProfileName = null,Object? stopText = null,Object? onlyStatisticsProxy = null,Object? crashlytics = null,Object? suspendOnWifiSsids = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? currentProfileName = null,Object? stopText = null,Object? suspendedText = null,Object? onlyStatisticsProxy = null,Object? crashlytics = null,Object? suspendOnWifiSsids = null,}) {
   return _then(_self.copyWith(
 setupParams: freezed == setupParams ? _self.setupParams : setupParams // ignore: cast_nullable_to_non_nullable
 as SetupParams?,vpnOptions: freezed == vpnOptions ? _self.vpnOptions : vpnOptions // ignore: cast_nullable_to_non_nullable
@@ -8490,6 +8490,7 @@ as VpnOptions?,stopTip: null == stopTip ? _self.stopTip : stopTip // ignore: cas
 as String,startTip: null == startTip ? _self.startTip : startTip // ignore: cast_nullable_to_non_nullable
 as String,currentProfileName: null == currentProfileName ? _self.currentProfileName : currentProfileName // ignore: cast_nullable_to_non_nullable
 as String,stopText: null == stopText ? _self.stopText : stopText // ignore: cast_nullable_to_non_nullable
+as String,suspendedText: null == suspendedText ? _self.suspendedText : suspendedText // ignore: cast_nullable_to_non_nullable
 as String,onlyStatisticsProxy: null == onlyStatisticsProxy ? _self.onlyStatisticsProxy : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
 as bool,crashlytics: null == crashlytics ? _self.crashlytics : crashlytics // ignore: cast_nullable_to_non_nullable
 as bool,suspendOnWifiSsids: null == suspendOnWifiSsids ? _self.suspendOnWifiSsids : suspendOnWifiSsids // ignore: cast_nullable_to_non_nullable
@@ -8602,10 +8603,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SharedState() when $default != null:
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
   return orElse();
 
 }
@@ -8623,10 +8624,10 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)  $default,) {final _that = this;
 switch (_that) {
 case _SharedState():
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -8643,10 +8644,10 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,) {final _that = this;
 switch (_that) {
 case _SharedState() when $default != null:
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
   return null;
 
 }
@@ -8658,7 +8659,7 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 @JsonSerializable()
 
 class _SharedState implements SharedState {
-  const _SharedState({this.setupParams, this.vpnOptions, required this.stopTip, required this.startTip, required this.currentProfileName, required this.stopText, required this.onlyStatisticsProxy, required this.crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids) final  List<String> suspendOnWifiSsids = const []}): _suspendOnWifiSsids = suspendOnWifiSsids;
+  const _SharedState({this.setupParams, this.vpnOptions, required this.stopTip, required this.startTip, required this.currentProfileName, required this.stopText, this.suspendedText = 'Suspended...', required this.onlyStatisticsProxy, required this.crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids) final  List<String> suspendOnWifiSsids = const []}): _suspendOnWifiSsids = suspendOnWifiSsids;
   factory _SharedState.fromJson(Map<String, dynamic> json) => _$SharedStateFromJson(json);
 
 @override final  SetupParams? setupParams;
@@ -8667,6 +8668,7 @@ class _SharedState implements SharedState {
 @override final  String startTip;
 @override final  String currentProfileName;
 @override final  String stopText;
+@override@JsonKey() final  String suspendedText;
 @override final  bool onlyStatisticsProxy;
 @override final  bool crashlytics;
  final  List<String> _suspendOnWifiSsids;
@@ -8690,16 +8692,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.crashlytics, crashlytics) || other.crashlytics == crashlytics)&&const DeepCollectionEquality().equals(other._suspendOnWifiSsids, _suspendOnWifiSsids));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.suspendedText, suspendedText) || other.suspendedText == suspendedText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.crashlytics, crashlytics) || other.crashlytics == crashlytics)&&const DeepCollectionEquality().equals(other._suspendOnWifiSsids, _suspendOnWifiSsids));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,currentProfileName,stopText,onlyStatisticsProxy,crashlytics,const DeepCollectionEquality().hash(_suspendOnWifiSsids));
+int get hashCode => Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,currentProfileName,stopText,suspendedText,onlyStatisticsProxy,crashlytics,const DeepCollectionEquality().hash(_suspendOnWifiSsids));
 
 @override
 String toString() {
-  return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, currentProfileName: $currentProfileName, stopText: $stopText, onlyStatisticsProxy: $onlyStatisticsProxy, crashlytics: $crashlytics, suspendOnWifiSsids: $suspendOnWifiSsids)';
+  return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, currentProfileName: $currentProfileName, stopText: $stopText, suspendedText: $suspendedText, onlyStatisticsProxy: $onlyStatisticsProxy, crashlytics: $crashlytics, suspendOnWifiSsids: $suspendOnWifiSsids)';
 }
 
 
@@ -8710,7 +8712,7 @@ abstract mixin class _$SharedStateCopyWith<$Res> implements $SharedStateCopyWith
   factory _$SharedStateCopyWith(_SharedState value, $Res Function(_SharedState) _then) = __$SharedStateCopyWithImpl;
 @override @useResult
 $Res call({
- SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool crashlytics,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
+ SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, String suspendedText, bool onlyStatisticsProxy, bool crashlytics,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
 });
 
 
@@ -8727,7 +8729,7 @@ class __$SharedStateCopyWithImpl<$Res>
 
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? currentProfileName = null,Object? stopText = null,Object? onlyStatisticsProxy = null,Object? crashlytics = null,Object? suspendOnWifiSsids = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? currentProfileName = null,Object? stopText = null,Object? suspendedText = null,Object? onlyStatisticsProxy = null,Object? crashlytics = null,Object? suspendOnWifiSsids = null,}) {
   return _then(_SharedState(
 setupParams: freezed == setupParams ? _self.setupParams : setupParams // ignore: cast_nullable_to_non_nullable
 as SetupParams?,vpnOptions: freezed == vpnOptions ? _self.vpnOptions : vpnOptions // ignore: cast_nullable_to_non_nullable
@@ -8735,6 +8737,7 @@ as VpnOptions?,stopTip: null == stopTip ? _self.stopTip : stopTip // ignore: cas
 as String,startTip: null == startTip ? _self.startTip : startTip // ignore: cast_nullable_to_non_nullable
 as String,currentProfileName: null == currentProfileName ? _self.currentProfileName : currentProfileName // ignore: cast_nullable_to_non_nullable
 as String,stopText: null == stopText ? _self.stopText : stopText // ignore: cast_nullable_to_non_nullable
+as String,suspendedText: null == suspendedText ? _self.suspendedText : suspendedText // ignore: cast_nullable_to_non_nullable
 as String,onlyStatisticsProxy: null == onlyStatisticsProxy ? _self.onlyStatisticsProxy : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
 as bool,crashlytics: null == crashlytics ? _self.crashlytics : crashlytics // ignore: cast_nullable_to_non_nullable
 as bool,suspendOnWifiSsids: null == suspendOnWifiSsids ? _self._suspendOnWifiSsids : suspendOnWifiSsids // ignore: cast_nullable_to_non_nullable
