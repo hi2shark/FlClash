@@ -246,6 +246,93 @@ class WifiWatchSuspendControllerTest {
 
         assertEquals(listOf(true, false), events)
     }
+
+    @Test
+    fun cellularDefaultNetworkResumesEvenOnTrustedSsid() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        assertEquals(listOf(true), events)
+
+        // WiFi still associated to trusted SSID, but the OS routed the default
+        // network via Cellular -> proxy must come back immediately.
+        controller.forceResume("default network is Cellular")
+
+        assertEquals(listOf(true, false), events)
+    }
+
+    @Test
+    fun forceResumeCancelsPendingSuspendBeforeItFires() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        // Within the 5s stability window the default network flips to Cellular.
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS - 1)
+        assertEquals(emptyList(), events)
+
+        controller.forceResume("default network is Cellular")
+
+        assertEquals(listOf(false), events)
+        // The pending suspend timer must have been cancelled.
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        assertEquals(listOf(false), events)
+    }
+
+    @Test
+    fun forceResumeStaysActiveAcrossTrustedWifiUpdates() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        controller.forceResume("default network is Cellular")
+
+        // Subsequent WiFi capability updates while still on Cellular must NOT
+        // re-suspend, even though the SSID is trusted and validated.
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(false), events)
+    }
+
+    @Test
+    fun clearForceResumeReEvaluatesAndCanSuspendAgain() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        controller.forceResume("default network is Cellular")
+        assertEquals(listOf(false), events)
+
+        // Default network leaves Cellular (back to WiFi). Re-evaluation should
+        // schedule the stability suspend again.
+        controller.clearForceResume("default network is no longer Cellular")
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(false, true), events)
+    }
 }
 
 private class FakeScheduler {
