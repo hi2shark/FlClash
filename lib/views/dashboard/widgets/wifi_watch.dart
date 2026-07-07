@@ -105,14 +105,17 @@ class WifiWatchCard extends StatelessWidget {
                     final currentSsid = ref.watch(currentSSIDProvider);
                     final excludeSSIDs = ref.watch(excludeSSIDsProvider);
                     final ssid = state.ssid ?? state.rawSsid ?? currentSsid;
-                    final hasServiceInfo =
-                        state.wifiPresent || state.suspended || state.pendingSuspendDeadline != null;
+                    final hasServiceInfo = state.wifiPresent ||
+                        state.suspended ||
+                        state.pendingSuspendDeadline != null;
                     final hasNetwork = ssid != null;
                     final isExcluded =
                         hasNetwork && excludeSSIDs.contains(ssid);
                     final status = _statusText(context, state, isExcluded);
                     final display = hasServiceInfo && hasNetwork
-                        ? '$ssid · $status'
+                        ? state.prioritizeActionStatus
+                            ? status
+                            : '$ssid · $status'
                         : (hasNetwork ? ssid : status);
                     return FadeThroughBox(
                       child: Row(
