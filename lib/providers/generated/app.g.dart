@@ -114,6 +114,59 @@ abstract class _$AndroidServiceSuspended extends $Notifier<bool> {
   }
 }
 
+@ProviderFor(WifiWatchStateJson)
+final wifiWatchStateJsonProvider = WifiWatchStateJsonProvider._();
+
+final class WifiWatchStateJsonProvider
+    extends $NotifierProvider<WifiWatchStateJson, String> {
+  WifiWatchStateJsonProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'wifiWatchStateJsonProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$wifiWatchStateJsonHash();
+
+  @$internal
+  @override
+  WifiWatchStateJson create() => WifiWatchStateJson();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$wifiWatchStateJsonHash() =>
+    r'0000000000000000000000000000000000000000';
+
+abstract class _$WifiWatchStateJson extends $Notifier<String> {
+  String build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(Logs)
 final logsProvider = LogsProvider._();
 

@@ -68,6 +68,12 @@ class _AndroidContainerState extends ConsumerState<AndroidManager>
   }
 
   @override
+  void onWifiWatchState(String stateJson) {
+    ref.read(wifiWatchStateJsonProvider.notifier).value = stateJson;
+    super.onWifiWatchState(stateJson);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return widget.child;
   }

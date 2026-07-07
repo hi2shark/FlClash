@@ -453,63 +453,87 @@ class CurrentSSID extends _$CurrentSSID with AutoDisposeNotifierMixin {
   }
 }
 
+/// Raw WiFi-watch state JSON pushed by the native side via
+/// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
+/// Empty until the first push/poll lands. [WifiWatch] watches this so it can
+/// refresh on native events without a high-frequency poll.
+@Riverpod(keepAlive: true)
+class WifiWatchStateJson extends _$WifiWatchStateJson
+    with AutoDisposeNotifierMixin {
+  @override
+  String build() {
+    return '';
+  }
+}
+
 @Riverpod(keepAlive: true)
 class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
-  Timer? _timer;
+  Timer? _fallbackTimer;
+  bool _initialized = false;
 
   @override
   WifiWatchState build() {
     if (!system.isAndroid) {
       return const WifiWatchState();
     }
-    _fetch();
-    _timer = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) => _fetch(),
-    );
-    ref.onDispose(() {
-      _timer?.cancel();
-      _timer = null;
-    });
-    return WifiWatchState(
-      suspended: ref.read(androidServiceSuspendedProvider),
-    );
+
+    // Reactive to suspend broadcasts (ref.watch, not ref.read, so suspend
+    // changes refresh this provider immediately).
+    final androidSuspended = ref.watch(androidServiceSuspendedProvider);
+    // Reactive to native wifi-watch state pushes.
+    final stateJson = ref.watch(wifiWatchStateJsonProvider);
+
+    // One-shot setup that must survive rebuilds. Riverpod keeps the same
+    // Notifier instance across rebuilds while the provider is alive, so the
+    // fields below persist; we must NOT re-run this block on every rebuild or
+    // we'd leak timers and dispose handlers (each rebuild would otherwise
+    // create a new Timer.periodic that only gets cancelled on full dispose).
+    if (!_initialized) {
+      _initialized = true;
+      // Kick off a single initial pull so the UI has data before the first
+      // native push arrives.
+      _fetch();
+      // Low-frequency fallback poll in case a native push is missed (process
+      // death, race during service restart). Once per 10s is enough because the
+      // event channel is the primary signal.
+      _fallbackTimer = Timer.periodic(
+        const Duration(seconds: 10),
+        (_) => _fetch(),
+      );
+      ref.onDispose(() {
+        _fallbackTimer?.cancel();
+        _fallbackTimer = null;
+        // Allow a future re-create (after full dispose) to set up again.
+        _initialized = false;
+      });
+    }
+
+    // Build from whatever we have right now.
+    return buildWifiWatchState(stateJson, androidSuspended);
   }
 
+  /// Pull-based refresh: fetch service JSON and write it to the shared
+  /// [wifiWatchStateJsonProvider]. Going through the holder means the poll
+  /// path and the native-push path both funnel through a single state holder,
+  /// so [WifiWatch] re-builds exactly once per update. Guarded against reentry
+  /// via [_initialized] so a rebuild caused by this write does not trigger
+  /// another pull.
   Future<void> _fetch() async {
     try {
       final data = await service?.getWifiWatchState();
       final currentWifiInfo = await _getCurrentWifiInfo();
-      if (data == null || data.isEmpty) {
-        _publish(_stateFromDeviceInfo(currentWifiInfo));
-        return;
+      final merged = mergeServiceAndDeviceWifi(data, currentWifiInfo);
+      final notifier = ref.read(wifiWatchStateJsonProvider.notifier);
+      // Only write if the value actually changed; this keeps a no-op poll
+      // (service returned identical state) from forcing an extra rebuild.
+      if (ref.read(wifiWatchStateJsonProvider) != merged) {
+        notifier.value = merged;
       }
-      final json = jsonDecode(data) as Map<String, dynamic>;
-      if (json.isEmpty) {
-        _publish(_stateFromDeviceInfo(currentWifiInfo));
-        return;
-      }
-      final serviceState = WifiWatchState.fromJson(json);
-      final hasDeviceInfo =
-          currentWifiInfo.ssid != null || currentWifiInfo.rssi != null;
-      _publish(
-        serviceState.copyWith(
-          rawSsid: currentWifiInfo.ssid,
-          rssi: serviceState.rssi == null ? currentWifiInfo.rssi : null,
-          wifiPresent: serviceState.wifiPresent || hasDeviceInfo,
-        ),
-      );
     } catch (e, stack) {
       // Keep the previous state on failure so the UI does not flicker, but
       // log the error so malformed service JSON does not stay hidden.
       commonPrint.log('WifiWatch fetch failed: $e\n$stack');
     }
-  }
-
-  void _publish(WifiWatchState serviceState) {
-    value = serviceState.withAndroidServiceSuspended(
-      ref.read(androidServiceSuspendedProvider),
-    );
   }
 
   Future<WifiConnectionInfo> _getCurrentWifiInfo() async {
@@ -525,16 +549,73 @@ class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
       }
     }
   }
+}
 
-  WifiWatchState _stateFromDeviceInfo(WifiConnectionInfo info) {
-    final hasDeviceInfo = info.ssid != null || info.rssi != null;
-    return WifiWatchState(
-      ssid: info.ssid,
-      rawSsid: info.ssid,
-      rssi: info.rssi,
-      wifiPresent: hasDeviceInfo,
-    );
+/// Parses the JSON held by [wifiWatchStateJsonProvider] into a [WifiWatchState]
+/// and composes in the latest android-service-suspended flag. Top-level so it
+/// can be unit-tested without a live Riverpod container or Android platform.
+WifiWatchState buildWifiWatchState(String stateJson, bool androidSuspended) {
+  if (stateJson.isEmpty) {
+    return WifiWatchState(suspended: androidSuspended);
   }
+  try {
+    final json = jsonDecode(stateJson) as Map<String, dynamic>;
+    if (json.isEmpty) {
+      return WifiWatchState(suspended: androidSuspended);
+    }
+    final serviceState = WifiWatchState.fromJson(json);
+    return serviceState.withAndroidServiceSuspended(androidSuspended);
+  } catch (e, stack) {
+    commonPrint.log('WifiWatch parse failed: $e\n$stack');
+    return WifiWatchState(suspended: androidSuspended);
+  }
+}
+
+/// Merges the service-side WiFi-watch JSON with device-side WiFi info. The
+/// service is authoritative for SSID/trust; device info only fills gaps (RSSI,
+/// and rawSsid/ssid when the service hasn't resolved them yet). Returns JSON
+/// suitable for [wifiWatchStateJsonProvider]. Top-level so it can be unit-
+/// tested directly.
+///
+/// Previously rawSsid was overwritten unconditionally and rssi logic was
+/// inverted (service value cleared when present); both are fixed here.
+String mergeServiceAndDeviceWifi(
+  String? data,
+  WifiConnectionInfo currentWifiInfo,
+) {
+  final hasDeviceInfo =
+      currentWifiInfo.ssid != null || currentWifiInfo.rssi != null;
+  final fallback = wifiWatchStateFromDeviceInfo(currentWifiInfo);
+  if (data == null || data.isEmpty) {
+    return jsonEncode(fallback.toJson());
+  }
+  try {
+    final json = jsonDecode(data) as Map<String, dynamic>;
+    if (json.isEmpty) {
+      return jsonEncode(fallback.toJson());
+    }
+    final serviceState = WifiWatchState.fromJson(json);
+    final merged = serviceState.copyWith(
+      rawSsid: serviceState.ssid ?? currentWifiInfo.ssid,
+      rssi: serviceState.rssi ?? currentWifiInfo.rssi,
+      wifiPresent: serviceState.wifiPresent || hasDeviceInfo,
+    );
+    return jsonEncode(merged.toJson());
+  } catch (e) {
+    // Malformed service JSON: fall back to whatever the service gave us rather
+    // than silently substituting device-only info.
+    return data;
+  }
+}
+
+WifiWatchState wifiWatchStateFromDeviceInfo(WifiConnectionInfo info) {
+  final hasDeviceInfo = info.ssid != null || info.rssi != null;
+  return WifiWatchState(
+    ssid: info.ssid,
+    rawSsid: info.ssid,
+    rssi: info.rssi,
+    wifiPresent: hasDeviceInfo,
+  );
 }
 
 @Riverpod(keepAlive: true)

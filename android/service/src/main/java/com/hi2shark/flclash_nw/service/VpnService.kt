@@ -40,8 +40,16 @@ class VpnService : SystemVpnService(), IBaseService,
         install(NetworkObserveModule(self))
         install(NotificationModule(self))
         install(SuspendModule(self))
-        val wifiWatchModule = install(WifiWatchModule(self))
+        // Assign the field before install(): install() runs onInstall()
+        // synchronously, which can register the network callback and fire the
+        // first onStateChanged() before this block continues. If the field
+        // were assigned after install(), getWifiWatchStateJson() would read
+        // wifiWatchModule == null and drop SSID/RSSI from the first push.
+        val wifiWatchModule = WifiWatchModule(self) {
+            notifyWifiWatchStateChanged(getWifiWatchStateJson())
+        }
         this@VpnService.wifiWatchModule = wifiWatchModule
+        install(wifiWatchModule)
     }
 
     @Volatile
@@ -64,6 +72,8 @@ class VpnService : SystemVpnService(), IBaseService,
 
     override var isSuspended: Boolean = false
         private set
+
+    override val isVpn: Boolean = true
 
     override val wifiSuspended: Boolean
         get() = suspensionReasons.wifiSuspended
@@ -312,6 +322,16 @@ class VpnService : SystemVpnService(), IBaseService,
         val result = applyDesiredSuspended()
         if (!result.success) {
             suspensionReasons.setWifiSuspended(previous)
+        }
+        return result
+    }
+
+    override fun setIdleSuspended(suspended: Boolean): ServiceStartResult {
+        val previous = suspensionReasons.idleSuspended
+        suspensionReasons.setIdleSuspended(suspended)
+        val result = applyDesiredSuspended()
+        if (!result.success) {
+            suspensionReasons.setIdleSuspended(previous)
         }
         return result
     }

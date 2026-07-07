@@ -121,6 +121,10 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
         flutterMethodChannel.invokeMethodOnMainThread<Any>("suspended", suspended)
     }
 
+    fun handleWifiWatchState(stateJson: String) {
+        flutterMethodChannel.invokeMethodOnMainThread<Any>("wifiWatchState", stateJson)
+    }
+
     private fun onServiceDisconnected(message: String) {
         State.runTime = 0
         State.runStateFlow.tryEmit(RunState.STOP)

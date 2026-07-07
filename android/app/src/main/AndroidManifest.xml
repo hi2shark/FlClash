@@ -113,6 +113,7 @@
                 <action android:name="${applicationId}.intent.action.SERVICE_CREATED" />
                 <action android:name="${applicationId}.intent.action.SERVICE_DESTROYED" />
                 <action android:name="${applicationId}.intent.action.SERVICE_SUSPENDED_CHANGED" />
+                <action android:name="${applicationId}.intent.action.WIFI_WATCH_STATE_CHANGED" />
             </intent-filter>
         </receiver>
 

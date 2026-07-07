@@ -11,6 +11,15 @@ interface IBaseService {
     val isSuspended: Boolean
 
     /**
+     * Whether this service drives a system VPN tunnel. VpnService returns true,
+     * CommonService (proxy-only mode) returns false. The WiFi-watch module uses
+     * this to distinguish its own tunnel from third-party VPNs when deciding how
+     * to judge WiFi trust — only an own VPN tunnel obscures the underlying
+     * WiFi's NET_CAPABILITY_VALIDATED.
+     */
+    val isVpn: Boolean
+
+    /**
      * When true, the service should remain suspended regardless of screen/idle state.
      * Currently driven by the WiFi-watch feature (exclude SSID list).
      */
@@ -33,6 +42,15 @@ interface IBaseService {
     fun setWifiSuspended(suspended: Boolean): ServiceStartResult
 
     /**
+     * Driven by SuspendModule based on screen state and Doze idle mode. Routed
+     * through the shared suspension arbiter so that idle suspension composes
+     * correctly with external (user) and WiFi-watch suspensions, and so that the
+     * resulting state change always goes through applyDesiredSuspended +
+     * notifySuspendedChanged (keeping Core and the broadcast listeners in sync).
+     */
+    fun setIdleSuspended(suspended: Boolean): ServiceStartResult
+
+    /**
      * Returns a JSON representation of the current WiFi-watch state.
      */
     fun getWifiWatchStateJson(): String {
@@ -43,6 +61,16 @@ interface IBaseService {
         State.runtimeState.setSuspended(suspended)
         BroadcastAction.SERVICE_SUSPENDED_CHANGED.sendBroadcast {
             putExtra(BroadcastExtra.SUSPENDED, suspended)
+        }
+    }
+
+    /**
+     * Push the current WiFi-watch state to the app process so the UI can update
+     * event-driven instead of polling. Mirrors notifySuspendedChanged.
+     */
+    fun notifyWifiWatchStateChanged(stateJson: String) {
+        BroadcastAction.WIFI_WATCH_STATE_CHANGED.sendBroadcast {
+            putExtra(BroadcastExtra.WIFI_WATCH_STATE, stateJson)
         }
     }
 
