@@ -641,7 +641,6 @@
   "idleSessionCheckInterval": "アイドルセッション確認間隔",
   "idleSessionTimeout": "アイドルセッションタイムアウト",
   "minIdleSession": "最小アイドルセッション",
-  "key": "キー",
   "spec": "Spec",
   "up": "アップ",
   "down": "ダウン",

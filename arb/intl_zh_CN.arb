@@ -641,7 +641,6 @@
   "idleSessionCheckInterval": "空闲会话检查间隔",
   "idleSessionTimeout": "空闲会话超时",
   "minIdleSession": "最小空闲会话",
-  "key": "密钥",
   "spec": "Spec",
   "up": "上行",
   "down": "下行",

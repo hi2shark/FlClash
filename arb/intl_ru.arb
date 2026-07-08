@@ -641,7 +641,6 @@
   "idleSessionCheckInterval": "Интервал проверки простоя",
   "idleSessionTimeout": "Таймаут простоя",
   "minIdleSession": "Мин. простаивающих сессий",
-  "key": "Ключ",
   "spec": "Spec",
   "up": "Up",
   "down": "Down",

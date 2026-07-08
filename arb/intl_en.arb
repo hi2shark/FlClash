@@ -641,7 +641,6 @@
   "idleSessionCheckInterval": "Idle session check interval",
   "idleSessionTimeout": "Idle session timeout",
   "minIdleSession": "Min idle session",
-  "key": "Key",
   "spec": "Spec",
   "up": "Up",
   "down": "Down",
