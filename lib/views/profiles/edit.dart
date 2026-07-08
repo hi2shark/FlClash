@@ -6,6 +6,9 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/local_proxies/pages/local_proxy_list_page.dart';
+import 'package:fl_clash/local_proxies/pages/local_proxy_mixin_settings_page.dart';
+import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/state.dart';
@@ -46,6 +49,7 @@ class _EditProfileViewState extends State<EditProfileView> {
       text: widget.profile.autoUpdateDuration.inMinutes.toString(),
     );
     _updateFileInfo();
+    localProxyStore.init();
   }
 
   Future<void> _updateFileInfo() async {
@@ -212,6 +216,96 @@ class _EditProfileViewState extends State<EditProfileView> {
     globalState.container.read(setupActionProvider.notifier).autoApplyProfile();
   }
 
+  Widget _buildLocalProxyCard(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return ValueListenableBuilder<LocalProxyProviderConfig?>(
+      valueListenable: localProxyStore.configNotifier,
+      builder: (_, config, child) {
+        return ValueListenableBuilder<List<LocalProxy>>(
+          valueListenable: localProxyStore.proxiesNotifier,
+          builder: (_, proxies, child) {
+            final enabled = config?.enabled ?? false;
+            final enabledCount = proxies.where((p) => p.enabled).length;
+            final targetGroups = config?.targetGroups ?? [];
+            return CommonCard(
+              child: ListItem(
+                title: Text(appLocalizations.localProxyMixin),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    Text(
+                      enabled
+                          ? appLocalizations.localMixinEnabled
+                          : appLocalizations.localMixinDisabled,
+                    ),
+                    if (enabled) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        appLocalizations.localMixinStatus(
+                          proxies.length,
+                          enabledCount,
+                          targetGroups.isEmpty
+                              ? appLocalizations.none
+                              : targetGroups.join('、'),
+                        ),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 4),
+                      Text(appLocalizations.localMixinDesc),
+                    ],
+                    const SizedBox(height: 8),
+                    Wrap(
+                      runSpacing: 6,
+                      spacing: 12,
+                      children: [
+                        CommonChip(
+                          avatar: const Icon(Icons.storage_outlined),
+                          label: appLocalizations.manageLocalNodes,
+                          onPressed: () {
+                            BaseNavigator.push(
+                              context,
+                              const LocalProxyListPage(),
+                            );
+                          },
+                        ),
+                        CommonChip(
+                          avatar: const Icon(Icons.merge_type_outlined),
+                          label: appLocalizations.mixinSettings,
+                          onPressed: () {
+                            BaseNavigator.push(
+                              context,
+                              LocalProxyMixinSettingsPage(
+                                profileId: widget.profile.id,
+                              ),
+                            );
+                          },
+                        ),
+                        if (!enabled)
+                          CommonChip(
+                            avatar: const Icon(Icons.play_arrow_outlined),
+                            label: appLocalizations.startSetup,
+                            onPressed: () {
+                              BaseNavigator.push(
+                                context,
+                                LocalProxyMixinSettingsPage(
+                                  profileId: widget.profile.id,
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
@@ -324,6 +418,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           );
         },
       ),
+      _buildLocalProxyCard(context),
     ];
     return CommonPopScope(
       onPop: (context) {

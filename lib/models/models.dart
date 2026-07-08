@@ -3,5 +3,7 @@ export 'clash_config.dart';
 export 'common.dart';
 export 'config.dart';
 export 'core.dart';
+export 'local_proxy.dart';
+export 'local_proxy_provider_config.dart';
 export 'profile.dart';
 export 'state.dart';

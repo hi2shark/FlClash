@@ -20,7 +20,7 @@ _SharedState _$SharedStateFromJson(Map<String, dynamic> json) => _SharedState(
   onlyStatisticsProxy: json['onlyStatisticsProxy'] as bool,
   crashlytics: json['crashlytics'] as bool,
   suspendOnWifiSsids:
-      ((json['suspendOnWifiSsids'] ?? json['excludeSSIDs']) as List<dynamic>?)
+      (_readSuspendOnWifiSsids(json, 'suspendOnWifiSsids') as List<dynamic>?)
           ?.map((e) => e as String)
           .toList() ??
       const [],

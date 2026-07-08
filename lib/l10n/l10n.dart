@@ -4378,6 +4378,736 @@ class AppLocalizations {
   String get suspended {
     return Intl.message('Suspended...', name: 'suspended', desc: '', args: []);
   }
+
+  /// `Local Proxy Mix-in`
+  String get localProxyMixin {
+    return Intl.message(
+      'Local Proxy Mix-in',
+      name: 'localProxyMixin',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local Proxies`
+  String get localProxies {
+    return Intl.message(
+      'Local Proxies',
+      name: 'localProxies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Manage Local Nodes`
+  String get manageLocalNodes {
+    return Intl.message(
+      'Manage Local Nodes',
+      name: 'manageLocalNodes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Mixin Settings`
+  String get mixinSettings {
+    return Intl.message(
+      'Mixin Settings',
+      name: 'mixinSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start Setup`
+  String get startSetup {
+    return Intl.message('Start Setup', name: 'startSetup', desc: '', args: []);
+  }
+
+  /// `Status: enabled`
+  String get localMixinEnabled {
+    return Intl.message(
+      'Status: enabled',
+      name: 'localMixinEnabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disabled`
+  String get localMixinDisabled {
+    return Intl.message(
+      'Disabled',
+      name: 'localMixinDisabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{total} nodes · {enabled} enabled · Groups: {groups}`
+  String localMixinStatus(int total, int enabled, String groups) {
+    return Intl.message(
+      '$total nodes · $enabled enabled · Groups: $groups',
+      name: 'localMixinStatus',
+      desc: '',
+      args: [total, enabled, groups],
+    );
+  }
+
+  /// `Mix your manually added nodes into the current subscription without affecting updates.`
+  String get localMixinDesc {
+    return Intl.message(
+      'Mix your manually added nodes into the current subscription without affecting updates.',
+      name: 'localMixinDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enabled nodes`
+  String get enabledNodes {
+    return Intl.message(
+      'Enabled nodes',
+      name: 'enabledNodes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Provider name`
+  String get providerName {
+    return Intl.message(
+      'Provider name',
+      name: 'providerName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Provider type`
+  String get providerType {
+    return Intl.message(
+      'Provider type',
+      name: 'providerType',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local file`
+  String get localFile {
+    return Intl.message('Local file', name: 'localFile', desc: '', args: []);
+  }
+
+  /// `Enable local proxy mix-in`
+  String get enableLocalProxyMixin {
+    return Intl.message(
+      'Enable local proxy mix-in',
+      name: 'enableLocalProxyMixin',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select target proxy groups`
+  String get selectTargetGroups {
+    return Intl.message(
+      'Select target proxy groups',
+      name: 'selectTargetGroups',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No proxy groups in current config`
+  String get noProxyGroups {
+    return Intl.message(
+      'No proxy groups in current config',
+      name: 'noProxyGroups',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Provider`
+  String get providerInfo {
+    return Intl.message('Provider', name: 'providerInfo', desc: '', args: []);
+  }
+
+  /// `Health check`
+  String get healthCheck {
+    return Intl.message(
+      'Health check',
+      name: 'healthCheck',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable health check`
+  String get enableHealthCheck {
+    return Intl.message(
+      'Enable health check',
+      name: 'enableHealthCheck',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check URL`
+  String get healthCheckUrl {
+    return Intl.message(
+      'Check URL',
+      name: 'healthCheckUrl',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Interval (seconds)`
+  String get healthCheckInterval {
+    return Intl.message(
+      'Interval (seconds)',
+      name: 'healthCheckInterval',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Timeout (ms)`
+  String get healthCheckTimeout {
+    return Intl.message(
+      'Timeout (ms)',
+      name: 'healthCheckTimeout',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Save and reload`
+  String get saveAndReload {
+    return Intl.message(
+      'Save and reload',
+      name: 'saveAndReload',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cannot save local proxy mix-in config`
+  String get cannotSaveLocalMixin {
+    return Intl.message(
+      'Cannot save local proxy mix-in config',
+      name: 'cannotSaveLocalMixin',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Target groups {groups} no longer exist, please reselect.`
+  String localMixinMissingGroups(String groups) {
+    return Intl.message(
+      'Target groups $groups no longer exist, please reselect.',
+      name: 'localMixinMissingGroups',
+      desc: '',
+      args: [groups],
+    );
+  }
+
+  /// `Paste share link`
+  String get pasteShareLink {
+    return Intl.message(
+      'Paste share link',
+      name: 'pasteShareLink',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Manual add`
+  String get manualAdd {
+    return Intl.message('Manual add', name: 'manualAdd', desc: '', args: []);
+  }
+
+  /// `Add local proxy`
+  String get addLocalProxy {
+    return Intl.message(
+      'Add local proxy',
+      name: 'addLocalProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Edit local proxy`
+  String get editLocalProxy {
+    return Intl.message(
+      'Edit local proxy',
+      name: 'editLocalProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Search name / protocol / server`
+  String get searchLocalProxy {
+    return Intl.message(
+      'Search name / protocol / server',
+      name: 'searchLocalProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{total} nodes · {enabled} enabled`
+  String localProxyCount(int total, int enabled) {
+    return Intl.message(
+      '$total nodes · $enabled enabled',
+      name: 'localProxyCount',
+      desc: '',
+      args: [total, enabled],
+    );
+  }
+
+  /// `No local proxies`
+  String get noLocalProxy {
+    return Intl.message(
+      'No local proxies',
+      name: 'noLocalProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enabled`
+  String get enabled {
+    return Intl.message('Enabled', name: 'enabled', desc: '', args: []);
+  }
+
+  /// `Disabled`
+  String get disabled {
+    return Intl.message('Disabled', name: 'disabled', desc: '', args: []);
+  }
+
+  /// `Server`
+  String get server {
+    return Intl.message('Server', name: 'server', desc: '', args: []);
+  }
+
+  /// `Cipher`
+  String get cipher {
+    return Intl.message('Cipher', name: 'cipher', desc: '', args: []);
+  }
+
+  /// `UUID`
+  String get uuid {
+    return Intl.message('UUID', name: 'uuid', desc: '', args: []);
+  }
+
+  /// `SNI`
+  String get sni {
+    return Intl.message('SNI', name: 'sni', desc: '', args: []);
+  }
+
+  /// `Server Name`
+  String get servername {
+    return Intl.message('Server Name', name: 'servername', desc: '', args: []);
+  }
+
+  /// `TLS`
+  String get tls {
+    return Intl.message('TLS', name: 'tls', desc: '', args: []);
+  }
+
+  /// `UDP`
+  String get udp {
+    return Intl.message('UDP', name: 'udp', desc: '', args: []);
+  }
+
+  /// `Skip cert verify`
+  String get skipCertVerify {
+    return Intl.message(
+      'Skip cert verify',
+      name: 'skipCertVerify',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Protocol authentication`
+  String get protocolAuth {
+    return Intl.message(
+      'Protocol authentication',
+      name: 'protocolAuth',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Transport settings`
+  String get transportSettings {
+    return Intl.message(
+      'Transport settings',
+      name: 'transportSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Advanced settings`
+  String get advancedSettings {
+    return Intl.message(
+      'Advanced settings',
+      name: 'advancedSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Shadowsocks`
+  String get ss {
+    return Intl.message('Shadowsocks', name: 'ss', desc: '', args: []);
+  }
+
+  /// `VLESS`
+  String get vless {
+    return Intl.message('VLESS', name: 'vless', desc: '', args: []);
+  }
+
+  /// `Trojan`
+  String get trojan {
+    return Intl.message('Trojan', name: 'trojan', desc: '', args: []);
+  }
+
+  /// `Proxy name cannot be empty`
+  String get localProxyNameEmpty {
+    return Intl.message(
+      'Proxy name cannot be empty',
+      name: 'localProxyNameEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Server address cannot be empty`
+  String get localProxyServerEmpty {
+    return Intl.message(
+      'Server address cannot be empty',
+      name: 'localProxyServerEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Port must be 1-65535`
+  String get localProxyPortInvalid {
+    return Intl.message(
+      'Port must be 1-65535',
+      name: 'localProxyPortInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Shadowsocks cipher and password are required`
+  String get localProxySsAuthEmpty {
+    return Intl.message(
+      'Shadowsocks cipher and password are required',
+      name: 'localProxySsAuthEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `VLESS UUID is required`
+  String get localProxyUuidEmpty {
+    return Intl.message(
+      'VLESS UUID is required',
+      name: 'localProxyUuidEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password is required`
+  String get localProxyPasswordEmpty {
+    return Intl.message(
+      'Password is required',
+      name: 'localProxyPasswordEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `One node link per line`
+  String get pasteNodeLinkHint {
+    return Intl.message(
+      'One node link per line',
+      name: 'pasteNodeLinkHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Supported protocols`
+  String get supportedProtocols {
+    return Intl.message(
+      'Supported protocols',
+      name: 'supportedProtocols',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Parse`
+  String get parse {
+    return Intl.message('Parse', name: 'parse', desc: '', args: []);
+  }
+
+  /// `Import available nodes`
+  String get importAvailableNodes {
+    return Intl.message(
+      'Import available nodes',
+      name: 'importAvailableNodes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Detected {valid} available nodes, {invalid} failed`
+  String parseResult(int valid, int invalid) {
+    return Intl.message(
+      'Detected $valid available nodes, $invalid failed',
+      name: 'parseResult',
+      desc: '',
+      args: [valid, invalid],
+    );
+  }
+
+  /// `Parse failed`
+  String get parseFailed {
+    return Intl.message(
+      'Parse failed',
+      name: 'parseFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reason`
+  String get reason {
+    return Intl.message('Reason', name: 'reason', desc: '', args: []);
+  }
+
+  /// `Incomplete support`
+  String get incompleteSupport {
+    return Intl.message(
+      'Incomplete support',
+      name: 'incompleteSupport',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `AnyTLS`
+  String get anytls {
+    return Intl.message('AnyTLS', name: 'anytls', desc: '', args: []);
+  }
+
+  /// `Nowhere`
+  String get nowhere {
+    return Intl.message('Nowhere', name: 'nowhere', desc: '', args: []);
+  }
+
+  /// `Hysteria2`
+  String get hysteria2 {
+    return Intl.message('Hysteria2', name: 'hysteria2', desc: '', args: []);
+  }
+
+  /// `Obfs`
+  String get obfs {
+    return Intl.message('Obfs', name: 'obfs', desc: '', args: []);
+  }
+
+  /// `Obfs password`
+  String get obfsPassword {
+    return Intl.message(
+      'Obfs password',
+      name: 'obfsPassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `ALPN`
+  String get alpn {
+    return Intl.message('ALPN', name: 'alpn', desc: '', args: []);
+  }
+
+  /// `Client fingerprint`
+  String get clientFingerprint {
+    return Intl.message(
+      'Client fingerprint',
+      name: 'clientFingerprint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Fingerprint`
+  String get fingerprint {
+    return Intl.message('Fingerprint', name: 'fingerprint', desc: '', args: []);
+  }
+
+  /// `Certificate`
+  String get certificate {
+    return Intl.message('Certificate', name: 'certificate', desc: '', args: []);
+  }
+
+  /// `Private key`
+  String get privateKey {
+    return Intl.message('Private key', name: 'privateKey', desc: '', args: []);
+  }
+
+  /// `ECH`
+  String get ech {
+    return Intl.message('ECH', name: 'ech', desc: '', args: []);
+  }
+
+  /// `ECH config`
+  String get echConfig {
+    return Intl.message('ECH config', name: 'echConfig', desc: '', args: []);
+  }
+
+  /// `Idle session check interval`
+  String get idleSessionCheckInterval {
+    return Intl.message(
+      'Idle session check interval',
+      name: 'idleSessionCheckInterval',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Idle session timeout`
+  String get idleSessionTimeout {
+    return Intl.message(
+      'Idle session timeout',
+      name: 'idleSessionTimeout',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Min idle session`
+  String get minIdleSession {
+    return Intl.message(
+      'Min idle session',
+      name: 'minIdleSession',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Spec`
+  String get spec {
+    return Intl.message('Spec', name: 'spec', desc: '', args: []);
+  }
+
+  /// `Up`
+  String get up {
+    return Intl.message('Up', name: 'up', desc: '', args: []);
+  }
+
+  /// `Down`
+  String get down {
+    return Intl.message('Down', name: 'down', desc: '', args: []);
+  }
+
+  /// `Pool`
+  String get pool {
+    return Intl.message('Pool', name: 'pool', desc: '', args: []);
+  }
+
+  /// `Congestion controller`
+  String get congestionController {
+    return Intl.message(
+      'Congestion controller',
+      name: 'congestionController',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `CWND`
+  String get cwnd {
+    return Intl.message('CWND', name: 'cwnd', desc: '', args: []);
+  }
+
+  /// `BBR profile`
+  String get bbrProfile {
+    return Intl.message('BBR profile', name: 'bbrProfile', desc: '', args: []);
+  }
+
+  /// `Reduce RTT`
+  String get reduceRtt {
+    return Intl.message('Reduce RTT', name: 'reduceRtt', desc: '', args: []);
+  }
+
+  /// `Max UDP relay packet size`
+  String get maxUdpRelayPacketSize {
+    return Intl.message(
+      'Max UDP relay packet size',
+      name: 'maxUdpRelayPacketSize',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `AnyTLS password is required`
+  String get localProxyAnyTlsPasswordEmpty {
+    return Intl.message(
+      'AnyTLS password is required',
+      name: 'localProxyAnyTlsPasswordEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Nowhere key is required`
+  String get localProxyNowhereKeyEmpty {
+    return Intl.message(
+      'Nowhere key is required',
+      name: 'localProxyNowhereKeyEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Carrier must be tcp or udp`
+  String get localProxyCarrierInvalid {
+    return Intl.message(
+      'Carrier must be tcp or udp',
+      name: 'localProxyCarrierInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pool must be 0-9`
+  String get localProxyPoolInvalid {
+    return Intl.message(
+      'Pool must be 0-9',
+      name: 'localProxyPoolInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy`
+  String get proxy {
+    return Intl.message('Proxy', name: 'proxy', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

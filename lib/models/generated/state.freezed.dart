@@ -8432,7 +8432,7 @@ $VpnPropsCopyWith<$Res> get vpnProps {
 /// @nodoc
 mixin _$SharedState {
 
- SetupParams? get setupParams; VpnOptions? get vpnOptions; String get stopTip; String get startTip; String get currentProfileName; String get stopText; bool get onlyStatisticsProxy; bool get crashlytics; List<String> get suspendOnWifiSsids;
+ SetupParams? get setupParams; VpnOptions? get vpnOptions; String get stopTip; String get startTip; String get currentProfileName; String get stopText; bool get onlyStatisticsProxy; bool get crashlytics;@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> get suspendOnWifiSsids;
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -8465,7 +8465,7 @@ abstract mixin class $SharedStateCopyWith<$Res>  {
   factory $SharedStateCopyWith(SharedState value, $Res Function(SharedState) _then) = _$SharedStateCopyWithImpl;
 @useResult
 $Res call({
- SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool crashlytics, List<String> suspendOnWifiSsids
+ SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool crashlytics,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
 });
 
 
@@ -8602,7 +8602,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool crashlytics,  List<String> suspendOnWifiSsids)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SharedState() when $default != null:
 return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
@@ -8623,7 +8623,7 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool crashlytics,  List<String> suspendOnWifiSsids)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)  $default,) {final _that = this;
 switch (_that) {
 case _SharedState():
 return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
@@ -8643,7 +8643,7 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool crashlytics,  List<String> suspendOnWifiSsids)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,) {final _that = this;
 switch (_that) {
 case _SharedState() when $default != null:
 return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
@@ -8658,7 +8658,7 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 @JsonSerializable()
 
 class _SharedState implements SharedState {
-  const _SharedState({this.setupParams, this.vpnOptions, required this.stopTip, required this.startTip, required this.currentProfileName, required this.stopText, required this.onlyStatisticsProxy, required this.crashlytics, final  List<String> suspendOnWifiSsids = const []}): _suspendOnWifiSsids = suspendOnWifiSsids;
+  const _SharedState({this.setupParams, this.vpnOptions, required this.stopTip, required this.startTip, required this.currentProfileName, required this.stopText, required this.onlyStatisticsProxy, required this.crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids) final  List<String> suspendOnWifiSsids = const []}): _suspendOnWifiSsids = suspendOnWifiSsids;
   factory _SharedState.fromJson(Map<String, dynamic> json) => _$SharedStateFromJson(json);
 
 @override final  SetupParams? setupParams;
@@ -8670,11 +8670,12 @@ class _SharedState implements SharedState {
 @override final  bool onlyStatisticsProxy;
 @override final  bool crashlytics;
  final  List<String> _suspendOnWifiSsids;
-@override@JsonKey() List<String> get suspendOnWifiSsids {
+@override@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> get suspendOnWifiSsids {
   if (_suspendOnWifiSsids is EqualUnmodifiableListView) return _suspendOnWifiSsids;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_suspendOnWifiSsids);
 }
+
 
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
@@ -8709,7 +8710,7 @@ abstract mixin class _$SharedStateCopyWith<$Res> implements $SharedStateCopyWith
   factory _$SharedStateCopyWith(_SharedState value, $Res Function(_SharedState) _then) = __$SharedStateCopyWithImpl;
 @override @useResult
 $Res call({
- SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool crashlytics, List<String> suspendOnWifiSsids
+ SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool crashlytics,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
 });
 
 
