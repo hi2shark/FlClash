@@ -14,7 +14,9 @@ import android.os.PowerManager
 import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.service.IBaseService
+import com.hi2shark.flclash_nw.service.ServiceStartResult
 import com.hi2shark.flclash_nw.service.State
+import com.hi2shark.flclash_nw.service.WifiWatchResumeRetry
 import com.hi2shark.flclash_nw.service.WifiWatchState
 import com.hi2shark.flclash_nw.service.WifiWatchSuspendController
 import kotlinx.coroutines.CoroutineScope
@@ -53,6 +55,13 @@ class WifiWatchModule(
             ?.apply { setReferenceCounted(false) }
     }
 
+    private val resumeRetry = WifiWatchResumeRetry(
+        scheduler = ::schedule,
+        applySuspended = ::applyWifiSuspended,
+        onAttemptFinished = onStateChanged,
+        logger = { GlobalState.log("WiFi-watch $it") },
+    )
+
     private val controller = WifiWatchSuspendController(
         scheduler = ::schedule,
         setWifiSuspended = ::setWifiSuspended,
@@ -69,6 +78,7 @@ class WifiWatchModule(
     // falls back to reconsiderForceResumeFromActiveNetwork() called from the
     // WiFi callback path.
     private var defaultNetworkCallback: ConnectivityManager.NetworkCallback? = null
+    private var defaultLostReconsider: WifiWatchSuspendController.Cancellable? = null
 
     override fun onInstall() {
         scope.launch {
@@ -116,15 +126,20 @@ class WifiWatchModule(
     }
 
     private fun setWifiSuspended(suspended: Boolean) {
-        val baseService = service as? IBaseService ?: return
+        // Resume failures are retried with backoff so a single establish /
+        // startListener failure after long Doze cannot leave the proxy hung.
+        // Suspend cancels any pending resume retries.
+        resumeRetry.apply(suspended)
+    }
+
+    private fun applyWifiSuspended(suspended: Boolean): ServiceStartResult {
+        val baseService = service as? IBaseService
+            ?: return ServiceStartResult.failure("service unavailable")
         val result = baseService.setWifiSuspended(suspended)
         if (!result.success) {
             GlobalState.log("WiFi-watch setWifiSuspended($suspended) failed: ${result.message}")
         }
-        // The actual suspend decision changed (or was attempted); push state so
-        // the UI reflects the new suspended/pendingDeadline immediately rather
-        // than waiting for the next poll.
-        onStateChanged()
+        return result
     }
 
     private val wifiNetworkRequest: NetworkRequest
@@ -219,10 +234,12 @@ class WifiWatchModule(
                 }
 
                 override fun onLost(network: Network) {
-                    // Default network lost; the OS will soon nominate a new one.
-                    // Lift any Cellular force-resume so the next default
-                    // network's callback decides the state from scratch.
-                    controller.clearForceResume("default network lost")
+                    // The OS has not nominated a successor yet. Clearing
+                    // force-resume immediately would re-enter WiFi suspend
+                    // judgment in the gap and could leave the proxy hung if
+                    // the next callback is delayed by Doze. Hold state and
+                    // re-read the active network after a short delay.
+                    scheduleDefaultLostReconsider()
                 }
             }
             runCatching {
@@ -239,7 +256,26 @@ class WifiWatchModule(
         reconsiderForceResumeFromActiveNetwork()
     }
 
+    private fun scheduleDefaultLostReconsider() {
+        defaultLostReconsider?.cancel()
+        GlobalState.log(
+            "WiFi-watch default network lost — reconsider in ${DEFAULT_LOST_RECONSIDER_MILLIS}ms"
+        )
+        defaultLostReconsider = schedule(DEFAULT_LOST_RECONSIDER_MILLIS) {
+            defaultLostReconsider = null
+            reconsiderForceResumeFromActiveNetwork(allowEmptyActive = true)
+        }
+    }
+
+    private fun cancelDefaultLostReconsider(reason: String) {
+        val pending = defaultLostReconsider ?: return
+        GlobalState.log("WiFi-watch cancel default-lost reconsider: $reason")
+        defaultLostReconsider = null
+        pending.cancel()
+    }
+
     private fun handleDefaultNetworkCapabilities(caps: NetworkCapabilities) {
+        cancelDefaultLostReconsider("default network capabilities arrived")
         val isCellular = caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
         if (isCellular) {
             controller.forceResume("default network is Cellular")
@@ -256,15 +292,27 @@ class WifiWatchModule(
      * [registerDefaultNetworkCallback] (API 23) still detect a Cellular
      * default network when the OS switches while WiFi stays associated.
      *
-     * Returns early (leaving the current force-resume state untouched) when
-     * there is no active network or its capabilities are not yet populated —
-     * the next WiFi capability callback will retry.
+     * When [allowEmptyActive] is true (after a delayed default-network loss),
+     * a missing active network or missing capabilities forces resume so the
+     * proxy cannot stay suspended in the handover gap. Otherwise we leave the
+     * current force-resume state untouched and wait for the next callback.
      */
-    private fun reconsiderForceResumeFromActiveNetwork() {
+    private fun reconsiderForceResumeFromActiveNetwork(allowEmptyActive: Boolean = false) {
         val manager = connectivity ?: return
-        val active = manager.activeNetwork ?: return
+        val active = manager.activeNetwork
+        if (active == null) {
+            if (allowEmptyActive) {
+                controller.forceResume("no active network after default lost")
+            }
+            return
+        }
         val caps = manager.getNetworkCapabilities(active)
-            ?: return // capabilities not yet ready; wait for callback
+        if (caps == null) {
+            if (allowEmptyActive) {
+                controller.forceResume("active network capabilities unavailable after default lost")
+            }
+            return
+        }
         val isCellular = caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
         if (isCellular) {
             controller.forceResume("active network is Cellular")
@@ -424,11 +472,11 @@ class WifiWatchModule(
             it.isTrusted(verdict) && it.ssid != null
         } ?: wifiNetworks.values.firstOrNull()
         if (status?.ssid != null) return status
-        // If ConnectivityManager cannot see the underlying WiFi (common when a
-        // VPN tunnel is the default network) but a WiFi transport is still
-        // reported, fall back to WifiManager. Avoid the fallback when the
-        // system no longer reports any WiFi transport (real WiFi loss).
-        if (hasWifiTransport()) {
+        // Only use WifiManager fallback while we still track at least one WiFi
+        // network from ConnectivityManager. Once the local map is empty
+        // (onLost / onUnavailable), a stale connectionInfo SSID must not keep
+        // wifiPresent=true and block resume.
+        if (wifiNetworks.isNotEmpty() && hasWifiTransport()) {
             readWifiManagerFallback()?.let { return it }
         }
         return status
@@ -558,8 +606,10 @@ class WifiWatchModule(
         val status = synchronized(wifiNetworksLock) { lastPublishedStatus }
         // Some devices do not expose RSSI through NetworkCapabilities; use the
         // legacy WifiManager fallback for the UI if a WiFi transport is still
-        // present.
-        val fallback = if (status?.rssi == null && hasWifiTransport()) {
+        // present AND we still track a ConnectivityManager WiFi network. Once
+        // the map is empty the WiFi is gone — do not resurrect a stale SSID.
+        val hasTrackedWifi = synchronized(wifiNetworksLock) { wifiNetworks.isNotEmpty() }
+        val fallback = if (status?.rssi == null && hasTrackedWifi && hasWifiTransport()) {
             readWifiManagerFallback()
         } else {
             null
@@ -628,6 +678,8 @@ class WifiWatchModule(
 
     override fun onUninstall() {
         cancelWifiResolutionReconcile("module uninstall")
+        cancelDefaultLostReconsider("module uninstall")
+        resumeRetry.cancel("module uninstall")
         runCatching {
             connectivity?.unregisterNetworkCallback(callback)
         }
@@ -655,5 +707,8 @@ class WifiWatchModule(
         const val WEAK_RSSI_THRESHOLD_DBM = -80
         private const val SSID_RECONCILE_INTERVAL_MILLIS = 500L
         private const val MAX_SSID_RECONCILE_ATTEMPTS = 4
+        // Delay before re-reading the active network after the default network
+        // is lost, giving the OS time to nominate Cellular / the next WiFi.
+        const val DEFAULT_LOST_RECONSIDER_MILLIS = 1500L
     }
 }

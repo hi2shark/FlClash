@@ -333,6 +333,34 @@ class WifiWatchSuspendControllerTest {
 
         assertEquals(listOf(false, true), events)
     }
+
+    @Test
+    fun clearForceResumeWhileWifiGoneResumesImmediately() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        assertEquals(listOf(true), events)
+
+        // Cellular force-resume was active; WiFi then disappears and the
+        // delayed default-lost reconsider clears force-resume. With no WiFi
+        // present the controller must resume, not re-schedule suspend.
+        controller.forceResume("default network is Cellular")
+        assertEquals(listOf(true, false), events)
+        controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = false)
+        assertEquals(listOf(true, false, false), events)
+        controller.clearForceResume("active network is not Cellular")
+
+        assertEquals(listOf(true, false, false, false), events)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        assertEquals(listOf(true, false, false, false), events)
+    }
 }
 
 private class FakeScheduler {
