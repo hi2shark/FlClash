@@ -228,6 +228,7 @@ class _EditProfileViewState extends State<EditProfileView> {
             final enabledCount = proxies.where((p) => p.enabled).length;
             final targetGroups = config?.targetGroups ?? [];
             return Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 CommonCard(
                   child: ListItem(

@@ -128,4 +128,141 @@ void main() {
     await localProxyConfigInjector.inject(rawConfig);
     expect(rawConfig['proxy-providers'], isNull);
   });
+
+  test('injects when proxy-groups entries are Map<dynamic, dynamic>', () async {
+    await localProxyStore.add(
+      LocalProxy(
+        id: 2,
+        name: 'Dyn Node',
+        type: 'ss',
+        enabled: true,
+        config: {
+          'name': 'Dyn Node',
+          'type': 'ss',
+          'server': '1.1.1.1',
+          'port': 443,
+          'cipher': 'aes-256-gcm',
+          'password': 'pwd',
+          'udp': true,
+        },
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+    await localProxyStore.saveConfig(
+      const LocalProxyProviderConfig(enabled: true, targetGroups: ['SELECT']),
+    );
+
+    final rawConfig = <String, dynamic>{
+      'proxy-groups': <dynamic>[
+        <dynamic, dynamic>{
+          'name': 'SELECT',
+          'type': 'select',
+          'proxies': <dynamic>['DIRECT'],
+        },
+      ],
+    };
+
+    await localProxyConfigInjector.inject(rawConfig);
+    final group = (rawConfig['proxy-groups'] as List).first as Map;
+    expect(group['use'], contains('_flclash_local'));
+    expect(rawConfig['proxy-providers'], isA<Map>());
+  });
+
+  test('skips without throwing when proxy-groups missing', () async {
+    await localProxyStore.add(
+      LocalProxy(
+        id: 3,
+        name: 'Node',
+        type: 'ss',
+        enabled: true,
+        config: {
+          'name': 'Node',
+          'type': 'ss',
+          'server': '1.1.1.1',
+          'port': 443,
+          'cipher': 'aes-256-gcm',
+          'password': 'pwd',
+        },
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+    await localProxyStore.saveConfig(
+      const LocalProxyProviderConfig(enabled: true, targetGroups: ['SELECT']),
+    );
+
+    final rawConfig = <String, dynamic>{'proxies': <dynamic>[]};
+    await expectLater(localProxyConfigInjector.inject(rawConfig), completes);
+    expect(rawConfig.containsKey('proxy-providers'), isFalse);
+  });
+
+  test('skips without throwing when proxy-providers is not a map', () async {
+    await localProxyStore.add(
+      LocalProxy(
+        id: 4,
+        name: 'Node',
+        type: 'ss',
+        enabled: true,
+        config: {
+          'name': 'Node',
+          'type': 'ss',
+          'server': '1.1.1.1',
+          'port': 443,
+          'cipher': 'aes-256-gcm',
+          'password': 'pwd',
+        },
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+    await localProxyStore.saveConfig(
+      const LocalProxyProviderConfig(enabled: true, targetGroups: ['SELECT']),
+    );
+
+    final rawConfig = <String, dynamic>{
+      'proxy-providers': 'invalid',
+      'proxy-groups': [
+        {'name': 'SELECT', 'type': 'select'},
+      ],
+    };
+    await expectLater(localProxyConfigInjector.inject(rawConfig), completes);
+    expect(rawConfig['proxy-providers'], 'invalid');
+    final group = (rawConfig['proxy-groups'] as List).first as Map;
+    expect(group['use'], isNull);
+  });
+
+  test('skips inject when enabled with empty targetGroups', () async {
+    await localProxyStore.add(
+      LocalProxy(
+        id: 5,
+        name: 'Node',
+        type: 'ss',
+        enabled: true,
+        config: {
+          'name': 'Node',
+          'type': 'ss',
+          'server': '1.1.1.1',
+          'port': 443,
+          'cipher': 'aes-256-gcm',
+          'password': 'pwd',
+        },
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+    await localProxyStore.saveConfig(
+      const LocalProxyProviderConfig(enabled: true, targetGroups: []),
+    );
+
+    final rawConfig = <String, dynamic>{
+      'proxy-groups': [
+        {'name': 'SELECT', 'type': 'select'},
+      ],
+    };
+    await localProxyConfigInjector.inject(rawConfig);
+    expect(rawConfig['proxy-providers'], isNull);
+    final group = (rawConfig['proxy-groups'] as List).first as Map;
+    expect(group['use'], isNull);
+  });
 }

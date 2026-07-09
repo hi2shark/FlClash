@@ -582,7 +582,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "現在のプロキシグループは選択できません",
     ),
     "nowhere": MessageLookupByLibrary.simpleMessage("Nowhere"),
-    "nowhereShareKey": MessageLookupByLibrary.simpleMessage("共有キー (shark-key)"),
+    "nowhereShareKey": MessageLookupByLibrary.simpleMessage("共有キー (shared key)"),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "プロファイルがありません。追加してください",
     ),

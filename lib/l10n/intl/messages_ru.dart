@@ -763,7 +763,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "nowhere": MessageLookupByLibrary.simpleMessage("Nowhere"),
     "nowhereShareKey": MessageLookupByLibrary.simpleMessage(
-      "Ключ обмена (shark-key)",
+      "Ключ обмена (shared key)",
     ),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "Нет профиля, пожалуйста, добавьте профиль",

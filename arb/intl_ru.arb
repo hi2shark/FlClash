@@ -581,7 +581,7 @@
   "scanQrcode": "Сканировать QR-код",
   "selectProtocol": "Выберите протокол",
   "manualAdd": "Добавить вручную",
-  "nowhereShareKey": "Ключ обмена (shark-key)",
+  "nowhereShareKey": "Ключ обмена (shared key)",
   "flow": "Flow",
   "encryption": "Шифрование",
   "security": "Безопасность",

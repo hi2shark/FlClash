@@ -27,10 +27,11 @@ class LocalProxyProviderGenerator {
           (value is Map && value.isEmpty),
     );
 
+    _normalizeAlpn(map);
+
     final type = proxy.type;
 
     if (type == 'anytls') {
-      _normalizeAlpn(map);
       _normalizeEchOpts(map);
       _removeZeroValues(map, [
         'idle-session-check-interval',
@@ -39,12 +40,7 @@ class LocalProxyProviderGenerator {
       ]);
     }
 
-    if (type == 'hysteria2') {
-      _normalizeAlpn(map);
-    }
-
     if (type == 'nowhere') {
-      _normalizeAlpn(map);
       _normalizeEchOpts(map);
       final up = map['up']?.toString() ?? 'udp';
       final down = map['down']?.toString() ?? 'udp';
@@ -120,7 +116,11 @@ class LocalProxyProviderGenerator {
       join(await appPath.tempPath, 'flclash-local.yaml.tmp');
 
   Future<String> writeProviderFile(List<LocalProxy> proxies) async {
-    final yamlString = generateYaml(proxies);
+    final enabled = proxies.where((p) => p.enabled).toList();
+    if (enabled.isEmpty) {
+      return '';
+    }
+    final yamlString = generateYaml(enabled);
     final tempFile = File(await _tempPath);
     final targetFile = File(await _targetPath);
 

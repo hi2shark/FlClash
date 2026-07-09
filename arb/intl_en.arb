@@ -581,7 +581,7 @@
   "scanQrcode": "Scan QR code",
   "selectProtocol": "Select protocol",
   "manualAdd": "Manual add",
-  "nowhereShareKey": "Share key (shark-key)",
+  "nowhereShareKey": "Share key (shared key)",
   "flow": "Flow",
   "encryption": "Encryption",
   "security": "Security",

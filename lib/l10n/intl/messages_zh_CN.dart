@@ -508,7 +508,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noneOption": MessageLookupByLibrary.simpleMessage("无"),
     "notSelectedTip": MessageLookupByLibrary.simpleMessage("当前代理组无法选中"),
     "nowhere": MessageLookupByLibrary.simpleMessage("Nowhere"),
-    "nowhereShareKey": MessageLookupByLibrary.simpleMessage("分享密钥 (shark-key)"),
+    "nowhereShareKey": MessageLookupByLibrary.simpleMessage("分享密钥 (shared key)"),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage("没有配置文件,请先添加配置文件"),
     "nullTip": m17,
     "numberTip": m18,

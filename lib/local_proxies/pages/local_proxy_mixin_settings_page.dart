@@ -104,6 +104,13 @@ class _LocalProxyMixinSettingsPageState
 
   Future<void> _handleSave() async {
     final appLocalizations = context.appLocalizations;
+    if (_config.enabled && _config.targetGroups.isEmpty) {
+      globalState.showMessage(
+        title: appLocalizations.cannotSaveLocalMixin,
+        message: TextSpan(text: appLocalizations.selectTargetGroups),
+      );
+      return;
+    }
     if (_config.enabled) {
       final missing = _config.targetGroups
           .where((name) => !_groups.any((g) => g.name == name))

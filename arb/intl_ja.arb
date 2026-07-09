@@ -581,7 +581,7 @@
   "scanQrcode": "QRコードをスキャン",
   "selectProtocol": "プロトコルを選択",
   "manualAdd": "手動で追加",
-  "nowhereShareKey": "共有キー (shark-key)",
+  "nowhereShareKey": "共有キー (shared key)",
   "flow": "フロー",
   "encryption": "暗号化",
   "security": "セキュリティ",

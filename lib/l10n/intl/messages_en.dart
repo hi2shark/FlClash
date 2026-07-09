@@ -735,7 +735,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "nowhere": MessageLookupByLibrary.simpleMessage("Nowhere"),
     "nowhereShareKey": MessageLookupByLibrary.simpleMessage(
-      "Share key (shark-key)",
+      "Share key (shared key)",
     ),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "No profile, Please add a profile",

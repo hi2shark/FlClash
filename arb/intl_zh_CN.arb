@@ -581,7 +581,7 @@
   "scanQrcode": "扫描二维码",
   "selectProtocol": "选择协议",
   "manualAdd": "手动添加",
-  "nowhereShareKey": "分享密钥 (shark-key)",
+  "nowhereShareKey": "分享密钥 (shared key)",
   "flow": "流控",
   "encryption": "加密",
   "security": "安全",

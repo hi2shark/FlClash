@@ -9,36 +9,68 @@ class LocalProxyConfigInjector {
   const LocalProxyConfigInjector();
 
   Future<void> inject(Map<String, dynamic> rawConfig) async {
+    try {
+      await _inject(rawConfig);
+    } catch (e, s) {
+      commonPrint.log(
+        'Local proxy mixin skipped due to error: $e\n$s',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
+
+  Future<void> _inject(Map<String, dynamic> rawConfig) async {
     await localProxyStore.init();
     final config = localProxyStore.config;
     if (!config.enabled) return;
+    if (config.targetGroups.isEmpty) {
+      commonPrint.log(
+        'Local proxy mixin enabled but no target groups selected; skipping inject',
+        logLevel: LogLevel.warning,
+      );
+      return;
+    }
 
     final enabledProxies = localProxyStore.proxies
         .where((p) => p.enabled)
         .toList();
     if (enabledProxies.isEmpty) return;
 
-    await localProxyProviderGenerator.writeProviderFile(enabledProxies);
-
     final proxyProviders = rawConfig['proxy-providers'];
     if (proxyProviders != null && proxyProviders is! Map) {
-      throw Exception('proxy-providers in profile is not a map');
-    }
-    final providers =
-        (proxyProviders ?? <String, dynamic>{}) as Map<String, dynamic>;
-    final existing = providers[config.providerKey];
-    if (existing is Map && existing['path'] != config.providerPath) {
-      throw Exception(
-        'Provider key "${config.providerKey}" already exists in profile with a different path',
+      commonPrint.log(
+        'proxy-providers in profile is not a map; skipping local proxy mixin',
+        logLevel: LogLevel.warning,
       );
+      return;
     }
-    providers[config.providerKey] = _buildProviderEntry(config);
-    rawConfig['proxy-providers'] = providers;
 
     final groups = rawConfig['proxy-groups'];
     if (groups == null || groups is! List) {
-      throw Exception('No proxy-groups found in current profile');
+      commonPrint.log(
+        'No proxy-groups found in current profile; skipping local proxy mixin',
+        logLevel: LogLevel.warning,
+      );
+      return;
     }
+
+    final providers = Map<String, dynamic>.from(
+      (proxyProviders as Map?)?.cast<dynamic, dynamic>() ??
+          <dynamic, dynamic>{},
+    );
+    final existing = providers[config.providerKey];
+    if (existing is Map && existing['path'] != config.providerPath) {
+      commonPrint.log(
+        'Provider key "${config.providerKey}" already exists with a different path; skipping local proxy mixin',
+        logLevel: LogLevel.warning,
+      );
+      return;
+    }
+
+    await localProxyProviderGenerator.writeProviderFile(enabledProxies);
+
+    providers[config.providerKey] = _buildProviderEntry(config);
+    rawConfig['proxy-providers'] = providers;
 
     final missingGroups = <String>[];
     for (final target in config.targetGroups) {
@@ -49,7 +81,7 @@ class LocalProxyConfigInjector {
         missingGroups.add(target);
         continue;
       }
-      final groupMap = group as Map<String, dynamic>;
+      final groupMap = (group as Map).cast<String, dynamic>();
       final use = groupMap['use'];
       final useList = (use is List ? List<String>.from(use) : <String>[]);
       if (!useList.contains(config.providerKey)) {

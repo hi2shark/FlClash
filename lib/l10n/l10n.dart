@@ -4664,10 +4664,10 @@ class AppLocalizations {
     return Intl.message('Manual add', name: 'manualAdd', desc: '', args: []);
   }
 
-  /// `Share key (shark-key)`
+  /// `Share key (shared key)`
   String get nowhereShareKey {
     return Intl.message(
-      'Share key (shark-key)',
+      'Share key (shared key)',
       name: 'nowhereShareKey',
       desc: '',
       args: [],
