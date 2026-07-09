@@ -80,6 +80,10 @@ class VpnService : SystemVpnService(), IBaseService,
 
     private val suspensionReasons = ServiceSuspensionReasons()
 
+    // Serializes start / stop / applySuspended so WifiWatch cannot race with
+    // user-initiated stop (establish / stopTun overlapping stopSelf).
+    private val lifecycleLock = Any()
+
     private val suspendController = VpnSuspendController(
         currentOptions = { State.options },
         stopTun = Core::stopTun,
@@ -288,59 +292,67 @@ class VpnService : SystemVpnService(), IBaseService,
     }
 
     override fun start(): ServiceStartResult {
-        return try {
-            startForegroundWithNotification()
-            loader.load()
-            State.options?.let {
-                handleStart(it)
-            } ?: return ServiceStartResult.failure("VPN options empty")
-            isRunning = true
-            isSuspended = false
-            suspensionReasons.reset()
-            notifySuspendedChanged(false)
-            ServiceStartResult.success()
-        } catch (e: Exception) {
-            GlobalState.log("VpnService start failed $e")
-            stop()
-            ServiceStartResult.failure(e.message ?: "VPN service start failed")
+        synchronized(lifecycleLock) {
+            return try {
+                startForegroundWithNotification()
+                loader.load()
+                State.options?.let {
+                    handleStart(it)
+                } ?: return ServiceStartResult.failure("VPN options empty")
+                isRunning = true
+                isSuspended = false
+                suspensionReasons.reset()
+                notifySuspendedChanged(false)
+                ServiceStartResult.success()
+            } catch (e: Exception) {
+                GlobalState.log("VpnService start failed $e")
+                stopLocked()
+                ServiceStartResult.failure(e.message ?: "VPN service start failed")
+            }
         }
     }
 
     override fun setSuspended(suspended: Boolean): ServiceStartResult {
-        val previous = suspensionReasons.externalSuspended
-        suspensionReasons.setExternalSuspended(suspended)
-        val result = applyDesiredSuspended()
-        if (!result.success) {
-            suspensionReasons.setExternalSuspended(previous)
+        synchronized(lifecycleLock) {
+            val previous = suspensionReasons.externalSuspended
+            suspensionReasons.setExternalSuspended(suspended)
+            val result = applyDesiredSuspendedLocked()
+            if (!result.success) {
+                suspensionReasons.setExternalSuspended(previous)
+            }
+            return result
         }
-        return result
     }
 
     override fun setWifiSuspended(suspended: Boolean): ServiceStartResult {
-        val previous = suspensionReasons.wifiSuspended
-        suspensionReasons.setWifiSuspended(suspended)
-        val result = applyDesiredSuspended()
-        if (!result.success) {
-            suspensionReasons.setWifiSuspended(previous)
+        synchronized(lifecycleLock) {
+            val previous = suspensionReasons.wifiSuspended
+            suspensionReasons.setWifiSuspended(suspended)
+            val result = applyDesiredSuspendedLocked()
+            if (!result.success) {
+                suspensionReasons.setWifiSuspended(previous)
+            }
+            return result
         }
-        return result
     }
 
     override fun setIdleSuspended(suspended: Boolean): ServiceStartResult {
-        val previous = suspensionReasons.idleSuspended
-        suspensionReasons.setIdleSuspended(suspended)
-        val result = applyDesiredSuspended()
-        if (!result.success) {
-            suspensionReasons.setIdleSuspended(previous)
+        synchronized(lifecycleLock) {
+            val previous = suspensionReasons.idleSuspended
+            suspensionReasons.setIdleSuspended(suspended)
+            val result = applyDesiredSuspendedLocked()
+            if (!result.success) {
+                suspensionReasons.setIdleSuspended(previous)
+            }
+            return result
         }
-        return result
     }
 
-    private fun applyDesiredSuspended(): ServiceStartResult {
-        return applySuspended(suspensionReasons.shouldSuspend)
+    private fun applyDesiredSuspendedLocked(): ServiceStartResult {
+        return applySuspendedLocked(suspensionReasons.shouldSuspend)
     }
 
-    private fun applySuspended(suspended: Boolean): ServiceStartResult {
+    private fun applySuspendedLocked(suspended: Boolean): ServiceStartResult {
         if (!isRunning) {
             return ServiceStartResult.failure("VPN service is not running")
         }
@@ -360,11 +372,20 @@ class VpnService : SystemVpnService(), IBaseService,
     }
 
     override fun stop() {
+        synchronized(lifecycleLock) {
+            stopLocked()
+        }
+    }
+
+    private fun stopLocked() {
         isRunning = false
         isSuspended = false
         suspensionReasons.reset()
         notifySuspendedChanged(false)
-        loader.cancel()
+        // Uninstall WifiWatch (and other modules) before stopTun so a pending
+        // delayed suspend / force-resume cannot call establish after we tear down.
+        loader.cancelAndJoin()
+        wifiWatchModule = null
         Core.stopTun()
         stopSelf()
     }

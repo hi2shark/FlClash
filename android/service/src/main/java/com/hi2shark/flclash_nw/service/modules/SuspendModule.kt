@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
@@ -60,9 +61,18 @@ class SuspendModule(private val service: Service) : Module() {
                 emit(isScreenOn())
             }
 
-            screenFlow.collect {
-                    onUpdate(it)
-                }
+            // Doze enter/exit can happen while the screen stays off; without
+            // this, idleSuspended would stay stale until the next screen event
+            // and could block WiFi-watch resume (OR arbiter).
+            val idleFlow = service.receiveBroadcastFlow {
+                addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
+            }.map {
+                isScreenOn()
+            }
+
+            merge(screenFlow, idleFlow).collect {
+                onUpdate(it)
+            }
         }
     }
 

@@ -66,6 +66,10 @@ class CommonService : Service(), IBaseService,
 
     private val suspensionReasons = ServiceSuspensionReasons()
 
+    // Serializes start / stop / applySuspended so WifiWatch cannot race with
+    // user-initiated stop (startListener / stopListener overlapping stopSelf).
+    private val lifecycleLock = Any()
+
     override fun onCreate() {
         super.onCreate()
         handleCreate()
@@ -97,55 +101,63 @@ class CommonService : Service(), IBaseService,
     }
 
     override fun start(): ServiceStartResult {
-        return try {
-            startForegroundWithNotification()
-            loader.load()
-            isRunning = true
-            isSuspended = false
-            suspensionReasons.reset()
-            notifySuspendedChanged(false)
-            ServiceStartResult.success()
-        } catch (_: Exception) {
-            stop()
-            ServiceStartResult.failure("Common service start failed")
+        synchronized(lifecycleLock) {
+            return try {
+                startForegroundWithNotification()
+                loader.load()
+                isRunning = true
+                isSuspended = false
+                suspensionReasons.reset()
+                notifySuspendedChanged(false)
+                ServiceStartResult.success()
+            } catch (_: Exception) {
+                stopLocked()
+                ServiceStartResult.failure("Common service start failed")
+            }
         }
     }
 
     override fun setSuspended(suspended: Boolean): ServiceStartResult {
-        val previous = suspensionReasons.externalSuspended
-        suspensionReasons.setExternalSuspended(suspended)
-        val result = applyDesiredSuspended()
-        if (!result.success) {
-            suspensionReasons.setExternalSuspended(previous)
+        synchronized(lifecycleLock) {
+            val previous = suspensionReasons.externalSuspended
+            suspensionReasons.setExternalSuspended(suspended)
+            val result = applyDesiredSuspendedLocked()
+            if (!result.success) {
+                suspensionReasons.setExternalSuspended(previous)
+            }
+            return result
         }
-        return result
     }
 
     override fun setWifiSuspended(suspended: Boolean): ServiceStartResult {
-        val previous = suspensionReasons.wifiSuspended
-        suspensionReasons.setWifiSuspended(suspended)
-        val result = applyDesiredSuspended()
-        if (!result.success) {
-            suspensionReasons.setWifiSuspended(previous)
+        synchronized(lifecycleLock) {
+            val previous = suspensionReasons.wifiSuspended
+            suspensionReasons.setWifiSuspended(suspended)
+            val result = applyDesiredSuspendedLocked()
+            if (!result.success) {
+                suspensionReasons.setWifiSuspended(previous)
+            }
+            return result
         }
-        return result
     }
 
     override fun setIdleSuspended(suspended: Boolean): ServiceStartResult {
-        val previous = suspensionReasons.idleSuspended
-        suspensionReasons.setIdleSuspended(suspended)
-        val result = applyDesiredSuspended()
-        if (!result.success) {
-            suspensionReasons.setIdleSuspended(previous)
+        synchronized(lifecycleLock) {
+            val previous = suspensionReasons.idleSuspended
+            suspensionReasons.setIdleSuspended(suspended)
+            val result = applyDesiredSuspendedLocked()
+            if (!result.success) {
+                suspensionReasons.setIdleSuspended(previous)
+            }
+            return result
         }
-        return result
     }
 
-    private fun applyDesiredSuspended(): ServiceStartResult {
-        return applySuspended(suspensionReasons.shouldSuspend)
+    private fun applyDesiredSuspendedLocked(): ServiceStartResult {
+        return applySuspendedLocked(suspensionReasons.shouldSuspend)
     }
 
-    private fun applySuspended(suspended: Boolean): ServiceStartResult {
+    private fun applySuspendedLocked(suspended: Boolean): ServiceStartResult {
         if (!isRunning) {
             return ServiceStartResult.failure("Common service is not running")
         }
@@ -165,12 +177,21 @@ class CommonService : Service(), IBaseService,
     }
 
     override fun stop() {
-        AndroidCoreActions.stopListener()
+        synchronized(lifecycleLock) {
+            stopLocked()
+        }
+    }
+
+    private fun stopLocked() {
         isRunning = false
         isSuspended = false
         suspensionReasons.reset()
         notifySuspendedChanged(false)
-        loader.cancel()
+        // Uninstall WifiWatch before stopListener so a pending resume cannot
+        // call startListener after we tear down.
+        loader.cancelAndJoin()
+        wifiWatchModule = null
+        AndroidCoreActions.stopListener()
         stopSelf()
     }
 }

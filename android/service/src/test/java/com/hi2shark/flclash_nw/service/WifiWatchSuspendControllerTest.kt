@@ -215,10 +215,9 @@ class WifiWatchSuspendControllerTest {
         scheduler.advanceBy(WifiWatchSuspendController.SSID_RESOLUTION_GRACE_MILLIS - 1)
         assertEquals(emptyList(), events)
 
+        // Resolve while grace is still pending: cancel grace and start the 5s
+        // stability window from this moment.
         controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
-        scheduler.advanceBy(1)
-        assertEquals(emptyList(), events)
-
         scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS - 1)
         assertEquals(emptyList(), events)
         scheduler.advanceBy(1)
@@ -350,16 +349,59 @@ class WifiWatchSuspendControllerTest {
 
         // Cellular force-resume was active; WiFi then disappears and the
         // delayed default-lost reconsider clears force-resume. With no WiFi
-        // present the controller must resume, not re-schedule suspend.
+        // present the controller must stay resumed (idempotent — no duplicate
+        // setWifiSuspended(false)), not re-schedule suspend.
         controller.forceResume("default network is Cellular")
         assertEquals(listOf(true, false), events)
         controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = false)
-        assertEquals(listOf(true, false, false), events)
+        assertEquals(listOf(true, false), events)
         controller.clearForceResume("active network is not Cellular")
 
-        assertEquals(listOf(true, false, false, false), events)
+        assertEquals(listOf(true, false), events)
         scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
-        assertEquals(listOf(true, false, false, false), events)
+        assertEquals(listOf(true, false), events)
+    }
+
+    @Test
+    fun repeatedTrustedUpdatesDoNotResetPendingSuspendDeadline() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+
+        // Capability blips while still trusted must not restart the 5s window.
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS / 2)
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS / 2)
+
+        assertEquals(listOf(true), events)
+        assertEquals(null, controller.currentStatus().pendingSuspendDeadline)
+    }
+
+    @Test
+    fun untrustedUpdateCancelsPendingSuspendAndResumes() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS / 2)
+
+        controller.updateWifiNetwork(ssid = "Home", validated = false, wifiPresent = true)
+        assertEquals(listOf(false), events)
+
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        assertEquals(listOf(false), events)
     }
 }
 

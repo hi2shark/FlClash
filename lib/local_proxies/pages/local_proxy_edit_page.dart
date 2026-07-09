@@ -1178,6 +1178,13 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           ),
           const SizedBox(height: 16),
           _buildTextField(_sniController, appLocalizations.sni),
+          ListItem.switchItem(
+            title: Text(appLocalizations.skipCertVerify),
+            delegate: SwitchDelegate<bool>(
+              value: _skipCertVerify,
+              onChanged: (value) => setState(() => _skipCertVerify = value),
+            ),
+          ),
         ],
         if (_type == 'hysteria2') ...[
           _buildTextField(_sniController, appLocalizations.sni),
@@ -1341,10 +1348,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                 setState(() => _packetEncoding = value ?? ''),
           ),
         ],
-        if (_type == 'trojan' ||
-            _type == 'anytls' ||
-            _type == 'nowhere' ||
-            _type == 'hysteria2')
+        if (_type == 'trojan' || _type == 'anytls' || _type == 'hysteria2')
           ListItem.switchItem(
             title: Text(appLocalizations.skipCertVerify),
             delegate: SwitchDelegate<bool>(

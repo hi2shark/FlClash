@@ -86,7 +86,7 @@ class WifiWatchResumeRetryTest {
     }
 
     @Test
-    fun exhaustedRetriesStopAfterConfiguredAttempts() {
+    fun exhaustedRetriesKeepNeedsResumeAndReconcileLater() {
         val scheduler = ResumeRetryFakeScheduler()
         val applied = mutableListOf<Boolean>()
         val retry = WifiWatchResumeRetry(
@@ -102,8 +102,84 @@ class WifiWatchResumeRetryTest {
         // Initial attempt + 2 retries.
         scheduler.advanceBy(100)
         scheduler.advanceBy(200)
-        scheduler.advanceBy(10_000)
         assertEquals(listOf(false, false, false), applied)
+        assertTrue(retry.needsResume)
+
+        // Long reconcile after budget exhaustion fires another attempt.
+        scheduler.advanceBy(WifiWatchResumeRetry.RECONCILE_DELAY_MILLIS)
+        assertTrue(applied.size >= 4)
+        assertTrue(retry.needsResume)
+    }
+
+    @Test
+    fun reconcileIfNeededSucceedsAfterExhaustion() {
+        val scheduler = ResumeRetryFakeScheduler()
+        var calls = 0
+        val retry = WifiWatchResumeRetry(
+            delaysMillis = listOf(100L),
+            scheduler = scheduler::schedule,
+            applySuspended = {
+                calls++
+                // Initial + 1 short retry fail; capability reconcile succeeds.
+                if (calls <= 2) {
+                    ServiceStartResult.failure("fail")
+                } else {
+                    ServiceStartResult.success()
+                }
+            },
+        )
+
+        assertFalse(retry.apply(false).success)
+        scheduler.advanceBy(100)
+        assertTrue(retry.needsResume)
+
+        retry.reconcileIfNeeded()
+        assertFalse(retry.needsResume)
+        assertEquals(3, calls)
+    }
+
+    @Test
+    fun needsResumeClearedOnSuccessfulResume() {
+        val scheduler = ResumeRetryFakeScheduler()
+        var calls = 0
+        val retry = WifiWatchResumeRetry(
+            delaysMillis = listOf(100L),
+            scheduler = scheduler::schedule,
+            applySuspended = {
+                calls++
+                if (calls == 1) {
+                    ServiceStartResult.failure("once")
+                } else {
+                    ServiceStartResult.success()
+                }
+            },
+        )
+
+        assertFalse(retry.apply(false).success)
+        assertTrue(retry.needsResume)
+        scheduler.advanceBy(100)
+        assertFalse(retry.needsResume)
+    }
+
+    @Test
+    fun needsResumeClearedOnSuspend() {
+        val scheduler = ResumeRetryFakeScheduler()
+        val retry = WifiWatchResumeRetry(
+            delaysMillis = listOf(100L),
+            scheduler = scheduler::schedule,
+            applySuspended = { suspended ->
+                if (!suspended) {
+                    ServiceStartResult.failure("fail")
+                } else {
+                    ServiceStartResult.success()
+                }
+            },
+        )
+
+        assertFalse(retry.apply(false).success)
+        assertTrue(retry.needsResume)
+        assertTrue(retry.apply(true).success)
+        assertFalse(retry.needsResume)
     }
 
     @Test

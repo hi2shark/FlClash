@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -15,12 +16,24 @@ interface ModuleLoader {
     fun load()
 
     fun cancel()
+
+    /**
+     * Cancels the load job (if any) and uninstalls modules on the calling
+     * thread. Used by [com.hi2shark.flclash_nw.service.IBaseService.stop] so
+     * WifiWatch cannot race with stopTun / stopSelf after stop returns.
+     */
+    fun cancelAndJoin()
 }
 
 private val mutex = Mutex()
 fun CoroutineScope.moduleLoader(block: suspend ModuleLoaderScope.() -> Unit): ModuleLoader {
     val modules = mutableListOf<Module>()
     var job: Job? = null
+
+    fun uninstallLocked() {
+        modules.asReversed().forEach { it.uninstall() }
+        modules.clear()
+    }
 
     return object : ModuleLoader {
         override fun load() {
@@ -45,8 +58,17 @@ fun CoroutineScope.moduleLoader(block: suspend ModuleLoaderScope.() -> Unit): Mo
             launch(Dispatchers.IO) {
                 job?.cancel()
                 mutex.withLock {
-                    modules.asReversed().forEach { it.uninstall() }
-                    modules.clear()
+                    uninstallLocked()
+                }
+            }
+        }
+
+        override fun cancelAndJoin() {
+            job?.cancel()
+            runBlocking {
+                job?.join()
+                mutex.withLock {
+                    uninstallLocked()
                 }
             }
         }

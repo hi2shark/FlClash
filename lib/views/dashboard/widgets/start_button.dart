@@ -47,12 +47,14 @@ class _StartButtonState extends ConsumerState<StartButton>
   }
 
   void handleSwitchStart() {
-    isStart = !isStart;
-    updateController();
+    // Do not flip isStart optimistically: during on-demand suspend/resume the
+    // service may still be mutating TUN state. Wait for isStartProvider (via
+    // updateStatus) so the FAB stays aligned with the real run state.
+    final next = !ref.read(isStartProvider);
     debouncer.call(FunctionTag.updateStatus, () {
       globalState.container
           .read(setupActionProvider.notifier)
-          .updateStatus(isStart, isInit: !ref.read(initProvider));
+          .updateStatus(next, isInit: !ref.read(initProvider));
     }, duration: commonDuration);
   }
 

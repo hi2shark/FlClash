@@ -17,6 +17,7 @@ import com.hi2shark.flclash_nw.service.IBaseService
 import com.hi2shark.flclash_nw.service.ServiceStartResult
 import com.hi2shark.flclash_nw.service.State
 import com.hi2shark.flclash_nw.service.WifiWatchResumeRetry
+import com.hi2shark.flclash_nw.service.WifiWatchRssi
 import com.hi2shark.flclash_nw.service.WifiWatchState
 import com.hi2shark.flclash_nw.service.WifiWatchSuspendController
 import kotlinx.coroutines.CoroutineScope
@@ -128,7 +129,8 @@ class WifiWatchModule(
     private fun setWifiSuspended(suspended: Boolean) {
         // Resume failures are retried with backoff so a single establish /
         // startListener failure after long Doze cannot leave the proxy hung.
-        // Suspend cancels any pending resume retries.
+        // Suspend cancels any pending resume retries. Exhausted resumes keep
+        // needsResume so publishWifiNetwork can reconcile later.
         resumeRetry.apply(suspended)
     }
 
@@ -384,7 +386,21 @@ class WifiWatchModule(
     }
 
     private fun publishWifiNetwork(status: WifiNetworkStatus?, verdict: WifiVerdict) {
-        val trusted = status?.isTrusted(verdict) == true
+        val trusted = when {
+            status == null -> {
+                lastRssiTrusted = false
+                false
+            }
+            verdict == WifiVerdict.SystemValidated -> {
+                lastRssiTrusted = false
+                status.systemValidated
+            }
+            else -> {
+                val next = WifiWatchRssi.isTrusted(status.rssi, lastRssiTrusted)
+                lastRssiTrusted = next
+                next
+            }
+        }
         val unresolvedSsid = status != null && status.ssid == null
         synchronized(wifiNetworksLock) {
             lastPublishedStatus = status
@@ -412,6 +428,12 @@ class WifiWatchModule(
         // force-resume when the OS switches the default to Cellular while WiFi
         // stays associated.
         reconsiderForceResumeFromActiveNetwork()
+        // If a previous resume budget was exhausted and no long-delay reconcile
+        // is pending yet, kick one from capability updates (quiet networks also
+        // get WifiWatchResumeRetry's own 10s reconcile timer).
+        if (resumeRetry.needsResume) {
+            resumeRetry.reconcileIfNeeded()
+        }
         onStateChanged()
     }
 
@@ -579,17 +601,25 @@ class WifiWatchModule(
 
     private enum class WifiVerdict { SystemValidated, Rssi }
 
+    // Last RSSI-based trust decision, used for hysteresis between enter/exit
+    // thresholds so a signal hovering near -80 dBm does not flap suspend/resume.
+    private var lastRssiTrusted: Boolean = false
+
     private fun WifiNetworkStatus.isTrusted(verdict: WifiVerdict): Boolean {
+        // Pure read for network selection — does not mutate hysteresis state.
+        // publishWifiNetwork owns lastRssiTrusted updates.
         return when (verdict) {
             WifiVerdict.SystemValidated -> systemValidated
-            WifiVerdict.Rssi -> rssi != null && rssi >= WEAK_RSSI_THRESHOLD_DBM
+            WifiVerdict.Rssi -> WifiWatchRssi.isTrusted(rssi, lastRssiTrusted)
         }
     }
 
     private fun WifiNetworkStatus.trustedLabel(verdict: WifiVerdict): String {
         return when (verdict) {
             WifiVerdict.SystemValidated -> systemValidated.toString()
-            WifiVerdict.Rssi -> "rssi=${rssi ?: "<none>"} >= $WEAK_RSSI_THRESHOLD_DBM"
+            WifiVerdict.Rssi ->
+                "rssi=${rssi ?: "<none>"} enter>=${WifiWatchRssi.RSSI_ENTER_TRUSTED_DBM} " +
+                    "exit<${WifiWatchRssi.RSSI_EXIT_TRUSTED_DBM} trusted=$lastRssiTrusted"
         }
     }
 
@@ -700,11 +730,15 @@ class WifiWatchModule(
         // Sentinel returned by WifiInfo.getRssi() when the value is unknown.
         private const val INVALID_RSSI = -127
 
-        // Minimum RSSI (dBm) treated as a strong-enough WiFi signal to suspend
-        // the proxy while a VPN tunnel is active. -80 dBm is the widely cited
-        // floor for reliable packet delivery; below it the connection is
-        // considered weak and the proxy stays active.
-        const val WEAK_RSSI_THRESHOLD_DBM = -80
+        /** @deprecated Use [WifiWatchRssi.RSSI_ENTER_TRUSTED_DBM]. */
+        const val WEAK_RSSI_THRESHOLD_DBM = WifiWatchRssi.RSSI_ENTER_TRUSTED_DBM
+
+        const val RSSI_ENTER_TRUSTED_DBM = WifiWatchRssi.RSSI_ENTER_TRUSTED_DBM
+        const val RSSI_EXIT_TRUSTED_DBM = WifiWatchRssi.RSSI_EXIT_TRUSTED_DBM
+
+        fun isRssiTrusted(rssi: Int?, wasTrusted: Boolean): Boolean =
+            WifiWatchRssi.isTrusted(rssi, wasTrusted)
+
         private const val SSID_RECONCILE_INTERVAL_MILLIS = 500L
         private const val MAX_SSID_RECONCILE_ATTEMPTS = 4
         // Delay before re-reading the active network after the default network

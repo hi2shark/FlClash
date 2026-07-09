@@ -28,6 +28,9 @@ internal class WifiWatchSuspendController(
     private var pendingResolutionFallback: Cancellable? = null
     private var pendingSuspendDeadline: Long? = null
     private var generation = 0
+    // Last value passed to setWifiSuspended. Used so repeated evaluate() calls
+    // (force-resume hold, trusted blips) do not re-emit the same action.
+    private var lastRequestedSuspended: Boolean? = null
     // When true, the proxy is forced to resume regardless of WiFi trust, e.g.
     // because the system default network switched to Cellular. Stays in effect
     // until clearForceResume() is called (default network leaves Cellular).
@@ -154,28 +157,42 @@ internal class WifiWatchSuspendController(
     }
 
     private fun evaluateLocked(): (() -> Unit)? {
-        val currentGeneration = ++generation
-        cancelResolutionFallbackLocked("state changed")
-        cancelPendingLocked("state changed")
-
-        val ssid = wifiSsid
         val trusted = isTrustedWifiLocked()
         logLocked(
-            "evaluate ssid=${ssid ?: "<none>"} validated=$wifiValidated " +
+            "evaluate ssid=${wifiSsid ?: "<none>"} validated=$wifiValidated " +
                 "trusted=$trusted wifiPresent=$wifiPresent " +
                 "forceResumed=$forceResumed delay=${suspendDelayMillis}ms"
         )
 
         if (forceResumed) {
+            cancelResolutionFallbackLocked("state changed")
+            cancelPendingLocked("force resume")
+            generation++
             logLocked("resume immediately (forced)")
-            return { setWifiSuspended(false) }
+            return requestSuspendedLocked(false)
         }
 
         if (!trusted) {
+            cancelResolutionFallbackLocked("state changed")
+            cancelPendingLocked("untrusted")
+            generation++
             logLocked("resume immediately")
-            return { setWifiSuspended(false) }
+            return requestSuspendedLocked(false)
         }
 
+        // Still trusted: if a suspend is already pending, keep the original
+        // deadline. Capability / RSSI blips must not reset the 5s stability
+        // window or suspend can be deferred forever.
+        if (pendingSuspend != null) {
+            logLocked(
+                "trusted and suspend already pending — keep deadline " +
+                    "pendingSuspendDeadline=$pendingSuspendDeadline"
+            )
+            return null
+        }
+
+        cancelResolutionFallbackLocked("state changed")
+        val currentGeneration = ++generation
         logLocked("schedule suspend in ${suspendDelayMillis}ms")
         val deadline = System.currentTimeMillis() + suspendDelayMillis
         pendingSuspendDeadline = deadline
@@ -189,7 +206,7 @@ internal class WifiWatchSuspendController(
                         "current=$generation trusted=$stillTrusted"
                 )
                 if (stillTrusted) {
-                    { setWifiSuspended(true) }
+                    requestSuspendedLocked(true)
                 } else {
                     null
                 }
@@ -197,6 +214,15 @@ internal class WifiWatchSuspendController(
             action?.invoke()
         }
         return null
+    }
+
+    private fun requestSuspendedLocked(suspended: Boolean): (() -> Unit)? {
+        if (lastRequestedSuspended == suspended) {
+            logLocked("skip duplicate setWifiSuspended($suspended)")
+            return null
+        }
+        lastRequestedSuspended = suspended
+        return { setWifiSuspended(suspended) }
     }
 
     private fun scheduleResolutionFallbackLocked() {
@@ -221,7 +247,7 @@ internal class WifiWatchSuspendController(
                 generation++
                 cancelPendingLocked("SSID resolution grace expired")
                 logLocked("SSID resolution grace expired — resume to safe default")
-                return@synchronized { setWifiSuspended(false) }
+                return@synchronized requestSuspendedLocked(false)
             }
             action?.invoke()
         }
