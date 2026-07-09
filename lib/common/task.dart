@@ -86,13 +86,18 @@ Future<List<Group>> _toGroupsTask(ComputeGroupsState state) async {
 Future<VM2<String, String>> makeRealProfileTask(
   MakeRealProfileState data,
 ) async {
-  return compute<MakeRealProfileState, VM2<String, String>>(
+  // Build the real profile map in a background isolate, then apply local-proxy
+  // mixin on the main isolate (store / path_provider are not isolate-safe).
+  final rawConfig = await compute<MakeRealProfileState, Map<String, dynamic>>(
     _makeRealProfileTask,
     data,
   );
+  await localProxyConfigInjector.inject(rawConfig);
+  final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
+  return VM2(yaml, yaml.toMd5());
 }
 
-Future<VM2<String, String>> _makeRealProfileTask(
+Future<Map<String, dynamic>> _makeRealProfileTask(
   MakeRealProfileState data,
 ) async {
   final rawConfig = Map<String, dynamic>.from(data.rawConfig);
@@ -274,9 +279,7 @@ Future<VM2<String, String>> _makeRealProfileTask(
         .map((group) => (group as dynamic).toJson() as Map<String, dynamic>)
         .toList();
   }
-  await localProxyConfigInjector.inject(rawConfig);
-  final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
-  return VM2(yaml, yaml.toMd5());
+  return rawConfig;
 }
 
 Future<List<String>> shakingProfileTask(
