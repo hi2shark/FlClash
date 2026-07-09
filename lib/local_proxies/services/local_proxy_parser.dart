@@ -225,11 +225,16 @@ class LocalProxyParser {
     final query = uri.queryParameters;
     final fragment = _decodeFragment(uri.fragment);
 
-    final network = query['type'] ?? 'tcp';
+    var network = (query['type'] ?? 'tcp').toLowerCase();
+    final headerType = (query['headerType'] ?? '').toLowerCase();
+    if (network == 'tcp' && headerType == 'http') {
+      network = 'http';
+    } else if (network == 'http') {
+      network = 'h2';
+    }
     final security = query['security'];
     final tls = security == 'tls' || security == 'reality';
     final servername = query['sni'] ?? query['host'] ?? server;
-    final warnings = <String>[];
 
     final config = <String, dynamic>{
       'name': _buildName(fragment, 'vless', server),
@@ -243,22 +248,54 @@ class LocalProxyParser {
       'udp': true,
     };
 
-    if (query['flow'] != null) {
+    if (query['flow'] != null && query['flow']!.isNotEmpty) {
       config['flow'] = query['flow'];
     }
+    if (query['encryption'] != null && query['encryption']!.isNotEmpty) {
+      config['encryption'] = query['encryption'];
+    }
+    if (query['fp'] != null && query['fp']!.isNotEmpty) {
+      config['client-fingerprint'] = query['fp'];
+    }
+    if (query['alpn'] != null && query['alpn']!.isNotEmpty) {
+      config['alpn'] = query['alpn']!
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    if (query['insecure'] == '1' ||
+        query['allowInsecure'] == '1' ||
+        query['allow_insecure'] == '1') {
+      config['skip-cert-verify'] = true;
+    }
+    final packetEncoding = query['packetEncoding'] ?? query['packetencoding'];
+    if (packetEncoding != null && packetEncoding.isNotEmpty) {
+      config['packet-encoding'] = packetEncoding;
+      if (packetEncoding == 'xudp') {
+        config['xudp'] = true;
+      } else if (packetEncoding == 'packet') {
+        config['packet-addr'] = true;
+      }
+    }
     if (security == 'reality') {
-      warnings.add('REALITY is not fully supported in this version');
       final realityOpts = <String, dynamic>{};
       if (query['pbk'] != null) realityOpts['public-key'] = query['pbk'];
       if (query['sid'] != null) realityOpts['short-id'] = query['sid'];
-      if (query['spx'] != null) realityOpts['spiderX'] = query['spx'];
       if (realityOpts.isNotEmpty) {
         config['reality-opts'] = realityOpts;
       }
     }
-    if (network != 'tcp') {
-      warnings.add('Only TCP transport is fully supported in this version');
-    }
+
+    _applyVmessNetworkOpts(
+      config,
+      network,
+      query['host'] ?? '',
+      query['path'] ?? '',
+      serviceName: query['serviceName'] ?? '',
+      mode: query['mode'] ?? '',
+      extra: query['extra'] ?? '',
+    );
 
     return LocalProxyParseResult(
       raw: raw,
@@ -270,7 +307,6 @@ class LocalProxyParser {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       ),
-      warnings: warnings,
     );
   }
 
@@ -287,13 +323,65 @@ class LocalProxyParser {
     final query = uri.queryParameters;
     final fragment = _decodeFragment(uri.fragment);
 
+    var network = (query['type'] ?? 'tcp').toLowerCase();
+    final headerType = (query['headerType'] ?? '').toLowerCase();
+    if (network == 'tcp' && headerType == 'http') {
+      network = 'http';
+    } else if (network == 'http') {
+      network = 'h2';
+    }
+    final security = query['security'];
     final sni = query['sni'] ?? query['host'] ?? server;
     final skipCertVerify =
-        query['allowInsecure'] == '1' || query['allow_insecure'] == '1';
-    final warnings = <String>[];
-    if (query['type'] != null && query['type'] != 'tcp') {
-      warnings.add('Only TCP transport is fully supported in this version');
+        query['allowInsecure'] == '1' ||
+        query['allow_insecure'] == '1' ||
+        query['insecure'] == '1';
+    final tls = security == null ||
+        security == 'tls' ||
+        security == 'reality' ||
+        security.isEmpty;
+
+    final config = <String, dynamic>{
+      'name': _buildName(fragment, 'trojan', server),
+      'type': 'trojan',
+      'server': server,
+      'port': port,
+      'password': password,
+      'sni': sni,
+      'network': network,
+      'tls': tls,
+      'udp': true,
+      'skip-cert-verify': skipCertVerify,
+    };
+
+    if (query['fp'] != null && query['fp']!.isNotEmpty) {
+      config['client-fingerprint'] = query['fp'];
     }
+    if (query['alpn'] != null && query['alpn']!.isNotEmpty) {
+      config['alpn'] = query['alpn']!
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    if (security == 'reality') {
+      final realityOpts = <String, dynamic>{};
+      if (query['pbk'] != null) realityOpts['public-key'] = query['pbk'];
+      if (query['sid'] != null) realityOpts['short-id'] = query['sid'];
+      if (realityOpts.isNotEmpty) {
+        config['reality-opts'] = realityOpts;
+      }
+    }
+
+    _applyVmessNetworkOpts(
+      config,
+      network,
+      query['host'] ?? '',
+      query['path'] ?? '',
+      serviceName: query['serviceName'] ?? '',
+      mode: query['mode'] ?? '',
+      extra: query['extra'] ?? '',
+    );
 
     return LocalProxyParseResult(
       raw: raw,
@@ -301,20 +389,10 @@ class LocalProxyParser {
         id: -1,
         name: _buildName(fragment, 'trojan', server),
         type: 'trojan',
-        config: {
-          'name': _buildName(fragment, 'trojan', server),
-          'type': 'trojan',
-          'server': server,
-          'port': port,
-          'password': password,
-          'sni': sni,
-          'udp': true,
-          'skip-cert-verify': skipCertVerify,
-        },
+        config: config,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       ),
-      warnings: warnings,
     );
   }
 

@@ -51,66 +51,72 @@ class _LocalProxiesViewState extends ConsumerState<LocalProxiesView> {
                   final enabled = config?.enabled ?? false;
                   final enabledCount = proxies.where((p) => p.enabled).length;
                   final targetGroups = config?.targetGroups ?? [];
-                  return CommonCard(
-                    child: ListItem(
-                      title: Text(appLocalizations.localProxyMixin),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Text(
+                  return Column(
+                    children: [
+                      CommonCard(
+                        child: ListItem(
+                          title: Text(appLocalizations.localProxyMixin),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(
+                                enabled
+                                    ? appLocalizations.localMixinEnabled
+                                    : appLocalizations.localMixinDisabled,
+                              ),
+                              if (enabled) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  appLocalizations.localMixinStatus(
+                                    proxies.length,
+                                    enabledCount,
+                                    targetGroups.isEmpty
+                                        ? appLocalizations.none
+                                        : targetGroups.join('、'),
+                                  ),
+                                ),
+                              ] else ...[
+                                const SizedBox(height: 4),
+                                Text(appLocalizations.localMixinDesc),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      CommonCard(
+                        onPressed: () {
+                          BaseNavigator.push(
+                            context,
+                            const LocalProxyListPage(),
+                          );
+                        },
+                        child: ListItem(
+                          title: Text(appLocalizations.manageLocalNodes),
+                          subtitle: Text(
+                            appLocalizations.localProxyCount(
+                              proxies.length,
+                              enabledCount,
+                            ),
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      CommonCard(
+                        onPressed: () => _openMixinSettings(context),
+                        child: ListItem(
+                          title: Text(appLocalizations.mixinSettings),
+                          subtitle: Text(
                             enabled
                                 ? appLocalizations.localMixinEnabled
                                 : appLocalizations.localMixinDisabled,
                           ),
-                          if (enabled) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              appLocalizations.localMixinStatus(
-                                proxies.length,
-                                enabledCount,
-                                targetGroups.isEmpty
-                                    ? appLocalizations.none
-                                    : targetGroups.join('、'),
-                              ),
-                            ),
-                          ] else ...[
-                            const SizedBox(height: 4),
-                            Text(appLocalizations.localMixinDesc),
-                          ],
-                          const SizedBox(height: 8),
-                          Wrap(
-                            runSpacing: 6,
-                            spacing: 12,
-                            children: [
-                              CommonChip(
-                                avatar: const Icon(Icons.storage_outlined),
-                                label: appLocalizations.manageLocalNodes,
-                                onPressed: () {
-                                  BaseNavigator.push(
-                                    context,
-                                    const LocalProxyListPage(),
-                                  );
-                                },
-                              ),
-                              CommonChip(
-                                avatar: const Icon(Icons.merge_type_outlined),
-                                label: appLocalizations.mixinSettings,
-                                onPressed: () => _openMixinSettings(context),
-                              ),
-                              if (!enabled)
-                                CommonChip(
-                                  avatar: const Icon(
-                                    Icons.play_arrow_outlined,
-                                  ),
-                                  label: appLocalizations.startSetup,
-                                  onPressed: () => _openMixinSettings(context),
-                                ),
-                            ],
-                          ),
-                        ],
+                          trailing: const Icon(Icons.chevron_right),
+                        ),
                       ),
-                    ),
+                    ],
                   );
                 },
               );

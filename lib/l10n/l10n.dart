@@ -4594,10 +4594,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Timeout (ms)`
+  /// `Timeout (milliseconds)`
   String get healthCheckTimeout {
     return Intl.message(
-      'Timeout (ms)',
+      'Timeout (milliseconds)',
       name: 'healthCheckTimeout',
       desc: '',
       args: [],
@@ -4644,9 +4644,164 @@ class AppLocalizations {
     );
   }
 
+  /// `Scan QR code`
+  String get scanQrcode {
+    return Intl.message('Scan QR code', name: 'scanQrcode', desc: '', args: []);
+  }
+
+  /// `Select protocol`
+  String get selectProtocol {
+    return Intl.message(
+      'Select protocol',
+      name: 'selectProtocol',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Manual add`
   String get manualAdd {
     return Intl.message('Manual add', name: 'manualAdd', desc: '', args: []);
+  }
+
+  /// `Share key (shark-key)`
+  String get nowhereShareKey {
+    return Intl.message(
+      'Share key (shark-key)',
+      name: 'nowhereShareKey',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Flow`
+  String get flow {
+    return Intl.message('Flow', name: 'flow', desc: '', args: []);
+  }
+
+  /// `Encryption`
+  String get encryption {
+    return Intl.message('Encryption', name: 'encryption', desc: '', args: []);
+  }
+
+  /// `Security`
+  String get security {
+    return Intl.message('Security', name: 'security', desc: '', args: []);
+  }
+
+  /// `Reality`
+  String get reality {
+    return Intl.message('Reality', name: 'reality', desc: '', args: []);
+  }
+
+  /// `Public Key`
+  String get realityPublicKey {
+    return Intl.message(
+      'Public Key',
+      name: 'realityPublicKey',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Short ID`
+  String get realityShortId {
+    return Intl.message('Short ID', name: 'realityShortId', desc: '', args: []);
+  }
+
+  /// `Support X25519MLKEM768`
+  String get supportX25519Mlkem768 {
+    return Intl.message(
+      'Support X25519MLKEM768',
+      name: 'supportX25519Mlkem768',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Packet Encoding`
+  String get packetEncoding {
+    return Intl.message(
+      'Packet Encoding',
+      name: 'packetEncoding',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Path`
+  String get wsPath {
+    return Intl.message('Path', name: 'wsPath', desc: '', args: []);
+  }
+
+  /// `Host`
+  String get wsHost {
+    return Intl.message('Host', name: 'wsHost', desc: '', args: []);
+  }
+
+  /// `Max Early Data`
+  String get maxEarlyData {
+    return Intl.message(
+      'Max Early Data',
+      name: 'maxEarlyData',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Early Data Header`
+  String get earlyDataHeaderName {
+    return Intl.message(
+      'Early Data Header',
+      name: 'earlyDataHeaderName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `gRPC Service Name`
+  String get grpcServiceName {
+    return Intl.message(
+      'gRPC Service Name',
+      name: 'grpcServiceName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `gRPC User Agent`
+  String get grpcUserAgent {
+    return Intl.message(
+      'gRPC User Agent',
+      name: 'grpcUserAgent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP Method`
+  String get httpMethod {
+    return Intl.message('HTTP Method', name: 'httpMethod', desc: '', args: []);
+  }
+
+  /// `XHTTP Mode`
+  String get xhttpMode {
+    return Intl.message('XHTTP Mode', name: 'xhttpMode', desc: '', args: []);
+  }
+
+  /// `XHTTP Advanced`
+  String get xhttpAdvanced {
+    return Intl.message(
+      'XHTTP Advanced',
+      name: 'xhttpAdvanced',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `None`
+  String get noneOption {
+    return Intl.message('None', name: 'noneOption', desc: '', args: []);
   }
 
   /// `Add local proxy`
@@ -5094,10 +5249,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Nowhere key is required`
+  /// `Nowhere share key is required`
   String get localProxyNowhereKeyEmpty {
     return Intl.message(
-      'Nowhere key is required',
+      'Nowhere share key is required',
       name: 'localProxyNowhereKeyEmpty',
       desc: '',
       args: [],

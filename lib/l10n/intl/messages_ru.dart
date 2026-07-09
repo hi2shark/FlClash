@@ -390,6 +390,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("Домен"),
     "down": MessageLookupByLibrary.simpleMessage("Down"),
     "download": MessageLookupByLibrary.simpleMessage("Скачивание"),
+    "earlyDataHeaderName": MessageLookupByLibrary.simpleMessage(
+      "Early Data Header",
+    ),
     "ech": MessageLookupByLibrary.simpleMessage("ECH"),
     "echConfig": MessageLookupByLibrary.simpleMessage("ECH конфиг"),
     "edit": MessageLookupByLibrary.simpleMessage("Редактировать"),
@@ -415,6 +418,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "enabled": MessageLookupByLibrary.simpleMessage("Включено"),
     "enabledNodes": MessageLookupByLibrary.simpleMessage("Включённые узлы"),
+    "encryption": MessageLookupByLibrary.simpleMessage("Шифрование"),
     "entries": MessageLookupByLibrary.simpleMessage(" записей"),
     "exclude": MessageLookupByLibrary.simpleMessage(
       "Скрыть из последних задач",
@@ -468,6 +472,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "При включении возможны небольшие потери производительности",
     ),
     "fingerprint": MessageLookupByLibrary.simpleMessage("Отпечаток"),
+    "flow": MessageLookupByLibrary.simpleMessage("Flow"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("Семейство шрифтов"),
     "forceRestartCoreTip": MessageLookupByLibrary.simpleMessage(
       "Вы уверены, что хотите принудительно перезапустить ядро?",
@@ -487,6 +492,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "goToConfigureScript": MessageLookupByLibrary.simpleMessage(
       "Перейти к настройке скрипта",
     ),
+    "grpcServiceName": MessageLookupByLibrary.simpleMessage(
+      "gRPC Service Name",
+    ),
+    "grpcUserAgent": MessageLookupByLibrary.simpleMessage("gRPC User Agent"),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage(
       "Хотите сохранить изменения в кэше?",
     ),
@@ -507,6 +516,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Использование клавиатуры для управления приложением",
     ),
     "hoursAgo": m6,
+    "httpMethod": MessageLookupByLibrary.simpleMessage("HTTP Method"),
     "hysteria2": MessageLookupByLibrary.simpleMessage("Hysteria2"),
     "icon": MessageLookupByLibrary.simpleMessage("Иконка"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("История иконок"),
@@ -616,7 +626,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Введите имя прокси",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
-      "Введите ключ Nowhere",
+      "Введите ключ обмена Nowhere",
     ),
     "localProxyPasswordEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите пароль",
@@ -672,6 +682,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "matchSourceIp": MessageLookupByLibrary.simpleMessage(
       "Сопоставить исходный IP",
     ),
+    "maxEarlyData": MessageLookupByLibrary.simpleMessage("Max Early Data"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage(
       "Макс. количество неудач",
     ),
@@ -746,10 +757,14 @@ class MessageLookup extends MessageLookupByLibrary {
       "Не разрешать имя хоста",
     ),
     "none": MessageLookupByLibrary.simpleMessage("Нет"),
+    "noneOption": MessageLookupByLibrary.simpleMessage("Нет"),
     "notSelectedTip": MessageLookupByLibrary.simpleMessage(
       "Текущая группа прокси не может быть выбрана.",
     ),
     "nowhere": MessageLookupByLibrary.simpleMessage("Nowhere"),
+    "nowhereShareKey": MessageLookupByLibrary.simpleMessage(
+      "Ключ обмена (shark-key)",
+    ),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "Нет профиля, пожалуйста, добавьте профиль",
     ),
@@ -794,6 +809,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "overwriteTypeCustomDesc": MessageLookupByLibrary.simpleMessage(
       "Пользовательский режим, полная настройка групп прокси и правил",
     ),
+    "packetEncoding": MessageLookupByLibrary.simpleMessage("Packet Encoding"),
     "palette": MessageLookupByLibrary.simpleMessage("Палитра"),
     "parse": MessageLookupByLibrary.simpleMessage("Разобрать"),
     "parseFailed": MessageLookupByLibrary.simpleMessage("Ошибка разбора"),
@@ -910,6 +926,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "quickFill": MessageLookupByLibrary.simpleMessage("Быстрое заполнение"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Радужные"),
+    "reality": MessageLookupByLibrary.simpleMessage("Reality"),
+    "realityPublicKey": MessageLookupByLibrary.simpleMessage("Public Key"),
+    "realityShortId": MessageLookupByLibrary.simpleMessage("Short ID"),
     "reason": MessageLookupByLibrary.simpleMessage("Причина"),
     "redirPort": MessageLookupByLibrary.simpleMessage("Redir-порт"),
     "redo": MessageLookupByLibrary.simpleMessage("Повторить"),
@@ -1097,6 +1116,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Сохранить и перезагрузить",
     ),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Сохранить изменения?"),
+    "scanQrcode": MessageLookupByLibrary.simpleMessage("Сканировать QR-код"),
     "script": MessageLookupByLibrary.simpleMessage("Скрипт"),
     "scriptModeDesc": MessageLookupByLibrary.simpleMessage(
       "Режим скрипта, использование внешних расширяющих скриптов, предоставление возможности переопределения конфигурации одним кликом",
@@ -1106,7 +1126,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Поиск по имени / протоколу / серверу",
     ),
     "seconds": MessageLookupByLibrary.simpleMessage("Секунд"),
+    "security": MessageLookupByLibrary.simpleMessage("Безопасность"),
     "selectAll": MessageLookupByLibrary.simpleMessage("Выбрать все"),
+    "selectProtocol": MessageLookupByLibrary.simpleMessage("Выберите протокол"),
     "selectProxies": MessageLookupByLibrary.simpleMessage("Выбрать прокси"),
     "selectProxyProviders": MessageLookupByLibrary.simpleMessage(
       "Выбрать провайдеров прокси",
@@ -1178,6 +1200,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Подправило не может быть пустым",
     ),
     "submit": MessageLookupByLibrary.simpleMessage("Отправить"),
+    "supportX25519Mlkem768": MessageLookupByLibrary.simpleMessage(
+      "Support X25519MLKEM768",
+    ),
     "supportedProtocols": MessageLookupByLibrary.simpleMessage(
       "Поддерживаемые протоколы",
     ),
@@ -1299,6 +1324,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "wifiWatchTitle": MessageLookupByLibrary.simpleMessage("On Demand"),
     "wifiWatchTrusted": MessageLookupByLibrary.simpleMessage("Trusted network"),
     "wifiWatchWillSuspend": m25,
+    "wsHost": MessageLookupByLibrary.simpleMessage("Host"),
+    "wsPath": MessageLookupByLibrary.simpleMessage("Путь"),
+    "xhttpAdvanced": MessageLookupByLibrary.simpleMessage(
+      "XHTTP дополнительно",
+    ),
+    "xhttpMode": MessageLookupByLibrary.simpleMessage("XHTTP Mode"),
     "yearsAgo": m26,
     "zh_CN": MessageLookupByLibrary.simpleMessage("Упрощенный китайский"),
   };

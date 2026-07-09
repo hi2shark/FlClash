@@ -6,17 +6,30 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
 class LocalProxyImportPage extends StatefulWidget {
-  const LocalProxyImportPage({super.key});
+  final String? initialText;
+
+  const LocalProxyImportPage({super.key, this.initialText});
 
   @override
   State<LocalProxyImportPage> createState() => _LocalProxyImportPageState();
 }
 
 class _LocalProxyImportPageState extends State<LocalProxyImportPage> {
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _controller;
   List<LocalProxyParseResult> _results = [];
   final Set<int> _selected = {};
   bool _parsed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText ?? '');
+    if (widget.initialText != null && widget.initialText!.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _parse();
+      });
+    }
+  }
 
   @override
   void dispose() {

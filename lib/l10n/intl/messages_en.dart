@@ -384,6 +384,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("Domain"),
     "down": MessageLookupByLibrary.simpleMessage("Down"),
     "download": MessageLookupByLibrary.simpleMessage("Download"),
+    "earlyDataHeaderName": MessageLookupByLibrary.simpleMessage(
+      "Early Data Header",
+    ),
     "ech": MessageLookupByLibrary.simpleMessage("ECH"),
     "echConfig": MessageLookupByLibrary.simpleMessage("ECH config"),
     "edit": MessageLookupByLibrary.simpleMessage("Edit"),
@@ -405,6 +408,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "enabled": MessageLookupByLibrary.simpleMessage("Enabled"),
     "enabledNodes": MessageLookupByLibrary.simpleMessage("Enabled nodes"),
+    "encryption": MessageLookupByLibrary.simpleMessage("Encryption"),
     "entries": MessageLookupByLibrary.simpleMessage(" entries"),
     "exclude": MessageLookupByLibrary.simpleMessage("Hidden from recent tasks"),
     "excludeDesc": MessageLookupByLibrary.simpleMessage(
@@ -452,6 +456,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "There is a certain performance loss after opening",
     ),
     "fingerprint": MessageLookupByLibrary.simpleMessage("Fingerprint"),
+    "flow": MessageLookupByLibrary.simpleMessage("Flow"),
     "fontFamily": MessageLookupByLibrary.simpleMessage("FontFamily"),
     "forceRestartCoreTip": MessageLookupByLibrary.simpleMessage(
       "Are you sure you want to force restart the core?",
@@ -471,6 +476,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "goToConfigureScript": MessageLookupByLibrary.simpleMessage(
       "Go to configure script",
     ),
+    "grpcServiceName": MessageLookupByLibrary.simpleMessage(
+      "gRPC Service Name",
+    ),
+    "grpcUserAgent": MessageLookupByLibrary.simpleMessage("gRPC User Agent"),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage(
       "Do you want to cache the changes?",
     ),
@@ -478,7 +487,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "healthCheckInterval": MessageLookupByLibrary.simpleMessage(
       "Interval (seconds)",
     ),
-    "healthCheckTimeout": MessageLookupByLibrary.simpleMessage("Timeout (ms)"),
+    "healthCheckTimeout": MessageLookupByLibrary.simpleMessage(
+      "Timeout (milliseconds)",
+    ),
     "healthCheckUrl": MessageLookupByLibrary.simpleMessage("Check URL"),
     "hideFromList": MessageLookupByLibrary.simpleMessage("Hide from list"),
     "host": MessageLookupByLibrary.simpleMessage("Host"),
@@ -491,6 +502,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Use keyboard to control applications",
     ),
     "hoursAgo": m6,
+    "httpMethod": MessageLookupByLibrary.simpleMessage("HTTP Method"),
     "hysteria2": MessageLookupByLibrary.simpleMessage("Hysteria2"),
     "icon": MessageLookupByLibrary.simpleMessage("Icon"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("Icon records"),
@@ -600,7 +612,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Proxy name cannot be empty",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
-      "Nowhere key is required",
+      "Nowhere share key is required",
     ),
     "localProxyPasswordEmpty": MessageLookupByLibrary.simpleMessage(
       "Password is required",
@@ -652,6 +664,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "manualAdd": MessageLookupByLibrary.simpleMessage("Manual add"),
     "matchSourceIp": MessageLookupByLibrary.simpleMessage("Match source IP"),
+    "maxEarlyData": MessageLookupByLibrary.simpleMessage("Max Early Data"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage("Max failed times"),
     "maxUdpRelayPacketSize": MessageLookupByLibrary.simpleMessage(
       "Max UDP relay packet size",
@@ -716,10 +729,14 @@ class MessageLookup extends MessageLookupByLibrary {
       "No resolve hostname",
     ),
     "none": MessageLookupByLibrary.simpleMessage("none"),
+    "noneOption": MessageLookupByLibrary.simpleMessage("None"),
     "notSelectedTip": MessageLookupByLibrary.simpleMessage(
       "The current proxy group cannot be selected.",
     ),
     "nowhere": MessageLookupByLibrary.simpleMessage("Nowhere"),
+    "nowhereShareKey": MessageLookupByLibrary.simpleMessage(
+      "Share key (shark-key)",
+    ),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "No profile, Please add a profile",
     ),
@@ -756,6 +773,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "overwriteTypeCustomDesc": MessageLookupByLibrary.simpleMessage(
       "Custom mode, fully customize proxy groups and rules",
     ),
+    "packetEncoding": MessageLookupByLibrary.simpleMessage("Packet Encoding"),
     "palette": MessageLookupByLibrary.simpleMessage("Palette"),
     "parse": MessageLookupByLibrary.simpleMessage("Parse"),
     "parseFailed": MessageLookupByLibrary.simpleMessage("Parse failed"),
@@ -870,6 +888,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "quickFill": MessageLookupByLibrary.simpleMessage("Quick fill"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Rainbow"),
+    "reality": MessageLookupByLibrary.simpleMessage("Reality"),
+    "realityPublicKey": MessageLookupByLibrary.simpleMessage("Public Key"),
+    "realityShortId": MessageLookupByLibrary.simpleMessage("Short ID"),
     "reason": MessageLookupByLibrary.simpleMessage("Reason"),
     "redirPort": MessageLookupByLibrary.simpleMessage("Redir Port"),
     "redo": MessageLookupByLibrary.simpleMessage("redo"),
@@ -1045,6 +1066,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "saveChanges": MessageLookupByLibrary.simpleMessage(
       "Do you want to save the changes?",
     ),
+    "scanQrcode": MessageLookupByLibrary.simpleMessage("Scan QR code"),
     "script": MessageLookupByLibrary.simpleMessage("Script"),
     "scriptModeDesc": MessageLookupByLibrary.simpleMessage(
       "Script mode, use external extension scripts, provide one-click override configuration capability",
@@ -1054,7 +1076,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Search name / protocol / server",
     ),
     "seconds": MessageLookupByLibrary.simpleMessage("Seconds"),
+    "security": MessageLookupByLibrary.simpleMessage("Security"),
     "selectAll": MessageLookupByLibrary.simpleMessage("Select all"),
+    "selectProtocol": MessageLookupByLibrary.simpleMessage("Select protocol"),
     "selectProxies": MessageLookupByLibrary.simpleMessage("Select proxies"),
     "selectProxyProviders": MessageLookupByLibrary.simpleMessage(
       "Select proxy providers",
@@ -1120,6 +1144,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Sub rule cannot be empty",
     ),
     "submit": MessageLookupByLibrary.simpleMessage("Submit"),
+    "supportX25519Mlkem768": MessageLookupByLibrary.simpleMessage(
+      "Support X25519MLKEM768",
+    ),
     "supportedProtocols": MessageLookupByLibrary.simpleMessage(
       "Supported protocols",
     ),
@@ -1227,6 +1254,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "wifiWatchTitle": MessageLookupByLibrary.simpleMessage("On Demand"),
     "wifiWatchTrusted": MessageLookupByLibrary.simpleMessage("Trusted network"),
     "wifiWatchWillSuspend": m25,
+    "wsHost": MessageLookupByLibrary.simpleMessage("Host"),
+    "wsPath": MessageLookupByLibrary.simpleMessage("Path"),
+    "xhttpAdvanced": MessageLookupByLibrary.simpleMessage("XHTTP Advanced"),
+    "xhttpMode": MessageLookupByLibrary.simpleMessage("XHTTP Mode"),
     "yearsAgo": m26,
     "zh_CN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };

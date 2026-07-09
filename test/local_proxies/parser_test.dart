@@ -59,12 +59,52 @@ void main() {
       expect(proxy.config['udp'], true);
     });
 
-    test('warns about non-tcp transport', () {
-      const uri = 'vless://uuid@example.com:443?type=ws#WS';
+    test('parses vless ws transport with path and host', () {
+      const uri =
+          'vless://uuid@example.com:443?type=ws&security=tls&sni=cdn.example.com&host=cdn.example.com&path=%2Fws&fp=chrome#WS';
       final results = parser.parseMany(uri);
       expect(results.first.error, isNull);
-      expect(results.first.warnings, isNotEmpty);
-      expect(results.first.proxy!.config['network'], 'ws');
+      expect(results.first.warnings, isEmpty);
+      final proxy = results.first.proxy!;
+      expect(proxy.config['network'], 'ws');
+      expect(proxy.config['tls'], true);
+      expect(proxy.config['client-fingerprint'], 'chrome');
+      final wsOpts = proxy.config['ws-opts'] as Map;
+      expect(wsOpts['path'], '/ws');
+      expect((wsOpts['headers'] as Map)['Host'], 'cdn.example.com');
+    });
+
+    test('parses vless reality with grpc', () {
+      const uri =
+          'vless://uuid@example.com:443?type=grpc&security=reality&sni=www.example.com&pbk=publickey&sid=abcd&serviceName=GunService&flow=xtls-rprx-vision#Reality';
+      final results = parser.parseMany(uri);
+      expect(results.first.error, isNull);
+      expect(results.first.warnings, isEmpty);
+      final proxy = results.first.proxy!;
+      expect(proxy.config['network'], 'grpc');
+      expect(proxy.config['tls'], true);
+      expect(proxy.config['flow'], 'xtls-rprx-vision');
+      expect(proxy.config['reality-opts'], {
+        'public-key': 'publickey',
+        'short-id': 'abcd',
+      });
+      expect(proxy.config['grpc-opts'], {
+        'grpc-service-name': 'GunService',
+      });
+    });
+
+    test('parses vless xhttp transport', () {
+      const uri =
+          'vless://uuid@example.com:443?type=xhttp&security=tls&path=%2Fxh&host=cdn.example.com&mode=auto#XHTTP';
+      final results = parser.parseMany(uri);
+      expect(results.first.error, isNull);
+      final proxy = results.first.proxy!;
+      expect(proxy.config['network'], 'xhttp');
+      expect(proxy.config['xhttp-opts'], {
+        'path': '/xh',
+        'host': 'cdn.example.com',
+        'mode': 'auto',
+      });
     });
   });
 
@@ -81,6 +121,21 @@ void main() {
       expect(proxy.config['sni'], 'cdn.example.com');
       expect(proxy.config['skip-cert-verify'], true);
       expect(proxy.config['udp'], true);
+      expect(proxy.config['network'], 'tcp');
+    });
+
+    test('parses trojan ws transport', () {
+      const uri =
+          'trojan://pwd@example.com:443?type=ws&sni=cdn.example.com&host=cdn.example.com&path=%2Ftrojan&fp=chrome#TWS';
+      final results = parser.parseMany(uri);
+      expect(results.first.error, isNull);
+      expect(results.first.warnings, isEmpty);
+      final proxy = results.first.proxy!;
+      expect(proxy.config['network'], 'ws');
+      expect(proxy.config['client-fingerprint'], 'chrome');
+      final wsOpts = proxy.config['ws-opts'] as Map;
+      expect(wsOpts['path'], '/trojan');
+      expect((wsOpts['headers'] as Map)['Host'], 'cdn.example.com');
     });
   });
 

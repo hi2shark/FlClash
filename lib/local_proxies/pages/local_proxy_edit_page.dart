@@ -5,16 +5,16 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
-class LocalProxyEditPage extends StatefulWidget {
-  final LocalProxy? proxy;
+const manualProxyTypes = [
+  'ss',
+  'vless',
+  'trojan',
+  'anytls',
+  'nowhere',
+  'hysteria2',
+];
 
-  const LocalProxyEditPage({super.key, this.proxy});
-
-  @override
-  State<LocalProxyEditPage> createState() => _LocalProxyEditPageState();
-}
-
-const _manualProxyTypes = {
+const _manualProxyTypeSet = {
   'ss',
   'vless',
   'trojan',
@@ -22,6 +22,57 @@ const _manualProxyTypes = {
   'nowhere',
   'hysteria2',
 };
+
+const _ssCiphers = [
+  'aes-128-gcm',
+  'aes-192-gcm',
+  'aes-256-gcm',
+  'chacha20-ietf-poly1305',
+  'xchacha20-ietf-poly1305',
+  '2022-blake3-aes-128-gcm',
+  '2022-blake3-aes-256-gcm',
+  '2022-blake3-chacha20-poly1305',
+  'none',
+];
+
+const _networks = [
+  'tcp',
+  'ws',
+  'httpupgrade',
+  'http',
+  'h2',
+  'grpc',
+  'xhttp',
+];
+
+const _clientFingerprints = [
+  '',
+  'chrome',
+  'firefox',
+  'safari',
+  'ios',
+  'android',
+  'edge',
+  'random',
+];
+
+const _vlessFlows = ['', 'xtls-rprx-vision'];
+
+const _packetEncodings = ['', 'packet', 'xudp'];
+
+const _xhttpModes = ['', 'auto', 'packet-up', 'stream-up', 'stream-one'];
+
+const _httpMethods = ['GET', 'POST', 'PUT', 'HEAD'];
+
+class LocalProxyEditPage extends StatefulWidget {
+  final LocalProxy? proxy;
+  final String? initialType;
+
+  const LocalProxyEditPage({super.key, this.proxy, this.initialType});
+
+  @override
+  State<LocalProxyEditPage> createState() => _LocalProxyEditPageState();
+}
 
 class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late String _type;
@@ -52,14 +103,40 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late final TextEditingController _obfsPasswordController;
   late final TextEditingController _hysteria2UpController;
   late final TextEditingController _hysteria2DownController;
+  late final TextEditingController _encryptionController;
+  late final TextEditingController _realityPublicKeyController;
+  late final TextEditingController _realityShortIdController;
+  late final TextEditingController _wsPathController;
+  late final TextEditingController _wsHostController;
+  late final TextEditingController _maxEarlyDataController;
+  late final TextEditingController _earlyDataHeaderNameController;
+  late final TextEditingController _grpcServiceNameController;
+  late final TextEditingController _grpcUserAgentController;
+  late final TextEditingController _httpPathController;
+  late final TextEditingController _httpHostController;
+  late final TextEditingController _h2PathController;
+  late final TextEditingController _h2HostController;
+  late final TextEditingController _xhttpPathController;
+  late final TextEditingController _xhttpHostController;
+  late final TextEditingController _xhttpHeadersController;
 
   late bool _tls;
   late bool _udp;
   late bool _skipCertVerify;
   late bool _echEnabled;
   late bool _reduceRtt;
+  late bool _supportX25519Mlkem768;
+  late bool _v2rayHttpUpgrade;
+  late bool _v2rayHttpUpgradeFastOpen;
+  late bool _xhttpAdvancedExpanded;
   late String _up;
   late String _down;
+  late String _network;
+  late String _security;
+  late String _flow;
+  late String _packetEncoding;
+  late String _httpMethod;
+  late String _xhttpMode;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -68,7 +145,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     super.initState();
     final proxy = widget.proxy;
     final config = proxy?.config ?? {};
-    _type = proxy?.type ?? 'ss';
+    _type = proxy?.type ?? widget.initialType ?? 'ss';
     _nameController = TextEditingController(text: proxy?.name ?? '');
     _serverController = TextEditingController(
       text: config['server']?.toString() ?? '',
@@ -150,12 +227,116 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _hysteria2DownController = TextEditingController(
       text: config['down']?.toString() ?? '',
     );
+    _encryptionController = TextEditingController(
+      text: config['encryption']?.toString() ?? '',
+    );
+
+    final realityOpts = config['reality-opts'] as Map? ?? {};
+    _realityPublicKeyController = TextEditingController(
+      text: realityOpts['public-key']?.toString() ?? '',
+    );
+    _realityShortIdController = TextEditingController(
+      text: realityOpts['short-id']?.toString() ?? '',
+    );
+    _supportX25519Mlkem768 = realityOpts['support-x25519mlkem768'] == true;
+
+    final wsOpts = config['ws-opts'] as Map? ?? {};
+    final wsHeaders = wsOpts['headers'] as Map? ?? {};
+    _wsPathController = TextEditingController(
+      text: wsOpts['path']?.toString() ?? '',
+    );
+    _wsHostController = TextEditingController(
+      text: (wsHeaders['Host'] ?? wsHeaders['host'])?.toString() ?? '',
+    );
+    _maxEarlyDataController = TextEditingController(
+      text: wsOpts['max-early-data']?.toString() ?? '',
+    );
+    _earlyDataHeaderNameController = TextEditingController(
+      text: wsOpts['early-data-header-name']?.toString() ?? '',
+    );
+    _v2rayHttpUpgrade = wsOpts['v2ray-http-upgrade'] == true;
+    _v2rayHttpUpgradeFastOpen = wsOpts['v2ray-http-upgrade-fast-open'] == true;
+
+    final grpcOpts = config['grpc-opts'] as Map? ?? {};
+    _grpcServiceNameController = TextEditingController(
+      text: grpcOpts['grpc-service-name']?.toString() ?? '',
+    );
+    _grpcUserAgentController = TextEditingController(
+      text: grpcOpts['grpc-user-agent']?.toString() ?? '',
+    );
+
+    final httpOpts = config['http-opts'] as Map? ?? {};
+    final httpHeaders = httpOpts['headers'] as Map? ?? {};
+    final httpHost = httpHeaders['Host'] ?? httpHeaders['host'];
+    _httpMethod = httpOpts['method']?.toString() ?? 'GET';
+    if (!_httpMethods.contains(_httpMethod)) {
+      _httpMethod = 'GET';
+    }
+    _httpPathController = TextEditingController(
+      text: _listOrString(httpOpts['path']),
+    );
+    _httpHostController = TextEditingController(text: _listOrString(httpHost));
+
+    final h2Opts = config['h2-opts'] as Map? ?? {};
+    _h2PathController = TextEditingController(
+      text: h2Opts['path']?.toString() ?? '',
+    );
+    _h2HostController = TextEditingController(
+      text: _listOrString(h2Opts['host']),
+    );
+
+    final xhttpOpts = config['xhttp-opts'] as Map? ?? {};
+    _xhttpPathController = TextEditingController(
+      text: xhttpOpts['path']?.toString() ?? '',
+    );
+    _xhttpHostController = TextEditingController(
+      text: xhttpOpts['host']?.toString() ?? '',
+    );
+    _xhttpMode = xhttpOpts['mode']?.toString() ?? '';
+    if (!_xhttpModes.contains(_xhttpMode)) {
+      _xhttpMode = '';
+    }
+    final xhttpHeaders = xhttpOpts['headers'] as Map?;
+    _xhttpHeadersController = TextEditingController(
+      text: xhttpHeaders == null
+          ? ''
+          : xhttpHeaders.entries.map((e) => '${e.key}: ${e.value}').join('\n'),
+    );
+    _xhttpAdvancedExpanded = false;
+
     _tls = config['tls'] == true;
     _udp = config['udp'] != false;
     _skipCertVerify = config['skip-cert-verify'] == true;
     _reduceRtt = config['reduce-rtt'] == true;
     _up = config['up']?.toString() ?? 'udp';
     _down = config['down']?.toString() ?? 'udp';
+    _network = config['network']?.toString() ?? 'tcp';
+    if (!_networks.contains(_network)) {
+      _network = 'tcp';
+    }
+    if (realityOpts.isNotEmpty ||
+        (config['reality-opts'] is Map &&
+            (config['reality-opts'] as Map).isNotEmpty)) {
+      _security = 'reality';
+      _tls = true;
+    } else if (_tls) {
+      _security = 'tls';
+    } else {
+      _security = 'none';
+    }
+    _flow = config['flow']?.toString() ?? '';
+    if (!_vlessFlows.contains(_flow)) {
+      _flow = '';
+    }
+    _packetEncoding = config['packet-encoding']?.toString() ?? '';
+    if (config['xudp'] == true) {
+      _packetEncoding = 'xudp';
+    } else if (config['packet-addr'] == true) {
+      _packetEncoding = 'packet';
+    }
+    if (!_packetEncodings.contains(_packetEncoding)) {
+      _packetEncoding = '';
+    }
   }
 
   @override
@@ -187,6 +368,22 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _obfsPasswordController.dispose();
     _hysteria2UpController.dispose();
     _hysteria2DownController.dispose();
+    _encryptionController.dispose();
+    _realityPublicKeyController.dispose();
+    _realityShortIdController.dispose();
+    _wsPathController.dispose();
+    _wsHostController.dispose();
+    _maxEarlyDataController.dispose();
+    _earlyDataHeaderNameController.dispose();
+    _grpcServiceNameController.dispose();
+    _grpcUserAgentController.dispose();
+    _httpPathController.dispose();
+    _httpHostController.dispose();
+    _h2PathController.dispose();
+    _h2HostController.dispose();
+    _xhttpPathController.dispose();
+    _xhttpHostController.dispose();
+    _xhttpHeadersController.dispose();
     super.dispose();
   }
 
@@ -194,6 +391,36 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     if (value == null) return '';
     if (value is List) return value.join(', ');
     return value.toString();
+  }
+
+  String _listOrString(dynamic value) {
+    if (value == null) return '';
+    if (value is List) {
+      return value.map((e) => e.toString()).join(', ');
+    }
+    return value.toString();
+  }
+
+  List<String> _splitCsv(String text) {
+    return text
+        .split(RegExp(r'[,，\s]+'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
+  Map<String, String> _parseHeaders(String text) {
+    final headers = <String, String>{};
+    for (final line in text.split('\n')) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+      final idx = trimmed.indexOf(':');
+      if (idx <= 0) continue;
+      headers[trimmed.substring(0, idx).trim()] = trimmed
+          .substring(idx + 1)
+          .trim();
+    }
+    return headers;
   }
 
   int? get _port {
@@ -206,6 +433,8 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     if (text.trim().isEmpty) return null;
     return int.tryParse(text.trim());
   }
+
+  bool get _isTransportProtocol => _type == 'vless' || _type == 'trojan';
 
   Map<String, dynamic> _buildConfig() {
     final base = <String, dynamic>{
@@ -221,17 +450,17 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         base['password'] = _passwordController.text;
       case 'vless':
         base['uuid'] = _uuidController.text.trim();
-        base['network'] = 'tcp';
-        base['tls'] = _tls;
-        base['servername'] = _sniController.text.trim().isNotEmpty
-            ? _sniController.text.trim()
-            : _serverController.text.trim();
+        if (_flow.isNotEmpty) {
+          base['flow'] = _flow;
+        }
+        if (_encryptionController.text.trim().isNotEmpty) {
+          base['encryption'] = _encryptionController.text.trim();
+        }
+        _applyTransportAndTls(base, servernameKey: 'servername');
+        _applyPacketEncoding(base);
       case 'trojan':
         base['password'] = _passwordController.text;
-        base['sni'] = _sniController.text.trim().isNotEmpty
-            ? _sniController.text.trim()
-            : _serverController.text.trim();
-        base['skip-cert-verify'] = _skipCertVerify;
+        _applyTransportAndTls(base, servernameKey: 'sni');
       case 'anytls':
         base['password'] = _passwordController.text;
         _applySni(base);
@@ -312,6 +541,136 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     return base;
   }
 
+  void _applyTransportAndTls(
+    Map<String, dynamic> base, {
+    required String servernameKey,
+  }) {
+    base['network'] = _network;
+    final sni = _sniController.text.trim().isNotEmpty
+        ? _sniController.text.trim()
+        : _serverController.text.trim();
+    base[servernameKey] = sni;
+
+    final useTls = _security == 'tls' || _security == 'reality';
+    base['tls'] = useTls;
+    base['skip-cert-verify'] = _skipCertVerify;
+    _applyAlpn(base);
+    if (_clientFingerprintController.text.trim().isNotEmpty) {
+      base['client-fingerprint'] = _clientFingerprintController.text.trim();
+    }
+    if (_fingerprintController.text.trim().isNotEmpty) {
+      base['fingerprint'] = _fingerprintController.text.trim();
+    }
+
+    if (_security == 'reality') {
+      final realityOpts = <String, dynamic>{};
+      if (_realityPublicKeyController.text.trim().isNotEmpty) {
+        realityOpts['public-key'] = _realityPublicKeyController.text.trim();
+      }
+      if (_realityShortIdController.text.trim().isNotEmpty) {
+        realityOpts['short-id'] = _realityShortIdController.text.trim();
+      }
+      if (_supportX25519Mlkem768) {
+        realityOpts['support-x25519mlkem768'] = true;
+      }
+      if (realityOpts.isNotEmpty) {
+        base['reality-opts'] = realityOpts;
+      }
+    }
+
+    switch (_network) {
+      case 'ws':
+      case 'httpupgrade':
+        final wsOpts = <String, dynamic>{
+          'path': _wsPathController.text.trim().isNotEmpty
+              ? _wsPathController.text.trim()
+              : '/',
+        };
+        if (_wsHostController.text.trim().isNotEmpty) {
+          wsOpts['headers'] = {'Host': _wsHostController.text.trim()};
+        }
+        final maxEarly = _intOrNull(_maxEarlyDataController.text);
+        if (maxEarly != null) {
+          wsOpts['max-early-data'] = maxEarly;
+        }
+        if (_earlyDataHeaderNameController.text.trim().isNotEmpty) {
+          wsOpts['early-data-header-name'] = _earlyDataHeaderNameController.text
+              .trim();
+        }
+        if (_network == 'httpupgrade' || _v2rayHttpUpgrade) {
+          wsOpts['v2ray-http-upgrade'] = true;
+        }
+        if (_v2rayHttpUpgradeFastOpen) {
+          wsOpts['v2ray-http-upgrade-fast-open'] = true;
+        }
+        base['ws-opts'] = wsOpts;
+      case 'grpc':
+        final grpcOpts = <String, dynamic>{};
+        if (_grpcServiceNameController.text.trim().isNotEmpty) {
+          grpcOpts['grpc-service-name'] = _grpcServiceNameController.text
+              .trim();
+        }
+        if (_grpcUserAgentController.text.trim().isNotEmpty) {
+          grpcOpts['grpc-user-agent'] = _grpcUserAgentController.text.trim();
+        }
+        if (grpcOpts.isNotEmpty) {
+          base['grpc-opts'] = grpcOpts;
+        }
+      case 'http':
+        final httpOpts = <String, dynamic>{
+          'method': _httpMethod,
+          'path': _httpPathController.text.trim().isNotEmpty
+              ? [_httpPathController.text.trim()]
+              : ['/'],
+        };
+        if (_httpHostController.text.trim().isNotEmpty) {
+          httpOpts['headers'] = {
+            'Host': [_httpHostController.text.trim()],
+          };
+        }
+        base['http-opts'] = httpOpts;
+      case 'h2':
+        final h2Opts = <String, dynamic>{
+          'path': _h2PathController.text.trim().isNotEmpty
+              ? _h2PathController.text.trim()
+              : '/',
+        };
+        final hosts = _splitCsv(_h2HostController.text);
+        if (hosts.isNotEmpty) {
+          h2Opts['host'] = hosts;
+        }
+        base['h2-opts'] = h2Opts;
+      case 'xhttp':
+        final xhttpOpts = <String, dynamic>{};
+        if (_xhttpPathController.text.trim().isNotEmpty) {
+          xhttpOpts['path'] = _xhttpPathController.text.trim();
+        }
+        if (_xhttpHostController.text.trim().isNotEmpty) {
+          xhttpOpts['host'] = _xhttpHostController.text.trim();
+        }
+        if (_xhttpMode.isNotEmpty) {
+          xhttpOpts['mode'] = _xhttpMode;
+        }
+        final headers = _parseHeaders(_xhttpHeadersController.text);
+        if (headers.isNotEmpty) {
+          xhttpOpts['headers'] = headers;
+        }
+        if (xhttpOpts.isNotEmpty) {
+          base['xhttp-opts'] = xhttpOpts;
+        }
+    }
+  }
+
+  void _applyPacketEncoding(Map<String, dynamic> base) {
+    if (_packetEncoding.isEmpty) return;
+    base['packet-encoding'] = _packetEncoding;
+    if (_packetEncoding == 'xudp') {
+      base['xudp'] = true;
+    } else if (_packetEncoding == 'packet') {
+      base['packet-addr'] = true;
+    }
+  }
+
   void _applySni(Map<String, dynamic> base) {
     if (_sniController.text.trim().isNotEmpty) {
       base['sni'] = _sniController.text.trim();
@@ -319,7 +678,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   }
 
   void _applyAlpn(Map<String, dynamic> base) {
-    if (_alpnController.text.trim().isNotEmpty) {
+    final alpn = _splitCsv(_alpnController.text);
+    if (alpn.isNotEmpty) {
+      base['alpn'] = alpn;
+    } else if (_alpnController.text.trim().isNotEmpty) {
       base['alpn'] = _alpnController.text.trim();
     }
   }
@@ -431,6 +793,19 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     }
   }
 
+  String _protocolLabel() {
+    final l10n = context.appLocalizations;
+    return switch (_type) {
+      'ss' => l10n.ss,
+      'vless' => l10n.vless,
+      'trojan' => l10n.trojan,
+      'anytls' => l10n.anytls,
+      'nowhere' => l10n.nowhere,
+      'hysteria2' => l10n.hysteria2,
+      _ => _type.toUpperCase(),
+    };
+  }
+
   Widget _buildTextField(
     TextEditingController controller,
     String label, {
@@ -441,12 +816,32 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      maxLines: maxLines,
+      maxLines: maxLines ?? 1,
       minLines: minLines,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
       ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final effective = items.any((e) => e.value == value)
+        ? value
+        : (items.first.value ?? '');
+    return DropdownButtonFormField<String>(
+      initialValue: effective,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      items: items,
+      onChanged: onChanged,
     );
   }
 
@@ -472,41 +867,287 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     return switch (_type) {
       'ss' => Column(
         children: [
-          _buildTextField(_cipherController, appLocalizations.cipher),
+          _buildDropdown(
+            label: appLocalizations.cipher,
+            value: _cipherController.text,
+            items: [
+              for (final cipher in _ssCiphers)
+                DropdownMenuItem(value: cipher, child: Text(cipher)),
+              if (!_ssCiphers.contains(_cipherController.text) &&
+                  _cipherController.text.isNotEmpty)
+                DropdownMenuItem(
+                  value: _cipherController.text,
+                  child: Text(_cipherController.text),
+                ),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _cipherController.text = value);
+            },
+          ),
           const SizedBox(height: 16),
           _buildTextField(_passwordController, appLocalizations.password),
         ],
       ),
-      'vless' => _buildTextField(_uuidController, appLocalizations.uuid),
+      'vless' => Column(
+        children: [
+          _buildTextField(_uuidController, appLocalizations.uuid),
+          const SizedBox(height: 16),
+          _buildDropdown(
+            label: appLocalizations.flow,
+            value: _flow,
+            items: [
+              DropdownMenuItem(
+                value: '',
+                child: Text(appLocalizations.noneOption),
+              ),
+              const DropdownMenuItem(
+                value: 'xtls-rprx-vision',
+                child: Text('xtls-rprx-vision'),
+              ),
+            ],
+            onChanged: (value) => setState(() => _flow = value ?? ''),
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(_encryptionController, appLocalizations.encryption),
+        ],
+      ),
       'trojan' || 'anytls' || 'hysteria2' => _buildTextField(
         _passwordController,
         appLocalizations.password,
       ),
-      'nowhere' => _buildTextField(_keyController, appLocalizations.key),
-      _ => Container(),
+      'nowhere' => _buildTextField(
+        _keyController,
+        appLocalizations.nowhereShareKey,
+      ),
+      _ => const SizedBox.shrink(),
     };
   }
 
   Widget _buildTransportFields() {
     final appLocalizations = context.appLocalizations;
+    if (_isTransportProtocol) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildDropdown(
+            label: appLocalizations.network,
+            value: _network,
+            items: [
+              for (final n in _networks)
+                DropdownMenuItem(value: n, child: Text(n)),
+            ],
+            onChanged: (value) => setState(() => _network = value ?? 'tcp'),
+          ),
+          const SizedBox(height: 16),
+          _buildDropdown(
+            label: appLocalizations.security,
+            value: _security,
+            items: [
+              DropdownMenuItem(
+                value: 'none',
+                child: Text(appLocalizations.noneOption),
+              ),
+              DropdownMenuItem(
+                value: 'tls',
+                child: Text(appLocalizations.tls),
+              ),
+              DropdownMenuItem(
+                value: 'reality',
+                child: Text(appLocalizations.reality),
+              ),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _security = value ?? 'none';
+                _tls = _security != 'none';
+              });
+            },
+          ),
+          if (_security != 'none') ...[
+            const SizedBox(height: 16),
+            _buildTextField(
+              _sniController,
+              _type == 'vless'
+                  ? appLocalizations.servername
+                  : appLocalizations.sni,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(_alpnController, appLocalizations.alpn),
+            const SizedBox(height: 16),
+            _buildDropdown(
+              label: appLocalizations.clientFingerprint,
+              value: _clientFingerprintController.text,
+              items: [
+                for (final fp in _clientFingerprints)
+                  DropdownMenuItem(
+                    value: fp,
+                    child: Text(
+                      fp.isEmpty ? appLocalizations.noneOption : fp,
+                    ),
+                  ),
+                if (!_clientFingerprints.contains(
+                      _clientFingerprintController.text,
+                    ) &&
+                    _clientFingerprintController.text.isNotEmpty)
+                  DropdownMenuItem(
+                    value: _clientFingerprintController.text,
+                    child: Text(_clientFingerprintController.text),
+                  ),
+              ],
+              onChanged: (value) {
+                setState(() => _clientFingerprintController.text = value ?? '');
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              _fingerprintController,
+              appLocalizations.fingerprint,
+            ),
+            ListItem.switchItem(
+              title: Text(appLocalizations.skipCertVerify),
+              delegate: SwitchDelegate<bool>(
+                value: _skipCertVerify,
+                onChanged: (value) => setState(() => _skipCertVerify = value),
+              ),
+            ),
+          ],
+          if (_security == 'reality') ...[
+            const SizedBox(height: 8),
+            Text(appLocalizations.reality, style: context.textTheme.titleSmall),
+            const SizedBox(height: 12),
+            _buildTextField(
+              _realityPublicKeyController,
+              appLocalizations.realityPublicKey,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              _realityShortIdController,
+              appLocalizations.realityShortId,
+            ),
+            ListItem.switchItem(
+              title: Text(appLocalizations.supportX25519Mlkem768),
+              delegate: SwitchDelegate<bool>(
+                value: _supportX25519Mlkem768,
+                onChanged: (value) =>
+                    setState(() => _supportX25519Mlkem768 = value),
+              ),
+            ),
+          ],
+          if (_network == 'ws' || _network == 'httpupgrade') ...[
+            const SizedBox(height: 8),
+            _buildTextField(_wsPathController, appLocalizations.wsPath),
+            const SizedBox(height: 16),
+            _buildTextField(_wsHostController, appLocalizations.wsHost),
+            const SizedBox(height: 16),
+            _buildTextField(
+              _maxEarlyDataController,
+              appLocalizations.maxEarlyData,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              _earlyDataHeaderNameController,
+              appLocalizations.earlyDataHeaderName,
+            ),
+            if (_network == 'ws')
+              ListItem.switchItem(
+                title: const Text('v2ray-http-upgrade'),
+                delegate: SwitchDelegate<bool>(
+                  value: _v2rayHttpUpgrade,
+                  onChanged: (value) =>
+                      setState(() => _v2rayHttpUpgrade = value),
+                ),
+              ),
+            ListItem.switchItem(
+              title: const Text('v2ray-http-upgrade-fast-open'),
+              delegate: SwitchDelegate<bool>(
+                value: _v2rayHttpUpgradeFastOpen,
+                onChanged: (value) =>
+                    setState(() => _v2rayHttpUpgradeFastOpen = value),
+              ),
+            ),
+          ],
+          if (_network == 'grpc') ...[
+            const SizedBox(height: 8),
+            _buildTextField(
+              _grpcServiceNameController,
+              appLocalizations.grpcServiceName,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              _grpcUserAgentController,
+              appLocalizations.grpcUserAgent,
+            ),
+          ],
+          if (_network == 'http') ...[
+            const SizedBox(height: 8),
+            _buildDropdown(
+              label: appLocalizations.httpMethod,
+              value: _httpMethod,
+              items: [
+                for (final m in _httpMethods)
+                  DropdownMenuItem(value: m, child: Text(m)),
+              ],
+              onChanged: (value) => setState(() => _httpMethod = value ?? 'GET'),
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(_httpPathController, appLocalizations.wsPath),
+            const SizedBox(height: 16),
+            _buildTextField(_httpHostController, appLocalizations.wsHost),
+          ],
+          if (_network == 'h2') ...[
+            const SizedBox(height: 8),
+            _buildTextField(_h2PathController, appLocalizations.wsPath),
+            const SizedBox(height: 16),
+            _buildTextField(_h2HostController, appLocalizations.wsHost),
+          ],
+          if (_network == 'xhttp') ...[
+            const SizedBox(height: 8),
+            _buildTextField(_xhttpPathController, appLocalizations.wsPath),
+            const SizedBox(height: 16),
+            _buildTextField(_xhttpHostController, appLocalizations.wsHost),
+            const SizedBox(height: 16),
+            _buildDropdown(
+              label: appLocalizations.xhttpMode,
+              value: _xhttpMode,
+              items: [
+                for (final m in _xhttpModes)
+                  DropdownMenuItem(
+                    value: m,
+                    child: Text(m.isEmpty ? appLocalizations.noneOption : m),
+                  ),
+              ],
+              onChanged: (value) => setState(() => _xhttpMode = value ?? ''),
+            ),
+            const SizedBox(height: 8),
+            ExpansionTile(
+              title: Text(appLocalizations.xhttpAdvanced),
+              initiallyExpanded: _xhttpAdvancedExpanded,
+              onExpansionChanged: (v) =>
+                  setState(() => _xhttpAdvancedExpanded = v),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildTextField(
+                    _xhttpHeadersController,
+                    'Headers (Key: Value)',
+                    minLines: 3,
+                    maxLines: 6,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_type == 'vless')
-          ListItem.switchItem(
-            title: Text(appLocalizations.tls),
-            delegate: SwitchDelegate<bool>(
-              value: _tls,
-              onChanged: (value) => setState(() => _tls = value),
-            ),
-          ),
-        if (_type != 'ss' && _type != 'nowhere')
-          _buildTextField(
-            _sniController,
-            _type == 'vless'
-                ? appLocalizations.servername
-                : appLocalizations.sni,
-          ),
+        if (_type == 'anytls')
+          _buildTextField(_sniController, appLocalizations.sni),
         if (_type == 'nowhere') ...[
           _buildTextField(_specController, appLocalizations.spec),
           const SizedBox(height: 16),
@@ -595,16 +1236,34 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
 
   Widget _buildTlsFields() {
     if (_type != 'anytls' && _type != 'nowhere') {
-      return Container();
+      return const SizedBox.shrink();
     }
     final appLocalizations = context.appLocalizations;
     return Column(
       children: [
         _buildTextField(_alpnController, appLocalizations.alpn),
         const SizedBox(height: 16),
-        _buildTextField(
-          _clientFingerprintController,
-          appLocalizations.clientFingerprint,
+        _buildDropdown(
+          label: appLocalizations.clientFingerprint,
+          value: _clientFingerprintController.text,
+          items: [
+            for (final fp in _clientFingerprints)
+              DropdownMenuItem(
+                value: fp,
+                child: Text(fp.isEmpty ? appLocalizations.noneOption : fp),
+              ),
+            if (!_clientFingerprints.contains(
+                  _clientFingerprintController.text,
+                ) &&
+                _clientFingerprintController.text.isNotEmpty)
+              DropdownMenuItem(
+                value: _clientFingerprintController.text,
+                child: Text(_clientFingerprintController.text),
+              ),
+          ],
+          onChanged: (value) {
+            setState(() => _clientFingerprintController.text = value ?? '');
+          },
         ),
         const SizedBox(height: 16),
         _buildTextField(_fingerprintController, appLocalizations.fingerprint),
@@ -628,7 +1287,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
 
   Widget _buildEchFields() {
     if (_type != 'anytls' && _type != 'nowhere') {
-      return Container();
+      return const SizedBox.shrink();
     }
     final appLocalizations = context.appLocalizations;
     return Column(
@@ -665,6 +1324,23 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             onChanged: (value) => setState(() => _udp = value),
           ),
         ),
+        if (_type == 'vless') ...[
+          const SizedBox(height: 8),
+          _buildDropdown(
+            label: appLocalizations.packetEncoding,
+            value: _packetEncoding,
+            items: [
+              DropdownMenuItem(
+                value: '',
+                child: Text(appLocalizations.noneOption),
+              ),
+              const DropdownMenuItem(value: 'packet', child: Text('packet')),
+              const DropdownMenuItem(value: 'xudp', child: Text('xudp')),
+            ],
+            onChanged: (value) =>
+                setState(() => _packetEncoding = value ?? ''),
+          ),
+        ],
         if (_type == 'trojan' ||
             _type == 'anytls' ||
             _type == 'nowhere' ||
@@ -738,7 +1414,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           ),
         ],
       ),
-      _ => Container(),
+      _ => const SizedBox.shrink(),
     };
   }
 
@@ -746,7 +1422,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final isManualEditable =
-        widget.proxy == null || _manualProxyTypes.contains(_type);
+        widget.proxy == null || _manualProxyTypeSet.contains(_type);
     if (!isManualEditable) {
       return CommonScaffold(
         title: appLocalizations.editLocalProxy,
@@ -784,47 +1460,14 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         child: ListView(
           padding: const EdgeInsets.all(16).copyWith(bottom: 88),
           children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SegmentedButton<String>(
-                    segments: [
-                      ButtonSegment(
-                        value: 'ss',
-                        label: Text(appLocalizations.ss),
-                      ),
-                      ButtonSegment(
-                        value: 'vless',
-                        label: Text(appLocalizations.vless),
-                      ),
-                      ButtonSegment(
-                        value: 'trojan',
-                        label: Text(appLocalizations.trojan),
-                      ),
-                      ButtonSegment(
-                        value: 'anytls',
-                        label: Text(appLocalizations.anytls),
-                      ),
-                      ButtonSegment(
-                        value: 'nowhere',
-                        label: Text(appLocalizations.nowhere),
-                      ),
-                      ButtonSegment(
-                        value: 'hysteria2',
-                        label: Text(appLocalizations.hysteria2),
-                      ),
-                    ],
-                    selected: {_type},
-                    onSelectionChanged: (value) {
-                      setState(() => _type = value.first);
-                    },
-                  ),
-                ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Chip(
+                avatar: const Icon(Icons.shield_outlined, size: 18),
+                label: Text(_protocolLabel()),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             _buildCommonFields(),
             const SizedBox(height: 24),
             Text(
@@ -845,18 +1488,33 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               Text(appLocalizations.tls, style: context.textTheme.titleSmall),
               const SizedBox(height: 12),
               _buildTlsFields(),
-              const SizedBox(height: 24),
-              Text(appLocalizations.ech, style: context.textTheme.titleSmall),
-              const SizedBox(height: 12),
-              _buildEchFields(),
+              const SizedBox(height: 8),
+              ExpansionTile(
+                initiallyExpanded: false,
+                tilePadding: EdgeInsets.zero,
+                title: Text(
+                  appLocalizations.ech,
+                  style: context.textTheme.titleSmall,
+                ),
+                children: [
+                  _buildEchFields(),
+                  const SizedBox(height: 8),
+                ],
+              ),
             ],
-            const SizedBox(height: 24),
-            Text(
-              appLocalizations.advancedSettings,
-              style: context.textTheme.titleSmall,
+            const SizedBox(height: 8),
+            ExpansionTile(
+              initiallyExpanded: false,
+              tilePadding: EdgeInsets.zero,
+              title: Text(
+                appLocalizations.advancedSettings,
+                style: context.textTheme.titleSmall,
+              ),
+              children: [
+                _buildAdvancedFields(),
+                const SizedBox(height: 8),
+              ],
             ),
-            const SizedBox(height: 12),
-            _buildAdvancedFields(),
           ],
         ),
       ),

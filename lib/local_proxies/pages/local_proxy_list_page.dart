@@ -3,6 +3,7 @@ import 'package:fl_clash/local_proxies/pages/local_proxy_edit_page.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_import_page.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
+import 'package:fl_clash/pages/scan.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -51,24 +52,30 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
     }
   }
 
-  void _handleAddUri() async {
+  void _handleAddUri({String? initialText}) async {
     final result = await BaseNavigator.push<bool>(
       context,
-      const LocalProxyImportPage(),
+      LocalProxyImportPage(initialText: initialText),
     );
     if (result == true) {
       await _reloadIfEnabled();
     }
   }
 
-  void _handleAddManual() async {
+  void _handleAddManual(String type) async {
     final result = await BaseNavigator.push<bool>(
       context,
-      const LocalProxyEditPage(),
+      LocalProxyEditPage(initialType: type),
     );
     if (result == true) {
       await _reloadIfEnabled();
     }
+  }
+
+  Future<void> _handleScanQr() async {
+    final raw = await BaseNavigator.push<String>(context, const ScanPage());
+    if (!mounted || raw == null || raw.trim().isEmpty) return;
+    _handleAddUri(initialText: raw.trim());
   }
 
   void _handleEdit(LocalProxy proxy) async {
@@ -94,32 +101,68 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
     await _reloadIfEnabled();
   }
 
+  String _protocolLabel(String type) {
+    final l10n = context.appLocalizations;
+    return switch (type) {
+      'ss' => l10n.ss,
+      'vless' => l10n.vless,
+      'trojan' => l10n.trojan,
+      'anytls' => l10n.anytls,
+      'nowhere' => l10n.nowhere,
+      'hysteria2' => l10n.hysteria2,
+      _ => type.toUpperCase(),
+    };
+  }
+
   void _showAddMenu() {
     final appLocalizations = context.appLocalizations;
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (_) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.paste),
-                title: Text(appLocalizations.pasteShareLink),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _handleAddUri();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.edit_note),
-                title: Text(appLocalizations.manualAdd),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _handleAddManual();
-                },
-              ),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.paste),
+                  title: Text(appLocalizations.pasteShareLink),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _handleAddUri();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.qr_code_scanner),
+                  title: Text(appLocalizations.scanQrcode),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _handleScanQr();
+                  },
+                ),
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      appLocalizations.selectProtocol,
+                      style: context.textTheme.titleSmall,
+                    ),
+                  ),
+                ),
+                for (final type in manualProxyTypes)
+                  ListTile(
+                    leading: const Icon(Icons.edit_note),
+                    title: Text(_protocolLabel(type)),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _handleAddManual(type);
+                    },
+                  ),
+              ],
+            ),
           ),
         );
       },
