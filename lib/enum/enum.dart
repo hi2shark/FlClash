@@ -344,6 +344,7 @@ enum PageLabel {
   requests,
   resources,
   connections,
+  localProxies,
 }
 
 enum RuleAction {

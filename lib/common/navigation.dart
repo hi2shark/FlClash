@@ -58,6 +58,15 @@ class Navigation {
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
+        icon: const Icon(Icons.merge_type),
+        label: PageLabel.localProxies,
+        description: 'localMixinDesc',
+        builder: (_) => const LocalProxiesView(
+          key: GlobalObjectKey(PageLabel.localProxies),
+        ),
+        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+      ),
+      NavigationItem(
         icon: const Icon(Icons.adb),
         label: PageLabel.logs,
         builder: (_) => const LogsView(key: GlobalObjectKey(PageLabel.logs)),
