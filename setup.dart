@@ -57,6 +57,7 @@ Future<void> main(List<String> args) async {
   final targets = _getTargets(platform, arch, results['targets']);
   final androidArch = results['arch'] as String?;
   final overrideVersion = results['version'] as String?;
+  final repository = resolveRepository(results['repository'] as String?);
   final verbose = results['verbose'] as bool;
 
   final exitCode = await _package(
@@ -67,9 +68,18 @@ Future<void> main(List<String> args) async {
     arch,
     androidArch: androidArch,
     overrideVersion: overrideVersion,
+    repository: repository,
     verbose: verbose,
   );
   exit(exitCode);
+}
+
+String resolveRepository(String? cliValue) {
+  final value = cliValue?.trim();
+  if (value != null && value.isNotEmpty) return value;
+  final fromEnv = Platform.environment['GITHUB_REPOSITORY']?.trim();
+  if (fromEnv != null && fromEnv.isNotEmpty) return fromEnv;
+  return 'chen08209/FlClash';
 }
 
 ArgParser createSetupArgParser() {
@@ -96,6 +106,12 @@ ArgParser createSetupArgParser() {
       valueHelp: 'x.y.z+build',
       help: 'Override the app version in pubspec.yaml (e.g. 0.8.95 or v0.8.95). '
           'If the value has no build number, the existing build number is preserved.',
+    )
+    ..addOption(
+      'repository',
+      valueHelp: 'owner/name',
+      help: 'GitHub repository for in-app update checks '
+          '(default: GITHUB_REPOSITORY env, then chen08209/FlClash)',
     )
     ..addFlag(
       'verbose',
@@ -143,6 +159,7 @@ Future<int> _package(
   String arch, {
   String? androidArch,
   String? overrideVersion,
+  required String repository,
   required bool verbose,
 }) async {
   final distributorDir = p.join(
@@ -174,7 +191,11 @@ Future<int> _package(
   final file = File(p.join(rootDir, 'env.json'));
 
   await file.writeAsString(
-    jsonEncode({'APP_ENV': env, 'CORE_SHA256': ?coreSha256}),
+    jsonEncode({
+      'APP_ENV': env,
+      'CORE_SHA256': ?coreSha256,
+      'REPOSITORY': repository,
+    }),
   );
 
   final flutterBuildArgs = createFlutterBuildArgs(

@@ -48,9 +48,9 @@ jobs:
           - platform: linux
             os: ubuntu-22.04
             arch: amd64
-          # - platform: macos
-          #   os: macos-15-intel
-          #   arch: amd64
+          - platform: macos
+            os: macos-15-intel
+            arch: amd64
           - platform: macos
             os: macos-latest
             arch: arm64
@@ -127,7 +127,7 @@ jobs:
           flutter pub get
 
       - name: Setup
-        run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} --version ${{ github.ref_name }} -v
+        run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} --version ${{ github.ref_name }} --repository ${{ github.repository }} -v
 
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -211,7 +211,7 @@ jobs:
       - name: Generate release.md
         run: |
           tags=($(git tag --merged HEAD --sort=-creatordate))
-          preTag=$(curl -s "https://api.github.com/repos/hi2shark/FlClash/releases/latest" | \
+          preTag=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | \
           sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p')
           
           [ -z "$preTag" ] && preTag=""
@@ -231,7 +231,8 @@ jobs:
       - name: Patch release.md
         run: |
           version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
+          sed -e "s|VERSION|$version|g" -e "s|REPOSITORY|${{ github.repository }}|g" \
+            ./.github/release_template.md >> release.md
 
       - name: Generate sha256
         if: ${{ env.IS_STABLE == 'true' }}

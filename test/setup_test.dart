@@ -11,6 +11,16 @@ void main() {
       expect(results.rest, ['android']);
     });
 
+    test('parses --repository option', () {
+      final results = setup.createSetupArgParser().parse([
+        'android',
+        '--repository',
+        'owner/repo',
+      ]);
+
+      expect(results['repository'], 'owner/repo');
+    });
+
     test('omits verbose from flutter build args by default', () {
       final args = setup.createFlutterBuildArgs(
         platform: 'android',
@@ -31,6 +41,19 @@ void main() {
         'dart-define-from-file=env.json',
         'split-per-abi',
       ]);
+    });
+
+    test('resolveRepository prefers CLI value', () {
+      expect(
+        setup.resolveRepository('hi2shark/FlClash'),
+        'hi2shark/FlClash',
+      );
+    });
+
+    test('resolveRepository falls back to default', () {
+      expect(setup.resolveRepository(null), 'chen08209/FlClash');
+      expect(setup.resolveRepository(''), 'chen08209/FlClash');
+      expect(setup.resolveRepository('  '), 'chen08209/FlClash');
     });
   });
 }
