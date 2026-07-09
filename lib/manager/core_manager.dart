@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -32,7 +33,10 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     coreEventManager.addListener(this);
     ref.listenManual(currentProfileIdProvider, (prev, next) {
       if (prev != next) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (prev != null) {
+            await localProxyStore.resetMixinOnProfileSwitch();
+          }
           ref.read(setupActionProvider.notifier).fullSetup();
         });
       }

@@ -105,6 +105,18 @@ class LocalProxyStore {
     await _save();
   }
 
+  /// Disables mixin and clears target groups when switching profiles.
+  /// Keeps local nodes and other config fields intact.
+  /// Returns true if a reset was performed.
+  Future<bool> resetMixinOnProfileSwitch() async {
+    await init();
+    if (!_data.config.enabled) return false;
+    await saveConfig(
+      _data.config.copyWith(enabled: false, targetGroups: []),
+    );
+    return true;
+  }
+
   Future<void> add(LocalProxy proxy) async {
     await init();
     final nextSortIndex = _data.proxies.isEmpty
