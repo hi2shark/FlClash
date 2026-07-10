@@ -74,10 +74,11 @@ Future<void> main(List<String> args) async {
   exit(exitCode);
 }
 
-String resolveRepository(String? cliValue) {
+String resolveRepository(String? cliValue, {Map<String, String>? environment}) {
   final value = cliValue?.trim();
   if (value != null && value.isNotEmpty) return value;
-  final fromEnv = Platform.environment['GITHUB_REPOSITORY']?.trim();
+  final fromEnv = (environment ?? Platform.environment)['GITHUB_REPOSITORY']
+      ?.trim();
   if (fromEnv != null && fromEnv.isNotEmpty) return fromEnv;
   return 'chen08209/FlClash';
 }
@@ -104,13 +105,15 @@ ArgParser createSetupArgParser() {
     ..addOption(
       'version',
       valueHelp: 'x.y.z+build',
-      help: 'Override the app version in pubspec.yaml (e.g. 0.8.95 or v0.8.95). '
+      help:
+          'Override the app version in pubspec.yaml (e.g. 0.8.95 or v0.8.95). '
           'If the value has no build number, the existing build number is preserved.',
     )
     ..addOption(
       'repository',
       valueHelp: 'owner/name',
-      help: 'GitHub repository for in-app update checks '
+      help:
+          'GitHub repository for in-app update checks '
           '(default: GITHUB_REPOSITORY env, then chen08209/FlClash)',
     )
     ..addFlag(
@@ -260,8 +263,8 @@ Future<void> _patchPubspecVersion(String rootDir, String version) async {
   final newVersion = cleanVersion.contains('+')
       ? cleanVersion
       : currentVersion.contains('+')
-          ? '$cleanVersion${currentVersion.substring(currentVersion.indexOf('+'))}'
-          : cleanVersion;
+      ? '$cleanVersion${currentVersion.substring(currentVersion.indexOf('+'))}'
+      : cleanVersion;
 
   content = content.replaceFirst(versionPattern, 'version: $newVersion');
   await pubspecFile.writeAsString(content);

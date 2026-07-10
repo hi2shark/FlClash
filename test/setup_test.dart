@@ -45,15 +45,37 @@ void main() {
 
     test('resolveRepository prefers CLI value', () {
       expect(
-        setup.resolveRepository('hi2shark/FlClash'),
+        setup.resolveRepository(
+          'hi2shark/FlClash',
+          environment: const {'GITHUB_REPOSITORY': 'environment/repo'},
+        ),
+        'hi2shark/FlClash',
+      );
+    });
+
+    test('resolveRepository falls back to environment', () {
+      expect(
+        setup.resolveRepository(
+          null,
+          environment: const {'GITHUB_REPOSITORY': 'hi2shark/FlClash'},
+        ),
         'hi2shark/FlClash',
       );
     });
 
     test('resolveRepository falls back to default', () {
-      expect(setup.resolveRepository(null), 'chen08209/FlClash');
-      expect(setup.resolveRepository(''), 'chen08209/FlClash');
-      expect(setup.resolveRepository('  '), 'chen08209/FlClash');
+      expect(
+        setup.resolveRepository(null, environment: const {}),
+        'chen08209/FlClash',
+      );
+      expect(
+        setup.resolveRepository('', environment: const {}),
+        'chen08209/FlClash',
+      );
+      expect(
+        setup.resolveRepository('  ', environment: const {}),
+        'chen08209/FlClash',
+      );
     });
   });
 }
