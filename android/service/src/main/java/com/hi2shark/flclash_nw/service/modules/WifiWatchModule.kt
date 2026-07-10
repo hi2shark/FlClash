@@ -486,6 +486,30 @@ class WifiWatchModule(
     }
 
     private fun currentWifiNetworkStatusLocked(verdict: WifiVerdict): WifiNetworkStatus? {
+        // ConnectivityManager may briefly retain the old WiFi Network while an
+        // AP switch is in progress. Anchor selection to WifiManager's currently
+        // associated SSID first; otherwise a still-validated/strong old network
+        // can win below and incorrectly suspend on its SSID.
+        val fallback = if (wifiNetworks.isNotEmpty() && hasWifiTransport()) {
+            readWifiManagerFallback()
+        } else {
+            null
+        }
+        if (fallback != null) {
+            val current = wifiNetworks.values.firstOrNull { it.ssid == fallback.ssid }
+            if (current != null) {
+                return if (current.rssi == null && fallback.rssi != null) {
+                    current.copy(rssi = fallback.rssi)
+                } else {
+                    current
+                }
+            }
+            // The callback cache has not caught up with the association yet.
+            // Publish the actual SSID as unvalidated so the controller fails
+            // open and cancels any pending suspend until capabilities arrive.
+            return fallback
+        }
+
         // Prefer a network that already reads as trusted under the active
         // verdict (validated when no VPN, or strong RSSI when a VPN is active),
         // otherwise fall back to the first known WiFi network so the controller
@@ -498,9 +522,6 @@ class WifiWatchModule(
         // network from ConnectivityManager. Once the local map is empty
         // (onLost / onUnavailable), a stale connectionInfo SSID must not keep
         // wifiPresent=true and block resume.
-        if (wifiNetworks.isNotEmpty() && hasWifiTransport()) {
-            readWifiManagerFallback()?.let { return it }
-        }
         return status
     }
 
