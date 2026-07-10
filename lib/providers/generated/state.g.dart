@@ -2131,7 +2131,7 @@ final class SharedStateProvider
   }
 }
 
-String _$sharedStateHash() => r'b8afccb49abbd800887171115ff07aec73125813';
+String _$sharedStateHash() => r'5947d78df25292861ddf5437ffeee1e28ccc1cb0';
 
 @ProviderFor(overlayTopOffset)
 final overlayTopOffsetProvider = OverlayTopOffsetProvider._();
@@ -3177,4 +3177,4 @@ final class SuspendProvider extends $FunctionalProvider<bool, bool, bool>
   }
 }
 
-String _$suspendHash() => r'9ab9210f4f3c70f63d9858d492a9c09b3fb24bf1';
+String _$suspendHash() => r'fae069b1e239a49db8758214f6749e9dbb86b301';

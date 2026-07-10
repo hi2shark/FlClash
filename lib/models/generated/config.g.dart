@@ -343,6 +343,7 @@ _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
       : PatchClashConfig.fromJson(
           json['patchClashConfig'] as Map<String, dynamic>,
         ),
+  onDemandEnabled: json['onDemandEnabled'] as bool? ?? true,
   excludeSSIDs:
       (json['excludeSSIDs'] as List<dynamic>?)
           ?.map((e) => e as String)
@@ -362,5 +363,6 @@ Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
   'proxiesStyleProps': instance.proxiesStyleProps,
   'windowProps': instance.windowProps,
   'patchClashConfig': instance.patchClashConfig,
+  'onDemandEnabled': instance.onDemandEnabled,
   'excludeSSIDs': instance.excludeSSIDs,
 };

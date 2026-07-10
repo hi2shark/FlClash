@@ -84,9 +84,10 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       return;
     }
     final res = await wifiSsidManager.requestBackgroundPermission();
-    globalState.container
-        .read(backgroundLocationPermissionsProvider.notifier)
-        .value = res;
+    final notifier = globalState.container.read(
+      backgroundLocationPermissionsProvider.notifier,
+    );
+    notifier.value = res;
   }
 
   void _handleOpenBatteryOptimizationSettings() {
@@ -173,8 +174,12 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     BuildContext context,
     WifiWatchState state,
     bool isExcluded,
+    bool enabled,
   ) {
     final appLocalizations = context.appLocalizations;
+    if (!enabled) {
+      return appLocalizations.disabled;
+    }
     final hasKnownSsid = state.ssid != null || state.rawSsid != null;
     if (state.suspended) {
       return appLocalizations.suspended;
@@ -217,16 +222,16 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
           builder: (context, ref, _) {
             final appLocalizations = context.appLocalizations;
             final state = ref.watch(wifiWatchProvider);
+            final enabled = ref.watch(onDemandEnabledProvider);
             final excludeSSIDs = ref.watch(excludeSSIDsProvider);
             final ssid = state.ssid ?? state.rawSsid;
             final hasSsid = ssid != null;
             final hasNetwork = hasSsid || state.wifiPresent;
-            final isExcluded = hasSsid && excludeSSIDs.contains(ssid);
+            final isExcluded =
+                enabled && hasSsid && excludeSSIDs.contains(ssid);
             final ssidTextStyle = context.textTheme.bodyMedium?.toLight;
-            final matchedSsidTextStyle = (ssidTextStyle ?? const TextStyle()).copyWith(
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
-            );
+            final matchedSsidTextStyle = (ssidTextStyle ?? const TextStyle())
+                .copyWith(color: Colors.green, fontWeight: FontWeight.bold);
             return generateSectionV3(
               title: appLocalizations.currentWifiConnection,
               items: [
@@ -239,8 +244,9 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                             : appLocalizations.wifiWatchNoWifi),
                     style: isExcluded ? matchedSsidTextStyle : ssidTextStyle,
                   ),
-                  onPressed:
-                      hasSsid ? () => _handleCopySsid(context, ssid) : null,
+                  onPressed: hasSsid
+                      ? () => _handleCopySsid(context, ssid)
+                      : null,
                 ),
                 DecorationListItem(
                   title: Text(appLocalizations.currentWifiSignal),
@@ -271,7 +277,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                 DecorationListItem(
                   title: Text(appLocalizations.currentWifiStatus),
                   trailing: Text(
-                    _currentWifiStatus(context, state, isExcluded),
+                    _currentWifiStatus(context, state, isExcluded, enabled),
                     style: context.textTheme.bodyMedium?.toLight,
                   ),
                 ),
@@ -349,6 +355,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       batteryOptimizationDisableProvider,
     );
     final excludeSSIDs = ref.watch(excludeSSIDsProvider);
+    final onDemandEnabled = ref.watch(onDemandEnabledProvider);
     final locationPermissionsGranted = ref.watch(
       locationPermissionsProvider.select(
         (state) => state == WifiSsidPermission.granted,
@@ -363,6 +370,29 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     return CommonScaffold(
       body: CustomScrollView(
         slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+            ).copyWith(top: 16),
+            sliver: SliverToBoxAdapter(
+              child: generateSectionV3(
+                items: [
+                  DecorationListItem(
+                    title: Text(appLocalizations.onDemand),
+                    subtitle: Text(appLocalizations.onDemandDesc),
+                    trailing: Switch(
+                      value: onDemandEnabled,
+                      onChanged: (value) {
+                        ref
+                            .read(onDemandEnabledProvider.notifier)
+                            .update((_) => value);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverToBoxAdapter(
@@ -446,7 +476,9 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                   if (system.isAndroid)
                     DecorationListItem(
                       minVerticalPadding: 8,
-                      title: Text(appLocalizations.backgroundLocationPermission),
+                      title: Text(
+                        appLocalizations.backgroundLocationPermission,
+                      ),
                       subtitle: Text(
                         appLocalizations.backgroundLocationPermissionDesc,
                       ),

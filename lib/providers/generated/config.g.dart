@@ -632,6 +632,58 @@ abstract class _$ExcludeSSIDs extends $Notifier<List<String>> {
   }
 }
 
+@ProviderFor(OnDemandEnabled)
+final onDemandEnabledProvider = OnDemandEnabledProvider._();
+
+final class OnDemandEnabledProvider
+    extends $NotifierProvider<OnDemandEnabled, bool> {
+  OnDemandEnabledProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'onDemandEnabledProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$onDemandEnabledHash();
+
+  @$internal
+  @override
+  OnDemandEnabled create() => OnDemandEnabled();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$onDemandEnabledHash() => r'f9a4341be82713e1431e8b7d48a04c6887e039fa';
+
+abstract class _$OnDemandEnabled extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(_config)
 final configProvider = _ConfigProvider._();
 
@@ -670,4 +722,4 @@ final class _ConfigProvider extends $FunctionalProvider<Config, Config, Config>
   }
 }
 
-String _$_configHash() => r'7f29da1e31a3393fb36ab43c21f0d1b38223afec';
+String _$_configHash() => r'406f9bcf8f77d520e8e4d89022d94aaaf322d477';

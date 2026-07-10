@@ -403,6 +403,48 @@ class WifiWatchSuspendControllerTest {
         scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
         assertEquals(listOf(false), events)
     }
+
+    @Test
+    fun clearingSuspendOnSsidsCancelsPendingSuspendAndResumes() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS / 2)
+
+        controller.updateSuspendOnWifiSsids(emptySet())
+        assertEquals(listOf(false), events)
+
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        assertEquals(listOf(false), events)
+    }
+
+    @Test
+    fun clearingSuspendOnSsidsResumesWhileSsidResolutionIsPending() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        assertEquals(listOf(true), events)
+
+        controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = true)
+        controller.updateSuspendOnWifiSsids(emptySet())
+
+        assertEquals(listOf(true, false), events)
+        scheduler.advanceBy(WifiWatchSuspendController.SSID_RESOLUTION_GRACE_MILLIS)
+        assertEquals(listOf(true, false), events)
+    }
 }
 
 private class FakeScheduler {

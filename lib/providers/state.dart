@@ -612,6 +612,7 @@ SharedState sharedState(Ref ref) {
     ),
   );
   final vpnSetting = ref.watch(vpnSettingProvider);
+  final onDemandEnabled = ref.watch(onDemandEnabledProvider);
   final suspendOnWifiSsids = ref.watch(excludeSSIDsProvider);
   final currentProfileName = currentProfileVM2.a;
   final selectedMap = currentProfileVM2.b;
@@ -640,8 +641,18 @@ SharedState sharedState(Ref ref) {
       allowBypass: vpnSetting.allowBypass,
       bypassDomain: bypassDomain,
     ),
-    suspendOnWifiSsids: suspendOnWifiSsids,
+    suspendOnWifiSsids: effectiveSuspendOnWifiSsids(
+      onDemandEnabled,
+      suspendOnWifiSsids,
+    ),
   );
+}
+
+List<String> effectiveSuspendOnWifiSsids(
+  bool onDemandEnabled,
+  List<String> configuredSsids,
+) {
+  return onDemandEnabled ? configuredSsids : const [];
 }
 
 @riverpod
@@ -852,7 +863,8 @@ class RuleProvider extends _$RuleProvider with AutoDisposeNotifierMixin {
 
 @riverpod
 bool suspend(Ref ref) {
+  final onDemandEnabled = ref.watch(onDemandEnabledProvider);
   final currentSSID = ref.watch(currentSSIDProvider);
   final excludeSSIDs = ref.watch(excludeSSIDsProvider);
-  return excludeSSIDs.contains(currentSSID);
+  return onDemandEnabled && excludeSSIDs.contains(currentSSID);
 }

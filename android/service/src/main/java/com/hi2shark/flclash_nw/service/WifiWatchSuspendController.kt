@@ -51,6 +51,11 @@ internal class WifiWatchSuspendController(
             logLocked("suspend-on SSIDs updated count=${value.size}")
             when {
                 !wifiNetworkObserved -> null
+                value.isEmpty() -> {
+                    cancelResolutionFallbackLocked("suspend-on SSIDs disabled")
+                    wifiResolutionPending = false
+                    evaluateLocked()
+                }
                 wifiResolutionPending -> {
                     logLocked("SSID resolution pending — defer suspend-on SSID re-evaluation")
                     null

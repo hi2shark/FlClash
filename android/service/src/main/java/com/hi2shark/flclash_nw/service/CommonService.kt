@@ -9,7 +9,6 @@ import com.hi2shark.flclash_nw.service.WifiWatchState
 import com.hi2shark.flclash_nw.core.Core
 import com.hi2shark.flclash_nw.service.modules.NetworkObserveModule
 import com.hi2shark.flclash_nw.service.modules.NotificationModule
-import com.hi2shark.flclash_nw.service.modules.SuspendModule
 import com.hi2shark.flclash_nw.service.modules.WifiWatchModule
 import com.hi2shark.flclash_nw.service.modules.moduleLoader
 import com.hi2shark.flclash_nw.service.modules.startForegroundWithNotification
@@ -25,7 +24,6 @@ class CommonService : Service(), IBaseService,
     private val loader = moduleLoader {
         install(NetworkObserveModule(self))
         install(NotificationModule(self))
-        install(SuspendModule(self))
         // Assign the field before install(): install() runs onInstall()
         // synchronously, which can register the network callback and fire the
         // first onStateChanged() before this block continues. If the field

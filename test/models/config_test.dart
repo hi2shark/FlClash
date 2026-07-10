@@ -245,6 +245,7 @@ void main() {
       expect(restored.networkProps.systemProxy, true);
       expect(restored.vpnProps.enable, true);
       expect(restored.hotKeyActions, isEmpty);
+      expect(restored.onDemandEnabled, true);
     });
 
     test('realFromJson handles null', () {
@@ -265,6 +266,8 @@ void main() {
           themeMode: ThemeMode.system,
         ),
         windowProps: WindowProps(width: 1280, height: 720),
+        onDemandEnabled: false,
+        excludeSSIDs: ['Home'],
       );
       final restored = roundTrip(() => config.toJson(), Config.fromJson);
       expect(restored.currentProfileId, 42);
@@ -275,6 +278,18 @@ void main() {
       expect(restored.vpnProps.enable, false);
       expect(restored.windowProps.width, 1280);
       expect(restored.windowProps.height, 720);
+      expect(restored.onDemandEnabled, false);
+      expect(restored.excludeSSIDs, ['Home']);
+    });
+
+    test('missing on-demand flag defaults to enabled', () {
+      final restored = Config.fromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'excludeSSIDs': ['Home'],
+      });
+
+      expect(restored.onDemandEnabled, true);
+      expect(restored.excludeSSIDs, ['Home']);
     });
   });
 }

@@ -43,8 +43,12 @@ class WifiWatchCard extends StatelessWidget {
     BuildContext context,
     WifiWatchState state,
     bool isExcluded,
+    bool enabled,
   ) {
     final appLocalizations = context.appLocalizations;
+    if (!enabled) {
+      return appLocalizations.disabled;
+    }
     final hasKnownSsid = state.ssid != null || state.rawSsid != null;
     if (state.suspended) {
       return appLocalizations.suspended;
@@ -93,12 +97,7 @@ class WifiWatchCard extends StatelessWidget {
     const overflow = TextOverflow.ellipsis;
 
     if (!hasNetwork || ssid == null || prioritizeActionStatus) {
-      return Text(
-        status,
-        style: style,
-        maxLines: maxLines,
-        overflow: overflow,
-      );
+      return Text(status, style: style, maxLines: maxLines, overflow: overflow);
     }
 
     final display = hasServiceInfo ? '$ssid · $status' : ssid;
@@ -151,18 +150,25 @@ class WifiWatchCard extends StatelessWidget {
               SizedBox(
                 height: globalState.measure.bodyMediumHeight + 2,
                 child: Consumer(
-                  builder: (_, ref, __) {
+                  builder: (_, ref, child) {
                     final state = ref.watch(wifiWatchProvider);
+                    final enabled = ref.watch(onDemandEnabledProvider);
                     final currentSsid = ref.watch(currentSSIDProvider);
                     final excludeSSIDs = ref.watch(excludeSSIDsProvider);
                     final ssid = state.ssid ?? state.rawSsid ?? currentSsid;
-                    final hasServiceInfo = state.wifiPresent ||
+                    final hasServiceInfo =
+                        state.wifiPresent ||
                         state.suspended ||
                         state.pendingSuspendDeadline != null;
                     final hasNetwork = ssid != null;
                     final isExcluded =
-                        hasNetwork && excludeSSIDs.contains(ssid);
-                    final status = _statusText(context, state, isExcluded);
+                        enabled && hasNetwork && excludeSSIDs.contains(ssid);
+                    final status = _statusText(
+                      context,
+                      state,
+                      isExcluded,
+                      enabled,
+                    );
                     return FadeThroughBox(
                       child: Row(
                         children: [
@@ -189,6 +195,22 @@ class WifiWatchCard extends StatelessWidget {
                                 isExcluded: isExcluded,
                                 prioritizeActionStatus:
                                     state.prioritizeActionStatus,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 42,
+                            height: 24,
+                            child: FittedBox(
+                              child: Switch(
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                value: enabled,
+                                onChanged: (value) {
+                                  ref
+                                      .read(onDemandEnabledProvider.notifier)
+                                      .update((_) => value);
+                                },
                               ),
                             ),
                           ),

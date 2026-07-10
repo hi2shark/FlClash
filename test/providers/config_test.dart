@@ -25,9 +25,9 @@ void main() {
     });
 
     test('can update state', () {
-      container.read(appSettingProvider.notifier).update(
-            (_) => const AppSettingProps(autoLaunch: true),
-          );
+      container
+          .read(appSettingProvider.notifier)
+          .update((_) => const AppSettingProps(autoLaunch: true));
       final value = container.read(appSettingProvider);
       expect(value.autoLaunch, true);
     });
@@ -41,9 +41,9 @@ void main() {
     });
 
     test('can update state', () {
-      container.read(windowSettingProvider.notifier).update(
-            (_) => const WindowProps(width: 1024, height: 768),
-          );
+      container
+          .read(windowSettingProvider.notifier)
+          .update((_) => const WindowProps(width: 1024, height: 768));
       final value = container.read(windowSettingProvider);
       expect(value.width, 1024);
       expect(value.height, 768);
@@ -58,9 +58,9 @@ void main() {
     });
 
     test('can update state', () {
-      container.read(vpnSettingProvider.notifier).update(
-            (_) => const VpnProps(enable: false),
-          );
+      container
+          .read(vpnSettingProvider.notifier)
+          .update((_) => const VpnProps(enable: false));
       expect(container.read(vpnSettingProvider).enable, false);
     });
   });
@@ -73,9 +73,9 @@ void main() {
     });
 
     test('can update state', () {
-      container.read(networkSettingProvider.notifier).update(
-            (_) => const NetworkProps(systemProxy: false),
-          );
+      container
+          .read(networkSettingProvider.notifier)
+          .update((_) => const NetworkProps(systemProxy: false));
       expect(container.read(networkSettingProvider).systemProxy, false);
     });
   });
@@ -87,13 +87,10 @@ void main() {
     });
 
     test('can update state', () {
-      container.read(themeSettingProvider.notifier).update(
-            (_) => const ThemeProps(primaryColor: 0xFF123456),
-          );
-      expect(
-        container.read(themeSettingProvider).primaryColor,
-        0xFF123456,
-      );
+      container
+          .read(themeSettingProvider.notifier)
+          .update((_) => const ThemeProps(primaryColor: 0xFF123456));
+      expect(container.read(themeSettingProvider).primaryColor, 0xFF123456);
     });
   });
 
@@ -138,13 +135,25 @@ void main() {
     });
 
     test('can update state', () {
-      container.read(proxiesStyleSettingProvider.notifier).update(
+      container
+          .read(proxiesStyleSettingProvider.notifier)
+          .update(
             (_) => const ProxiesStyleProps(sortType: ProxiesSortType.delay),
           );
       expect(
         container.read(proxiesStyleSettingProvider).sortType,
         ProxiesSortType.delay,
       );
+    });
+  });
+
+  group('OnDemandEnabled provider', () {
+    test('defaults to enabled and can be disabled', () {
+      expect(container.read(onDemandEnabledProvider), true);
+
+      container.read(onDemandEnabledProvider.notifier).update((_) => false);
+
+      expect(container.read(onDemandEnabledProvider), false);
     });
   });
 
@@ -158,15 +167,18 @@ void main() {
       expect(config.currentProfileId, null);
       expect(config.overrideDns, false);
       expect(config.hotKeyActions, isEmpty);
+      expect(config.onDemandEnabled, true);
     });
 
     test('reflects updated sub-provider values', () {
       container.read(currentProfileIdProvider.notifier).update((_) => 99);
       container.read(overrideDnsProvider.notifier).update((_) => true);
+      container.read(onDemandEnabledProvider.notifier).update((_) => false);
 
       final config = container.read(configProvider);
       expect(config.currentProfileId, 99);
       expect(config.overrideDns, true);
+      expect(config.onDemandEnabled, false);
     });
   });
 
@@ -178,13 +190,14 @@ void main() {
         overrideDns: true,
       );
       final overrides = buildConfigOverrides(config);
-      expect(overrides.length, 12);
+      expect(overrides.length, 13);
 
       final overrideContainer = ProviderContainer(overrides: overrides);
       addTearDown(overrideContainer.dispose);
 
       expect(overrideContainer.read(currentProfileIdProvider), 7);
       expect(overrideContainer.read(overrideDnsProvider), true);
+      expect(overrideContainer.read(onDemandEnabledProvider), true);
       expect(
         overrideContainer.read(appSettingProvider).onlyStatisticsProxy,
         false,

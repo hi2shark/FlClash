@@ -245,6 +245,7 @@ abstract class Config with _$Config {
     @Default(defaultProxiesStyleProps) ProxiesStyleProps proxiesStyleProps,
     @Default(defaultWindowProps) WindowProps windowProps,
     @Default(defaultClashConfig) PatchClashConfig patchClashConfig,
+    @Default(true) bool onDemandEnabled,
     @Default([]) List<String> excludeSSIDs,
   }) = _Config;
 
