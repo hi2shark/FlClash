@@ -124,6 +124,34 @@ class WifiWatchSuspendControllerTest {
         assertEquals(listOf(false), events)
     }
 
+    @Test
+    fun staleSuspendActionIsCorrectedAfterNewerResumeRequest() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        lateinit var controller: WifiWatchSuspendController
+        var injectWifiLoss = true
+        controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = { suspended ->
+                if (suspended && injectWifiLoss) {
+                    injectWifiLoss = false
+                    controller.updateWifiNetwork(
+                        ssid = null,
+                        validated = false,
+                        wifiPresent = false,
+                    )
+                }
+                events += suspended
+            },
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(false, true, false), events)
+    }
+
     // --- Regression: transient null SSID during an AP switch (wifi still present) ---
 
     @Test
@@ -312,6 +340,160 @@ class WifiWatchSuspendControllerTest {
     }
 
     @Test
+    fun forceResumeClearsAfterWifiLeavesTrustedNetwork() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        assertEquals(listOf(true), events)
+
+        controller.forceResume("default network is Cellular")
+        // The old WiFi callback can remain briefly after the VPN restarts.
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        assertEquals(listOf(true, false), events)
+
+        // Once the handoff reports a concrete non-matching WiFi, release the
+        // hold so a later return to Home can suspend normally again.
+        controller.updateWifiNetwork(ssid = "Cafe", validated = true, wifiPresent = true)
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(true, false, true), events)
+    }
+
+    @Test
+    fun forceResumeSurvivesMatchedWifiTrustBlip() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        controller.forceResume("default network is Cellular")
+        assertEquals(listOf(true, false), events)
+
+        controller.updateWifiNetwork(ssid = "Home", validated = false, wifiPresent = true)
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(true, false), events)
+
+        controller.clearForceResume("physical default network is WiFi")
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(true, false, true), events)
+    }
+
+    @Test
+    fun persistentForceResumeIgnoresWifiLossAndStaleMatchedUpdate() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        controller.forceResume("physical default is Cellular", persistent = true)
+
+        controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = false)
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(true, false), events)
+
+        controller.clearForceResume("physical default is WiFi")
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(true, false, true), events)
+    }
+
+    @Test
+    fun persistentForceResumeSurvivesOnDemandDisableAndReEnable() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        controller.forceResume("physical default is Cellular", persistent = true)
+
+        controller.updateSuspendOnWifiSsids(emptySet())
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(true, false), events)
+
+        controller.clearForceResume("physical default is WiFi")
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(true, false, true), events)
+    }
+
+    @Test
+    fun forceResumeClearsWhenSsidResolutionGraceExpires() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        controller.forceResume("default network is Cellular")
+        assertEquals(listOf(true, false), events)
+
+        controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SSID_RESOLUTION_GRACE_MILLIS)
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(true, false, true), events)
+    }
+
+    @Test
+    fun cellularAfterWifiGoneDoesNotBlockLaterTrustedWifi() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        assertEquals(listOf(true), events)
+
+        controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = false)
+        controller.forceResume("active network is Cellular")
+        assertEquals(listOf(true, false), events)
+
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(true, false, true), events)
+    }
+
+    @Test
     fun clearForceResumeReEvaluatesAndCanSuspendAgain() {
         val scheduler = FakeScheduler()
         val events = mutableListOf<Boolean>()
@@ -444,6 +626,50 @@ class WifiWatchSuspendControllerTest {
         assertEquals(listOf(true, false), events)
         scheduler.advanceBy(WifiWatchSuspendController.SSID_RESOLUTION_GRACE_MILLIS)
         assertEquals(listOf(true, false), events)
+    }
+
+    @Test
+    fun disablingAndReEnablingAllowsCurrentWifiToSuspendAgain() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        controller.forceResume("default network is Cellular")
+        assertEquals(listOf(true, false), events)
+
+        controller.updateSuspendOnWifiSsids(emptySet())
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(true, false, true), events)
+    }
+
+    @Test
+    fun replacingSuspendOnSsidsClearsObsoleteResumeHold() {
+        val scheduler = FakeScheduler()
+        val events = mutableListOf<Boolean>()
+        val controller = WifiWatchSuspendController(
+            scheduler = scheduler::schedule,
+            setWifiSuspended = events::add,
+        )
+
+        controller.updateSuspendOnWifiSsids(setOf("Home"))
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        controller.forceResume("default network is Cellular")
+        assertEquals(listOf(true, false), events)
+
+        controller.updateSuspendOnWifiSsids(setOf("Cafe"))
+        controller.updateWifiNetwork(ssid = "Cafe", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+
+        assertEquals(listOf(true, false, true), events)
     }
 }
 

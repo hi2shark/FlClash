@@ -10,19 +10,28 @@ import android.net.wifi.ScanResult
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.GlobalState
+import com.hi2shark.flclash_nw.service.DefaultNetworkResumeAction
 import com.hi2shark.flclash_nw.service.IBaseService
+import com.hi2shark.flclash_nw.service.PhysicalDefaultNetworkTracker
 import com.hi2shark.flclash_nw.service.ServiceStartResult
 import com.hi2shark.flclash_nw.service.State
 import com.hi2shark.flclash_nw.service.WifiWatchResumeRetry
 import com.hi2shark.flclash_nw.service.WifiWatchRssi
 import com.hi2shark.flclash_nw.service.WifiWatchState
 import com.hi2shark.flclash_nw.service.WifiWatchSuspendController
+import com.hi2shark.flclash_nw.service.defaultNetworkResumeAction
+import com.hi2shark.flclash_nw.service.selectWifiNetwork
+import com.hi2shark.flclash_nw.service.WifiNetworkCandidate
+import com.hi2shark.flclash_nw.service.WifiNetworkSelectionSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -31,7 +40,11 @@ class WifiWatchModule(
     private val service: Service,
     private val onStateChanged: () -> Unit = {},
 ) : Module() {
-    private val scope = CoroutineScope(Dispatchers.Default)
+    // ConnectivityManager can invoke the WiFi and physical-default callbacks
+    // on different threads. Serialize them so an old snapshot cannot publish
+    // after a newer network transition.
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val scope = CoroutineScope(Dispatchers.Default.limitedParallelism(1))
     private val connectivity by lazy {
         service.getSystemService<ConnectivityManager>()
     }
@@ -80,6 +93,10 @@ class WifiWatchModule(
     // WiFi callback path.
     private var defaultNetworkCallback: ConnectivityManager.NetworkCallback? = null
     private var defaultLostReconsider: WifiWatchSuspendController.Cancellable? = null
+    private val physicalDefaultNetwork = PhysicalDefaultNetworkTracker<Network>()
+
+    private val preferredWifiNetwork: Network?
+        get() = physicalDefaultNetwork.preferredWifi
 
     override fun onInstall() {
         scope.launch {
@@ -96,7 +113,7 @@ class WifiWatchModule(
         runCatching {
             manager.registerNetworkCallback(wifiNetworkRequest, callback)
         }.onSuccess {
-            updateKnownWifiNetworks(manager)
+            scope.launch { updateKnownWifiNetworks(manager) }
         }.onFailure {
             GlobalState.log("WiFi-watch registerNetworkCallback failed: ${it.message}")
             controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = false)
@@ -149,49 +166,55 @@ class WifiWatchModule(
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
             .build()
 
+    private val physicalDefaultNetworkRequest: NetworkRequest
+        get() = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+            .build()
+
     private fun createWifiNetworkCallback(): ConnectivityManager.NetworkCallback {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             object : ConnectivityManager.NetworkCallback(
                 ConnectivityManager.NetworkCallback.FLAG_INCLUDE_LOCATION_INFO
             ) {
                 override fun onAvailable(network: Network) {
-                    markWifiNetworkAvailable(network)
+                    scope.launch { markWifiNetworkAvailable(network) }
                 }
 
                 override fun onCapabilitiesChanged(
                     network: Network,
                     networkCapabilities: NetworkCapabilities,
                 ) {
-                    updateWifiNetwork(network, networkCapabilities)
+                    scope.launch { updateWifiNetwork(network, networkCapabilities) }
                 }
 
                 override fun onLost(network: Network) {
-                    removeWifiNetwork(network)
+                    scope.launch { removeWifiNetwork(network) }
                 }
 
                 override fun onUnavailable() {
-                    clearWifiNetworks()
+                    scope.launch { clearWifiNetworks() }
                 }
             }
         } else {
             object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
-                    markWifiNetworkAvailable(network)
+                    scope.launch { markWifiNetworkAvailable(network) }
                 }
 
                 override fun onCapabilitiesChanged(
                     network: Network,
                     networkCapabilities: NetworkCapabilities,
                 ) {
-                    updateWifiNetwork(network, networkCapabilities)
+                    scope.launch { updateWifiNetwork(network, networkCapabilities) }
                 }
 
                 override fun onLost(network: Network) {
-                    removeWifiNetwork(network)
+                    scope.launch { removeWifiNetwork(network) }
                 }
 
                 override fun onUnavailable() {
-                    clearWifiNetworks()
+                    scope.launch { clearWifiNetworks() }
                 }
             }
         }
@@ -202,8 +225,9 @@ class WifiWatchModule(
      * Cellular network (e.g. WiFi still associated but the system prefers
      * mobile data, or WiFi lost internet validation and the OS fell back to
      * mobile), the proxy is forced back on regardless of WiFi SSID trust — the
-     * user clearly needs proxying on the metered/active path. The force hold is
-     * lifted once the default network is no longer Cellular.
+     * user clearly needs proxying on the metered/active path. When resuming the
+     * tunnel makes our VPN the default network, the force hold is retained; it
+     * is lifted only after an explicit non-Cellular, non-VPN default appears.
      *
      * Two paths feed the cellular check:
      *  - API 24+ ([registerDefaultNetworkCallback]): immediate, event-driven.
@@ -232,20 +256,42 @@ class WifiWatchModule(
                     network: Network,
                     networkCapabilities: NetworkCapabilities,
                 ) {
-                    handleDefaultNetworkCapabilities(networkCapabilities)
+                    scope.launch {
+                        handleDefaultNetworkCapabilities(network, networkCapabilities)
+                    }
                 }
 
                 override fun onLost(network: Network) {
-                    // The OS has not nominated a successor yet. Clearing
-                    // force-resume immediately would re-enter WiFi suspend
-                    // judgment in the gap and could leave the proxy hung if
-                    // the next callback is delayed by Doze. Hold state and
-                    // re-read the active network after a short delay.
-                    scheduleDefaultLostReconsider()
+                    scope.launch {
+                        val lostCurrent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            physicalDefaultNetwork.lost(network)
+                        } else {
+                            true
+                        }
+                        if (!lostCurrent) return@launch
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            controller.forceResume(
+                                reason = "physical default network lost",
+                                persistent = true,
+                            )
+                        }
+                        // The OS has not nominated a successor yet. Re-read
+                        // after a short delay for older Android versions and as
+                        // a fallback if the next best-matching callback stalls.
+                        scheduleDefaultLostReconsider()
+                    }
                 }
             }
             runCatching {
-                manager.registerDefaultNetworkCallback(cb)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    manager.registerBestMatchingNetworkCallback(
+                        physicalDefaultNetworkRequest,
+                        cb,
+                        Handler(Looper.getMainLooper()),
+                    )
+                } else {
+                    manager.registerDefaultNetworkCallback(cb)
+                }
             }.onSuccess {
                 defaultNetworkCallback = cb
             }.onFailure {
@@ -255,7 +301,9 @@ class WifiWatchModule(
         // Seed the initial state on all versions. On API 24+ this covers the
         // case where the default network is already stable and no callback
         // fires right after registration; on API 23 this is the primary signal.
-        reconsiderForceResumeFromActiveNetwork()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            scope.launch { reconsiderForceResumeFromActiveNetwork() }
+        }
     }
 
     private fun scheduleDefaultLostReconsider() {
@@ -265,7 +313,9 @@ class WifiWatchModule(
         )
         defaultLostReconsider = schedule(DEFAULT_LOST_RECONSIDER_MILLIS) {
             defaultLostReconsider = null
-            reconsiderForceResumeFromActiveNetwork(allowEmptyActive = true)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                reconsiderForceResumeFromActiveNetwork(allowEmptyActive = true)
+            }
         }
     }
 
@@ -276,13 +326,71 @@ class WifiWatchModule(
         pending.cancel()
     }
 
-    private fun handleDefaultNetworkCapabilities(caps: NetworkCapabilities) {
+    private fun handleDefaultNetworkCapabilities(
+        network: Network,
+        caps: NetworkCapabilities,
+    ) {
         cancelDefaultLostReconsider("default network capabilities arrived")
-        val isCellular = caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-        if (isCellular) {
-            controller.forceResume("default network is Cellular")
-        } else {
-            controller.clearForceResume("default network is no longer Cellular")
+        updatePreferredWifiNetwork(network, caps)
+        applyDefaultNetworkResumeAction(
+            caps = caps,
+            source = "default network",
+            persistentCellular = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
+        )
+        if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+            // Publish from the location-aware WiFi callback cache. Default
+            // callbacks can redact WifiInfo; writing their capabilities into
+            // the cache would erase a previously resolved SSID.
+            val verdict = wifiVerdict()
+            val status = synchronized(wifiNetworksLock) {
+                currentWifiNetworkStatusLocked(verdict)
+            }
+            publishWifiNetwork(status, verdict)
+        }
+    }
+
+    private fun updatePreferredWifiNetwork(
+        network: Network,
+        caps: NetworkCapabilities,
+    ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return
+        }
+        physicalDefaultNetwork.update(
+            key = network,
+            isWifi = caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI),
+        )
+    }
+
+    private fun applyDefaultNetworkResumeAction(
+        caps: NetworkCapabilities,
+        source: String,
+        persistentCellular: Boolean = false,
+    ) {
+        val action = defaultNetworkResumeAction(
+            isCellular = caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR),
+            isOwnVpn = isOwnVpnService &&
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN),
+        )
+        when (action) {
+            DefaultNetworkResumeAction.FORCE ->
+                controller.forceResume(
+                    reason = "$source is Cellular",
+                    persistent = persistentCellular,
+                )
+            DefaultNetworkResumeAction.KEEP -> {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                    GlobalState.log(
+                        "WiFi-watch $source is VPN — keep force-resume state"
+                    )
+                } else {
+                    controller.clearForceResume(
+                        "$source is VPN but physical-default callback is available"
+                    )
+                }
+            }
+            DefaultNetworkResumeAction.CLEAR ->
+                controller.clearForceResume("$source is neither Cellular nor VPN")
         }
     }
 
@@ -315,12 +423,8 @@ class WifiWatchModule(
             }
             return
         }
-        val isCellular = caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-        if (isCellular) {
-            controller.forceResume("active network is Cellular")
-        } else {
-            controller.clearForceResume("active network is not Cellular")
-        }
+        updatePreferredWifiNetwork(active, caps)
+        applyDefaultNetworkResumeAction(caps, "active network")
     }
 
     private fun markWifiNetworkAvailable(network: Network) {
@@ -421,13 +525,12 @@ class WifiWatchModule(
             unresolvedSsid -> scheduleWifiResolutionReconcile("SSID unresolved while WiFi present")
             else -> cancelWifiResolutionReconcile("WiFi state resolved")
         }
-        // Best-effort default-network recheck. On API 24+ the dedicated default
-        // network callback drives forceResume immediately; this is a cheap
-        // secondary signal. On API 23 (no registerDefaultNetworkCallback) this
-        // is the primary signal — without it, API 23 users would never
-        // force-resume when the OS switches the default to Cellular while WiFi
-        // stays associated.
-        reconsiderForceResumeFromActiveNetwork()
+        // Android 12+ has a dedicated best-matching NOT_VPN callback. Polling
+        // activeNetwork there would see our VPN and could clear a valid
+        // Cellular hold. Older versions still need this best-effort signal.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            reconsiderForceResumeFromActiveNetwork()
+        }
         // If a previous resume budget was exhausted and no long-delay reconcile
         // is pending yet, kick one from capability updates (quiet networks also
         // get WifiWatchResumeRetry's own 10s reconcile timer).
@@ -495,34 +598,34 @@ class WifiWatchModule(
         } else {
             null
         }
-        if (fallback != null) {
-            val current = wifiNetworks.values.firstOrNull { it.ssid == fallback.ssid }
-            if (current != null) {
-                return if (current.rssi == null && fallback.rssi != null) {
-                    current.copy(rssi = fallback.rssi)
+        val selection = selectWifiNetwork(
+            candidates = wifiNetworks.map { (network, status) ->
+                WifiNetworkCandidate(
+                    key = network,
+                    ssid = status.ssid,
+                    trusted = status.isTrusted(verdict),
+                )
+            },
+            preferredKey = preferredWifiNetwork,
+            fallbackSsid = fallback?.ssid,
+        )
+        val selected = selection.key?.let(wifiNetworks::get)
+        return when (selection.source) {
+            WifiNetworkSelectionSource.PREFERRED_PENDING ->
+                null
+            WifiNetworkSelectionSource.FALLBACK_ONLY -> fallback
+            WifiNetworkSelectionSource.PREFERRED,
+            WifiNetworkSelectionSource.FALLBACK_MATCH -> {
+                if (selected?.rssi == null && fallback?.ssid == selected?.ssid) {
+                    selected?.copy(rssi = fallback?.rssi)
                 } else {
-                    current
+                    selected
                 }
             }
-            // The callback cache has not caught up with the association yet.
-            // Publish the actual SSID as unvalidated so the controller fails
-            // open and cancels any pending suspend until capabilities arrive.
-            return fallback
+            WifiNetworkSelectionSource.TRUSTED,
+            WifiNetworkSelectionSource.FIRST -> selected
+            WifiNetworkSelectionSource.NONE -> null
         }
-
-        // Prefer a network that already reads as trusted under the active
-        // verdict (validated when no VPN, or strong RSSI when a VPN is active),
-        // otherwise fall back to the first known WiFi network so the controller
-        // still observes the SSID change (e.g. switching between access points).
-        val status = wifiNetworks.values.firstOrNull {
-            it.isTrusted(verdict) && it.ssid != null
-        } ?: wifiNetworks.values.firstOrNull()
-        if (status?.ssid != null) return status
-        // Only use WifiManager fallback while we still track at least one WiFi
-        // network from ConnectivityManager. Once the local map is empty
-        // (onLost / onUnavailable), a stale connectionInfo SSID must not keep
-        // wifiPresent=true and block resume.
-        return status
     }
 
     private fun hasWifiTransport(): Boolean {
@@ -740,6 +843,7 @@ class WifiWatchModule(
             }
         }
         defaultNetworkCallback = null
+        physicalDefaultNetwork.clear()
         synchronized(wifiNetworksLock) {
             wifiNetworks.clear()
         }
