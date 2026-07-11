@@ -174,7 +174,7 @@ class WifiWatchCard extends StatelessWidget {
                         children: [
                           Icon(
                             _signalIcon(state.rssi, hasNetwork),
-                            size: 16.ap,
+                            size: 20,
                             color: _signalColor(
                               context,
                               state.rssi,
@@ -183,7 +183,7 @@ class WifiWatchCard extends StatelessWidget {
                               state.validated,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: TooltipText(
                               text: _displayText(
