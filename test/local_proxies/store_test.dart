@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
@@ -42,16 +43,27 @@ class _FakePathProvider extends PathProviderPlatform {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late Directory tmpDir;
+  late File storeFile;
 
-  setUp(() async {
+  setUpAll(() async {
     tmpDir = await Directory.systemTemp.createTemp('flclash_store_test_');
     PathProviderPlatform.instance = _FakePathProvider(tmpDir.path);
+    storeFile = File(join(tmpDir.path, 'local_proxies.json'));
+  });
+
+  setUp(() async {
+    if (await storeFile.exists()) {
+      await storeFile.delete();
+    }
     localProxyStore.resetForTest();
     await localProxyStore.init();
   });
 
-  tearDown(() async {
-    await tmpDir.delete(recursive: true);
+  tearDownAll(() async {
+    localProxyStore.resetForTest();
+    if (await tmpDir.exists()) {
+      await tmpDir.delete(recursive: true);
+    }
   });
 
   group('resetMixinOnProfileSwitch', () {
@@ -95,10 +107,7 @@ void main() {
 
     test('is no-op when mixin is already disabled', () async {
       await localProxyStore.saveConfig(
-        const LocalProxyProviderConfig(
-          enabled: false,
-          targetGroups: ['Proxy'],
-        ),
+        const LocalProxyProviderConfig(enabled: false, targetGroups: ['Proxy']),
       );
 
       final didReset = await localProxyStore.resetMixinOnProfileSwitch();
@@ -108,4 +117,83 @@ void main() {
       expect(localProxyStore.config.targetGroups, ['Proxy']);
     });
   });
+
+  group('proxy ids', () {
+    test('import assigns unique ids and delete removes one proxy', () async {
+      await localProxyStore.import([
+        _proxy(id: -1, name: 'Imported A'),
+        _proxy(id: -1, name: 'Imported B'),
+      ]);
+
+      final imported = localProxyStore.proxies;
+      final ids = imported.map((proxy) => proxy.id).toList();
+      expect(ids, everyElement(greaterThan(0)));
+      expect(ids.toSet(), hasLength(2));
+
+      await localProxyStore.delete(imported.first.id);
+
+      expect(localProxyStore.proxies, hasLength(1));
+      expect(localProxyStore.proxies.single.name, 'Imported B');
+    });
+
+    test('delete removes only one proxy when ids are duplicated', () async {
+      await localProxyStore.add(_proxy(id: 7, name: 'Duplicate A'));
+      await localProxyStore.add(_proxy(id: 7, name: 'Duplicate B'));
+
+      await localProxyStore.delete(7);
+
+      expect(localProxyStore.proxies, hasLength(1));
+      expect(localProxyStore.proxies.single.name, 'Duplicate B');
+    });
+
+    test('load migrates and persists invalid and duplicate ids', () async {
+      final legacyProxies = [
+        _proxy(id: -1, name: 'Invalid A'),
+        _proxy(id: -1, name: 'Invalid B'),
+        _proxy(id: 42, name: 'Duplicate A'),
+        _proxy(id: 42, name: 'Duplicate B'),
+      ];
+      await storeFile.writeAsString(
+        jsonEncode({
+          'providerConfig': const LocalProxyProviderConfig().toJson(),
+          'proxies': legacyProxies.map((proxy) => proxy.toJson()).toList(),
+        }),
+      );
+      localProxyStore.resetForTest();
+
+      await localProxyStore.init();
+
+      final ids = localProxyStore.proxies.map((proxy) => proxy.id).toList();
+      expect(ids, everyElement(greaterThan(0)));
+      expect(ids.toSet(), hasLength(legacyProxies.length));
+      expect(ids.where((id) => id == 42), hasLength(1));
+      expect(localProxyStore.proxies[2].id, 42);
+
+      final persisted =
+          jsonDecode(await storeFile.readAsString()) as Map<String, dynamic>;
+      final persistedIds = (persisted['proxies'] as List<dynamic>)
+          .map((proxy) => (proxy as Map<String, dynamic>)['id'] as int)
+          .toList();
+      expect(persistedIds, ids);
+    });
+  });
+}
+
+LocalProxy _proxy({required int id, required String name}) {
+  final now = DateTime.utc(2026);
+  return LocalProxy(
+    id: id,
+    name: name,
+    type: 'ss',
+    config: {
+      'name': name,
+      'type': 'ss',
+      'server': '127.0.0.1',
+      'port': 8388,
+      'cipher': 'aes-256-gcm',
+      'password': 'pwd',
+    },
+    createdAt: now,
+    updatedAt: now,
+  );
 }

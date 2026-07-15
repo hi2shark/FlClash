@@ -55,7 +55,10 @@ class LocalProxyStore {
 
   Future<void> init() async {
     if (_initialized) return;
-    await _load();
+    final needsMigration = await _load();
+    if (needsMigration) {
+      await _write();
+    }
     _initialized = true;
     _notify();
   }
@@ -66,15 +69,23 @@ class LocalProxyStore {
 
   int get enabledCount => _data.proxies.where((p) => p.enabled).length;
 
-  Future<void> _load() async {
+  Future<bool> _load() async {
     try {
       final file = File(await _filePath);
       if (!await file.exists()) {
-        return;
+        return false;
       }
       final content = await file.readAsString();
       final json = jsonDecode(content) as Map<String, dynamic>;
-      _data = _LocalProxyData.fromJson(json);
+      final loadedData = _LocalProxyData.fromJson(json);
+      final repairedProxies = _repairProxyIds(loadedData.proxies);
+      _data = repairedProxies == null
+          ? loadedData
+          : _LocalProxyData(
+              config: loadedData.config,
+              proxies: repairedProxies,
+            );
+      return repairedProxies != null;
     } catch (e, s) {
       commonPrint.log(
         'Failed to load local proxies: $e\n$s',
@@ -84,19 +95,53 @@ class LocalProxyStore {
         config: LocalProxyProviderConfig(),
         proxies: [],
       );
+      return false;
     }
   }
 
-  Future<void> _save() async {
+  Future<void> _write() async {
     final file = File(await _filePath);
     final content = const JsonEncoder.withIndent('  ').convert(_data.toJson());
     await file.safeWriteAsString(content);
+  }
+
+  Future<void> _save() async {
+    await _write();
     _notify();
   }
 
   void _notify() {
     proxiesNotifier.value = List.unmodifiable(_data.proxies);
     configNotifier.value = _data.config;
+  }
+
+  int _nextUniqueId(Set<int> usedIds) {
+    while (true) {
+      final id = snowflake.id;
+      if (id > 0 && usedIds.add(id)) {
+        return id;
+      }
+    }
+  }
+
+  List<LocalProxy>? _repairProxyIds(List<LocalProxy> proxies) {
+    final usedIds = proxies
+        .where((proxy) => proxy.id > 0)
+        .map((proxy) => proxy.id)
+        .toSet();
+    final seenIds = <int>{};
+    List<LocalProxy>? repaired;
+
+    for (var i = 0; i < proxies.length; i++) {
+      final proxy = proxies[i];
+      if (proxy.id > 0 && seenIds.add(proxy.id)) {
+        continue;
+      }
+      repaired ??= List<LocalProxy>.from(proxies);
+      repaired[i] = proxy.copyWith(id: _nextUniqueId(usedIds));
+    }
+
+    return repaired;
   }
 
   Future<void> saveConfig(LocalProxyProviderConfig config) async {
@@ -111,9 +156,7 @@ class LocalProxyStore {
   Future<bool> resetMixinOnProfileSwitch() async {
     await init();
     if (!_data.config.enabled) return false;
-    await saveConfig(
-      _data.config.copyWith(enabled: false, targetGroups: []),
-    );
+    await saveConfig(_data.config.copyWith(enabled: false, targetGroups: []));
     return true;
   }
 
@@ -145,10 +188,10 @@ class LocalProxyStore {
 
   Future<void> delete(int id) async {
     await init();
-    _data = _LocalProxyData(
-      config: _data.config,
-      proxies: _data.proxies.where((p) => p.id != id).toList(),
-    );
+    final index = _data.proxies.indexWhere((proxy) => proxy.id == id);
+    if (index == -1) return;
+    final proxies = List<LocalProxy>.from(_data.proxies)..removeAt(index);
+    _data = _LocalProxyData(config: _data.config, proxies: proxies);
     await _save();
   }
 
@@ -171,13 +214,18 @@ class LocalProxyStore {
                   .map((p) => p.sortIndex ?? 0)
                   .reduce((a, b) => a > b ? a : b) +
               1);
+    final usedIds = _data.proxies.map((proxy) => proxy.id).toSet();
     final usedNames = _data.proxies.map((p) => p.name).toSet();
     final imported = <LocalProxy>[];
     for (var i = 0; i < proxies.length; i++) {
       final uniqueName = _uniqueNameInSet(proxies[i].name, usedNames);
       usedNames.add(uniqueName);
       imported.add(
-        proxies[i].copyWith(sortIndex: startSortIndex + i, name: uniqueName),
+        proxies[i].copyWith(
+          id: _nextUniqueId(usedIds),
+          sortIndex: startSortIndex + i,
+          name: uniqueName,
+        ),
       );
     }
     _data = _LocalProxyData(
