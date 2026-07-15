@@ -282,6 +282,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
       "デベロッパーモードが有効になりました。",
     ),
+    "dialerProxy": MessageLookupByLibrary.simpleMessage("ダイヤラープロキシ"),
     "direct": MessageLookupByLibrary.simpleMessage("ダイレクト"),
     "disableUDP": MessageLookupByLibrary.simpleMessage("UDPを無効化"),
     "disabled": MessageLookupByLibrary.simpleMessage("無効"),
@@ -303,6 +304,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ech": MessageLookupByLibrary.simpleMessage("ECH"),
     "echConfig": MessageLookupByLibrary.simpleMessage("ECH 設定"),
+    "echQueryServerName": MessageLookupByLibrary.simpleMessage("ECH クエリサーバー名"),
     "edit": MessageLookupByLibrary.simpleMessage("編集"),
     "editGlobalRules": MessageLookupByLibrary.simpleMessage("グローバルルールを編集"),
     "editLocalProxy": MessageLookupByLibrary.simpleMessage("ローカルプロキシを編集"),
@@ -475,9 +477,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "キャリアは tcp または udp です",
     ),
     "localProxyCount": m13,
+    "localProxyHealthCheckInvalid": MessageLookupByLibrary.simpleMessage(
+      "ヘルスチェック設定が無効です",
+    ),
     "localProxyMixin": MessageLookupByLibrary.simpleMessage("ローカルプロキシ混入"),
     "localProxyNameEmpty": MessageLookupByLibrary.simpleMessage(
       "プロキシ名を入力してください",
+    ),
+    "localProxyNowhereAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
+      "Nowhere の詳細整数値は 0 以上で、デフォルト適用後の初期バックオフは最大バックオフ以下である必要があります",
+    ),
+    "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
+      "Nowhere の共有キー、Spec、最初の ALPN はそれぞれ 255 UTF-8 バイト以内で入力してください",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Nowhere 共有キーを入力してください",
@@ -490,6 +501,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "ポートは 1-65535 の範囲で入力してください",
+    ),
+    "localProxyReloadFailed": MessageLookupByLibrary.simpleMessage(
+      "ローカルプロキシの再読み込みに失敗したため、変更を元に戻しました",
     ),
     "localProxyServerEmpty": MessageLookupByLibrary.simpleMessage(
       "サーバーアドレスを入力してください",
@@ -526,6 +540,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "manageLocalNodes": MessageLookupByLibrary.simpleMessage("ローカルノード管理"),
     "manualAdd": MessageLookupByLibrary.simpleMessage("手動で追加"),
     "matchSourceIp": MessageLookupByLibrary.simpleMessage("送信元IPをマッチング"),
+    "maxConcurrentDials": MessageLookupByLibrary.simpleMessage("最大同時接続数"),
     "maxEarlyData": MessageLookupByLibrary.simpleMessage("Max Early Data"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage("最大失敗回数"),
     "maxUdpRelayPacketSize": MessageLookupByLibrary.simpleMessage(
@@ -582,7 +597,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "現在のプロキシグループは選択できません",
     ),
     "nowhere": MessageLookupByLibrary.simpleMessage("Nowhere"),
-    "nowhereShareKey": MessageLookupByLibrary.simpleMessage("共有キー (shared key)"),
+    "nowhereShareKey": MessageLookupByLibrary.simpleMessage(
+      "共有キー (shared key)",
+    ),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "プロファイルがありません。追加してください",
     ),
@@ -646,6 +663,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "prerequisites": MessageLookupByLibrary.simpleMessage("Prerequisites"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("キーボードを押してください"),
     "preview": MessageLookupByLibrary.simpleMessage("プレビュー"),
+    "prewarmOnStart": MessageLookupByLibrary.simpleMessage("起動時に事前ウォームアップ"),
     "privateKey": MessageLookupByLibrary.simpleMessage("秘密鍵"),
     "process": MessageLookupByLibrary.simpleMessage("プロセス"),
     "profile": MessageLookupByLibrary.simpleMessage("プロファイル"),
@@ -1003,6 +1021,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "VpnService経由で全システムトラフィックをルーティング",
     ),
     "vpnTip": MessageLookupByLibrary.simpleMessage("変更はVPN再起動後に有効"),
+    "warmBackoffInitial": MessageLookupByLibrary.simpleMessage(
+      "ウォームバックオフ初期値（秒）",
+    ),
+    "warmBackoffMax": MessageLookupByLibrary.simpleMessage("ウォームバックオフ最大値（秒）"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
     "wifiWatchExcluded": MessageLookupByLibrary.simpleMessage("除外対象"),

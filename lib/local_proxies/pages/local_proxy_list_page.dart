@@ -18,6 +18,7 @@ class LocalProxyListPage extends StatefulWidget {
 
 class _LocalProxyListPageState extends State<LocalProxyListPage> {
   late final TextEditingController _searchController;
+  Future<void> _toggleQueue = Future<void>.value();
   String _query = '';
 
   @override
@@ -43,12 +44,86 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
     }).toList();
   }
 
-  Future<void> _reloadIfEnabled() async {
+  Future<bool> _reloadIfEnabled() async {
     final config = localProxyStore.config;
-    if (config.enabled && config.targetGroups.isNotEmpty) {
-      globalState.container
-          .read(setupActionProvider.notifier)
-          .applyProfile(force: true);
+    if (!config.enabled || config.targetGroups.isEmpty) return true;
+    return globalState.container
+        .read(setupActionProvider.notifier)
+        .applyProfile(force: true);
+  }
+
+  LocalProxy? _findProxy(int id) {
+    for (final proxy in localProxyStore.proxies) {
+      if (proxy.id == id) return proxy;
+    }
+    return null;
+  }
+
+  void _handleToggle(LocalProxy proxy) {
+    final previous = _toggleQueue;
+    _toggleQueue = _runQueuedToggle(previous, proxy.id);
+  }
+
+  Future<void> _runQueuedToggle(Future<void> previous, int id) async {
+    try {
+      await previous;
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'Previous local proxy toggle failed: $error\n$stackTrace',
+      );
+    }
+
+    try {
+      await _toggleAndReload(id);
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'Unexpected local proxy toggle failure: $error\n$stackTrace',
+      );
+    }
+  }
+
+  Future<void> _toggleAndReload(int id) async {
+    final original = _findProxy(id);
+    if (original == null) return;
+
+    var success = false;
+    try {
+      await localProxyStore.toggle(id);
+      success = await _reloadIfEnabled();
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'Failed to reload after local proxy toggle: $error\n$stackTrace',
+      );
+    }
+    if (success) return;
+
+    await _restoreToggle(id, original.enabled);
+    await _reapplyPreviousConfig();
+    if (mounted) {
+      globalState.showNotifier(context.appLocalizations.localProxyReloadFailed);
+    }
+  }
+
+  Future<void> _restoreToggle(int id, bool enabled) async {
+    try {
+      final current = _findProxy(id);
+      if (current != null && current.enabled != enabled) {
+        await localProxyStore.toggle(id);
+      }
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'Failed to restore local proxy toggle: $error\n$stackTrace',
+      );
+    }
+  }
+
+  Future<void> _reapplyPreviousConfig() async {
+    try {
+      await _reloadIfEnabled();
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'Failed to reapply previous local proxy config: $error\n$stackTrace',
+      );
     }
   }
 
@@ -219,7 +294,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                           return _ProxyCard(
                             proxy: proxy,
                             onEdit: () => _handleEdit(proxy),
-                            onToggle: () => localProxyStore.toggle(proxy.id),
+                            onToggle: () => _handleToggle(proxy),
                             onDelete: () => _handleDelete(proxy),
                           );
                         },

@@ -252,6 +252,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "detectionTip": MessageLookupByLibrary.simpleMessage("依赖第三方api，仅供参考"),
     "developerMode": MessageLookupByLibrary.simpleMessage("开发者模式"),
     "developerModeEnableTip": MessageLookupByLibrary.simpleMessage("开发者模式已启用。"),
+    "dialerProxy": MessageLookupByLibrary.simpleMessage("前置代理"),
     "direct": MessageLookupByLibrary.simpleMessage("直连"),
     "disableUDP": MessageLookupByLibrary.simpleMessage("禁用UDP"),
     "disabled": MessageLookupByLibrary.simpleMessage("已停用"),
@@ -273,6 +274,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ech": MessageLookupByLibrary.simpleMessage("ECH"),
     "echConfig": MessageLookupByLibrary.simpleMessage("ECH 配置"),
+    "echQueryServerName": MessageLookupByLibrary.simpleMessage("ECH 查询服务器名称"),
     "edit": MessageLookupByLibrary.simpleMessage("编辑"),
     "editGlobalRules": MessageLookupByLibrary.simpleMessage("编辑全局规则"),
     "editLocalProxy": MessageLookupByLibrary.simpleMessage("编辑本地节点"),
@@ -421,15 +423,27 @@ class MessageLookup extends MessageLookupByLibrary {
       "传输层必须是 tcp 或 udp",
     ),
     "localProxyCount": m13,
+    "localProxyHealthCheckInvalid": MessageLookupByLibrary.simpleMessage(
+      "健康检查设置无效",
+    ),
     "localProxyMixin": MessageLookupByLibrary.simpleMessage("本地节点混入"),
     "localProxyNameEmpty": MessageLookupByLibrary.simpleMessage("节点名称不能为空"),
+    "localProxyNowhereAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
+      "Nowhere 高级整数必须为非负整数，且按默认值计算后的初始退避不得大于最大退避",
+    ),
+    "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
+      "Nowhere 共享密钥、Spec 和首个 ALPN 均不得超过 255 个 UTF-8 字节",
+    ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
-      "Nowhere 分享密钥不能为空",
+      "Nowhere 密钥不能为空",
     ),
     "localProxyPasswordEmpty": MessageLookupByLibrary.simpleMessage("密码不能为空"),
     "localProxyPoolInvalid": MessageLookupByLibrary.simpleMessage("连接池必须是 0-9"),
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "端口必须是 1-65535",
+    ),
+    "localProxyReloadFailed": MessageLookupByLibrary.simpleMessage(
+      "本地节点重载失败，已回滚更改",
     ),
     "localProxyServerEmpty": MessageLookupByLibrary.simpleMessage("服务器地址不能为空"),
     "localProxySsAuthEmpty": MessageLookupByLibrary.simpleMessage(
@@ -462,6 +476,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "manageLocalNodes": MessageLookupByLibrary.simpleMessage("管理本地节点"),
     "manualAdd": MessageLookupByLibrary.simpleMessage("手动添加"),
     "matchSourceIp": MessageLookupByLibrary.simpleMessage("匹配来源IP"),
+    "maxConcurrentDials": MessageLookupByLibrary.simpleMessage("最大并发建连数"),
     "maxEarlyData": MessageLookupByLibrary.simpleMessage("Max Early Data"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage("最大失败次数"),
     "maxUdpRelayPacketSize": MessageLookupByLibrary.simpleMessage(
@@ -508,7 +523,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noneOption": MessageLookupByLibrary.simpleMessage("无"),
     "notSelectedTip": MessageLookupByLibrary.simpleMessage("当前代理组无法选中"),
     "nowhere": MessageLookupByLibrary.simpleMessage("Nowhere"),
-    "nowhereShareKey": MessageLookupByLibrary.simpleMessage("分享密钥 (shared key)"),
+    "nowhereShareKey": MessageLookupByLibrary.simpleMessage(
+      "分享密钥 (shared key)",
+    ),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage("没有配置文件,请先添加配置文件"),
     "nullTip": m17,
     "numberTip": m18,
@@ -560,6 +577,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "prerequisites": MessageLookupByLibrary.simpleMessage("前置条件"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("请按下按键"),
     "preview": MessageLookupByLibrary.simpleMessage("预览"),
+    "prewarmOnStart": MessageLookupByLibrary.simpleMessage("启动时预热"),
     "privateKey": MessageLookupByLibrary.simpleMessage("私钥"),
     "process": MessageLookupByLibrary.simpleMessage("进程"),
     "profile": MessageLookupByLibrary.simpleMessage("配置"),
@@ -869,6 +887,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "通过VpnService自动路由系统所有流量",
     ),
     "vpnTip": MessageLookupByLibrary.simpleMessage("重启VPN后改变生效"),
+    "warmBackoffInitial": MessageLookupByLibrary.simpleMessage("初始预热退避（秒）"),
+    "warmBackoffMax": MessageLookupByLibrary.simpleMessage("最大预热退避（秒）"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV配置"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("白名单模式"),
     "wifiWatchExcluded": MessageLookupByLibrary.simpleMessage("已命中排除"),

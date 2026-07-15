@@ -366,6 +366,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
       "Режим разработчика активирован.",
     ),
+    "dialerProxy": MessageLookupByLibrary.simpleMessage(
+      "Прокси для подключения",
+    ),
     "direct": MessageLookupByLibrary.simpleMessage("Прямой"),
     "disableUDP": MessageLookupByLibrary.simpleMessage("Отключить UDP"),
     "disabled": MessageLookupByLibrary.simpleMessage("Отключено"),
@@ -395,6 +398,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ech": MessageLookupByLibrary.simpleMessage("ECH"),
     "echConfig": MessageLookupByLibrary.simpleMessage("ECH конфиг"),
+    "echQueryServerName": MessageLookupByLibrary.simpleMessage(
+      "Имя сервера запроса ECH",
+    ),
     "edit": MessageLookupByLibrary.simpleMessage("Редактировать"),
     "editGlobalRules": MessageLookupByLibrary.simpleMessage(
       "Редактировать глобальные правила",
@@ -621,9 +627,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "Канал должен быть tcp или udp",
     ),
     "localProxyCount": m13,
+    "localProxyHealthCheckInvalid": MessageLookupByLibrary.simpleMessage(
+      "Некорректные настройки проверки состояния",
+    ),
     "localProxyMixin": MessageLookupByLibrary.simpleMessage("Локальные прокси"),
     "localProxyNameEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите имя прокси",
+    ),
+    "localProxyNowhereAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
+      "Расширенные целые значения Nowhere должны быть неотрицательными, а начальная задержка с учётом значения по умолчанию — не больше максимальной",
+    ),
+    "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
+      "Общий ключ Nowhere, Spec и первый ALPN должны быть не длиннее 255 байт UTF-8 каждый",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите ключ обмена Nowhere",
@@ -636,6 +651,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "Порт должен быть от 1 до 65535",
+    ),
+    "localProxyReloadFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось перезагрузить локальные прокси; изменения отменены",
     ),
     "localProxyServerEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите адрес сервера",
@@ -681,6 +699,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualAdd": MessageLookupByLibrary.simpleMessage("Добавить вручную"),
     "matchSourceIp": MessageLookupByLibrary.simpleMessage(
       "Сопоставить исходный IP",
+    ),
+    "maxConcurrentDials": MessageLookupByLibrary.simpleMessage(
+      "Макс. одновременных подключений",
     ),
     "maxEarlyData": MessageLookupByLibrary.simpleMessage("Max Early Data"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage(
@@ -846,6 +867,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Пожалуйста, нажмите клавишу.",
     ),
     "preview": MessageLookupByLibrary.simpleMessage("Предпросмотр"),
+    "prewarmOnStart": MessageLookupByLibrary.simpleMessage(
+      "Предварительный прогрев при запуске",
+    ),
     "privateKey": MessageLookupByLibrary.simpleMessage("Приватный ключ"),
     "process": MessageLookupByLibrary.simpleMessage("процесс"),
     "profile": MessageLookupByLibrary.simpleMessage("Профиль"),
@@ -1300,6 +1324,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "vpnTip": MessageLookupByLibrary.simpleMessage(
       "Изменения вступят в силу после перезапуска VPN",
+    ),
+    "warmBackoffInitial": MessageLookupByLibrary.simpleMessage(
+      "Начальная задержка прогрева (с)",
+    ),
+    "warmBackoffMax": MessageLookupByLibrary.simpleMessage(
+      "Максимальная задержка прогрева (с)",
     ),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage(
       "Конфигурация WebDAV",

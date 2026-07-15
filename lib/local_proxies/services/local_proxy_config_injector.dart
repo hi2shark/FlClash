@@ -1,6 +1,3 @@
-import 'package:collection/collection.dart';
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_provider_generator.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy_provider_config.dart';
@@ -9,93 +6,97 @@ class LocalProxyConfigInjector {
   const LocalProxyConfigInjector();
 
   Future<void> inject(Map<String, dynamic> rawConfig) async {
-    try {
-      await _inject(rawConfig);
-    } catch (e, s) {
-      commonPrint.log(
-        'Local proxy mixin skipped due to error: $e\n$s',
-        logLevel: LogLevel.warning,
-      );
-    }
-  }
-
-  Future<void> _inject(Map<String, dynamic> rawConfig) async {
     await localProxyStore.init();
     final config = localProxyStore.config;
-    if (!config.enabled) return;
-    if (config.targetGroups.isEmpty) {
-      commonPrint.log(
-        'Local proxy mixin enabled but no target groups selected; skipping inject',
-        logLevel: LogLevel.warning,
-      );
-      return;
-    }
+    if (!config.enabled || config.targetGroups.isEmpty) return;
 
     final enabledProxies = localProxyStore.proxies
-        .where((p) => p.enabled)
+        .where((proxy) => proxy.enabled)
         .toList();
     if (enabledProxies.isEmpty) return;
 
     final proxyProviders = rawConfig['proxy-providers'];
     if (proxyProviders != null && proxyProviders is! Map) {
-      commonPrint.log(
-        'proxy-providers in profile is not a map; skipping local proxy mixin',
-        logLevel: LogLevel.warning,
+      throw StateError(
+        '"proxy-providers" must be a Map for local proxy injection.',
       );
-      return;
     }
 
-    final groups = rawConfig['proxy-groups'];
-    if (groups == null || groups is! List) {
-      commonPrint.log(
-        'No proxy-groups found in current profile; skipping local proxy mixin',
-        logLevel: LogLevel.warning,
+    final existingProviders = proxyProviders as Map?;
+    if (existingProviders?.containsKey(config.providerKey) ?? false) {
+      throw StateError(
+        'Local proxy provider key "${config.providerKey}" already exists.',
       );
-      return;
     }
 
-    final providers = Map<String, dynamic>.from(
-      (proxyProviders as Map?)?.cast<dynamic, dynamic>() ??
-          <dynamic, dynamic>{},
+    final proxyGroups = rawConfig['proxy-groups'];
+    if (proxyGroups is! List) {
+      throw StateError(
+        '"proxy-groups" must be a List for local proxy injection.',
+      );
+    }
+    final targetIndexes = _validateTargetGroups(
+      proxyGroups,
+      config.targetGroups,
     );
-    final existing = providers[config.providerKey];
-    if (existing is Map && existing['path'] != config.providerPath) {
-      commonPrint.log(
-        'Provider key "${config.providerKey}" already exists with a different path; skipping local proxy mixin',
-        logLevel: LogLevel.warning,
-      );
-      return;
-    }
 
-    await localProxyProviderGenerator.writeProviderFile(enabledProxies);
+    final nextProviders = Map<dynamic, dynamic>.from(
+      existingProviders ?? const <dynamic, dynamic>{},
+    );
+    nextProviders[config.providerKey] = _buildProviderEntry(config);
 
-    providers[config.providerKey] = _buildProviderEntry(config);
-    rawConfig['proxy-providers'] = providers;
-
-    final missingGroups = <String>[];
-    for (final target in config.targetGroups) {
-      final group = groups.firstWhereOrNull(
-        (g) => g is Map && g['name'] == target,
-      );
-      if (group == null) {
-        missingGroups.add(target);
-        continue;
+    final nextGroups = proxyGroups.map<dynamic>((group) {
+      return group is Map ? Map<dynamic, dynamic>.from(group) : group;
+    }).toList();
+    for (final index in targetIndexes.values) {
+      final group = nextGroups[index] as Map<dynamic, dynamic>;
+      final use = group['use'] as List?;
+      final nextUse = use == null ? <String>[] : List<String>.from(use);
+      if (!nextUse.contains(config.providerKey)) {
+        nextUse.add(config.providerKey);
       }
-      final groupMap = (group as Map).cast<String, dynamic>();
-      final use = groupMap['use'];
-      final useList = (use is List ? List<String>.from(use) : <String>[]);
-      if (!useList.contains(config.providerKey)) {
-        useList.add(config.providerKey);
-        groupMap['use'] = useList;
-      }
+      group['use'] = nextUse;
     }
 
-    if (missingGroups.isNotEmpty) {
-      commonPrint.log(
-        'Local proxy target groups not found: ${missingGroups.join(', ')}; skipping them',
-        logLevel: LogLevel.warning,
+    await localProxyProviderGenerator.writeProviderFile(
+      enabledProxies,
+      providerPath: config.providerPath,
+    );
+
+    rawConfig.addAll({
+      'proxy-providers': nextProviders,
+      'proxy-groups': nextGroups,
+    });
+  }
+
+  Map<String, int> _validateTargetGroups(
+    List<dynamic> groups,
+    List<String> targets,
+  ) {
+    final indexes = <String, int>{};
+    for (final target in targets) {
+      final index = groups.indexWhere(
+        (group) => group is Map && group['name'] == target,
       );
+      if (index == -1) {
+        throw StateError('Local proxy target group "$target" was not found.');
+      }
+
+      final group = groups[index];
+      if (group is! Map) {
+        throw StateError('Local proxy target group "$target" must be a Map.');
+      }
+      final use = group['use'];
+      if (use != null &&
+          (use is! List || use.any((entry) => entry is! String))) {
+        throw StateError(
+          'Local proxy target group "$target" has invalid "use"; '
+          'expected null or a List<String>.',
+        );
+      }
+      indexes[target] = index;
     }
+    return indexes;
   }
 
   Map<String, dynamic> _buildProviderEntry(LocalProxyProviderConfig config) {

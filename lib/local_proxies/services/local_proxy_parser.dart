@@ -336,7 +336,8 @@ class LocalProxyParser {
         query['allowInsecure'] == '1' ||
         query['allow_insecure'] == '1' ||
         query['insecure'] == '1';
-    final tls = security == null ||
+    final tls =
+        security == null ||
         security == 'tls' ||
         security == 'reality' ||
         security.isEmpty;
@@ -462,17 +463,85 @@ class LocalProxyParser {
     );
   }
 
+  String? _rawUserInfo(String raw) {
+    final schemeEnd = raw.indexOf('://');
+    if (schemeEnd == -1) return null;
+
+    final authorityStart = schemeEnd + 3;
+    var authorityEnd = raw.length;
+    for (final separator in ['/', '?', '#']) {
+      final index = raw.indexOf(separator, authorityStart);
+      if (index != -1 && index < authorityEnd) {
+        authorityEnd = index;
+      }
+    }
+    final authority = raw.substring(authorityStart, authorityEnd);
+    final atIndex = authority.lastIndexOf('@');
+    if (atIndex == -1) return null;
+    return authority.substring(0, atIndex);
+  }
+
+  Map<String, String> _parseFirstQueryParameters(String query) {
+    final parameters = <String, String>{};
+    if (query.isEmpty) return parameters;
+
+    for (final component in query.split('&')) {
+      if (component.isEmpty) continue;
+      final separator = component.indexOf('=');
+      final rawKey = separator == -1
+          ? component
+          : component.substring(0, separator);
+      final key = Uri.decodeComponent(rawKey);
+      if (parameters.containsKey(key)) continue;
+
+      final rawValue = separator == -1
+          ? ''
+          : component.substring(separator + 1);
+      parameters[key] = Uri.decodeComponent(rawValue);
+    }
+    return parameters;
+  }
+
+  String? _validateNowhereUtf8Value(
+    String field,
+    String value, {
+    bool required = false,
+  }) {
+    if (required && value.isEmpty) {
+      return 'Nowhere $field is empty';
+    }
+    try {
+      if (utf8.encode(value).length > 255) {
+        return 'Nowhere $field exceeds 255 UTF-8 bytes';
+      }
+    } catch (_) {
+      return 'Nowhere $field must be valid UTF-8';
+    }
+    return null;
+  }
+
   LocalProxyParseResult _parseNowhere(Uri uri, String raw) {
-    final key = uri.userInfo;
-    if (key.isEmpty) {
+    final rawUserInfo = _rawUserInfo(raw);
+    if (rawUserInfo == null || rawUserInfo.isEmpty) {
       return LocalProxyParseResult(raw: raw, error: 'Nowhere key is empty');
     }
-    if (uri.userInfo.contains(':')) {
+    if (rawUserInfo.contains(':')) {
       return LocalProxyParseResult(
         raw: raw,
         error: 'Nowhere URI must not contain a password component',
       );
     }
+
+    final password = Uri.decodeComponent(rawUserInfo);
+    final passwordError = _validateNowhereUtf8Value(
+      'key',
+      password,
+      required: true,
+    );
+    if (passwordError != null) {
+      return LocalProxyParseResult(raw: raw, error: passwordError);
+    }
+
     final server = uri.host;
     if (server.isEmpty) {
       return LocalProxyParseResult(raw: raw, error: 'Nowhere server is empty');
@@ -481,21 +550,41 @@ class LocalProxyParser {
       uri.port == 0 ? null : uri.port.toString(),
       443,
     );
-    final query = uri.queryParameters;
+    final query = _parseFirstQueryParameters(uri.query);
     final fragment = _decodeFragment(uri.fragment);
+    final warnings = <String>[];
 
-    var up = query['up']?.toLowerCase();
-    var down = query['down']?.toLowerCase();
-    if ((up == null || up.isEmpty) && (down == null || down.isEmpty)) {
-      final net =
-          query['net']?.toLowerCase() ?? query['network']?.toLowerCase();
-      if (net != null && net.isNotEmpty) {
+    final upValue = query['up'] ?? '';
+    final downValue = query['down'] ?? '';
+    if ((upValue.isEmpty) != (downValue.isEmpty)) {
+      return LocalProxyParseResult(
+        raw: raw,
+        error: 'Nowhere up and down must both be set or both omitted',
+      );
+    }
+
+    late final String up;
+    late final String down;
+    if (upValue.isNotEmpty) {
+      up = upValue;
+      down = downValue;
+    } else {
+      final net = query['net'] ?? '';
+      final network = query['network'] ?? '';
+      if (net.isNotEmpty) {
         up = net;
         down = net;
+      } else if (network.isNotEmpty) {
+        up = network;
+        down = network;
+        warnings.add(
+          'Nowhere share-link parameter "network" is deprecated; use "net"',
+        );
+      } else {
+        up = 'udp';
+        down = 'udp';
       }
     }
-    up ??= 'udp';
-    down ??= 'udp';
     if (!['tcp', 'udp'].contains(up) || !['tcp', 'udp'].contains(down)) {
       return LocalProxyParseResult(
         raw: raw,
@@ -504,32 +593,66 @@ class LocalProxyParser {
     }
     final tcpTCP = up == 'tcp' && down == 'tcp';
 
+    final spec = query['spec'];
+    if (spec != null && spec.isNotEmpty) {
+      final specError = _validateNowhereUtf8Value('spec', spec);
+      if (specError != null) {
+        return LocalProxyParseResult(raw: raw, error: specError);
+      }
+    }
+
+    final alpnValue = query['alpn'];
+    List<String>? alpn;
+    if (alpnValue != null && alpnValue.isNotEmpty) {
+      alpn = alpnValue.split(',');
+      final effectiveAlpn = alpn.first;
+      if (effectiveAlpn.isNotEmpty) {
+        final alpnError = _validateNowhereUtf8Value('ALPN', effectiveAlpn);
+        if (alpnError != null) {
+          return LocalProxyParseResult(raw: raw, error: alpnError);
+        }
+      }
+    }
+
+    final name = _buildName(fragment, 'nowhere', server);
     final config = <String, dynamic>{
-      'name': _buildName(fragment, 'nowhere', server),
+      'name': name,
       'type': 'nowhere',
       'server': server,
       'port': port,
-      'key': key,
+      'password': password,
       'udp': true,
       'up': up,
       'down': down,
       'network': up,
     };
 
-    if (query['spec'] != null && query['spec']!.isNotEmpty) {
-      config['spec'] = query['spec'];
+    if (spec != null && spec.isNotEmpty) {
+      config['spec'] = spec;
     }
-    if (query['sni'] != null && query['sni']!.isNotEmpty) {
-      config['sni'] = query['sni'];
+    final sni = query['sni'];
+    if (sni != null && sni.isNotEmpty) {
+      config['sni'] = sni;
     }
-    final alpn = _parseAlpn(query['alpn']);
-    if (alpn.isNotEmpty) {
+    if (alpn != null) {
       config['alpn'] = alpn;
     }
-    if (tcpTCP && query['pool'] != null && query['pool']!.isNotEmpty) {
-      final pool = int.tryParse(query['pool']!);
-      if (pool != null && pool >= 0 && pool <= 9) {
+
+    final poolValue = query['pool'];
+    if (poolValue != null && poolValue.isNotEmpty) {
+      var pool = int.tryParse(poolValue);
+      if (pool == null) {
+        warnings.add('Nowhere pool is not an integer; ignoring it');
+      } else if (pool < 0) {
+        warnings.add('Nowhere pool must be non-negative; ignoring it');
+      } else if (tcpTCP) {
+        if (pool > 9) {
+          warnings.add('Nowhere pool exceeds 9; using 9');
+          pool = 9;
+        }
         config['pool'] = pool;
+      } else if (pool != 0) {
+        warnings.add('Nowhere pool is only effective for tcp/tcp; ignoring it');
       }
     }
     if (_parseBoolQuery(query['insecure'])) {
@@ -548,12 +671,13 @@ class LocalProxyParser {
       raw: raw,
       proxy: LocalProxy(
         id: -1,
-        name: _buildName(fragment, 'nowhere', server),
+        name: name,
         type: 'nowhere',
         config: config,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       ),
+      warnings: warnings,
     );
   }
 

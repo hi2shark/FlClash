@@ -271,12 +271,12 @@ class SetupAction extends _$SetupAction {
     });
   }
 
-  Future<void> applyProfile({
+  Future<bool> applyProfile({
     bool silence = false,
     bool force = false,
     VoidCallback? preloadInvoke,
-  }) async {
-    await _setupConfig(
+  }) {
+    return _setupConfig(
       force: force,
       silence: silence,
       preloadInvoke: preloadInvoke,
@@ -374,7 +374,7 @@ class SetupAction extends _$SetupAction {
     return Result.success(enableTun);
   }
 
-  Future<void> _setupConfig({
+  Future<bool> _setupConfig({
     bool force = false,
     bool silence = false,
     VoidCallback? preloadInvoke,
@@ -389,7 +389,7 @@ class SetupAction extends _$SetupAction {
     commonPrint.log('setup ===> ${profile?.id}');
     final patchConfig = ref.read(patchClashConfigProvider);
     final res = await _requestAdmin(patchConfig.tun.enable);
-    if (res.isError) return;
+    if (res.isError) return false;
     final realTunEnable = ref.read(realTunEnableProvider);
     final realPatchConfig = patchConfig.copyWith.tun(enable: realTunEnable);
     final setupState = await ref.read(setupStateProvider(profile?.id).future);
@@ -404,12 +404,11 @@ class SetupAction extends _$SetupAction {
     );
     final yamlString = vm2.a;
     final yamlMd5 = vm2.b;
-    if (yamlMd5 == globalState.lastConfigMd5 && force == false) return;
-    await globalState.loadingRun(
+    if (yamlMd5 == globalState.lastConfigMd5 && force == false) return true;
+    final success = await globalState.loadingRun<bool>(
       () async {
         final configFilePath = await appPath.configFilePath;
         await File(configFilePath).safeWriteAsString(yamlString);
-        globalState.lastConfigMd5 = yamlMd5;
         final message = await coreController.setupConfig(
           setupState: setupState,
           params: _setupParams,
@@ -420,10 +419,13 @@ class SetupAction extends _$SetupAction {
         }
         ref.read(checkIpNumProvider.notifier).add();
         await onUpdated?.call();
+        globalState.lastConfigMd5 = yamlMd5;
+        return true;
       },
       silence: true,
       tag: !silence ? LoadingTag.proxies : null,
     );
+    return success == true;
   }
 }
 

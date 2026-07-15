@@ -41,24 +41,52 @@ class _FakePathProvider extends PathProviderPlatform {
   }) async => null;
 }
 
+Future<void> _addEnabledNode({int id = 100}) async {
+  await localProxyStore.add(
+    LocalProxy(
+      id: id,
+      name: 'Node',
+      type: 'ss',
+      enabled: true,
+      config: {
+        'name': 'Node',
+        'type': 'ss',
+        'server': '1.1.1.1',
+        'port': 443,
+        'cipher': 'aes-256-gcm',
+        'password': 'pwd',
+      },
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    ),
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late Directory tmpDir;
 
-  setUp(() async {
+  setUpAll(() async {
     tmpDir = await Directory.systemTemp.createTemp('flclash_test_');
     PathProviderPlatform.instance = _FakePathProvider(tmpDir.path);
-    localProxyStore.resetForTest();
-    await localProxyStore.init();
-    final file = File(
-      join(tmpDir.path, 'proxy_providers', 'flclash-local.yaml'),
-    );
-    if (await file.exists()) {
-      await file.delete(recursive: true);
-    }
   });
 
-  tearDown(() async {
+  setUp(() async {
+    for (final entity in [
+      File(join(tmpDir.path, 'local_proxies.json')),
+      Directory(join(tmpDir.path, 'proxy_providers')),
+      Directory(join(tmpDir.path, 'custom')),
+    ]) {
+      if (await entity.exists()) {
+        await entity.delete(recursive: true);
+      }
+    }
+    localProxyStore.resetForTest();
+    await localProxyStore.init();
+  });
+
+  tearDownAll(() async {
+    localProxyStore.resetForTest();
     await tmpDir.delete(recursive: true);
   });
 
@@ -116,6 +144,54 @@ void main() {
     expect((doc['proxies'] as List).length, 1);
   });
 
+  test('writes provider to configured providerPath', () async {
+    await localProxyStore.add(
+      LocalProxy(
+        id: 6,
+        name: 'Custom Path Node',
+        type: 'ss',
+        enabled: true,
+        config: {
+          'name': 'Custom Path Node',
+          'type': 'ss',
+          'server': '127.0.0.1',
+          'port': 8388,
+          'cipher': 'aes-256-gcm',
+          'password': 'pwd',
+        },
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+    const providerPath = './custom/providers/local.yaml';
+    await localProxyStore.saveConfig(
+      const LocalProxyProviderConfig(
+        enabled: true,
+        targetGroups: ['SELECT'],
+        providerPath: providerPath,
+      ),
+    );
+    final rawConfig = <String, dynamic>{
+      'proxy-groups': [
+        {'name': 'SELECT', 'type': 'select'},
+      ],
+    };
+
+    await localProxyConfigInjector.inject(rawConfig);
+
+    final provider =
+        (rawConfig['proxy-providers'] as Map)['_flclash_local'] as Map;
+    expect(provider['path'], providerPath);
+    final customFile = File(
+      join(tmpDir.path, 'custom', 'providers', 'local.yaml'),
+    );
+    expect(await customFile.exists(), isTrue);
+    final defaultFile = File(
+      join(tmpDir.path, 'proxy_providers', 'flclash-local.yaml'),
+    );
+    expect(await defaultFile.exists(), isFalse);
+  });
+
   test('does nothing when disabled', () async {
     await localProxyStore.saveConfig(
       const LocalProxyProviderConfig(enabled: false),
@@ -169,67 +245,179 @@ void main() {
     expect(rawConfig['proxy-providers'], isA<Map>());
   });
 
-  test('skips without throwing when proxy-groups missing', () async {
-    await localProxyStore.add(
-      LocalProxy(
-        id: 3,
-        name: 'Node',
-        type: 'ss',
-        enabled: true,
-        config: {
-          'name': 'Node',
-          'type': 'ss',
-          'server': '1.1.1.1',
-          'port': 443,
-          'cipher': 'aes-256-gcm',
-          'password': 'pwd',
-        },
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    );
+  test('throws when proxy-groups is missing without mutation', () async {
+    await _addEnabledNode();
     await localProxyStore.saveConfig(
       const LocalProxyProviderConfig(enabled: true, targetGroups: ['SELECT']),
     );
+    final proxies = <dynamic>[];
+    final rawConfig = <String, dynamic>{'proxies': proxies};
 
-    final rawConfig = <String, dynamic>{'proxies': <dynamic>[]};
-    await expectLater(localProxyConfigInjector.inject(rawConfig), completes);
-    expect(rawConfig.containsKey('proxy-providers'), isFalse);
+    await expectLater(
+      localProxyConfigInjector.inject(rawConfig),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(rawConfig, {'proxies': proxies});
+    expect(identical(rawConfig['proxies'], proxies), isTrue);
   });
 
-  test('skips without throwing when proxy-providers is not a map', () async {
-    await localProxyStore.add(
-      LocalProxy(
-        id: 4,
-        name: 'Node',
-        type: 'ss',
-        enabled: true,
-        config: {
-          'name': 'Node',
-          'type': 'ss',
-          'server': '1.1.1.1',
-          'port': 443,
-          'cipher': 'aes-256-gcm',
-          'password': 'pwd',
-        },
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+  test('throws for missing target group without partial mutation', () async {
+    await _addEnabledNode();
+    await localProxyStore.saveConfig(
+      const LocalProxyProviderConfig(enabled: true, targetGroups: ['MISSING']),
+    );
+    final providers = <String, dynamic>{
+      'existing': {'type': 'file', 'path': './existing.yaml'},
+    };
+    final groups = <dynamic>[
+      {
+        'name': 'SELECT',
+        'type': 'select',
+        'use': ['existing'],
+      },
+    ];
+    final rawConfig = <String, dynamic>{
+      'proxy-providers': providers,
+      'proxy-groups': groups,
+    };
+
+    await expectLater(
+      localProxyConfigInjector.inject(rawConfig),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.toString(),
+          'message',
+          contains('MISSING'),
+        ),
       ),
     );
+
+    expect(identical(rawConfig['proxy-providers'], providers), isTrue);
+    expect(identical(rawConfig['proxy-groups'], groups), isTrue);
+    expect(providers.containsKey('_flclash_local'), isFalse);
+    expect((groups.first as Map)['use'], ['existing']);
+  });
+
+  test('throws when proxy-providers is not a Map without mutation', () async {
+    await _addEnabledNode();
     await localProxyStore.saveConfig(
       const LocalProxyProviderConfig(enabled: true, targetGroups: ['SELECT']),
     );
-
+    final groups = <dynamic>[
+      {'name': 'SELECT', 'type': 'select'},
+    ];
     final rawConfig = <String, dynamic>{
       'proxy-providers': 'invalid',
-      'proxy-groups': [
-        {'name': 'SELECT', 'type': 'select'},
-      ],
+      'proxy-groups': groups,
     };
-    await expectLater(localProxyConfigInjector.inject(rawConfig), completes);
+
+    await expectLater(
+      localProxyConfigInjector.inject(rawConfig),
+      throwsA(isA<StateError>()),
+    );
+
     expect(rawConfig['proxy-providers'], 'invalid');
-    final group = (rawConfig['proxy-groups'] as List).first as Map;
-    expect(group['use'], isNull);
+    expect(identical(rawConfig['proxy-groups'], groups), isTrue);
+    expect((groups.first as Map)['use'], isNull);
+  });
+
+  test('throws for non-Map provider collision without mutation', () async {
+    await _addEnabledNode();
+    await localProxyStore.saveConfig(
+      const LocalProxyProviderConfig(enabled: true, targetGroups: ['SELECT']),
+    );
+    final providers = <String, dynamic>{'_flclash_local': 'invalid'};
+    final groups = <dynamic>[
+      {'name': 'SELECT', 'type': 'select'},
+    ];
+    final rawConfig = <String, dynamic>{
+      'proxy-providers': providers,
+      'proxy-groups': groups,
+    };
+
+    await expectLater(
+      localProxyConfigInjector.inject(rawConfig),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(identical(rawConfig['proxy-providers'], providers), isTrue);
+    expect(identical(rawConfig['proxy-groups'], groups), isTrue);
+    expect(providers['_flclash_local'], 'invalid');
+    expect((groups.first as Map)['use'], isNull);
+  });
+
+  test(
+    'throws for same-path Map provider collision without mutation',
+    () async {
+      await _addEnabledNode();
+      await localProxyStore.saveConfig(
+        const LocalProxyProviderConfig(enabled: true, targetGroups: ['SELECT']),
+      );
+      final provider = <String, dynamic>{
+        'type': 'file',
+        'path': './proxy_providers/flclash-local.yaml',
+      };
+      final providers = <String, dynamic>{'_flclash_local': provider};
+      final groups = <dynamic>[
+        {'name': 'SELECT', 'type': 'select'},
+      ];
+      final rawConfig = <String, dynamic>{
+        'proxy-providers': providers,
+        'proxy-groups': groups,
+      };
+
+      await expectLater(
+        localProxyConfigInjector.inject(rawConfig),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.toString(),
+            'message',
+            contains('_flclash_local'),
+          ),
+        ),
+      );
+
+      expect(identical(rawConfig['proxy-providers'], providers), isTrue);
+      expect(identical(rawConfig['proxy-groups'], groups), isTrue);
+      expect(identical(providers['_flclash_local'], provider), isTrue);
+      expect((groups.first as Map)['use'], isNull);
+      final providerFile = File(
+        join(tmpDir.path, 'proxy_providers', 'flclash-local.yaml'),
+      );
+      expect(await providerFile.exists(), isFalse);
+    },
+  );
+
+  test('throws for non-String group use without partial mutation', () async {
+    await _addEnabledNode();
+    await localProxyStore.saveConfig(
+      const LocalProxyProviderConfig(enabled: true, targetGroups: ['SELECT']),
+    );
+    final providers = <String, dynamic>{
+      'existing': {'type': 'file', 'path': './existing.yaml'},
+    };
+    final groups = <dynamic>[
+      {
+        'name': 'SELECT',
+        'type': 'select',
+        'use': ['existing', 1],
+      },
+    ];
+    final rawConfig = <String, dynamic>{
+      'proxy-providers': providers,
+      'proxy-groups': groups,
+    };
+
+    await expectLater(
+      localProxyConfigInjector.inject(rawConfig),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(identical(rawConfig['proxy-providers'], providers), isTrue);
+    expect(identical(rawConfig['proxy-groups'], groups), isTrue);
+    expect(providers.containsKey('_flclash_local'), isFalse);
+    expect((groups.first as Map)['use'], ['existing', 1]);
   });
 
   test('skips inject when enabled with empty targetGroups', () async {

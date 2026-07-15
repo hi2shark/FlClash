@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
@@ -35,15 +37,7 @@ const _ssCiphers = [
   'none',
 ];
 
-const _networks = [
-  'tcp',
-  'ws',
-  'httpupgrade',
-  'http',
-  'h2',
-  'grpc',
-  'xhttp',
-];
+const _networks = ['tcp', 'ws', 'httpupgrade', 'http', 'h2', 'grpc', 'xhttp'];
 
 const _clientFingerprints = [
   '',
@@ -63,6 +57,40 @@ const _packetEncodings = ['', 'packet', 'xudp'];
 const _xhttpModes = ['', 'auto', 'packet-up', 'stream-up', 'stream-one'];
 
 const _httpMethods = ['GET', 'POST', 'PUT', 'HEAD'];
+
+const _nowhereControlledFields = {
+  'name',
+  'type',
+  'server',
+  'port',
+  'udp',
+  'password',
+  'key',
+  'spec',
+  'up',
+  'down',
+  'network',
+  'net',
+  'pool',
+  'prewarm-on-start',
+  'max-concurrent-dials',
+  'warm-backoff-initial',
+  'warm-backoff-max',
+  'dialer-proxy',
+  'sni',
+  'alpn',
+  'skip-cert-verify',
+  'client-fingerprint',
+  'fingerprint',
+  'certificate',
+  'private-key',
+  'ech-opts',
+  'congestion-controller',
+  'cwnd',
+  'bbr-profile',
+  'reduce-rtt',
+  'max-udp-relay-packet-size',
+};
 
 class LocalProxyEditPage extends StatefulWidget {
   final LocalProxy? proxy;
@@ -91,14 +119,17 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late final TextEditingController _certificateController;
   late final TextEditingController _privateKeyController;
   late final TextEditingController _echConfigController;
+  late final TextEditingController _echQueryServerNameController;
   late final TextEditingController _idleSessionCheckIntervalController;
   late final TextEditingController _idleSessionTimeoutController;
   late final TextEditingController _minIdleSessionController;
   late final TextEditingController _poolController;
+  late final TextEditingController _maxConcurrentDialsController;
+  late final TextEditingController _warmBackoffInitialController;
+  late final TextEditingController _warmBackoffMaxController;
+  late final TextEditingController _dialerProxyController;
   late final TextEditingController _congestionControllerController;
   late final TextEditingController _cwndController;
-  late final TextEditingController _bbrProfileController;
-  late final TextEditingController _maxUdpRelayPacketSizeController;
   late final TextEditingController _obfsController;
   late final TextEditingController _obfsPasswordController;
   late final TextEditingController _hysteria2UpController;
@@ -124,7 +155,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late bool _udp;
   late bool _skipCertVerify;
   late bool _echEnabled;
-  late bool _reduceRtt;
+  late bool _prewarmOnStart;
   late bool _supportX25519Mlkem768;
   late bool _v2rayHttpUpgrade;
   late bool _v2rayHttpUpgradeFastOpen;
@@ -165,14 +196,19 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _sniController = TextEditingController(
       text: (config['servername'] ?? config['sni'])?.toString() ?? '',
     );
+    final nowherePassword = config['password']?.toString() ?? '';
     _keyController = TextEditingController(
-      text: config['key']?.toString() ?? config['password']?.toString() ?? '',
+      text: nowherePassword.isNotEmpty
+          ? nowherePassword
+          : config['key']?.toString() ?? '',
     );
     _specController = TextEditingController(
       text: config['spec']?.toString() ?? '',
     );
     _alpnController = TextEditingController(
-      text: _alpnToString(config['alpn']),
+      text: _type == 'nowhere'
+          ? _firstAlpnToString(config['alpn'])
+          : _alpnToString(config['alpn']),
     );
     _clientFingerprintController = TextEditingController(
       text: config['client-fingerprint']?.toString() ?? '',
@@ -191,6 +227,9 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _echConfigController = TextEditingController(
       text: echOpts?['config']?.toString() ?? '',
     );
+    _echQueryServerNameController = TextEditingController(
+      text: echOpts?['query-server-name']?.toString() ?? '',
+    );
     _idleSessionCheckIntervalController = TextEditingController(
       text: config['idle-session-check-interval']?.toString() ?? '',
     );
@@ -203,17 +242,23 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _poolController = TextEditingController(
       text: config['pool']?.toString() ?? '',
     );
+    _maxConcurrentDialsController = TextEditingController(
+      text: config['max-concurrent-dials']?.toString() ?? '',
+    );
+    _warmBackoffInitialController = TextEditingController(
+      text: config['warm-backoff-initial']?.toString() ?? '',
+    );
+    _warmBackoffMaxController = TextEditingController(
+      text: config['warm-backoff-max']?.toString() ?? '',
+    );
+    _dialerProxyController = TextEditingController(
+      text: config['dialer-proxy']?.toString() ?? '',
+    );
     _congestionControllerController = TextEditingController(
       text: config['congestion-controller']?.toString() ?? '',
     );
     _cwndController = TextEditingController(
       text: config['cwnd']?.toString() ?? '',
-    );
-    _bbrProfileController = TextEditingController(
-      text: config['bbr-profile']?.toString() ?? '',
-    );
-    _maxUdpRelayPacketSizeController = TextEditingController(
-      text: config['max-udp-relay-packet-size']?.toString() ?? '',
     );
     _obfsController = TextEditingController(
       text: config['obfs']?.toString() ?? '',
@@ -307,9 +352,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _tls = config['tls'] == true;
     _udp = config['udp'] != false;
     _skipCertVerify = config['skip-cert-verify'] == true;
-    _reduceRtt = config['reduce-rtt'] == true;
-    _up = config['up']?.toString() ?? 'udp';
-    _down = config['down']?.toString() ?? 'udp';
+    _prewarmOnStart = config['prewarm-on-start'] == true;
+    final legacyCarrier = (config['network'] ?? config['net'])?.toString();
+    _up = config['up']?.toString() ?? legacyCarrier ?? 'udp';
+    _down = config['down']?.toString() ?? legacyCarrier ?? 'udp';
     _network = config['network']?.toString() ?? 'tcp';
     if (!_networks.contains(_network)) {
       _network = 'tcp';
@@ -356,14 +402,17 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _certificateController.dispose();
     _privateKeyController.dispose();
     _echConfigController.dispose();
+    _echQueryServerNameController.dispose();
     _idleSessionCheckIntervalController.dispose();
     _idleSessionTimeoutController.dispose();
     _minIdleSessionController.dispose();
     _poolController.dispose();
+    _maxConcurrentDialsController.dispose();
+    _warmBackoffInitialController.dispose();
+    _warmBackoffMaxController.dispose();
+    _dialerProxyController.dispose();
     _congestionControllerController.dispose();
     _cwndController.dispose();
-    _bbrProfileController.dispose();
-    _maxUdpRelayPacketSizeController.dispose();
     _obfsController.dispose();
     _obfsPasswordController.dispose();
     _hysteria2UpController.dispose();
@@ -391,6 +440,13 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     if (value == null) return '';
     if (value is List) return value.join(', ');
     return value.toString();
+  }
+
+  String _firstAlpnToString(dynamic value) {
+    if (value is List) {
+      return value.isEmpty ? '' : value.first.toString();
+    }
+    return (value?.toString() ?? '').split(',').first;
   }
 
   String _listOrString(dynamic value) {
@@ -434,16 +490,45 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     return int.tryParse(text.trim());
   }
 
+  String? get _firstNowhereAlpn {
+    final alpn = _alpnController.text;
+    if (alpn.isEmpty) return null;
+    return alpn.split(',').first;
+  }
+
+  bool _isValidNonNegativeInteger(TextEditingController controller) {
+    final text = controller.text.trim();
+    if (text.isEmpty) return true;
+    final value = int.tryParse(text);
+    return value != null && value >= 0;
+  }
+
+  bool _fitsNowhereField(String value) {
+    try {
+      return utf8.encode(value).length <= 255;
+    } catch (_) {
+      return false;
+    }
+  }
+
   bool get _isTransportProtocol => _type == 'vless' || _type == 'trojan';
 
   Map<String, dynamic> _buildConfig() {
-    final base = <String, dynamic>{
+    final base = _type == 'nowhere' && widget.proxy?.type == 'nowhere'
+        ? Map<String, dynamic>.from(widget.proxy!.config)
+        : <String, dynamic>{};
+    if (_type == 'nowhere') {
+      for (final field in _nowhereControlledFields) {
+        base.remove(field);
+      }
+    }
+    base.addAll({
       'name': _nameController.text.trim(),
       'type': _type,
       'server': _serverController.text.trim(),
       'port': _port,
       'udp': _udp,
-    };
+    });
     switch (_type) {
       case 'ss':
         base['cipher'] = _cipherController.text.trim();
@@ -484,20 +569,41 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           base['min-idle-session'] = minIdleSession;
         }
       case 'nowhere':
-        base['key'] = _keyController.text.trim();
+        base['password'] = _keyController.text;
         _applySni(base);
-        _applyAlpn(base);
+        _applyNowhereAlpn(base);
         _applyTlsOptions(base);
         _applyEch(base);
-        if (_specController.text.trim().isNotEmpty) {
-          base['spec'] = _specController.text.trim();
+        if (_specController.text.isNotEmpty) {
+          base['spec'] = _specController.text;
         }
         base['up'] = _up;
         base['down'] = _down;
-        base['network'] = _up;
-        final pool = _intOrNull(_poolController.text);
-        if (pool != null) {
-          base['pool'] = pool;
+        if (_up == 'tcp' && _down == 'tcp') {
+          final pool = _intOrNull(_poolController.text);
+          if (pool != null) {
+            base['pool'] = pool;
+          }
+        }
+        base['prewarm-on-start'] = _prewarmOnStart;
+        final maxConcurrentDials = _intOrNull(
+          _maxConcurrentDialsController.text,
+        );
+        if (maxConcurrentDials != null) {
+          base['max-concurrent-dials'] = maxConcurrentDials;
+        }
+        final warmBackoffInitial = _intOrNull(
+          _warmBackoffInitialController.text,
+        );
+        if (warmBackoffInitial != null) {
+          base['warm-backoff-initial'] = warmBackoffInitial;
+        }
+        final warmBackoffMax = _intOrNull(_warmBackoffMaxController.text);
+        if (warmBackoffMax != null) {
+          base['warm-backoff-max'] = warmBackoffMax;
+        }
+        if (_dialerProxyController.text.trim().isNotEmpty) {
+          base['dialer-proxy'] = _dialerProxyController.text.trim();
         }
         if (_congestionControllerController.text.trim().isNotEmpty) {
           base['congestion-controller'] = _congestionControllerController.text
@@ -506,14 +612,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         final cwnd = _intOrNull(_cwndController.text);
         if (cwnd != null) {
           base['cwnd'] = cwnd;
-        }
-        if (_bbrProfileController.text.trim().isNotEmpty) {
-          base['bbr-profile'] = _bbrProfileController.text.trim();
-        }
-        base['reduce-rtt'] = _reduceRtt;
-        final maxUdp = _intOrNull(_maxUdpRelayPacketSizeController.text);
-        if (maxUdp != null) {
-          base['max-udp-relay-packet-size'] = maxUdp;
         }
       case 'hysteria2':
         base['password'] = _passwordController.text;
@@ -686,6 +784,13 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     }
   }
 
+  void _applyNowhereAlpn(Map<String, dynamic> base) {
+    final alpn = _firstNowhereAlpn;
+    if (alpn != null) {
+      base['alpn'] = [alpn];
+    }
+  }
+
   void _applyTlsOptions(Map<String, dynamic> base) {
     if (_clientFingerprintController.text.trim().isNotEmpty) {
       base['client-fingerprint'] = _clientFingerprintController.text.trim();
@@ -703,12 +808,15 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   }
 
   void _applyEch(Map<String, dynamic> base) {
-    if (_echEnabled && _echConfigController.text.trim().isNotEmpty) {
-      base['ech-opts'] = {
-        'enable': true,
-        'config': _echConfigController.text.trim(),
-      };
+    if (!_echEnabled) return;
+    final echOpts = <String, dynamic>{'enable': true};
+    if (_echConfigController.text.trim().isNotEmpty) {
+      echOpts['config'] = _echConfigController.text.trim();
     }
+    if (_echQueryServerNameController.text.trim().isNotEmpty) {
+      echOpts['query-server-name'] = _echQueryServerNameController.text.trim();
+    }
+    base['ech-opts'] = echOpts;
   }
 
   String? _validateCommon() {
@@ -741,16 +849,45 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           return appLocalizations.localProxyAnyTlsPasswordEmpty;
         }
       case 'nowhere':
-        if (_keyController.text.trim().isEmpty) {
+        final sharedKey = _keyController.text;
+        if (sharedKey.isEmpty) {
           return appLocalizations.localProxyNowhereKeyEmpty;
+        }
+        final spec = _specController.text;
+        final firstAlpn = _firstNowhereAlpn;
+        if (!_fitsNowhereField(sharedKey) ||
+            !_fitsNowhereField(spec) ||
+            (firstAlpn != null && !_fitsNowhereField(firstAlpn))) {
+          return appLocalizations.localProxyNowhereInputTooLong;
         }
         if (!['tcp', 'udp'].contains(_up) || !['tcp', 'udp'].contains(_down)) {
           return appLocalizations.localProxyCarrierInvalid;
         }
-        final pool = _intOrNull(_poolController.text);
-        if (_poolController.text.trim().isNotEmpty &&
-            (pool == null || pool < 0 || pool > 9)) {
-          return appLocalizations.localProxyPoolInvalid;
+        if (_up == 'tcp' && _down == 'tcp') {
+          final pool = _intOrNull(_poolController.text);
+          if (_poolController.text.trim().isNotEmpty &&
+              (pool == null || pool < 0 || pool > 9)) {
+            return appLocalizations.localProxyPoolInvalid;
+          }
+        }
+        if (!_isValidNonNegativeInteger(_maxConcurrentDialsController) ||
+            !_isValidNonNegativeInteger(_warmBackoffInitialController) ||
+            !_isValidNonNegativeInteger(_warmBackoffMaxController) ||
+            !_isValidNonNegativeInteger(_cwndController)) {
+          return appLocalizations.localProxyNowhereAdvancedInvalid;
+        }
+        final warmBackoffInitial = _intOrNull(
+          _warmBackoffInitialController.text,
+        );
+        final warmBackoffMax = _intOrNull(_warmBackoffMaxController.text);
+        final effectiveWarmBackoffInitial =
+            warmBackoffInitial == null || warmBackoffInitial == 0
+            ? 1
+            : warmBackoffInitial;
+        final effectiveWarmBackoffMax =
+            warmBackoffMax == null || warmBackoffMax == 0 ? 30 : warmBackoffMax;
+        if (effectiveWarmBackoffInitial > effectiveWarmBackoffMax) {
+          return appLocalizations.localProxyNowhereAdvancedInvalid;
         }
       case 'hysteria2':
         if (_passwordController.text.isEmpty) {
@@ -948,10 +1085,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                 value: 'none',
                 child: Text(appLocalizations.noneOption),
               ),
-              DropdownMenuItem(
-                value: 'tls',
-                child: Text(appLocalizations.tls),
-              ),
+              DropdownMenuItem(value: 'tls', child: Text(appLocalizations.tls)),
               DropdownMenuItem(
                 value: 'reality',
                 child: Text(appLocalizations.reality),
@@ -982,9 +1116,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                 for (final fp in _clientFingerprints)
                   DropdownMenuItem(
                     value: fp,
-                    child: Text(
-                      fp.isEmpty ? appLocalizations.noneOption : fp,
-                    ),
+                    child: Text(fp.isEmpty ? appLocalizations.noneOption : fp),
                   ),
                 if (!_clientFingerprints.contains(
                       _clientFingerprintController.text,
@@ -1089,7 +1221,8 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                 for (final m in _httpMethods)
                   DropdownMenuItem(value: m, child: Text(m)),
               ],
-              onChanged: (value) => setState(() => _httpMethod = value ?? 'GET'),
+              onChanged: (value) =>
+                  setState(() => _httpMethod = value ?? 'GET'),
             ),
             const SizedBox(height: 16),
             _buildTextField(_httpPathController, appLocalizations.wsPath),
@@ -1170,12 +1303,14 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            _poolController,
-            appLocalizations.pool,
-            keyboardType: TextInputType.number,
-          ),
+          if (_up == 'tcp' && _down == 'tcp') ...[
+            const SizedBox(height: 16),
+            _buildTextField(
+              _poolController,
+              appLocalizations.pool,
+              keyboardType: TextInputType.number,
+            ),
+          ],
           const SizedBox(height: 16),
           _buildTextField(_sniController, appLocalizations.sni),
           ListItem.switchItem(
@@ -1315,6 +1450,11 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             minLines: 3,
             maxLines: 6,
           ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _echQueryServerNameController,
+            appLocalizations.echQueryServerName,
+          ),
         ],
       ],
     );
@@ -1344,8 +1484,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               const DropdownMenuItem(value: 'packet', child: Text('packet')),
               const DropdownMenuItem(value: 'xudp', child: Text('xudp')),
             ],
-            onChanged: (value) =>
-                setState(() => _packetEncoding = value ?? ''),
+            onChanged: (value) => setState(() => _packetEncoding = value ?? ''),
           ),
         ],
         if (_type == 'trojan' || _type == 'anytls' || _type == 'hysteria2')
@@ -1390,6 +1529,34 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       ),
       'nowhere' => Column(
         children: [
+          ListItem.switchItem(
+            title: Text(appLocalizations.prewarmOnStart),
+            delegate: SwitchDelegate<bool>(
+              value: _prewarmOnStart,
+              onChanged: (value) => setState(() => _prewarmOnStart = value),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _maxConcurrentDialsController,
+            appLocalizations.maxConcurrentDials,
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _warmBackoffInitialController,
+            appLocalizations.warmBackoffInitial,
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _warmBackoffMaxController,
+            appLocalizations.warmBackoffMax,
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(_dialerProxyController, appLocalizations.dialerProxy),
+          const SizedBox(height: 16),
           _buildTextField(
             _congestionControllerController,
             appLocalizations.congestionController,
@@ -1398,22 +1565,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           _buildTextField(
             _cwndController,
             appLocalizations.cwnd,
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(_bbrProfileController, appLocalizations.bbrProfile),
-          const SizedBox(height: 16),
-          ListItem.switchItem(
-            title: Text(appLocalizations.reduceRtt),
-            delegate: SwitchDelegate<bool>(
-              value: _reduceRtt,
-              onChanged: (value) => setState(() => _reduceRtt = value),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            _maxUdpRelayPacketSizeController,
-            appLocalizations.maxUdpRelayPacketSize,
             keyboardType: TextInputType.number,
           ),
         ],
@@ -1500,10 +1651,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                   appLocalizations.ech,
                   style: context.textTheme.titleSmall,
                 ),
-                children: [
-                  _buildEchFields(),
-                  const SizedBox(height: 8),
-                ],
+                children: [_buildEchFields(), const SizedBox(height: 8)],
               ),
             ],
             const SizedBox(height: 8),
@@ -1514,10 +1662,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                 appLocalizations.advancedSettings,
                 style: context.textTheme.titleSmall,
               ),
-              children: [
-                _buildAdvancedFields(),
-                const SizedBox(height: 8),
-              ],
+              children: [_buildAdvancedFields(), const SizedBox(height: 8)],
             ),
           ],
         ),

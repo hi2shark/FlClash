@@ -25,11 +25,14 @@ class _GroupInfo {
   _GroupInfo({required this.name, required this.type});
 }
 
+const _providerGroupTypes = {'select', 'url-test', 'fallback', 'load-balance'};
+
 class _LocalProxyMixinSettingsPageState
     extends State<LocalProxyMixinSettingsPage> {
   late LocalProxyProviderConfig _config;
   List<_GroupInfo> _groups = [];
   bool _loading = true;
+  bool _saving = false;
   late final TextEditingController _healthCheckUrlController;
   late final TextEditingController _healthCheckIntervalController;
   late final TextEditingController _healthCheckTimeoutController;
@@ -61,6 +64,7 @@ class _LocalProxyMixinSettingsPageState
   Future<void> _loadGroups() async {
     try {
       final configMap = await coreController.getConfig(widget.profileId);
+      if (!mounted) return;
       final groupsRaw = configMap['proxy-groups'];
       final groups = <_GroupInfo>[];
       if (groupsRaw is List) {
@@ -68,7 +72,10 @@ class _LocalProxyMixinSettingsPageState
           if (item is Map) {
             final name = item['name']?.toString();
             final type = item['type']?.toString();
-            if (name != null && name.isNotEmpty && type != null) {
+            if (name != null &&
+                name.isNotEmpty &&
+                type != null &&
+                _providerGroupTypes.contains(type)) {
               groups.add(_GroupInfo(name: name, type: type));
             }
           }
@@ -79,6 +86,7 @@ class _LocalProxyMixinSettingsPageState
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _loading = false);
       globalState.showNotifier(e.toString());
     }
@@ -103,6 +111,7 @@ class _LocalProxyMixinSettingsPageState
   }
 
   Future<void> _handleSave() async {
+    if (_saving) return;
     final appLocalizations = context.appLocalizations;
     if (_config.enabled && _config.targetGroups.isEmpty) {
       globalState.showMessage(
@@ -128,23 +137,92 @@ class _LocalProxyMixinSettingsPageState
       }
     }
 
-    var next = _config;
+    final healthCheckUrl = _healthCheckUrlController.text.trim();
+    final healthCheckUri = Uri.tryParse(healthCheckUrl);
     final interval = int.tryParse(_healthCheckIntervalController.text.trim());
     final timeout = int.tryParse(_healthCheckTimeoutController.text.trim());
-    next = next.copyWith(
-      healthCheckUrl: _healthCheckUrlController.text.trim().isEmpty
-          ? next.healthCheckUrl
-          : _healthCheckUrlController.text.trim(),
-      healthCheckInterval: interval ?? next.healthCheckInterval,
-      healthCheckTimeout: timeout ?? next.healthCheckTimeout,
+    final healthCheckScheme = healthCheckUri?.scheme.toLowerCase();
+    if (_config.enabled &&
+        _config.healthCheckEnabled &&
+        (healthCheckUri == null ||
+            !healthCheckUri.isAbsolute ||
+            healthCheckUri.host.isEmpty ||
+            (healthCheckScheme != 'http' && healthCheckScheme != 'https') ||
+            interval == null ||
+            interval <= 0 ||
+            timeout == null ||
+            timeout <= 0)) {
+      globalState.showMessage(
+        title: appLocalizations.cannotSaveLocalMixin,
+        message: TextSpan(text: appLocalizations.localProxyHealthCheckInvalid),
+      );
+      return;
+    }
+
+    final previous = localProxyStore.config;
+    final next = _config.copyWith(
+      healthCheckUrl: healthCheckUrl.isEmpty
+          ? _config.healthCheckUrl
+          : healthCheckUrl,
+      healthCheckInterval: interval != null && interval > 0
+          ? interval
+          : _config.healthCheckInterval,
+      healthCheckTimeout: timeout != null && timeout > 0
+          ? timeout
+          : _config.healthCheckTimeout,
     );
 
-    await localProxyStore.saveConfig(next);
-    globalState.container
-        .read(setupActionProvider.notifier)
-        .applyProfile(force: true);
-    if (mounted) {
-      Navigator.of(context).pop(true);
+    _saving = true;
+    try {
+      var success = false;
+      try {
+        await localProxyStore.saveConfig(next);
+        success = await globalState.container
+            .read(setupActionProvider.notifier)
+            .applyProfile(force: true);
+      } catch (error, stackTrace) {
+        commonPrint.log(
+          'Failed to save local proxy mixin config: $error\n$stackTrace',
+        );
+      }
+
+      if (!success) {
+        await _restorePreviousConfig(previous);
+        if (mounted) {
+          globalState.showNotifier(appLocalizations.localProxyReloadFailed);
+        }
+        return;
+      }
+
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
+    } finally {
+      _saving = false;
+    }
+  }
+
+  Future<void> _restorePreviousConfig(LocalProxyProviderConfig previous) async {
+    try {
+      await localProxyStore.saveConfig(previous);
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'Failed to restore local proxy mixin config: $error\n$stackTrace',
+      );
+    }
+
+    try {
+      final success = await globalState.container
+          .read(setupActionProvider.notifier)
+          .applyProfile(force: true);
+      if (!success) {
+        commonPrint.log('Failed to reapply previous local proxy mixin config.');
+      }
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'Failed to reapply previous local proxy mixin config: '
+        '$error\n$stackTrace',
+      );
     }
   }
 

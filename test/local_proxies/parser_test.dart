@@ -88,9 +88,7 @@ void main() {
         'public-key': 'publickey',
         'short-id': 'abcd',
       });
-      expect(proxy.config['grpc-opts'], {
-        'grpc-service-name': 'GunService',
-      });
+      expect(proxy.config['grpc-opts'], {'grpc-service-name': 'GunService'});
     });
 
     test('parses vless xhttp transport', () {
@@ -189,7 +187,7 @@ void main() {
   });
 
   group('nowhere:// URI parsing', () {
-    test('parses nowhere with key, carriers and spec', () {
+    test('parses nowhere into canonical password config', () {
       const uri =
           'nowhere://secretkey@example.com:2077?up=tcp&down=tcp&spec=auto&sni=cdn.example.com&alpn=h2&pool=3&insecure=1&fp=chrome#Nowhere';
       final results = parser.parseMany(uri);
@@ -200,7 +198,8 @@ void main() {
       expect(proxy.name, 'Nowhere');
       expect(proxy.config['server'], 'example.com');
       expect(proxy.config['port'], 2077);
-      expect(proxy.config['key'], 'secretkey');
+      expect(proxy.config['password'], 'secretkey');
+      expect(proxy.config.containsKey('key'), isFalse);
       expect(proxy.config['up'], 'tcp');
       expect(proxy.config['down'], 'tcp');
       expect(proxy.config['network'], 'tcp');
@@ -213,28 +212,134 @@ void main() {
       expect(proxy.config['udp'], true);
     });
 
+    test('uses first duplicate values and preserves literal plus signs', () {
+      const uri =
+          'nowhere://sec+ret%3Akey@example.com:443?up=tcp&up=udp&down=tcp&down=udp&spec=first+value&spec=second&alpn=h2%2Bdraft,h3&alpn=ignored&sni=cdn%2Bedge.example&pool=2&pool=8#NW';
+      final result = parser.parseMany(uri).single;
+
+      expect(result.error, isNull);
+      final config = result.proxy!.config;
+      expect(config['password'], 'sec+ret:key');
+      expect(config['up'], 'tcp');
+      expect(config['down'], 'tcp');
+      expect(config['spec'], 'first+value');
+      expect(config['alpn'], ['h2+draft', 'h3']);
+      expect(config['sni'], 'cdn+edge.example');
+      expect(config['pool'], 2);
+    });
+
     test('parses nowhere without carriers defaulting to udp', () {
       const uri = 'nowhere://key@example.com#NW';
-      final results = parser.parseMany(uri);
-      expect(results.first.error, isNull);
-      final proxy = results.first.proxy!;
+      final result = parser.parseMany(uri).single;
+      expect(result.error, isNull);
+      expect(result.warnings, isEmpty);
+      final proxy = result.proxy!;
       expect(proxy.config['up'], 'udp');
       expect(proxy.config['down'], 'udp');
       expect(proxy.config['port'], 443);
     });
 
-    test('rejects nowhere with password component', () {
-      const uri = 'nowhere://user:pass@example.com:443#NW';
-      final results = parser.parseMany(uri);
-      expect(results.first.proxy, isNull);
-      expect(results.first.error, isNotNull);
+    test('uses net before network and warns for network compatibility', () {
+      final netResult = parser
+          .parseMany('nowhere://key@example.com?net=tcp&network=udp')
+          .single;
+      expect(netResult.error, isNull);
+      expect(netResult.proxy!.config['up'], 'tcp');
+      expect(netResult.proxy!.config['down'], 'tcp');
+      expect(netResult.warnings, isEmpty);
+
+      final networkResult = parser
+          .parseMany('nowhere://key@example.com?network=tcp')
+          .single;
+      expect(networkResult.error, isNull);
+      expect(networkResult.proxy!.config['up'], 'tcp');
+      expect(networkResult.proxy!.config['down'], 'tcp');
+      expect(networkResult.warnings.single, contains('network'));
     });
 
-    test('rejects nowhere with invalid carriers', () {
-      const uri = 'nowhere://key@example.com:443?up=icmp#NW';
-      final results = parser.parseMany(uri);
-      expect(results.first.proxy, isNull);
-      expect(results.first.error, isNotNull);
+    test('rejects literal password component but accepts encoded colon', () {
+      final passwordComponent = parser
+          .parseMany('nowhere://user:pass@example.com:443#NW')
+          .single;
+      expect(passwordComponent.proxy, isNull);
+      expect(passwordComponent.error, contains('password component'));
+
+      final encodedColon = parser
+          .parseMany('nowhere://user%3Apass@example.com:443#NW')
+          .single;
+      expect(encodedColon.error, isNull);
+      expect(encodedColon.proxy!.config['password'], 'user:pass');
+    });
+
+    test('requires paired, lowercase, valid carriers', () {
+      for (final uri in [
+        'nowhere://key@example.com:443?up=tcp',
+        'nowhere://key@example.com:443?up=TCP&down=tcp',
+        'nowhere://key@example.com:443?up=icmp&down=udp',
+      ]) {
+        final result = parser.parseMany(uri).single;
+        expect(result.proxy, isNull, reason: uri);
+        expect(result.error, isNotNull, reason: uri);
+      }
+    });
+
+    test('normalizes pool with Mihomo-compatible warnings', () {
+      final clamped = parser
+          .parseMany('nowhere://key@example.com?up=tcp&down=tcp&pool=12')
+          .single;
+      expect(clamped.error, isNull);
+      expect(clamped.proxy!.config['pool'], 9);
+      expect(clamped.warnings.single, contains('using 9'));
+
+      for (final value in ['-1', 'invalid']) {
+        final result = parser
+            .parseMany('nowhere://key@example.com?up=tcp&down=tcp&pool=$value')
+            .single;
+        expect(result.error, isNull);
+        expect(result.proxy!.config.containsKey('pool'), isFalse);
+        expect(result.warnings, isNotEmpty);
+      }
+
+      final ignored = parser
+          .parseMany('nowhere://key@example.com?pool=3')
+          .single;
+      expect(ignored.error, isNull);
+      expect(ignored.proxy!.config.containsKey('pool'), isFalse);
+      expect(ignored.warnings.single, contains('tcp/tcp'));
+
+      final explicitZero = parser
+          .parseMany('nowhere://key@example.com?pool=0')
+          .single;
+      expect(explicitZero.error, isNull);
+      expect(explicitZero.proxy!.config.containsKey('pool'), isFalse);
+      expect(explicitZero.warnings, isEmpty);
+    });
+
+    test('enforces decoded UTF-8 byte limits for key, spec and ALPN', () {
+      final key255 = List.filled(255, 'k').join();
+      final spec255 = List.filled(85, '界').join();
+      final alpn255 = List.filled(255, 'a').join();
+      final accepted = parser
+          .parseMany(
+            'nowhere://$key255@example.com?spec=${Uri.encodeComponent(spec255)}&alpn=$alpn255',
+          )
+          .single;
+      expect(accepted.error, isNull);
+      expect(accepted.proxy!.config['spec'], spec255);
+      expect(accepted.proxy!.config['alpn'], [alpn255]);
+
+      final tooLongKey = List.filled(256, 'k').join();
+      final tooLongSpec = List.filled(256, 's').join();
+      final tooLongAlpn = List.filled(256, 'a').join();
+      for (final uri in [
+        'nowhere://$tooLongKey@example.com',
+        'nowhere://key@example.com?spec=$tooLongSpec',
+        'nowhere://key@example.com?alpn=$tooLongAlpn',
+      ]) {
+        final result = parser.parseMany(uri).single;
+        expect(result.proxy, isNull, reason: uri);
+        expect(result.error, contains('255 UTF-8 bytes'), reason: uri);
+      }
     });
   });
 

@@ -362,6 +362,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
       "Developer mode is enabled.",
     ),
+    "dialerProxy": MessageLookupByLibrary.simpleMessage("Dialer proxy"),
     "direct": MessageLookupByLibrary.simpleMessage("Direct"),
     "disableUDP": MessageLookupByLibrary.simpleMessage("Disable UDP"),
     "disabled": MessageLookupByLibrary.simpleMessage("Disabled"),
@@ -389,6 +390,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ech": MessageLookupByLibrary.simpleMessage("ECH"),
     "echConfig": MessageLookupByLibrary.simpleMessage("ECH config"),
+    "echQueryServerName": MessageLookupByLibrary.simpleMessage(
+      "ECH query server name",
+    ),
     "edit": MessageLookupByLibrary.simpleMessage("Edit"),
     "editGlobalRules": MessageLookupByLibrary.simpleMessage(
       "Edit global rules",
@@ -605,11 +609,20 @@ class MessageLookup extends MessageLookupByLibrary {
       "Carrier must be tcp or udp",
     ),
     "localProxyCount": m13,
+    "localProxyHealthCheckInvalid": MessageLookupByLibrary.simpleMessage(
+      "Health check settings are invalid",
+    ),
     "localProxyMixin": MessageLookupByLibrary.simpleMessage(
       "Local Proxy Mix-in",
     ),
     "localProxyNameEmpty": MessageLookupByLibrary.simpleMessage(
       "Proxy name cannot be empty",
+    ),
+    "localProxyNowhereAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
+      "Nowhere advanced integer values must be non-negative, and effective initial backoff must not exceed maximum backoff",
+    ),
+    "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
+      "Nowhere shared key, spec, and first ALPN must each be at most 255 UTF-8 bytes",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Nowhere share key is required",
@@ -622,6 +635,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "Port must be 1-65535",
+    ),
+    "localProxyReloadFailed": MessageLookupByLibrary.simpleMessage(
+      "Failed to reload local proxies. Changes were rolled back",
     ),
     "localProxyServerEmpty": MessageLookupByLibrary.simpleMessage(
       "Server address cannot be empty",
@@ -664,6 +680,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "manualAdd": MessageLookupByLibrary.simpleMessage("Manual add"),
     "matchSourceIp": MessageLookupByLibrary.simpleMessage("Match source IP"),
+    "maxConcurrentDials": MessageLookupByLibrary.simpleMessage(
+      "Max concurrent dials",
+    ),
     "maxEarlyData": MessageLookupByLibrary.simpleMessage("Max Early Data"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage("Max failed times"),
     "maxUdpRelayPacketSize": MessageLookupByLibrary.simpleMessage(
@@ -810,6 +829,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Please press the keyboard.",
     ),
     "preview": MessageLookupByLibrary.simpleMessage("Preview"),
+    "prewarmOnStart": MessageLookupByLibrary.simpleMessage("Prewarm on start"),
     "privateKey": MessageLookupByLibrary.simpleMessage("Private key"),
     "process": MessageLookupByLibrary.simpleMessage("Process"),
     "profile": MessageLookupByLibrary.simpleMessage("Profile"),
@@ -1232,6 +1252,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "vpnTip": MessageLookupByLibrary.simpleMessage(
       "Changes take effect after restarting the VPN",
+    ),
+    "warmBackoffInitial": MessageLookupByLibrary.simpleMessage(
+      "Initial warm backoff (seconds)",
+    ),
+    "warmBackoffMax": MessageLookupByLibrary.simpleMessage(
+      "Maximum warm backoff (seconds)",
     ),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage(
       "WebDAV configuration",

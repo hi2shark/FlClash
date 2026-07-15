@@ -5154,6 +5154,16 @@ class AppLocalizations {
     return Intl.message('ECH config', name: 'echConfig', desc: '', args: []);
   }
 
+  /// `ECH query server name`
+  String get echQueryServerName {
+    return Intl.message(
+      'ECH query server name',
+      name: 'echQueryServerName',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Idle session check interval`
   String get idleSessionCheckInterval {
     return Intl.message(
@@ -5202,6 +5212,56 @@ class AppLocalizations {
   /// `Pool`
   String get pool {
     return Intl.message('Pool', name: 'pool', desc: '', args: []);
+  }
+
+  /// `Prewarm on start`
+  String get prewarmOnStart {
+    return Intl.message(
+      'Prewarm on start',
+      name: 'prewarmOnStart',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Max concurrent dials`
+  String get maxConcurrentDials {
+    return Intl.message(
+      'Max concurrent dials',
+      name: 'maxConcurrentDials',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Initial warm backoff (seconds)`
+  String get warmBackoffInitial {
+    return Intl.message(
+      'Initial warm backoff (seconds)',
+      name: 'warmBackoffInitial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Maximum warm backoff (seconds)`
+  String get warmBackoffMax {
+    return Intl.message(
+      'Maximum warm backoff (seconds)',
+      name: 'warmBackoffMax',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Dialer proxy`
+  String get dialerProxy {
+    return Intl.message(
+      'Dialer proxy',
+      name: 'dialerProxy',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Congestion controller`
@@ -5274,6 +5334,46 @@ class AppLocalizations {
     return Intl.message(
       'Pool must be 0-9',
       name: 'localProxyPoolInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Nowhere shared key, spec, and first ALPN must each be at most 255 UTF-8 bytes`
+  String get localProxyNowhereInputTooLong {
+    return Intl.message(
+      'Nowhere shared key, spec, and first ALPN must each be at most 255 UTF-8 bytes',
+      name: 'localProxyNowhereInputTooLong',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Nowhere advanced integer values must be non-negative, and effective initial backoff must not exceed maximum backoff`
+  String get localProxyNowhereAdvancedInvalid {
+    return Intl.message(
+      'Nowhere advanced integer values must be non-negative, and effective initial backoff must not exceed maximum backoff',
+      name: 'localProxyNowhereAdvancedInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Health check settings are invalid`
+  String get localProxyHealthCheckInvalid {
+    return Intl.message(
+      'Health check settings are invalid',
+      name: 'localProxyHealthCheckInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed to reload local proxies. Changes were rolled back`
+  String get localProxyReloadFailed {
+    return Intl.message(
+      'Failed to reload local proxies. Changes were rolled back',
+      name: 'localProxyReloadFailed',
       desc: '',
       args: [],
     );
