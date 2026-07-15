@@ -14,7 +14,7 @@ require (
 require (
 	github.com/RyuaNerin/go-krypto v1.3.0 // indirect
 	github.com/Yawning/aez v0.0.0-20211027044916-e49e68abd344 // indirect
-	github.com/ajg/form v1.5.1 // indirect
+	github.com/ajg/form v1.7.1 // indirect
 	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/alexbrainman/sspi v0.0.0-20231016080023-1a75b4708caa // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
@@ -45,6 +45,7 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
+	github.com/hi2shark/nowhere-go v0.4.0-alpha.3 // indirect
 	github.com/huin/goupnp v1.3.0 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20250109001534-8abf58130905 // indirect
 	github.com/josharian/native v1.1.0 // indirect
@@ -58,10 +59,10 @@ require (
 	github.com/metacubex/amneziawg-go v0.0.0-20260612143004-19b4f1cdd5ec // indirect
 	github.com/metacubex/ascon v0.1.0 // indirect
 	github.com/metacubex/bart v0.26.0 // indirect
-	github.com/metacubex/bbolt v0.0.0-20250725135710-010dbbbb7a5b // indirect
+	github.com/metacubex/bbolt v0.0.0-20260706163408-d4ec34ad7c48 // indirect
 	github.com/metacubex/blake3 v0.1.0 // indirect
 	github.com/metacubex/chacha v0.1.5 // indirect
-	github.com/metacubex/chi v0.1.0 // indirect
+	github.com/metacubex/chi v0.1.1 // indirect
 	github.com/metacubex/connect-ip-go v0.0.0-20260412152424-e1625567920a // indirect
 	github.com/metacubex/cpu v0.1.1 // indirect
 	github.com/metacubex/edwards25519 v1.2.0 // indirect
@@ -79,7 +80,7 @@ require (
 	github.com/metacubex/qpack v0.6.0 // indirect
 	github.com/metacubex/quic-go v0.59.1-0.20260606115121-0662b57ad5bf // indirect
 	github.com/metacubex/randv2 v0.2.0 // indirect
-	github.com/metacubex/restls-client-go v0.1.7 // indirect
+	github.com/metacubex/restls-client-go v0.1.8 // indirect
 	github.com/metacubex/sevenzip v1.6.4 // indirect
 	github.com/metacubex/sing v0.5.7 // indirect
 	github.com/metacubex/sing-mux v0.3.10 // indirect
@@ -95,7 +96,7 @@ require (
 	github.com/metacubex/tailscale v0.0.0-20260623094802-1ab893d4162c // indirect
 	github.com/metacubex/tailscale-wireguard-go v0.0.0-20260623093519-06ea214022e4 // indirect
 	github.com/metacubex/tfo-go v0.0.0-20260623020846-376a77860b8c // indirect
-	github.com/metacubex/tls v0.1.6 // indirect
+	github.com/metacubex/tls v0.1.7 // indirect
 	github.com/metacubex/utls v1.8.7 // indirect
 	github.com/metacubex/wireguard-go v0.0.0-20250820062549-a6cecdd7f57f // indirect
 	github.com/metacubex/yamux v0.0.0-20250918083631-dd5f17c0be49 // indirect
