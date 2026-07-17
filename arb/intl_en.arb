@@ -716,5 +716,12 @@
   "quicVersion": "QUIC Version",
   "localNodes": "Local Nodes",
   "allNodes": "All Nodes",
-  "testFailed": "Test Failed"
+  "testFailed": "Test Failed",
+  "testStage": "Stage",
+  "testTarget": "Target",
+  "resolvedAddress": "Resolved Address",
+  "sentPackets": "Sent Packets",
+  "receivedPackets": "Received Packets",
+  "errorDetails": "Error",
+  "quicHandshakeTimedOut": "QUIC handshake timed out"
 }

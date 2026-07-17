@@ -309,6 +309,14 @@ void main() {
           'alpn': 'h3',
           'version': 1,
           'error': '',
+          'stage': 'completed',
+          'target': 'cloudflare-quic.com:443',
+          'resolved-ip': '203.0.113.7:443',
+          'network': 'udp4',
+          'sent-packets': 2,
+          'sent-bytes': 2400,
+          'received-packets': 1,
+          'received-bytes': 1200,
         }),
       );
       final result = await controller.getQuicTest(params);
@@ -317,6 +325,14 @@ void main() {
       expect(result.alpn, 'h3');
       expect(result.version, 1);
       expect(result.error, '');
+      expect(result.stage, 'completed');
+      expect(result.target, 'cloudflare-quic.com:443');
+      expect(result.resolvedIp, '203.0.113.7:443');
+      expect(result.network, 'udp4');
+      expect(result.sentPackets, 2);
+      expect(result.sentBytes, 2400);
+      expect(result.receivedPackets, 1);
+      expect(result.receivedBytes, 1200);
     });
 
     test('getQuicTest applies defaults for missing fields', () async {
@@ -330,6 +346,14 @@ void main() {
       expect(result.alpn, '');
       expect(result.version, 0);
       expect(result.error, 'x');
+      expect(result.stage, '');
+      expect(result.target, '');
+      expect(result.resolvedIp, '');
+      expect(result.network, '');
+      expect(result.sentPackets, 0);
+      expect(result.sentBytes, 0);
+      expect(result.receivedPackets, 0);
+      expect(result.receivedBytes, 0);
     });
 
     test('getAllProxies filters out group types', () async {

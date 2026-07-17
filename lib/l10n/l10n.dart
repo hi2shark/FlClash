@@ -5633,6 +5633,61 @@ class AppLocalizations {
   String get testFailed {
     return Intl.message('Test Failed', name: 'testFailed', desc: '', args: []);
   }
+
+  /// `Stage`
+  String get testStage {
+    return Intl.message('Stage', name: 'testStage', desc: '', args: []);
+  }
+
+  /// `Target`
+  String get testTarget {
+    return Intl.message('Target', name: 'testTarget', desc: '', args: []);
+  }
+
+  /// `Resolved Address`
+  String get resolvedAddress {
+    return Intl.message(
+      'Resolved Address',
+      name: 'resolvedAddress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sent Packets`
+  String get sentPackets {
+    return Intl.message(
+      'Sent Packets',
+      name: 'sentPackets',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Received Packets`
+  String get receivedPackets {
+    return Intl.message(
+      'Received Packets',
+      name: 'receivedPackets',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Error`
+  String get errorDetails {
+    return Intl.message('Error', name: 'errorDetails', desc: '', args: []);
+  }
+
+  /// `QUIC handshake timed out`
+  String get quicHandshakeTimedOut {
+    return Intl.message(
+      'QUIC handshake timed out',
+      name: 'quicHandshakeTimedOut',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

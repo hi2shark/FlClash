@@ -382,6 +382,14 @@ _QuicTestResult _$QuicTestResultFromJson(Map<String, dynamic> json) =>
       alpn: json['alpn'] as String? ?? '',
       version: (json['version'] as num?)?.toInt() ?? 0,
       error: json['error'] as String? ?? '',
+      stage: json['stage'] as String? ?? '',
+      target: json['target'] as String? ?? '',
+      resolvedIp: json['resolved-ip'] as String? ?? '',
+      network: json['network'] as String? ?? '',
+      sentPackets: (json['sent-packets'] as num?)?.toInt() ?? 0,
+      sentBytes: (json['sent-bytes'] as num?)?.toInt() ?? 0,
+      receivedPackets: (json['received-packets'] as num?)?.toInt() ?? 0,
+      receivedBytes: (json['received-bytes'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$QuicTestResultToJson(_QuicTestResult instance) =>
@@ -391,4 +399,12 @@ Map<String, dynamic> _$QuicTestResultToJson(_QuicTestResult instance) =>
       'alpn': instance.alpn,
       'version': instance.version,
       'error': instance.error,
+      'stage': instance.stage,
+      'target': instance.target,
+      'resolved-ip': instance.resolvedIp,
+      'network': instance.network,
+      'sent-packets': instance.sentPackets,
+      'sent-bytes': instance.sentBytes,
+      'received-packets': instance.receivedPackets,
+      'received-bytes': instance.receivedBytes,
     };

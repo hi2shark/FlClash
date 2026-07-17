@@ -716,5 +716,12 @@
   "quicVersion": "QUIC バージョン",
   "localNodes": "ローカルノード",
   "allNodes": "すべてのノード",
-  "testFailed": "テスト失敗"
+  "testFailed": "テスト失敗",
+  "testStage": "ステージ",
+  "testTarget": "ターゲット",
+  "resolvedAddress": "解決済みアドレス",
+  "sentPackets": "送信パケット",
+  "receivedPackets": "受信パケット",
+  "errorDetails": "エラー",
+  "quicHandshakeTimedOut": "QUIC ハンドシェイクがタイムアウトしました"
 }

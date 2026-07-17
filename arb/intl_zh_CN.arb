@@ -716,5 +716,12 @@
   "quicVersion": "QUIC 版本",
   "localNodes": "本地节点",
   "allNodes": "全部节点",
-  "testFailed": "测试失败"
+  "testFailed": "测试失败",
+  "testStage": "阶段",
+  "testTarget": "目标",
+  "resolvedAddress": "解析地址",
+  "sentPackets": "发送包数",
+  "receivedPackets": "接收包数",
+  "errorDetails": "错误",
+  "quicHandshakeTimedOut": "QUIC 握手超时"
 }

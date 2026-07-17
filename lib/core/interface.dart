@@ -352,7 +352,14 @@ abstract class CoreHandlerInterface with CoreInterface {
           data: json.encode(params.toJson()),
           timeout: const Duration(seconds: 10),
         ) ??
-        json.encode(QuicTestResult(name: params.proxyName, error: 'timeout'));
+        json.encode(
+          QuicTestResult(
+            name: params.proxyName,
+            stage: 'client_timeout',
+            target: params.host ?? 'cloudflare-quic.com:443',
+            error: 'core QUIC test did not respond before the client timeout',
+          ),
+        );
   }
 
   @override

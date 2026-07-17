@@ -716,5 +716,12 @@
   "quicVersion": "Версия QUIC",
   "localNodes": "Локальные узлы",
   "allNodes": "Все узлы",
-  "testFailed": "Тест не удался"
+  "testFailed": "Тест не удался",
+  "testStage": "Этап",
+  "testTarget": "Цель",
+  "resolvedAddress": "Разрешенный адрес",
+  "sentPackets": "Отправлено пакетов",
+  "receivedPackets": "Получено пакетов",
+  "errorDetails": "Ошибка",
+  "quicHandshakeTimedOut": "Время ожидания рукопожатия QUIC истекло"
 }

@@ -91,10 +91,20 @@ class _NetworkTestViewState extends State<NetworkTestView> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: context.textTheme.bodyMedium?.toLight),
-          Text(value, style: context.textTheme.bodyMedium),
+          Expanded(
+            child: Text(label, style: context.textTheme.bodyMedium?.toLight),
+          ),
+          const SizedBox(width: 16),
+          Flexible(
+            flex: 2,
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: context.textTheme.bodyMedium,
+            ),
+          ),
         ],
       ),
     );
@@ -140,8 +150,38 @@ class _NetworkTestViewState extends State<NetworkTestView> {
       return null;
     }
     final appLocalizations = context.appLocalizations;
+    final sent = '${result.sentPackets} (${result.sentBytes} B)';
+    final received = '${result.receivedPackets} (${result.receivedBytes} B)';
     if (result.error.isNotEmpty) {
-      return _buildErrorText(result.error);
+      final isHandshakeTimeout =
+          result.stage == 'quic_handshake' &&
+          result.error.toLowerCase().contains('deadline exceeded');
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildErrorText(
+            isHandshakeTimeout
+                ? appLocalizations.quicHandshakeTimedOut
+                : result.error,
+          ),
+          const SizedBox(height: 8),
+          if (result.stage.isNotEmpty)
+            _buildResultRow(appLocalizations.testStage, result.stage),
+          if (result.target.isNotEmpty)
+            _buildResultRow(appLocalizations.testTarget, result.target),
+          if (result.resolvedIp.isNotEmpty)
+            _buildResultRow(
+              appLocalizations.resolvedAddress,
+              result.resolvedIp,
+            ),
+          if (result.network.isNotEmpty)
+            _buildResultRow(appLocalizations.networkType, result.network),
+          _buildResultRow(appLocalizations.sentPackets, sent),
+          _buildResultRow(appLocalizations.receivedPackets, received),
+          _buildResultRow(appLocalizations.errorDetails, result.error),
+        ],
+      );
     }
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -149,6 +189,14 @@ class _NetworkTestViewState extends State<NetworkTestView> {
         _buildResultRow(appLocalizations.rtt, '${result.rtt} ms'),
         _buildResultRow(appLocalizations.alpn, result.alpn),
         _buildResultRow(appLocalizations.quicVersion, '${result.version}'),
+        if (result.target.isNotEmpty)
+          _buildResultRow(appLocalizations.testTarget, result.target),
+        if (result.resolvedIp.isNotEmpty)
+          _buildResultRow(appLocalizations.resolvedAddress, result.resolvedIp),
+        if (result.network.isNotEmpty)
+          _buildResultRow(appLocalizations.networkType, result.network),
+        _buildResultRow(appLocalizations.sentPackets, sent),
+        _buildResultRow(appLocalizations.receivedPackets, received),
       ],
     );
   }

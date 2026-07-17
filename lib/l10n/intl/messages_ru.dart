@@ -429,6 +429,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "enabledNodes": MessageLookupByLibrary.simpleMessage("Включённые узлы"),
     "encryption": MessageLookupByLibrary.simpleMessage("Шифрование"),
     "entries": MessageLookupByLibrary.simpleMessage(" записей"),
+    "errorDetails": MessageLookupByLibrary.simpleMessage("Ошибка"),
     "exclude": MessageLookupByLibrary.simpleMessage(
       "Скрыть из последних задач",
     ),
@@ -957,6 +958,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "qrcodeDesc": MessageLookupByLibrary.simpleMessage(
       "Сканируйте QR-код для получения профиля",
     ),
+    "quicHandshakeTimedOut": MessageLookupByLibrary.simpleMessage(
+      "Время ожидания рукопожатия QUIC истекло",
+    ),
     "quicTest": MessageLookupByLibrary.simpleMessage("Тест QUIC"),
     "quicTestDesc": MessageLookupByLibrary.simpleMessage(
       "Проверка QUIC (HTTP/3) соединения через выбранный узел",
@@ -968,6 +972,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "realityPublicKey": MessageLookupByLibrary.simpleMessage("Public Key"),
     "realityShortId": MessageLookupByLibrary.simpleMessage("Short ID"),
     "reason": MessageLookupByLibrary.simpleMessage("Причина"),
+    "receivedPackets": MessageLookupByLibrary.simpleMessage("Получено пакетов"),
     "redirPort": MessageLookupByLibrary.simpleMessage("Redir-порт"),
     "redo": MessageLookupByLibrary.simpleMessage("Повторить"),
     "reduceRtt": MessageLookupByLibrary.simpleMessage("Снижать RTT"),
@@ -991,6 +996,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "resetTip": MessageLookupByLibrary.simpleMessage(
       "Убедитесь, что хотите сбросить",
+    ),
+    "resolvedAddress": MessageLookupByLibrary.simpleMessage(
+      "Разрешенный адрес",
     ),
     "resources": MessageLookupByLibrary.simpleMessage("Ресурсы"),
     "resourcesDesc": MessageLookupByLibrary.simpleMessage(
@@ -1187,6 +1195,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Выбрано"),
     "selectedCountTitle": m21,
+    "sentPackets": MessageLookupByLibrary.simpleMessage("Отправлено пакетов"),
     "server": MessageLookupByLibrary.simpleMessage("Сервер"),
     "servername": MessageLookupByLibrary.simpleMessage("Имя сервера"),
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
@@ -1274,6 +1283,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "testInterval": MessageLookupByLibrary.simpleMessage(
       "Интервал тестирования",
     ),
+    "testStage": MessageLookupByLibrary.simpleMessage("Этап"),
+    "testTarget": MessageLookupByLibrary.simpleMessage("Цель"),
     "testUrl": MessageLookupByLibrary.simpleMessage("Тест URL"),
     "testWhenUsed": MessageLookupByLibrary.simpleMessage(
       "Тестировать при использовании",

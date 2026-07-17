@@ -417,6 +417,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "enabledNodes": MessageLookupByLibrary.simpleMessage("Enabled nodes"),
     "encryption": MessageLookupByLibrary.simpleMessage("Encryption"),
     "entries": MessageLookupByLibrary.simpleMessage(" entries"),
+    "errorDetails": MessageLookupByLibrary.simpleMessage("Error"),
     "exclude": MessageLookupByLibrary.simpleMessage("Hidden from recent tasks"),
     "excludeDesc": MessageLookupByLibrary.simpleMessage(
       "When the app is in the background, the app is hidden from the recent task",
@@ -915,6 +916,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "qrcodeDesc": MessageLookupByLibrary.simpleMessage(
       "Scan QR code to obtain profile",
     ),
+    "quicHandshakeTimedOut": MessageLookupByLibrary.simpleMessage(
+      "QUIC handshake timed out",
+    ),
     "quicTest": MessageLookupByLibrary.simpleMessage("QUIC Test"),
     "quicTestDesc": MessageLookupByLibrary.simpleMessage(
       "Test QUIC (HTTP/3) connectivity through the selected node",
@@ -926,6 +930,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "realityPublicKey": MessageLookupByLibrary.simpleMessage("Public Key"),
     "realityShortId": MessageLookupByLibrary.simpleMessage("Short ID"),
     "reason": MessageLookupByLibrary.simpleMessage("Reason"),
+    "receivedPackets": MessageLookupByLibrary.simpleMessage("Received Packets"),
     "redirPort": MessageLookupByLibrary.simpleMessage("Redir Port"),
     "redo": MessageLookupByLibrary.simpleMessage("redo"),
     "reduceRtt": MessageLookupByLibrary.simpleMessage("Reduce RTT"),
@@ -948,6 +953,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "The current page has changes. Are you sure you want to reset?",
     ),
     "resetTip": MessageLookupByLibrary.simpleMessage("Make sure to reset"),
+    "resolvedAddress": MessageLookupByLibrary.simpleMessage("Resolved Address"),
     "resources": MessageLookupByLibrary.simpleMessage("Resources"),
     "resourcesDesc": MessageLookupByLibrary.simpleMessage(
       "External resource related info",
@@ -1133,6 +1139,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Selected"),
     "selectedCountTitle": m21,
+    "sentPackets": MessageLookupByLibrary.simpleMessage("Sent Packets"),
     "server": MessageLookupByLibrary.simpleMessage("Server"),
     "servername": MessageLookupByLibrary.simpleMessage("Server Name"),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
@@ -1210,6 +1217,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "testFailed": MessageLookupByLibrary.simpleMessage("Test Failed"),
     "testInterval": MessageLookupByLibrary.simpleMessage("Test interval"),
+    "testStage": MessageLookupByLibrary.simpleMessage("Stage"),
+    "testTarget": MessageLookupByLibrary.simpleMessage("Target"),
     "testUrl": MessageLookupByLibrary.simpleMessage("Test url"),
     "testWhenUsed": MessageLookupByLibrary.simpleMessage("Test when used"),
     "testing": MessageLookupByLibrary.simpleMessage("Testing..."),

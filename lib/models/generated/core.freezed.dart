@@ -4989,7 +4989,7 @@ as int?,
 /// @nodoc
 mixin _$QuicTestResult {
 
- String get name; int get rtt; String get alpn; int get version; String get error;
+ String get name; int get rtt; String get alpn; int get version; String get error; String get stage; String get target;@JsonKey(name: 'resolved-ip') String get resolvedIp; String get network;@JsonKey(name: 'sent-packets') int get sentPackets;@JsonKey(name: 'sent-bytes') int get sentBytes;@JsonKey(name: 'received-packets') int get receivedPackets;@JsonKey(name: 'received-bytes') int get receivedBytes;
 /// Create a copy of QuicTestResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -5002,16 +5002,16 @@ $QuicTestResultCopyWith<QuicTestResult> get copyWith => _$QuicTestResultCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is QuicTestResult&&(identical(other.name, name) || other.name == name)&&(identical(other.rtt, rtt) || other.rtt == rtt)&&(identical(other.alpn, alpn) || other.alpn == alpn)&&(identical(other.version, version) || other.version == version)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is QuicTestResult&&(identical(other.name, name) || other.name == name)&&(identical(other.rtt, rtt) || other.rtt == rtt)&&(identical(other.alpn, alpn) || other.alpn == alpn)&&(identical(other.version, version) || other.version == version)&&(identical(other.error, error) || other.error == error)&&(identical(other.stage, stage) || other.stage == stage)&&(identical(other.target, target) || other.target == target)&&(identical(other.resolvedIp, resolvedIp) || other.resolvedIp == resolvedIp)&&(identical(other.network, network) || other.network == network)&&(identical(other.sentPackets, sentPackets) || other.sentPackets == sentPackets)&&(identical(other.sentBytes, sentBytes) || other.sentBytes == sentBytes)&&(identical(other.receivedPackets, receivedPackets) || other.receivedPackets == receivedPackets)&&(identical(other.receivedBytes, receivedBytes) || other.receivedBytes == receivedBytes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,rtt,alpn,version,error);
+int get hashCode => Object.hash(runtimeType,name,rtt,alpn,version,error,stage,target,resolvedIp,network,sentPackets,sentBytes,receivedPackets,receivedBytes);
 
 @override
 String toString() {
-  return 'QuicTestResult(name: $name, rtt: $rtt, alpn: $alpn, version: $version, error: $error)';
+  return 'QuicTestResult(name: $name, rtt: $rtt, alpn: $alpn, version: $version, error: $error, stage: $stage, target: $target, resolvedIp: $resolvedIp, network: $network, sentPackets: $sentPackets, sentBytes: $sentBytes, receivedPackets: $receivedPackets, receivedBytes: $receivedBytes)';
 }
 
 
@@ -5022,7 +5022,7 @@ abstract mixin class $QuicTestResultCopyWith<$Res>  {
   factory $QuicTestResultCopyWith(QuicTestResult value, $Res Function(QuicTestResult) _then) = _$QuicTestResultCopyWithImpl;
 @useResult
 $Res call({
- String name, int rtt, String alpn, int version, String error
+ String name, int rtt, String alpn, int version, String error, String stage, String target,@JsonKey(name: 'resolved-ip') String resolvedIp, String network,@JsonKey(name: 'sent-packets') int sentPackets,@JsonKey(name: 'sent-bytes') int sentBytes,@JsonKey(name: 'received-packets') int receivedPackets,@JsonKey(name: 'received-bytes') int receivedBytes
 });
 
 
@@ -5039,14 +5039,22 @@ class _$QuicTestResultCopyWithImpl<$Res>
 
 /// Create a copy of QuicTestResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? rtt = null,Object? alpn = null,Object? version = null,Object? error = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? rtt = null,Object? alpn = null,Object? version = null,Object? error = null,Object? stage = null,Object? target = null,Object? resolvedIp = null,Object? network = null,Object? sentPackets = null,Object? sentBytes = null,Object? receivedPackets = null,Object? receivedBytes = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,rtt: null == rtt ? _self.rtt : rtt // ignore: cast_nullable_to_non_nullable
 as int,alpn: null == alpn ? _self.alpn : alpn // ignore: cast_nullable_to_non_nullable
 as String,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String,
+as String,stage: null == stage ? _self.stage : stage // ignore: cast_nullable_to_non_nullable
+as String,target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,resolvedIp: null == resolvedIp ? _self.resolvedIp : resolvedIp // ignore: cast_nullable_to_non_nullable
+as String,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
+as String,sentPackets: null == sentPackets ? _self.sentPackets : sentPackets // ignore: cast_nullable_to_non_nullable
+as int,sentBytes: null == sentBytes ? _self.sentBytes : sentBytes // ignore: cast_nullable_to_non_nullable
+as int,receivedPackets: null == receivedPackets ? _self.receivedPackets : receivedPackets // ignore: cast_nullable_to_non_nullable
+as int,receivedBytes: null == receivedBytes ? _self.receivedBytes : receivedBytes // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -5131,10 +5139,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  int rtt,  String alpn,  int version,  String error)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  int rtt,  String alpn,  int version,  String error,  String stage,  String target, @JsonKey(name: 'resolved-ip')  String resolvedIp,  String network, @JsonKey(name: 'sent-packets')  int sentPackets, @JsonKey(name: 'sent-bytes')  int sentBytes, @JsonKey(name: 'received-packets')  int receivedPackets, @JsonKey(name: 'received-bytes')  int receivedBytes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _QuicTestResult() when $default != null:
-return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error);case _:
+return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error,_that.stage,_that.target,_that.resolvedIp,_that.network,_that.sentPackets,_that.sentBytes,_that.receivedPackets,_that.receivedBytes);case _:
   return orElse();
 
 }
@@ -5152,10 +5160,10 @@ return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  int rtt,  String alpn,  int version,  String error)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  int rtt,  String alpn,  int version,  String error,  String stage,  String target, @JsonKey(name: 'resolved-ip')  String resolvedIp,  String network, @JsonKey(name: 'sent-packets')  int sentPackets, @JsonKey(name: 'sent-bytes')  int sentBytes, @JsonKey(name: 'received-packets')  int receivedPackets, @JsonKey(name: 'received-bytes')  int receivedBytes)  $default,) {final _that = this;
 switch (_that) {
 case _QuicTestResult():
-return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error);case _:
+return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error,_that.stage,_that.target,_that.resolvedIp,_that.network,_that.sentPackets,_that.sentBytes,_that.receivedPackets,_that.receivedBytes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -5172,10 +5180,10 @@ return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  int rtt,  String alpn,  int version,  String error)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  int rtt,  String alpn,  int version,  String error,  String stage,  String target, @JsonKey(name: 'resolved-ip')  String resolvedIp,  String network, @JsonKey(name: 'sent-packets')  int sentPackets, @JsonKey(name: 'sent-bytes')  int sentBytes, @JsonKey(name: 'received-packets')  int receivedPackets, @JsonKey(name: 'received-bytes')  int receivedBytes)?  $default,) {final _that = this;
 switch (_that) {
 case _QuicTestResult() when $default != null:
-return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error);case _:
+return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error,_that.stage,_that.target,_that.resolvedIp,_that.network,_that.sentPackets,_that.sentBytes,_that.receivedPackets,_that.receivedBytes);case _:
   return null;
 
 }
@@ -5187,7 +5195,7 @@ return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error);case 
 @JsonSerializable()
 
 class _QuicTestResult implements QuicTestResult {
-  const _QuicTestResult({this.name = '', this.rtt = 0, this.alpn = '', this.version = 0, this.error = ''});
+  const _QuicTestResult({this.name = '', this.rtt = 0, this.alpn = '', this.version = 0, this.error = '', this.stage = '', this.target = '', @JsonKey(name: 'resolved-ip') this.resolvedIp = '', this.network = '', @JsonKey(name: 'sent-packets') this.sentPackets = 0, @JsonKey(name: 'sent-bytes') this.sentBytes = 0, @JsonKey(name: 'received-packets') this.receivedPackets = 0, @JsonKey(name: 'received-bytes') this.receivedBytes = 0});
   factory _QuicTestResult.fromJson(Map<String, dynamic> json) => _$QuicTestResultFromJson(json);
 
 @override@JsonKey() final  String name;
@@ -5195,6 +5203,14 @@ class _QuicTestResult implements QuicTestResult {
 @override@JsonKey() final  String alpn;
 @override@JsonKey() final  int version;
 @override@JsonKey() final  String error;
+@override@JsonKey() final  String stage;
+@override@JsonKey() final  String target;
+@override@JsonKey(name: 'resolved-ip') final  String resolvedIp;
+@override@JsonKey() final  String network;
+@override@JsonKey(name: 'sent-packets') final  int sentPackets;
+@override@JsonKey(name: 'sent-bytes') final  int sentBytes;
+@override@JsonKey(name: 'received-packets') final  int receivedPackets;
+@override@JsonKey(name: 'received-bytes') final  int receivedBytes;
 
 /// Create a copy of QuicTestResult
 /// with the given fields replaced by the non-null parameter values.
@@ -5209,16 +5225,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _QuicTestResult&&(identical(other.name, name) || other.name == name)&&(identical(other.rtt, rtt) || other.rtt == rtt)&&(identical(other.alpn, alpn) || other.alpn == alpn)&&(identical(other.version, version) || other.version == version)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _QuicTestResult&&(identical(other.name, name) || other.name == name)&&(identical(other.rtt, rtt) || other.rtt == rtt)&&(identical(other.alpn, alpn) || other.alpn == alpn)&&(identical(other.version, version) || other.version == version)&&(identical(other.error, error) || other.error == error)&&(identical(other.stage, stage) || other.stage == stage)&&(identical(other.target, target) || other.target == target)&&(identical(other.resolvedIp, resolvedIp) || other.resolvedIp == resolvedIp)&&(identical(other.network, network) || other.network == network)&&(identical(other.sentPackets, sentPackets) || other.sentPackets == sentPackets)&&(identical(other.sentBytes, sentBytes) || other.sentBytes == sentBytes)&&(identical(other.receivedPackets, receivedPackets) || other.receivedPackets == receivedPackets)&&(identical(other.receivedBytes, receivedBytes) || other.receivedBytes == receivedBytes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,rtt,alpn,version,error);
+int get hashCode => Object.hash(runtimeType,name,rtt,alpn,version,error,stage,target,resolvedIp,network,sentPackets,sentBytes,receivedPackets,receivedBytes);
 
 @override
 String toString() {
-  return 'QuicTestResult(name: $name, rtt: $rtt, alpn: $alpn, version: $version, error: $error)';
+  return 'QuicTestResult(name: $name, rtt: $rtt, alpn: $alpn, version: $version, error: $error, stage: $stage, target: $target, resolvedIp: $resolvedIp, network: $network, sentPackets: $sentPackets, sentBytes: $sentBytes, receivedPackets: $receivedPackets, receivedBytes: $receivedBytes)';
 }
 
 
@@ -5229,7 +5245,7 @@ abstract mixin class _$QuicTestResultCopyWith<$Res> implements $QuicTestResultCo
   factory _$QuicTestResultCopyWith(_QuicTestResult value, $Res Function(_QuicTestResult) _then) = __$QuicTestResultCopyWithImpl;
 @override @useResult
 $Res call({
- String name, int rtt, String alpn, int version, String error
+ String name, int rtt, String alpn, int version, String error, String stage, String target,@JsonKey(name: 'resolved-ip') String resolvedIp, String network,@JsonKey(name: 'sent-packets') int sentPackets,@JsonKey(name: 'sent-bytes') int sentBytes,@JsonKey(name: 'received-packets') int receivedPackets,@JsonKey(name: 'received-bytes') int receivedBytes
 });
 
 
@@ -5246,14 +5262,22 @@ class __$QuicTestResultCopyWithImpl<$Res>
 
 /// Create a copy of QuicTestResult
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? rtt = null,Object? alpn = null,Object? version = null,Object? error = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? rtt = null,Object? alpn = null,Object? version = null,Object? error = null,Object? stage = null,Object? target = null,Object? resolvedIp = null,Object? network = null,Object? sentPackets = null,Object? sentBytes = null,Object? receivedPackets = null,Object? receivedBytes = null,}) {
   return _then(_QuicTestResult(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,rtt: null == rtt ? _self.rtt : rtt // ignore: cast_nullable_to_non_nullable
 as int,alpn: null == alpn ? _self.alpn : alpn // ignore: cast_nullable_to_non_nullable
 as String,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
 as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String,
+as String,stage: null == stage ? _self.stage : stage // ignore: cast_nullable_to_non_nullable
+as String,target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,resolvedIp: null == resolvedIp ? _self.resolvedIp : resolvedIp // ignore: cast_nullable_to_non_nullable
+as String,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
+as String,sentPackets: null == sentPackets ? _self.sentPackets : sentPackets // ignore: cast_nullable_to_non_nullable
+as int,sentBytes: null == sentBytes ? _self.sentBytes : sentBytes // ignore: cast_nullable_to_non_nullable
+as int,receivedPackets: null == receivedPackets ? _self.receivedPackets : receivedPackets // ignore: cast_nullable_to_non_nullable
+as int,receivedBytes: null == receivedBytes ? _self.receivedBytes : receivedBytes // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

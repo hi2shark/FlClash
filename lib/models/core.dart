@@ -257,6 +257,14 @@ abstract class QuicTestResult with _$QuicTestResult {
     @Default('') String alpn,
     @Default(0) int version,
     @Default('') String error,
+    @Default('') String stage,
+    @Default('') String target,
+    @JsonKey(name: 'resolved-ip') @Default('') String resolvedIp,
+    @Default('') String network,
+    @JsonKey(name: 'sent-packets') @Default(0) int sentPackets,
+    @JsonKey(name: 'sent-bytes') @Default(0) int sentBytes,
+    @JsonKey(name: 'received-packets') @Default(0) int receivedPackets,
+    @JsonKey(name: 'received-bytes') @Default(0) int receivedBytes,
   }) = _QuicTestResult;
 
   factory QuicTestResult.fromJson(Map<String, Object?> json) =>
