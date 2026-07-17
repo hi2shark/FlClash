@@ -44,6 +44,8 @@ void main() {
     registerFallbackValue(
       const UpdateGeoDataParams(geoType: 't', geoName: 'n'),
     );
+    registerFallbackValue(const SpeedTestParams(proxyName: 'P'));
+    registerFallbackValue(const QuicTestParams(proxyName: 'P'));
   });
 
   setUp(() {
@@ -262,6 +264,97 @@ void main() {
       when(() => mock.deleteFile('/tmp/x')).thenAnswer((_) async => 'ok');
       final result = await controller.deleteFile('/tmp/x');
       expect(result, 'ok');
+    });
+  });
+
+  group('network test methods', () {
+    test('getSpeedTest parses JSON response', () async {
+      const params = SpeedTestParams(proxyName: 'P1');
+      when(() => mock.speedTest(params)).thenAnswer(
+        (_) async => json.encode({
+          'name': 'P1',
+          'latency': 120,
+          'speed': 1024.5,
+          'bytes': 204800,
+          'error': '',
+        }),
+      );
+      final result = await controller.getSpeedTest(params);
+      expect(result.name, 'P1');
+      expect(result.latency, 120);
+      expect(result.speed, 1024.5);
+      expect(result.bytes, 204800);
+      expect(result.error, '');
+    });
+
+    test('getSpeedTest applies defaults for missing fields', () async {
+      const params = SpeedTestParams(proxyName: 'P1');
+      when(
+        () => mock.speedTest(any()),
+      ).thenAnswer((_) async => json.encode({'name': 'P1'}));
+      final result = await controller.getSpeedTest(params);
+      expect(result.name, 'P1');
+      expect(result.latency, 0);
+      expect(result.speed, 0);
+      expect(result.bytes, 0);
+      expect(result.error, '');
+    });
+
+    test('getQuicTest parses JSON response', () async {
+      const params = QuicTestParams(proxyName: 'P1');
+      when(() => mock.quicTest(params)).thenAnswer(
+        (_) async => json.encode({
+          'name': 'P1',
+          'rtt': 80,
+          'alpn': 'h3',
+          'version': 1,
+          'error': '',
+        }),
+      );
+      final result = await controller.getQuicTest(params);
+      expect(result.name, 'P1');
+      expect(result.rtt, 80);
+      expect(result.alpn, 'h3');
+      expect(result.version, 1);
+      expect(result.error, '');
+    });
+
+    test('getQuicTest applies defaults for missing fields', () async {
+      const params = QuicTestParams(proxyName: 'P1');
+      when(
+        () => mock.quicTest(any()),
+      ).thenAnswer((_) async => json.encode({'name': 'P1', 'error': 'x'}));
+      final result = await controller.getQuicTest(params);
+      expect(result.name, 'P1');
+      expect(result.rtt, 0);
+      expect(result.alpn, '');
+      expect(result.version, 0);
+      expect(result.error, 'x');
+    });
+
+    test('getAllProxies filters out group types', () async {
+      when(() => mock.getProxies()).thenAnswer(
+        (_) async => const ProxiesData(
+          proxies: {
+            'ProxyA': {'name': 'ProxyA', 'type': 'Shadowsocks'},
+            'Group1': {'name': 'Group1', 'type': 'Selector'},
+            'ProxyB': {'name': 'ProxyB', 'type': 'Vmess'},
+            'Group2': {'name': 'Group2', 'type': 'URLTest'},
+          },
+          all: ['ProxyA', 'Group1', 'ProxyB', 'Group2'],
+        ),
+      );
+      final result = await controller.getAllProxies();
+      expect(result.map((proxy) => proxy.name), ['ProxyA', 'ProxyB']);
+      expect(result.every((proxy) => proxy.type != 'Selector'), true);
+    });
+
+    test('getAllProxies returns empty list when no proxies', () async {
+      when(
+        () => mock.getProxies(),
+      ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
+      final result = await controller.getAllProxies();
+      expect(result, isEmpty);
     });
   });
 }

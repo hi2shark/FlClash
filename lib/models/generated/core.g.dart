@@ -290,6 +290,8 @@ const _$ActionMethodEnumMap = {
   ActionMethod.crash: 'crash',
   ActionMethod.setupConfig: 'setupConfig',
   ActionMethod.deleteFile: 'deleteFile',
+  ActionMethod.speedTest: 'speedTest',
+  ActionMethod.quicTest: 'quicTest',
   ActionMethod.setState: 'setState',
   ActionMethod.startTun: 'startTun',
   ActionMethod.stopTun: 'stopTun',
@@ -326,3 +328,67 @@ Map<String, dynamic> _$ActionResultToJson(_ActionResult instance) =>
     };
 
 const _$ResultTypeEnumMap = {ResultType.success: 0, ResultType.error: -1};
+
+_SpeedTestParams _$SpeedTestParamsFromJson(Map<String, dynamic> json) =>
+    _SpeedTestParams(
+      proxyName: json['proxy-name'] as String,
+      testUrl: json['test-url'] as String?,
+      timeout: (json['timeout'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$SpeedTestParamsToJson(_SpeedTestParams instance) =>
+    <String, dynamic>{
+      'proxy-name': instance.proxyName,
+      'test-url': instance.testUrl,
+      'timeout': instance.timeout,
+    };
+
+_SpeedTestResult _$SpeedTestResultFromJson(Map<String, dynamic> json) =>
+    _SpeedTestResult(
+      name: json['name'] as String? ?? '',
+      latency: (json['latency'] as num?)?.toInt() ?? 0,
+      speed: (json['speed'] as num?)?.toDouble() ?? 0,
+      bytes: (json['bytes'] as num?)?.toInt() ?? 0,
+      error: json['error'] as String? ?? '',
+    );
+
+Map<String, dynamic> _$SpeedTestResultToJson(_SpeedTestResult instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'latency': instance.latency,
+      'speed': instance.speed,
+      'bytes': instance.bytes,
+      'error': instance.error,
+    };
+
+_QuicTestParams _$QuicTestParamsFromJson(Map<String, dynamic> json) =>
+    _QuicTestParams(
+      proxyName: json['proxy-name'] as String,
+      host: json['host'] as String?,
+      timeout: (json['timeout'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$QuicTestParamsToJson(_QuicTestParams instance) =>
+    <String, dynamic>{
+      'proxy-name': instance.proxyName,
+      'host': instance.host,
+      'timeout': instance.timeout,
+    };
+
+_QuicTestResult _$QuicTestResultFromJson(Map<String, dynamic> json) =>
+    _QuicTestResult(
+      name: json['name'] as String? ?? '',
+      rtt: (json['rtt'] as num?)?.toInt() ?? 0,
+      alpn: json['alpn'] as String? ?? '',
+      version: (json['version'] as num?)?.toInt() ?? 0,
+      error: json['error'] as String? ?? '',
+    );
+
+Map<String, dynamic> _$QuicTestResultToJson(_QuicTestResult instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'rtt': instance.rtt,
+      'alpn': instance.alpn,
+      'version': instance.version,
+      'error': instance.error,
+    };

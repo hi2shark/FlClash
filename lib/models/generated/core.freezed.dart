@@ -4172,4 +4172,1092 @@ as ResultType,
 
 }
 
+
+/// @nodoc
+mixin _$SpeedTestParams {
+
+@JsonKey(name: 'proxy-name') String get proxyName;@JsonKey(name: 'test-url') String? get testUrl; int? get timeout;
+/// Create a copy of SpeedTestParams
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SpeedTestParamsCopyWith<SpeedTestParams> get copyWith => _$SpeedTestParamsCopyWithImpl<SpeedTestParams>(this as SpeedTestParams, _$identity);
+
+  /// Serializes this SpeedTestParams to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SpeedTestParams&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&(identical(other.testUrl, testUrl) || other.testUrl == testUrl)&&(identical(other.timeout, timeout) || other.timeout == timeout));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,proxyName,testUrl,timeout);
+
+@override
+String toString() {
+  return 'SpeedTestParams(proxyName: $proxyName, testUrl: $testUrl, timeout: $timeout)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SpeedTestParamsCopyWith<$Res>  {
+  factory $SpeedTestParamsCopyWith(SpeedTestParams value, $Res Function(SpeedTestParams) _then) = _$SpeedTestParamsCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(name: 'proxy-name') String proxyName,@JsonKey(name: 'test-url') String? testUrl, int? timeout
+});
+
+
+
+
+}
+/// @nodoc
+class _$SpeedTestParamsCopyWithImpl<$Res>
+    implements $SpeedTestParamsCopyWith<$Res> {
+  _$SpeedTestParamsCopyWithImpl(this._self, this._then);
+
+  final SpeedTestParams _self;
+  final $Res Function(SpeedTestParams) _then;
+
+/// Create a copy of SpeedTestParams
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? proxyName = null,Object? testUrl = freezed,Object? timeout = freezed,}) {
+  return _then(_self.copyWith(
+proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,testUrl: freezed == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
+as String?,timeout: freezed == timeout ? _self.timeout : timeout // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [SpeedTestParams].
+extension SpeedTestParamsPatterns on SpeedTestParams {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _SpeedTestParams value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _SpeedTestParams() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _SpeedTestParams value)  $default,){
+final _that = this;
+switch (_that) {
+case _SpeedTestParams():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _SpeedTestParams value)?  $default,){
+final _that = this;
+switch (_that) {
+case _SpeedTestParams() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-name')  String proxyName, @JsonKey(name: 'test-url')  String? testUrl,  int? timeout)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _SpeedTestParams() when $default != null:
+return $default(_that.proxyName,_that.testUrl,_that.timeout);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-name')  String proxyName, @JsonKey(name: 'test-url')  String? testUrl,  int? timeout)  $default,) {final _that = this;
+switch (_that) {
+case _SpeedTestParams():
+return $default(_that.proxyName,_that.testUrl,_that.timeout);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'proxy-name')  String proxyName, @JsonKey(name: 'test-url')  String? testUrl,  int? timeout)?  $default,) {final _that = this;
+switch (_that) {
+case _SpeedTestParams() when $default != null:
+return $default(_that.proxyName,_that.testUrl,_that.timeout);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _SpeedTestParams implements SpeedTestParams {
+  const _SpeedTestParams({@JsonKey(name: 'proxy-name') required this.proxyName, @JsonKey(name: 'test-url') this.testUrl, this.timeout});
+  factory _SpeedTestParams.fromJson(Map<String, dynamic> json) => _$SpeedTestParamsFromJson(json);
+
+@override@JsonKey(name: 'proxy-name') final  String proxyName;
+@override@JsonKey(name: 'test-url') final  String? testUrl;
+@override final  int? timeout;
+
+/// Create a copy of SpeedTestParams
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SpeedTestParamsCopyWith<_SpeedTestParams> get copyWith => __$SpeedTestParamsCopyWithImpl<_SpeedTestParams>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$SpeedTestParamsToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SpeedTestParams&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&(identical(other.testUrl, testUrl) || other.testUrl == testUrl)&&(identical(other.timeout, timeout) || other.timeout == timeout));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,proxyName,testUrl,timeout);
+
+@override
+String toString() {
+  return 'SpeedTestParams(proxyName: $proxyName, testUrl: $testUrl, timeout: $timeout)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$SpeedTestParamsCopyWith<$Res> implements $SpeedTestParamsCopyWith<$Res> {
+  factory _$SpeedTestParamsCopyWith(_SpeedTestParams value, $Res Function(_SpeedTestParams) _then) = __$SpeedTestParamsCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(name: 'proxy-name') String proxyName,@JsonKey(name: 'test-url') String? testUrl, int? timeout
+});
+
+
+
+
+}
+/// @nodoc
+class __$SpeedTestParamsCopyWithImpl<$Res>
+    implements _$SpeedTestParamsCopyWith<$Res> {
+  __$SpeedTestParamsCopyWithImpl(this._self, this._then);
+
+  final _SpeedTestParams _self;
+  final $Res Function(_SpeedTestParams) _then;
+
+/// Create a copy of SpeedTestParams
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? proxyName = null,Object? testUrl = freezed,Object? timeout = freezed,}) {
+  return _then(_SpeedTestParams(
+proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,testUrl: freezed == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
+as String?,timeout: freezed == timeout ? _self.timeout : timeout // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$SpeedTestResult {
+
+ String get name; int get latency; double get speed; int get bytes; String get error;
+/// Create a copy of SpeedTestResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SpeedTestResultCopyWith<SpeedTestResult> get copyWith => _$SpeedTestResultCopyWithImpl<SpeedTestResult>(this as SpeedTestResult, _$identity);
+
+  /// Serializes this SpeedTestResult to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SpeedTestResult&&(identical(other.name, name) || other.name == name)&&(identical(other.latency, latency) || other.latency == latency)&&(identical(other.speed, speed) || other.speed == speed)&&(identical(other.bytes, bytes) || other.bytes == bytes)&&(identical(other.error, error) || other.error == error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,latency,speed,bytes,error);
+
+@override
+String toString() {
+  return 'SpeedTestResult(name: $name, latency: $latency, speed: $speed, bytes: $bytes, error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SpeedTestResultCopyWith<$Res>  {
+  factory $SpeedTestResultCopyWith(SpeedTestResult value, $Res Function(SpeedTestResult) _then) = _$SpeedTestResultCopyWithImpl;
+@useResult
+$Res call({
+ String name, int latency, double speed, int bytes, String error
+});
+
+
+
+
+}
+/// @nodoc
+class _$SpeedTestResultCopyWithImpl<$Res>
+    implements $SpeedTestResultCopyWith<$Res> {
+  _$SpeedTestResultCopyWithImpl(this._self, this._then);
+
+  final SpeedTestResult _self;
+  final $Res Function(SpeedTestResult) _then;
+
+/// Create a copy of SpeedTestResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? latency = null,Object? speed = null,Object? bytes = null,Object? error = null,}) {
+  return _then(_self.copyWith(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,latency: null == latency ? _self.latency : latency // ignore: cast_nullable_to_non_nullable
+as int,speed: null == speed ? _self.speed : speed // ignore: cast_nullable_to_non_nullable
+as double,bytes: null == bytes ? _self.bytes : bytes // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [SpeedTestResult].
+extension SpeedTestResultPatterns on SpeedTestResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _SpeedTestResult value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _SpeedTestResult() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _SpeedTestResult value)  $default,){
+final _that = this;
+switch (_that) {
+case _SpeedTestResult():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _SpeedTestResult value)?  $default,){
+final _that = this;
+switch (_that) {
+case _SpeedTestResult() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  int latency,  double speed,  int bytes,  String error)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _SpeedTestResult() when $default != null:
+return $default(_that.name,_that.latency,_that.speed,_that.bytes,_that.error);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  int latency,  double speed,  int bytes,  String error)  $default,) {final _that = this;
+switch (_that) {
+case _SpeedTestResult():
+return $default(_that.name,_that.latency,_that.speed,_that.bytes,_that.error);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  int latency,  double speed,  int bytes,  String error)?  $default,) {final _that = this;
+switch (_that) {
+case _SpeedTestResult() when $default != null:
+return $default(_that.name,_that.latency,_that.speed,_that.bytes,_that.error);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _SpeedTestResult implements SpeedTestResult {
+  const _SpeedTestResult({this.name = '', this.latency = 0, this.speed = 0, this.bytes = 0, this.error = ''});
+  factory _SpeedTestResult.fromJson(Map<String, dynamic> json) => _$SpeedTestResultFromJson(json);
+
+@override@JsonKey() final  String name;
+@override@JsonKey() final  int latency;
+@override@JsonKey() final  double speed;
+@override@JsonKey() final  int bytes;
+@override@JsonKey() final  String error;
+
+/// Create a copy of SpeedTestResult
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SpeedTestResultCopyWith<_SpeedTestResult> get copyWith => __$SpeedTestResultCopyWithImpl<_SpeedTestResult>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$SpeedTestResultToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SpeedTestResult&&(identical(other.name, name) || other.name == name)&&(identical(other.latency, latency) || other.latency == latency)&&(identical(other.speed, speed) || other.speed == speed)&&(identical(other.bytes, bytes) || other.bytes == bytes)&&(identical(other.error, error) || other.error == error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,latency,speed,bytes,error);
+
+@override
+String toString() {
+  return 'SpeedTestResult(name: $name, latency: $latency, speed: $speed, bytes: $bytes, error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$SpeedTestResultCopyWith<$Res> implements $SpeedTestResultCopyWith<$Res> {
+  factory _$SpeedTestResultCopyWith(_SpeedTestResult value, $Res Function(_SpeedTestResult) _then) = __$SpeedTestResultCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, int latency, double speed, int bytes, String error
+});
+
+
+
+
+}
+/// @nodoc
+class __$SpeedTestResultCopyWithImpl<$Res>
+    implements _$SpeedTestResultCopyWith<$Res> {
+  __$SpeedTestResultCopyWithImpl(this._self, this._then);
+
+  final _SpeedTestResult _self;
+  final $Res Function(_SpeedTestResult) _then;
+
+/// Create a copy of SpeedTestResult
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? latency = null,Object? speed = null,Object? bytes = null,Object? error = null,}) {
+  return _then(_SpeedTestResult(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,latency: null == latency ? _self.latency : latency // ignore: cast_nullable_to_non_nullable
+as int,speed: null == speed ? _self.speed : speed // ignore: cast_nullable_to_non_nullable
+as double,bytes: null == bytes ? _self.bytes : bytes // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$QuicTestParams {
+
+@JsonKey(name: 'proxy-name') String get proxyName; String? get host; int? get timeout;
+/// Create a copy of QuicTestParams
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$QuicTestParamsCopyWith<QuicTestParams> get copyWith => _$QuicTestParamsCopyWithImpl<QuicTestParams>(this as QuicTestParams, _$identity);
+
+  /// Serializes this QuicTestParams to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is QuicTestParams&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&(identical(other.host, host) || other.host == host)&&(identical(other.timeout, timeout) || other.timeout == timeout));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,proxyName,host,timeout);
+
+@override
+String toString() {
+  return 'QuicTestParams(proxyName: $proxyName, host: $host, timeout: $timeout)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $QuicTestParamsCopyWith<$Res>  {
+  factory $QuicTestParamsCopyWith(QuicTestParams value, $Res Function(QuicTestParams) _then) = _$QuicTestParamsCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(name: 'proxy-name') String proxyName, String? host, int? timeout
+});
+
+
+
+
+}
+/// @nodoc
+class _$QuicTestParamsCopyWithImpl<$Res>
+    implements $QuicTestParamsCopyWith<$Res> {
+  _$QuicTestParamsCopyWithImpl(this._self, this._then);
+
+  final QuicTestParams _self;
+  final $Res Function(QuicTestParams) _then;
+
+/// Create a copy of QuicTestParams
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? proxyName = null,Object? host = freezed,Object? timeout = freezed,}) {
+  return _then(_self.copyWith(
+proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,host: freezed == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
+as String?,timeout: freezed == timeout ? _self.timeout : timeout // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [QuicTestParams].
+extension QuicTestParamsPatterns on QuicTestParams {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _QuicTestParams value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _QuicTestParams() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _QuicTestParams value)  $default,){
+final _that = this;
+switch (_that) {
+case _QuicTestParams():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _QuicTestParams value)?  $default,){
+final _that = this;
+switch (_that) {
+case _QuicTestParams() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-name')  String proxyName,  String? host,  int? timeout)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _QuicTestParams() when $default != null:
+return $default(_that.proxyName,_that.host,_that.timeout);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-name')  String proxyName,  String? host,  int? timeout)  $default,) {final _that = this;
+switch (_that) {
+case _QuicTestParams():
+return $default(_that.proxyName,_that.host,_that.timeout);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'proxy-name')  String proxyName,  String? host,  int? timeout)?  $default,) {final _that = this;
+switch (_that) {
+case _QuicTestParams() when $default != null:
+return $default(_that.proxyName,_that.host,_that.timeout);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _QuicTestParams implements QuicTestParams {
+  const _QuicTestParams({@JsonKey(name: 'proxy-name') required this.proxyName, this.host, this.timeout});
+  factory _QuicTestParams.fromJson(Map<String, dynamic> json) => _$QuicTestParamsFromJson(json);
+
+@override@JsonKey(name: 'proxy-name') final  String proxyName;
+@override final  String? host;
+@override final  int? timeout;
+
+/// Create a copy of QuicTestParams
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$QuicTestParamsCopyWith<_QuicTestParams> get copyWith => __$QuicTestParamsCopyWithImpl<_QuicTestParams>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$QuicTestParamsToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _QuicTestParams&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&(identical(other.host, host) || other.host == host)&&(identical(other.timeout, timeout) || other.timeout == timeout));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,proxyName,host,timeout);
+
+@override
+String toString() {
+  return 'QuicTestParams(proxyName: $proxyName, host: $host, timeout: $timeout)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$QuicTestParamsCopyWith<$Res> implements $QuicTestParamsCopyWith<$Res> {
+  factory _$QuicTestParamsCopyWith(_QuicTestParams value, $Res Function(_QuicTestParams) _then) = __$QuicTestParamsCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(name: 'proxy-name') String proxyName, String? host, int? timeout
+});
+
+
+
+
+}
+/// @nodoc
+class __$QuicTestParamsCopyWithImpl<$Res>
+    implements _$QuicTestParamsCopyWith<$Res> {
+  __$QuicTestParamsCopyWithImpl(this._self, this._then);
+
+  final _QuicTestParams _self;
+  final $Res Function(_QuicTestParams) _then;
+
+/// Create a copy of QuicTestParams
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? proxyName = null,Object? host = freezed,Object? timeout = freezed,}) {
+  return _then(_QuicTestParams(
+proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,host: freezed == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
+as String?,timeout: freezed == timeout ? _self.timeout : timeout // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$QuicTestResult {
+
+ String get name; int get rtt; String get alpn; int get version; String get error;
+/// Create a copy of QuicTestResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$QuicTestResultCopyWith<QuicTestResult> get copyWith => _$QuicTestResultCopyWithImpl<QuicTestResult>(this as QuicTestResult, _$identity);
+
+  /// Serializes this QuicTestResult to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is QuicTestResult&&(identical(other.name, name) || other.name == name)&&(identical(other.rtt, rtt) || other.rtt == rtt)&&(identical(other.alpn, alpn) || other.alpn == alpn)&&(identical(other.version, version) || other.version == version)&&(identical(other.error, error) || other.error == error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,rtt,alpn,version,error);
+
+@override
+String toString() {
+  return 'QuicTestResult(name: $name, rtt: $rtt, alpn: $alpn, version: $version, error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $QuicTestResultCopyWith<$Res>  {
+  factory $QuicTestResultCopyWith(QuicTestResult value, $Res Function(QuicTestResult) _then) = _$QuicTestResultCopyWithImpl;
+@useResult
+$Res call({
+ String name, int rtt, String alpn, int version, String error
+});
+
+
+
+
+}
+/// @nodoc
+class _$QuicTestResultCopyWithImpl<$Res>
+    implements $QuicTestResultCopyWith<$Res> {
+  _$QuicTestResultCopyWithImpl(this._self, this._then);
+
+  final QuicTestResult _self;
+  final $Res Function(QuicTestResult) _then;
+
+/// Create a copy of QuicTestResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? rtt = null,Object? alpn = null,Object? version = null,Object? error = null,}) {
+  return _then(_self.copyWith(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,rtt: null == rtt ? _self.rtt : rtt // ignore: cast_nullable_to_non_nullable
+as int,alpn: null == alpn ? _self.alpn : alpn // ignore: cast_nullable_to_non_nullable
+as String,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [QuicTestResult].
+extension QuicTestResultPatterns on QuicTestResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _QuicTestResult value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _QuicTestResult() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _QuicTestResult value)  $default,){
+final _that = this;
+switch (_that) {
+case _QuicTestResult():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _QuicTestResult value)?  $default,){
+final _that = this;
+switch (_that) {
+case _QuicTestResult() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  int rtt,  String alpn,  int version,  String error)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _QuicTestResult() when $default != null:
+return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  int rtt,  String alpn,  int version,  String error)  $default,) {final _that = this;
+switch (_that) {
+case _QuicTestResult():
+return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  int rtt,  String alpn,  int version,  String error)?  $default,) {final _that = this;
+switch (_that) {
+case _QuicTestResult() when $default != null:
+return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _QuicTestResult implements QuicTestResult {
+  const _QuicTestResult({this.name = '', this.rtt = 0, this.alpn = '', this.version = 0, this.error = ''});
+  factory _QuicTestResult.fromJson(Map<String, dynamic> json) => _$QuicTestResultFromJson(json);
+
+@override@JsonKey() final  String name;
+@override@JsonKey() final  int rtt;
+@override@JsonKey() final  String alpn;
+@override@JsonKey() final  int version;
+@override@JsonKey() final  String error;
+
+/// Create a copy of QuicTestResult
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$QuicTestResultCopyWith<_QuicTestResult> get copyWith => __$QuicTestResultCopyWithImpl<_QuicTestResult>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$QuicTestResultToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _QuicTestResult&&(identical(other.name, name) || other.name == name)&&(identical(other.rtt, rtt) || other.rtt == rtt)&&(identical(other.alpn, alpn) || other.alpn == alpn)&&(identical(other.version, version) || other.version == version)&&(identical(other.error, error) || other.error == error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,name,rtt,alpn,version,error);
+
+@override
+String toString() {
+  return 'QuicTestResult(name: $name, rtt: $rtt, alpn: $alpn, version: $version, error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$QuicTestResultCopyWith<$Res> implements $QuicTestResultCopyWith<$Res> {
+  factory _$QuicTestResultCopyWith(_QuicTestResult value, $Res Function(_QuicTestResult) _then) = __$QuicTestResultCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, int rtt, String alpn, int version, String error
+});
+
+
+
+
+}
+/// @nodoc
+class __$QuicTestResultCopyWithImpl<$Res>
+    implements _$QuicTestResultCopyWith<$Res> {
+  __$QuicTestResultCopyWithImpl(this._self, this._then);
+
+  final _QuicTestResult _self;
+  final $Res Function(_QuicTestResult) _then;
+
+/// Create a copy of QuicTestResult
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? rtt = null,Object? alpn = null,Object? version = null,Object? error = null,}) {
+  return _then(_QuicTestResult(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,rtt: null == rtt ? _self.rtt : rtt // ignore: cast_nullable_to_non_nullable
+as int,alpn: null == alpn ? _self.alpn : alpn // ignore: cast_nullable_to_non_nullable
+as String,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
 // dart format on

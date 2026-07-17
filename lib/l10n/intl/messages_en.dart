@@ -140,6 +140,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Advanced settings",
     ),
     "agree": MessageLookupByLibrary.simpleMessage("Agree"),
+    "allNodes": MessageLookupByLibrary.simpleMessage("All Nodes"),
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Allow applications to bypass VPN",
     ),
@@ -385,6 +386,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("Domain"),
     "down": MessageLookupByLibrary.simpleMessage("Down"),
     "download": MessageLookupByLibrary.simpleMessage("Download"),
+    "downloadSpeed": MessageLookupByLibrary.simpleMessage("Download Speed"),
+    "downloaded": MessageLookupByLibrary.simpleMessage("Downloaded"),
     "earlyDataHeaderName": MessageLookupByLibrary.simpleMessage(
       "Early Data Header",
     ),
@@ -581,6 +584,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "key": MessageLookupByLibrary.simpleMessage("Key"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
+    "latency": MessageLookupByLibrary.simpleMessage("Latency"),
     "layout": MessageLookupByLibrary.simpleMessage("Layout"),
     "light": MessageLookupByLibrary.simpleMessage("Light"),
     "list": MessageLookupByLibrary.simpleMessage("List"),
@@ -601,6 +605,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localMixinMissingGroups": m11,
     "localMixinStatus": m12,
+    "localNodes": MessageLookupByLibrary.simpleMessage("Local Nodes"),
     "localProxies": MessageLookupByLibrary.simpleMessage("Local Proxies"),
     "localProxyAnyTlsPasswordEmpty": MessageLookupByLibrary.simpleMessage(
       "AnyTLS password is required",
@@ -728,6 +733,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Network exception, please check your connection and try again",
     ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("Network speed"),
+    "networkTest": MessageLookupByLibrary.simpleMessage("Network Test"),
+    "networkTestDesc": MessageLookupByLibrary.simpleMessage(
+      "Node speed test and QUIC connectivity test",
+    ),
     "networkType": MessageLookupByLibrary.simpleMessage("Network type"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("Neutral"),
     "noData": MessageLookupByLibrary.simpleMessage("No data"),
@@ -906,6 +915,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "qrcodeDesc": MessageLookupByLibrary.simpleMessage(
       "Scan QR code to obtain profile",
     ),
+    "quicTest": MessageLookupByLibrary.simpleMessage("QUIC Test"),
+    "quicTestDesc": MessageLookupByLibrary.simpleMessage(
+      "Test QUIC (HTTP/3) connectivity through the selected node",
+    ),
+    "quicVersion": MessageLookupByLibrary.simpleMessage("QUIC Version"),
     "quickFill": MessageLookupByLibrary.simpleMessage("Quick fill"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Rainbow"),
     "reality": MessageLookupByLibrary.simpleMessage("Reality"),
@@ -977,6 +991,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Bypass private route address",
     ),
     "routeMode_config": MessageLookupByLibrary.simpleMessage("Use config"),
+    "rtt": MessageLookupByLibrary.simpleMessage("RTT"),
     "ru": MessageLookupByLibrary.simpleMessage("Russian"),
     "rule": MessageLookupByLibrary.simpleMessage("Rule"),
     "ruleActionAndDesc": MessageLookupByLibrary.simpleMessage(
@@ -1098,6 +1113,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "seconds": MessageLookupByLibrary.simpleMessage("Seconds"),
     "security": MessageLookupByLibrary.simpleMessage("Security"),
     "selectAll": MessageLookupByLibrary.simpleMessage("Select all"),
+    "selectNode": MessageLookupByLibrary.simpleMessage("Select Node"),
     "selectProtocol": MessageLookupByLibrary.simpleMessage("Select protocol"),
     "selectProxies": MessageLookupByLibrary.simpleMessage("Select proxies"),
     "selectProxyProviders": MessageLookupByLibrary.simpleMessage(
@@ -1136,6 +1152,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "specialProxy": MessageLookupByLibrary.simpleMessage("Special proxy"),
     "specialRules": MessageLookupByLibrary.simpleMessage("special rules"),
     "speedStatistics": MessageLookupByLibrary.simpleMessage("Speed statistics"),
+    "speedTest": MessageLookupByLibrary.simpleMessage("Speed Test"),
+    "speedTestDesc": MessageLookupByLibrary.simpleMessage(
+      "Test download speed through the selected node",
+    ),
     "splitStrategy": MessageLookupByLibrary.simpleMessage("Split strategy"),
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage(
       "Split strategy cannot be empty",
@@ -1149,6 +1169,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "start": MessageLookupByLibrary.simpleMessage("Start"),
     "startSetup": MessageLookupByLibrary.simpleMessage("Start Setup"),
+    "startTest": MessageLookupByLibrary.simpleMessage("Start Test"),
     "startVpn": MessageLookupByLibrary.simpleMessage("Starting VPN..."),
     "status": MessageLookupByLibrary.simpleMessage("Status"),
     "statusDesc": MessageLookupByLibrary.simpleMessage(
@@ -1187,9 +1208,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage(
       "Enabling it will allow TCP concurrency",
     ),
+    "testFailed": MessageLookupByLibrary.simpleMessage("Test Failed"),
     "testInterval": MessageLookupByLibrary.simpleMessage("Test interval"),
     "testUrl": MessageLookupByLibrary.simpleMessage("Test url"),
     "testWhenUsed": MessageLookupByLibrary.simpleMessage("Test when used"),
+    "testing": MessageLookupByLibrary.simpleMessage("Testing..."),
     "textScale": MessageLookupByLibrary.simpleMessage("Text Scaling"),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Theme color"),

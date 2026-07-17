@@ -56,6 +56,18 @@ type TestDelayParams struct {
 	Timeout   int64  `json:"timeout"`
 }
 
+type SpeedTestParams struct {
+	ProxyName string `json:"proxy-name"`
+	TestUrl   string `json:"test-url"`
+	Timeout   int64  `json:"timeout"`
+}
+
+type QuicTestParams struct {
+	ProxyName string `json:"proxy-name"`
+	Host      string `json:"host"`
+	Timeout   int64  `json:"timeout"`
+}
+
 type ExternalProvider struct {
 	Name             string                     `json:"name"`
 	Type             string                     `json:"type"`
@@ -85,6 +97,8 @@ const (
 	getTotalTrafficMethod          Method = "getTotalTraffic"
 	resetTrafficMethod             Method = "resetTraffic"
 	asyncTestDelayMethod           Method = "asyncTestDelay"
+	speedTestMethod                Method = "speedTest"
+	quicTestMethod                 Method = "quicTest"
 	getConnectionsMethod           Method = "getConnections"
 	closeConnectionsMethod         Method = "closeConnections"
 	resetConnectionsMethod         Method = "resetConnections"

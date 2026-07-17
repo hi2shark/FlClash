@@ -252,6 +252,8 @@ enum ActionMethod {
   crash,
   setupConfig,
   deleteFile,
+  speedTest,
+  quicTest,
 
   ///Android,
   setState,
@@ -345,6 +347,7 @@ enum PageLabel {
   resources,
   connections,
   localProxies,
+  networkTest,
 }
 
 enum RuleAction {

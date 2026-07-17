@@ -58,6 +58,14 @@ class Navigation {
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
+        icon: const Icon(Icons.speed),
+        label: PageLabel.networkTest,
+        description: 'networkTestDesc',
+        builder: (_) =>
+            const NetworkTestView(key: GlobalObjectKey(PageLabel.networkTest)),
+        modes: [NavigationItemMode.more],
+      ),
+      NavigationItem(
         icon: const Icon(Icons.merge_type),
         label: PageLabel.localProxies,
         description: 'localMixinDesc',

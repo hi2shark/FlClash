@@ -210,3 +210,55 @@ extension ActionResultExt on ActionResult {
     }
   }
 }
+
+@freezed
+abstract class SpeedTestParams with _$SpeedTestParams {
+  const factory SpeedTestParams({
+    @JsonKey(name: 'proxy-name') required String proxyName,
+    @JsonKey(name: 'test-url') String? testUrl,
+    int? timeout,
+  }) = _SpeedTestParams;
+
+  factory SpeedTestParams.fromJson(Map<String, Object?> json) =>
+      _$SpeedTestParamsFromJson(json);
+}
+
+@freezed
+abstract class SpeedTestResult with _$SpeedTestResult {
+  const factory SpeedTestResult({
+    @Default('') String name,
+    @Default(0) int latency,
+    @Default(0) double speed,
+    @Default(0) int bytes,
+    @Default('') String error,
+  }) = _SpeedTestResult;
+
+  factory SpeedTestResult.fromJson(Map<String, Object?> json) =>
+      _$SpeedTestResultFromJson(json);
+}
+
+@freezed
+abstract class QuicTestParams with _$QuicTestParams {
+  const factory QuicTestParams({
+    @JsonKey(name: 'proxy-name') required String proxyName,
+    String? host,
+    int? timeout,
+  }) = _QuicTestParams;
+
+  factory QuicTestParams.fromJson(Map<String, Object?> json) =>
+      _$QuicTestParamsFromJson(json);
+}
+
+@freezed
+abstract class QuicTestResult with _$QuicTestResult {
+  const factory QuicTestResult({
+    @Default('') String name,
+    @Default(0) int rtt,
+    @Default('') String alpn,
+    @Default(0) int version,
+    @Default('') String error,
+  }) = _QuicTestResult;
+
+  factory QuicTestResult.fromJson(Map<String, Object?> json) =>
+      _$QuicTestResultFromJson(json);
+}

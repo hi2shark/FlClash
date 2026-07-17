@@ -9,6 +9,7 @@ export 'dashboard/dashboard.dart';
 export 'developer.dart';
 export 'local_proxies.dart';
 export 'logs.dart';
+export 'network_test.dart';
 export 'profiles/profiles.dart';
 export 'proxies/proxies.dart';
 export 'resources.dart';

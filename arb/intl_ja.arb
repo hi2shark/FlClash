@@ -699,5 +699,22 @@
   "currentWifiStatus": "状態",
   "wifiWatchExcluded": "除外対象",
   "wifiWatchExcludedInactive": "除外対象（非アクティブ）",
-  "wifiWatchExcludedWillSuspend": "{seconds}秒後に一時停止"
+  "wifiWatchExcludedWillSuspend": "{seconds}秒後に一時停止",
+  "networkTest": "ネットワークテスト",
+  "networkTestDesc": "ノードの速度テストと QUIC 接続テスト",
+  "speedTest": "速度テスト",
+  "speedTestDesc": "選択したノードでダウンロード速度をテストします",
+  "quicTest": "QUIC テスト",
+  "quicTestDesc": "選択したノードで QUIC（HTTP/3）接続をテストします",
+  "selectNode": "ノードを選択",
+  "startTest": "テスト開始",
+  "testing": "テスト中...",
+  "latency": "レイテンシ",
+  "downloadSpeed": "ダウンロード速度",
+  "downloaded": "ダウンロード済み",
+  "rtt": "RTT",
+  "quicVersion": "QUIC バージョン",
+  "localNodes": "ローカルノード",
+  "allNodes": "すべてのノード",
+  "testFailed": "テスト失敗"
 }

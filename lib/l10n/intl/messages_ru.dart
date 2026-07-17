@@ -140,6 +140,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Расширенные настройки",
     ),
     "agree": MessageLookupByLibrary.simpleMessage("Согласен"),
+    "allNodes": MessageLookupByLibrary.simpleMessage("Все узлы"),
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Разрешить приложениям обходить VPN",
     ),
@@ -393,6 +394,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "domain": MessageLookupByLibrary.simpleMessage("Домен"),
     "down": MessageLookupByLibrary.simpleMessage("Down"),
     "download": MessageLookupByLibrary.simpleMessage("Скачивание"),
+    "downloadSpeed": MessageLookupByLibrary.simpleMessage("Скорость загрузки"),
+    "downloaded": MessageLookupByLibrary.simpleMessage("Загружено"),
     "earlyDataHeaderName": MessageLookupByLibrary.simpleMessage(
       "Early Data Header",
     ),
@@ -599,6 +602,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "key": MessageLookupByLibrary.simpleMessage("Ключ"),
     "language": MessageLookupByLibrary.simpleMessage("Язык"),
+    "latency": MessageLookupByLibrary.simpleMessage("Задержка"),
     "layout": MessageLookupByLibrary.simpleMessage("Макет"),
     "light": MessageLookupByLibrary.simpleMessage("Светлый"),
     "list": MessageLookupByLibrary.simpleMessage("Список"),
@@ -619,6 +623,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localMixinMissingGroups": m11,
     "localMixinStatus": m12,
+    "localNodes": MessageLookupByLibrary.simpleMessage("Локальные узлы"),
     "localProxies": MessageLookupByLibrary.simpleMessage("Локальные прокси"),
     "localProxyAnyTlsPasswordEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите пароль AnyTLS",
@@ -756,6 +761,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Ошибка сети, проверьте соединение и попробуйте еще раз",
     ),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("Скорость сети"),
+    "networkTest": MessageLookupByLibrary.simpleMessage("Тест сети"),
+    "networkTestDesc": MessageLookupByLibrary.simpleMessage(
+      "Тест скорости узла и проверка QUIC-соединения",
+    ),
     "networkType": MessageLookupByLibrary.simpleMessage("Тип сети"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("Нейтральные"),
     "noData": MessageLookupByLibrary.simpleMessage("Нет данных"),
@@ -948,6 +957,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "qrcodeDesc": MessageLookupByLibrary.simpleMessage(
       "Сканируйте QR-код для получения профиля",
     ),
+    "quicTest": MessageLookupByLibrary.simpleMessage("Тест QUIC"),
+    "quicTestDesc": MessageLookupByLibrary.simpleMessage(
+      "Проверка QUIC (HTTP/3) соединения через выбранный узел",
+    ),
+    "quicVersion": MessageLookupByLibrary.simpleMessage("Версия QUIC"),
     "quickFill": MessageLookupByLibrary.simpleMessage("Быстрое заполнение"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Радужные"),
     "reality": MessageLookupByLibrary.simpleMessage("Reality"),
@@ -1029,6 +1043,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "routeMode_config": MessageLookupByLibrary.simpleMessage(
       "Использовать конфигурацию",
     ),
+    "rtt": MessageLookupByLibrary.simpleMessage("RTT"),
     "ru": MessageLookupByLibrary.simpleMessage("Русский"),
     "rule": MessageLookupByLibrary.simpleMessage("Правило"),
     "ruleActionAndDesc": MessageLookupByLibrary.simpleMessage(
@@ -1152,6 +1167,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "seconds": MessageLookupByLibrary.simpleMessage("Секунд"),
     "security": MessageLookupByLibrary.simpleMessage("Безопасность"),
     "selectAll": MessageLookupByLibrary.simpleMessage("Выбрать все"),
+    "selectNode": MessageLookupByLibrary.simpleMessage("Выбрать узел"),
     "selectProtocol": MessageLookupByLibrary.simpleMessage("Выберите протокол"),
     "selectProxies": MessageLookupByLibrary.simpleMessage("Выбрать прокси"),
     "selectProxyProviders": MessageLookupByLibrary.simpleMessage(
@@ -1194,6 +1210,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedStatistics": MessageLookupByLibrary.simpleMessage(
       "Статистика скорости",
     ),
+    "speedTest": MessageLookupByLibrary.simpleMessage("Тест скорости"),
+    "speedTestDesc": MessageLookupByLibrary.simpleMessage(
+      "Проверка скорости загрузки через выбранный узел",
+    ),
     "splitStrategy": MessageLookupByLibrary.simpleMessage(
       "Стратегия разделения",
     ),
@@ -1209,6 +1229,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "start": MessageLookupByLibrary.simpleMessage("Старт"),
     "startSetup": MessageLookupByLibrary.simpleMessage("Начать настройку"),
+    "startTest": MessageLookupByLibrary.simpleMessage("Начать тест"),
     "startVpn": MessageLookupByLibrary.simpleMessage("Запуск VPN..."),
     "status": MessageLookupByLibrary.simpleMessage("Статус"),
     "statusDesc": MessageLookupByLibrary.simpleMessage(
@@ -1249,6 +1270,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage(
       "Включение позволит использовать параллелизм TCP",
     ),
+    "testFailed": MessageLookupByLibrary.simpleMessage("Тест не удался"),
     "testInterval": MessageLookupByLibrary.simpleMessage(
       "Интервал тестирования",
     ),
@@ -1256,6 +1278,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "testWhenUsed": MessageLookupByLibrary.simpleMessage(
       "Тестировать при использовании",
     ),
+    "testing": MessageLookupByLibrary.simpleMessage("Тестирование..."),
     "textScale": MessageLookupByLibrary.simpleMessage("Масштабирование текста"),
     "theme": MessageLookupByLibrary.simpleMessage("Тема"),
     "themeColor": MessageLookupByLibrary.simpleMessage("Цвет темы"),

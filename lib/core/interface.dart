@@ -22,6 +22,10 @@ mixin CoreInterface {
 
   Future<String> asyncTestDelay(String url, String proxyName);
 
+  Future<String> speedTest(SpeedTestParams params);
+
+  Future<String> quicTest(QuicTestParams params);
+
   Future<String> updateConfig(UpdateParams updateParams);
 
   Future<String> setupConfig(SetupParams setupParams);
@@ -329,6 +333,26 @@ abstract class CoreHandlerInterface with CoreInterface {
           timeout: const Duration(seconds: 6),
         ) ??
         json.encode(Delay(name: proxyName, value: -1, url: url));
+  }
+
+  @override
+  Future<String> speedTest(SpeedTestParams params) async {
+    return await _invoke<String>(
+          method: ActionMethod.speedTest,
+          data: json.encode(params.toJson()),
+          timeout: const Duration(seconds: 30),
+        ) ??
+        json.encode(SpeedTestResult(name: params.proxyName, error: 'timeout'));
+  }
+
+  @override
+  Future<String> quicTest(QuicTestParams params) async {
+    return await _invoke<String>(
+          method: ActionMethod.quicTest,
+          data: json.encode(params.toJson()),
+          timeout: const Duration(seconds: 10),
+        ) ??
+        json.encode(QuicTestResult(name: params.proxyName, error: 'timeout'));
   }
 
   @override

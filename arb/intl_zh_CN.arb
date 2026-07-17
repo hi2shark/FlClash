@@ -699,5 +699,22 @@
   "currentWifiStatus": "状态",
   "wifiWatchExcluded": "已命中排除",
   "wifiWatchExcludedInactive": "已命中排除（未生效）",
-  "wifiWatchExcludedWillSuspend": "{seconds} 秒后挂起"
+  "wifiWatchExcludedWillSuspend": "{seconds} 秒后挂起",
+  "networkTest": "网络测试",
+  "networkTestDesc": "节点测速与 QUIC 连通性测试",
+  "speedTest": "测速",
+  "speedTestDesc": "通过所选节点测试下载速度",
+  "quicTest": "QUIC 测试",
+  "quicTestDesc": "通过所选节点测试 QUIC（HTTP/3）连通性",
+  "selectNode": "选择节点",
+  "startTest": "开始测试",
+  "testing": "测试中...",
+  "latency": "延迟",
+  "downloadSpeed": "下载速度",
+  "downloaded": "已下载",
+  "rtt": "RTT",
+  "quicVersion": "QUIC 版本",
+  "localNodes": "本地节点",
+  "allNodes": "全部节点",
+  "testFailed": "测试失败"
 }

@@ -699,5 +699,22 @@
   "currentWifiStatus": "Status",
   "wifiWatchExcluded": "Excluded",
   "wifiWatchExcludedInactive": "Excluded (inactive)",
-  "wifiWatchExcludedWillSuspend": "Suspend in {seconds}s"
+  "wifiWatchExcludedWillSuspend": "Suspend in {seconds}s",
+  "networkTest": "Network Test",
+  "networkTestDesc": "Node speed test and QUIC connectivity test",
+  "speedTest": "Speed Test",
+  "speedTestDesc": "Test download speed through the selected node",
+  "quicTest": "QUIC Test",
+  "quicTestDesc": "Test QUIC (HTTP/3) connectivity through the selected node",
+  "selectNode": "Select Node",
+  "startTest": "Start Test",
+  "testing": "Testing...",
+  "latency": "Latency",
+  "downloadSpeed": "Download Speed",
+  "downloaded": "Downloaded",
+  "rtt": "RTT",
+  "quicVersion": "QUIC Version",
+  "localNodes": "Local Nodes",
+  "allNodes": "All Nodes",
+  "testFailed": "Test Failed"
 }

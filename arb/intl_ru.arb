@@ -699,5 +699,22 @@
   "currentWifiStatus": "Состояние",
   "wifiWatchExcluded": "Исключено",
   "wifiWatchExcludedInactive": "Исключено (неактивно)",
-  "wifiWatchExcludedWillSuspend": "Приостановка через {seconds} с"
+  "wifiWatchExcludedWillSuspend": "Приостановка через {seconds} с",
+  "networkTest": "Тест сети",
+  "networkTestDesc": "Тест скорости узла и проверка QUIC-соединения",
+  "speedTest": "Тест скорости",
+  "speedTestDesc": "Проверка скорости загрузки через выбранный узел",
+  "quicTest": "Тест QUIC",
+  "quicTestDesc": "Проверка QUIC (HTTP/3) соединения через выбранный узел",
+  "selectNode": "Выбрать узел",
+  "startTest": "Начать тест",
+  "testing": "Тестирование...",
+  "latency": "Задержка",
+  "downloadSpeed": "Скорость загрузки",
+  "downloaded": "Загружено",
+  "rtt": "RTT",
+  "quicVersion": "Версия QUIC",
+  "localNodes": "Локальные узлы",
+  "allNodes": "Все узлы",
+  "testFailed": "Тест не удался"
 }

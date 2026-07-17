@@ -208,6 +208,26 @@ class CoreController {
     return Delay.fromJson(json.decode(data));
   }
 
+  Future<SpeedTestResult> getSpeedTest(SpeedTestParams params) async {
+    final data = await _interface.speedTest(params);
+    return SpeedTestResult.fromJson(json.decode(data));
+  }
+
+  Future<QuicTestResult> getQuicTest(QuicTestParams params) async {
+    final data = await _interface.quicTest(params);
+    return QuicTestResult.fromJson(json.decode(data));
+  }
+
+  Future<List<Proxy>> getAllProxies() async {
+    final proxiesData = await _interface.getProxies();
+    return proxiesData.proxies.values
+        .where(
+          (proxy) => !GroupTypeExtension.valueList.contains(proxy['type']),
+        )
+        .map((proxy) => Proxy.fromJson(Map<String, Object?>.from(proxy)))
+        .toList();
+  }
+
   Future<Map<String, dynamic>> getConfig(int id) async {
     final profilePath = await appPath.getProfilePath(id.toString());
     final res = await _interface.getConfig(profilePath);

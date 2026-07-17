@@ -5518,6 +5518,121 @@ class AppLocalizations {
       args: [seconds],
     );
   }
+
+  /// `Network Test`
+  String get networkTest {
+    return Intl.message(
+      'Network Test',
+      name: 'networkTest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Node speed test and QUIC connectivity test`
+  String get networkTestDesc {
+    return Intl.message(
+      'Node speed test and QUIC connectivity test',
+      name: 'networkTestDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Speed Test`
+  String get speedTest {
+    return Intl.message('Speed Test', name: 'speedTest', desc: '', args: []);
+  }
+
+  /// `Test download speed through the selected node`
+  String get speedTestDesc {
+    return Intl.message(
+      'Test download speed through the selected node',
+      name: 'speedTestDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `QUIC Test`
+  String get quicTest {
+    return Intl.message('QUIC Test', name: 'quicTest', desc: '', args: []);
+  }
+
+  /// `Test QUIC (HTTP/3) connectivity through the selected node`
+  String get quicTestDesc {
+    return Intl.message(
+      'Test QUIC (HTTP/3) connectivity through the selected node',
+      name: 'quicTestDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select Node`
+  String get selectNode {
+    return Intl.message('Select Node', name: 'selectNode', desc: '', args: []);
+  }
+
+  /// `Start Test`
+  String get startTest {
+    return Intl.message('Start Test', name: 'startTest', desc: '', args: []);
+  }
+
+  /// `Testing...`
+  String get testing {
+    return Intl.message('Testing...', name: 'testing', desc: '', args: []);
+  }
+
+  /// `Latency`
+  String get latency {
+    return Intl.message('Latency', name: 'latency', desc: '', args: []);
+  }
+
+  /// `Download Speed`
+  String get downloadSpeed {
+    return Intl.message(
+      'Download Speed',
+      name: 'downloadSpeed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Downloaded`
+  String get downloaded {
+    return Intl.message('Downloaded', name: 'downloaded', desc: '', args: []);
+  }
+
+  /// `RTT`
+  String get rtt {
+    return Intl.message('RTT', name: 'rtt', desc: '', args: []);
+  }
+
+  /// `QUIC Version`
+  String get quicVersion {
+    return Intl.message(
+      'QUIC Version',
+      name: 'quicVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local Nodes`
+  String get localNodes {
+    return Intl.message('Local Nodes', name: 'localNodes', desc: '', args: []);
+  }
+
+  /// `All Nodes`
+  String get allNodes {
+    return Intl.message('All Nodes', name: 'allNodes', desc: '', args: []);
+  }
+
+  /// `Test Failed`
+  String get testFailed {
+    return Intl.message('Test Failed', name: 'testFailed', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

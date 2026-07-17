@@ -101,6 +101,18 @@ func handleAction(action *Action, result ActionResult) {
 			result.success(value)
 		})
 		return
+	case speedTestMethod:
+		data := action.Data.(string)
+		handleSpeedTest(data, func(value string) {
+			result.success(value)
+		})
+		return
+	case quicTestMethod:
+		data := action.Data.(string)
+		handleQuicTest(data, func(value string) {
+			result.success(value)
+		})
+		return
 	case getConnectionsMethod:
 		result.success(handleGetConnections())
 		return
