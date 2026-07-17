@@ -216,10 +216,10 @@ class _NetworkTestViewState extends State<NetworkTestView> {
                 leading: const Icon(Icons.dns),
                 title: Text(appLocalizations.selectNode),
                 subtitle: Text(_proxyName),
-                delegate: OpenDelegate<String>(
+                delegate: OpenDelegate(
                   widget: _NodeSelectionView(currentName: _proxyName),
                   onChanged: (name) {
-                    if (name != null && name != _proxyName) {
+                    if (name is String && name != _proxyName) {
                       setState(() {
                         _proxyName = name;
                       });
