@@ -64,16 +64,12 @@ class LocalProxyProviderGenerator {
     map['password'] = password;
     map.remove('key');
 
-    final spec = _optionalString(proxy, map, 'spec');
-    if (spec != null) {
-      _validateUtf8Length(proxy, 'spec', spec);
-    }
-
     final carriers = _resolveNowhereCarriers(proxy, map);
     map['up'] = carriers.$1;
     map['down'] = carriers.$2;
     map['network'] = carriers.$1;
     map.remove('net');
+    map.remove('spec');
 
     _normalizeNowhereAlpn(proxy, map);
 

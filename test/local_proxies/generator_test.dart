@@ -201,6 +201,7 @@ void main() {
       expect(map['network'], 'udp');
       expect(map.containsKey('pool'), isFalse);
       expect(map.containsKey('reduce-rtt'), isFalse);
+      expect(map.containsKey('spec'), isFalse);
     });
 
     test('keeps pool for nowhere tcp/tcp carriers', () {
@@ -467,29 +468,23 @@ void main() {
 
     test('enforces decoded UTF-8 byte limits', () {
       final key255 = List.filled(255, 'k').join();
-      final spec255 = List.filled(85, '界').join();
       final alpn255 = List.filled(255, 'a').join();
       final validConfig = _validNowhereConfig()
         ..addAll({
           'password': key255,
-          'spec': spec255,
           'alpn': [alpn255, List.filled(256, 'z').join()],
         });
       final map = _firstProxy(
         generator.generateYaml([_proxy(type: 'nowhere', config: validConfig)]),
       );
       expect(map['password'], key255);
-      expect(map['spec'], spec255);
+      expect(map.containsKey('spec'), isFalse);
       expect(map['alpn'], [alpn255]);
 
       final tooLongValues = <(String, Map<String, dynamic>)>[
         (
           'password/key',
           _validNowhereConfig()..['password'] = List.filled(256, 'k').join(),
-        ),
-        (
-          'spec',
-          _validNowhereConfig()..['spec'] = List.filled(256, 's').join(),
         ),
         (
           'ALPN',

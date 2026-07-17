@@ -432,7 +432,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Nowhere 高级整数必须为非负整数，且按默认值计算后的初始退避不得大于最大退避",
     ),
     "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
-      "Nowhere 共享密钥、Spec 和首个 ALPN 均不得超过 255 个 UTF-8 字节",
+      "Nowhere 共享密钥和首个 ALPN 均不得超过 255 个 UTF-8 字节",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Nowhere 密钥不能为空",
@@ -795,7 +795,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "sort": MessageLookupByLibrary.simpleMessage("排序"),
     "source": MessageLookupByLibrary.simpleMessage("来源"),
     "sourceIp": MessageLookupByLibrary.simpleMessage("源IP"),
-    "spec": MessageLookupByLibrary.simpleMessage("Spec"),
     "specialProxy": MessageLookupByLibrary.simpleMessage("特殊代理"),
     "specialRules": MessageLookupByLibrary.simpleMessage("特殊规则"),
     "speedStatistics": MessageLookupByLibrary.simpleMessage("网速统计"),

@@ -622,7 +622,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Nowhere advanced integer values must be non-negative, and effective initial backoff must not exceed maximum backoff",
     ),
     "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
-      "Nowhere shared key, spec, and first ALPN must each be at most 255 UTF-8 bytes",
+      "Nowhere shared key and first ALPN must each be at most 255 UTF-8 bytes",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Nowhere share key is required",
@@ -1133,7 +1133,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "sort": MessageLookupByLibrary.simpleMessage("Sort"),
     "source": MessageLookupByLibrary.simpleMessage("Source"),
     "sourceIp": MessageLookupByLibrary.simpleMessage("Source IP"),
-    "spec": MessageLookupByLibrary.simpleMessage("Spec"),
     "specialProxy": MessageLookupByLibrary.simpleMessage("Special proxy"),
     "specialRules": MessageLookupByLibrary.simpleMessage("special rules"),
     "speedStatistics": MessageLookupByLibrary.simpleMessage("Speed statistics"),

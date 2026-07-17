@@ -638,7 +638,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Расширенные целые значения Nowhere должны быть неотрицательными, а начальная задержка с учётом значения по умолчанию — не больше максимальной",
     ),
     "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
-      "Общий ключ Nowhere, Spec и первый ALPN должны быть не длиннее 255 байт UTF-8 каждый",
+      "Общий ключ Nowhere и первый ALPN должны быть не длиннее 255 байт UTF-8 каждый",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите ключ обмена Nowhere",
@@ -1189,7 +1189,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "sort": MessageLookupByLibrary.simpleMessage("Сортировка"),
     "source": MessageLookupByLibrary.simpleMessage("Источник"),
     "sourceIp": MessageLookupByLibrary.simpleMessage("Исходный IP"),
-    "spec": MessageLookupByLibrary.simpleMessage("Spec"),
     "specialProxy": MessageLookupByLibrary.simpleMessage("Специальный прокси"),
     "specialRules": MessageLookupByLibrary.simpleMessage("Специальные правила"),
     "speedStatistics": MessageLookupByLibrary.simpleMessage(

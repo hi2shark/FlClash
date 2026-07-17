@@ -5194,11 +5194,6 @@ class AppLocalizations {
     );
   }
 
-  /// `Spec`
-  String get spec {
-    return Intl.message('Spec', name: 'spec', desc: '', args: []);
-  }
-
   /// `Up`
   String get up {
     return Intl.message('Up', name: 'up', desc: '', args: []);
@@ -5339,10 +5334,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Nowhere shared key, spec, and first ALPN must each be at most 255 UTF-8 bytes`
+  /// `Nowhere shared key and first ALPN must each be at most 255 UTF-8 bytes`
   String get localProxyNowhereInputTooLong {
     return Intl.message(
-      'Nowhere shared key, spec, and first ALPN must each be at most 255 UTF-8 bytes',
+      'Nowhere shared key and first ALPN must each be at most 255 UTF-8 bytes',
       name: 'localProxyNowhereInputTooLong',
       desc: '',
       args: [],

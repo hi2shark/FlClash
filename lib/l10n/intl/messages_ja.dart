@@ -488,7 +488,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Nowhere の詳細整数値は 0 以上で、デフォルト適用後の初期バックオフは最大バックオフ以下である必要があります",
     ),
     "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
-      "Nowhere の共有キー、Spec、最初の ALPN はそれぞれ 255 UTF-8 バイト以内で入力してください",
+      "Nowhere の共有キーと最初の ALPN はそれぞれ 255 UTF-8 バイト以内で入力してください",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Nowhere 共有キーを入力してください",
@@ -923,7 +923,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "sort": MessageLookupByLibrary.simpleMessage("並び替え"),
     "source": MessageLookupByLibrary.simpleMessage("ソース"),
     "sourceIp": MessageLookupByLibrary.simpleMessage("送信元IP"),
-    "spec": MessageLookupByLibrary.simpleMessage("Spec"),
     "specialProxy": MessageLookupByLibrary.simpleMessage("特殊プロキシ"),
     "specialRules": MessageLookupByLibrary.simpleMessage("特殊ルール"),
     "speedStatistics": MessageLookupByLibrary.simpleMessage("速度統計"),

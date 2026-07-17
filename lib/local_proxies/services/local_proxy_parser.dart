@@ -593,14 +593,6 @@ class LocalProxyParser {
     }
     final tcpTCP = up == 'tcp' && down == 'tcp';
 
-    final spec = query['spec'];
-    if (spec != null && spec.isNotEmpty) {
-      final specError = _validateNowhereUtf8Value('spec', spec);
-      if (specError != null) {
-        return LocalProxyParseResult(raw: raw, error: specError);
-      }
-    }
-
     final alpnValue = query['alpn'];
     List<String>? alpn;
     if (alpnValue != null && alpnValue.isNotEmpty) {
@@ -627,9 +619,6 @@ class LocalProxyParser {
       'network': up,
     };
 
-    if (spec != null && spec.isNotEmpty) {
-      config['spec'] = spec;
-    }
     final sni = query['sni'];
     if (sni != null && sni.isNotEmpty) {
       config['sni'] = sni;

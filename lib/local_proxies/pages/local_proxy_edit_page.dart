@@ -112,7 +112,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late final TextEditingController _uuidController;
   late final TextEditingController _sniController;
   late final TextEditingController _keyController;
-  late final TextEditingController _specController;
   late final TextEditingController _alpnController;
   late final TextEditingController _clientFingerprintController;
   late final TextEditingController _fingerprintController;
@@ -201,9 +200,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       text: nowherePassword.isNotEmpty
           ? nowherePassword
           : config['key']?.toString() ?? '',
-    );
-    _specController = TextEditingController(
-      text: config['spec']?.toString() ?? '',
     );
     _alpnController = TextEditingController(
       text: _type == 'nowhere'
@@ -395,7 +391,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _uuidController.dispose();
     _sniController.dispose();
     _keyController.dispose();
-    _specController.dispose();
     _alpnController.dispose();
     _clientFingerprintController.dispose();
     _fingerprintController.dispose();
@@ -574,9 +569,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         _applyNowhereAlpn(base);
         _applyTlsOptions(base);
         _applyEch(base);
-        if (_specController.text.isNotEmpty) {
-          base['spec'] = _specController.text;
-        }
         base['up'] = _up;
         base['down'] = _down;
         if (_up == 'tcp' && _down == 'tcp') {
@@ -853,10 +845,8 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         if (sharedKey.isEmpty) {
           return appLocalizations.localProxyNowhereKeyEmpty;
         }
-        final spec = _specController.text;
         final firstAlpn = _firstNowhereAlpn;
         if (!_fitsNowhereField(sharedKey) ||
-            !_fitsNowhereField(spec) ||
             (firstAlpn != null && !_fitsNowhereField(firstAlpn))) {
           return appLocalizations.localProxyNowhereInputTooLong;
         }
@@ -1282,8 +1272,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         if (_type == 'anytls')
           _buildTextField(_sniController, appLocalizations.sni),
         if (_type == 'nowhere') ...[
-          _buildTextField(_specController, appLocalizations.spec),
-          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -1638,7 +1626,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             ),
             const SizedBox(height: 12),
             _buildTransportFields(),
-            if (_type == 'anytls' || _type == 'nowhere') ...[
+            if (_type == 'anytls') ...[
               const SizedBox(height: 24),
               Text(appLocalizations.tls, style: context.textTheme.titleSmall),
               const SizedBox(height: 12),
@@ -1652,6 +1640,31 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                   style: context.textTheme.titleSmall,
                 ),
                 children: [_buildEchFields(), const SizedBox(height: 8)],
+              ),
+            ],
+            if (_type == 'nowhere') ...[
+              const SizedBox(height: 24),
+              ExpansionTile(
+                initiallyExpanded: false,
+                tilePadding: EdgeInsets.zero,
+                title: Text(
+                  appLocalizations.tls,
+                  style: context.textTheme.titleSmall,
+                ),
+                children: [
+                  const SizedBox(height: 12),
+                  _buildTlsFields(),
+                  const SizedBox(height: 8),
+                  ExpansionTile(
+                    initiallyExpanded: false,
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(
+                      appLocalizations.ech,
+                      style: context.textTheme.titleSmall,
+                    ),
+                    children: [_buildEchFields(), const SizedBox(height: 8)],
+                  ),
+                ],
               ),
             ],
             const SizedBox(height: 8),
