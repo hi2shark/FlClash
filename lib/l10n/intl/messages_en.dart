@@ -501,6 +501,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "healthCheckUrl": MessageLookupByLibrary.simpleMessage("Check URL"),
     "hideFromList": MessageLookupByLibrary.simpleMessage("Hide from list"),
     "host": MessageLookupByLibrary.simpleMessage("Host"),
+    "hostKey": MessageLookupByLibrary.simpleMessage("Host key"),
+    "hostKeyAlgorithms": MessageLookupByLibrary.simpleMessage(
+      "Host key algorithms",
+    ),
     "hostsDesc": MessageLookupByLibrary.simpleMessage("Add Hosts"),
     "hotkeyConflict": MessageLookupByLibrary.simpleMessage("Hotkey conflict"),
     "hotkeyManagement": MessageLookupByLibrary.simpleMessage(
@@ -642,6 +646,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "Port must be 1-65535",
     ),
+    "localProxyProtocolReimportOnly": MessageLookupByLibrary.simpleMessage(
+      "This protocol can only be updated by re-importing it",
+    ),
     "localProxyReloadFailed": MessageLookupByLibrary.simpleMessage(
       "Failed to reload local proxies. Changes were rolled back",
     ),
@@ -650,6 +657,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxySsAuthEmpty": MessageLookupByLibrary.simpleMessage(
       "Shadowsocks cipher and password are required",
+    ),
+    "localProxySshAuthEmpty": MessageLookupByLibrary.simpleMessage(
+      "SSH password or private key is required",
+    ),
+    "localProxySshPassphraseWithoutKey": MessageLookupByLibrary.simpleMessage(
+      "A private key is required when using a passphrase",
+    ),
+    "localProxyTlsKeyPairRequired": MessageLookupByLibrary.simpleMessage(
+      "Certificate and private key must be provided together",
+    ),
+    "localProxyUsernameEmpty": MessageLookupByLibrary.simpleMessage(
+      "Username is required",
     ),
     "localProxyUuidEmpty": MessageLookupByLibrary.simpleMessage(
       "VLESS UUID is required",
@@ -841,6 +860,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "preview": MessageLookupByLibrary.simpleMessage("Preview"),
     "prewarmOnStart": MessageLookupByLibrary.simpleMessage("Prewarm on start"),
     "privateKey": MessageLookupByLibrary.simpleMessage("Private key"),
+    "privateKeyPassphrase": MessageLookupByLibrary.simpleMessage(
+      "Private key passphrase",
+    ),
     "process": MessageLookupByLibrary.simpleMessage("Process"),
     "profile": MessageLookupByLibrary.simpleMessage("Profile"),
     "profileAutoUpdateIntervalInvalidValidationDesc":
@@ -920,9 +942,16 @@ class MessageLookup extends MessageLookupByLibrary {
       "QUIC handshake timed out",
     ),
     "quicTest": MessageLookupByLibrary.simpleMessage("QUIC Test"),
+    "quicTestCustomTarget": MessageLookupByLibrary.simpleMessage(
+      "Custom target",
+    ),
+    "quicTestCustomTargetHint": MessageLookupByLibrary.simpleMessage(
+      "Host, host:port, or IPv6 address",
+    ),
     "quicTestDesc": MessageLookupByLibrary.simpleMessage(
       "Test QUIC (HTTP/3) connectivity through the selected node",
     ),
+    "quicTestTarget": MessageLookupByLibrary.simpleMessage("QUIC test target"),
     "quicVersion": MessageLookupByLibrary.simpleMessage("QUIC Version"),
     "quickFill": MessageLookupByLibrary.simpleMessage("Quick fill"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Rainbow"),
@@ -1152,6 +1181,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "size": MessageLookupByLibrary.simpleMessage("Size"),
     "skipCertVerify": MessageLookupByLibrary.simpleMessage("Skip cert verify"),
     "sni": MessageLookupByLibrary.simpleMessage("SNI"),
+    "socks5": MessageLookupByLibrary.simpleMessage("SOCKS5"),
     "socksPort": MessageLookupByLibrary.simpleMessage("Socks Port"),
     "sort": MessageLookupByLibrary.simpleMessage("Sort"),
     "source": MessageLookupByLibrary.simpleMessage("Source"),
@@ -1163,11 +1193,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedTestDesc": MessageLookupByLibrary.simpleMessage(
       "Test download speed through the selected node",
     ),
+    "speedTestPackageSize": MessageLookupByLibrary.simpleMessage(
+      "Test package size",
+    ),
     "splitStrategy": MessageLookupByLibrary.simpleMessage("Split strategy"),
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage(
       "Split strategy cannot be empty",
     ),
     "ss": MessageLookupByLibrary.simpleMessage("Shadowsocks"),
+    "ssh": MessageLookupByLibrary.simpleMessage("SSH"),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs is empty"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Stack mode"),
     "standard": MessageLookupByLibrary.simpleMessage("Standard"),
@@ -1270,6 +1304,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "urlTip": m22,
     "useHosts": MessageLookupByLibrary.simpleMessage("Use hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("Use system hosts"),
+    "username": MessageLookupByLibrary.simpleMessage("Username"),
     "uuid": MessageLookupByLibrary.simpleMessage("UUID"),
     "value": MessageLookupByLibrary.simpleMessage("Value"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("Vibrant"),

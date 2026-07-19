@@ -18,7 +18,12 @@ class LocalProxyProviderGenerator {
 
   Map<String, dynamic> _buildProxyMap(LocalProxy proxy) {
     final map = Map<String, dynamic>.from(proxy.config);
+    final type = proxy.type;
     map['port'] = _toPort(map['port']);
+
+    if (type == 'ssh') {
+      _normalizeSshFields(map);
+    }
 
     // Clean empty/null values regardless of protocol.
     map.removeWhere(
@@ -29,7 +34,6 @@ class LocalProxyProviderGenerator {
           (value is Map && value.isEmpty),
     );
 
-    final type = proxy.type;
     if (type == 'nowhere') {
       _normalizeNowhere(proxy, map);
     } else {
@@ -255,6 +259,29 @@ class LocalProxyProviderGenerator {
       if (parsed != null) return parsed;
     }
     return 0;
+  }
+
+  void _normalizeSshFields(Map<String, dynamic> map) {
+    _canonicalizeSshField(map, 'private-key', 'privateKey');
+    _canonicalizeSshField(
+      map,
+      'private-key-passphrase',
+      'privateKeyPassphrase',
+    );
+    _canonicalizeSshField(map, 'host-key', 'hostKey');
+    _canonicalizeSshField(map, 'host-key-algorithms', 'hostKeyAlgorithms');
+    map.remove('udp');
+  }
+
+  void _canonicalizeSshField(
+    Map<String, dynamic> map,
+    String canonicalKey,
+    String legacyKey,
+  ) {
+    if (!map.containsKey(canonicalKey) && map.containsKey(legacyKey)) {
+      map[canonicalKey] = map[legacyKey];
+    }
+    map.remove(legacyKey);
   }
 
   void _normalizeAlpn(Map<String, dynamic> map) {

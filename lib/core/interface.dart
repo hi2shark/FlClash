@@ -102,7 +102,11 @@ abstract class CoreHandlerInterface with CoreInterface {
         commonPrint.log('Invoke ${method.name} ${DateTime.now()} $data');
       },
       function: () async {
-        return invoke<T>(method: method, data: data, timeout: timeout);
+        final result = invoke<T>(method: method, data: data, timeout: timeout);
+        if (timeout == null) {
+          return result;
+        }
+        return result.timeout(timeout, onTimeout: () => null);
       },
       onEnd: (data, elapsedMilliseconds) {
         commonPrint.log('Invoke ${method.name} ${elapsedMilliseconds}ms');
@@ -337,20 +341,28 @@ abstract class CoreHandlerInterface with CoreInterface {
 
   @override
   Future<String> speedTest(SpeedTestParams params) async {
+    final requestedTimeout = params.timeout;
+    final invokeTimeout = requestedTimeout != null && requestedTimeout > 0
+        ? Duration(milliseconds: requestedTimeout) + const Duration(seconds: 5)
+        : const Duration(seconds: 30);
     return await _invoke<String>(
           method: ActionMethod.speedTest,
           data: json.encode(params.toJson()),
-          timeout: const Duration(seconds: 30),
+          timeout: invokeTimeout,
         ) ??
         json.encode(SpeedTestResult(name: params.proxyName, error: 'timeout'));
   }
 
   @override
   Future<String> quicTest(QuicTestParams params) async {
+    final requestedTimeout = params.timeout;
+    final invokeTimeout = requestedTimeout != null && requestedTimeout > 0
+        ? Duration(milliseconds: requestedTimeout) + const Duration(seconds: 2)
+        : const Duration(seconds: 12);
     return await _invoke<String>(
           method: ActionMethod.quicTest,
           data: json.encode(params.toJson()),
-          timeout: const Duration(seconds: 10),
+          timeout: invokeTimeout,
         ) ??
         json.encode(
           QuicTestResult(

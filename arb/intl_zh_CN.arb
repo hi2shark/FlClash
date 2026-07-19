@@ -723,5 +723,20 @@
   "sentPackets": "发送包数",
   "receivedPackets": "接收包数",
   "errorDetails": "错误",
-  "quicHandshakeTimedOut": "QUIC 握手超时"
+  "quicHandshakeTimedOut": "QUIC 握手超时",
+  "speedTestPackageSize": "测速包大小",
+  "quicTestTarget": "QUIC 测试目标",
+  "quicTestCustomTarget": "自定义目标",
+  "quicTestCustomTargetHint": "主机、主机:端口或 IPv6 地址",
+  "socks5": "SOCKS5",
+  "ssh": "SSH",
+  "username": "用户名",
+  "privateKeyPassphrase": "私钥口令",
+  "hostKey": "主机密钥",
+  "hostKeyAlgorithms": "主机密钥算法",
+  "localProxyUsernameEmpty": "用户名不能为空",
+  "localProxySshAuthEmpty": "SSH 密码或私钥至少填写一项",
+  "localProxySshPassphraseWithoutKey": "使用私钥口令时必须提供私钥",
+  "localProxyTlsKeyPairRequired": "证书和私钥必须同时提供",
+  "localProxyProtocolReimportOnly": "该协议仅支持重新导入，不支持手动编辑"
 }

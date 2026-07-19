@@ -351,6 +351,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "healthCheckUrl": MessageLookupByLibrary.simpleMessage("检测 URL"),
     "hideFromList": MessageLookupByLibrary.simpleMessage("从列表中隐藏"),
     "host": MessageLookupByLibrary.simpleMessage("主机"),
+    "hostKey": MessageLookupByLibrary.simpleMessage("主机密钥"),
+    "hostKeyAlgorithms": MessageLookupByLibrary.simpleMessage("主机密钥算法"),
     "hostsDesc": MessageLookupByLibrary.simpleMessage("追加Hosts"),
     "hotkeyConflict": MessageLookupByLibrary.simpleMessage("快捷键冲突"),
     "hotkeyManagement": MessageLookupByLibrary.simpleMessage("快捷键管理"),
@@ -448,6 +450,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "端口必须是 1-65535",
     ),
+    "localProxyProtocolReimportOnly": MessageLookupByLibrary.simpleMessage(
+      "该协议仅支持重新导入，不支持手动编辑",
+    ),
     "localProxyReloadFailed": MessageLookupByLibrary.simpleMessage(
       "本地节点重载失败，已回滚更改",
     ),
@@ -455,6 +460,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxySsAuthEmpty": MessageLookupByLibrary.simpleMessage(
       "Shadowsocks 加密方式和密码不能为空",
     ),
+    "localProxySshAuthEmpty": MessageLookupByLibrary.simpleMessage(
+      "SSH 密码或私钥至少填写一项",
+    ),
+    "localProxySshPassphraseWithoutKey": MessageLookupByLibrary.simpleMessage(
+      "使用私钥口令时必须提供私钥",
+    ),
+    "localProxyTlsKeyPairRequired": MessageLookupByLibrary.simpleMessage(
+      "证书和私钥必须同时提供",
+    ),
+    "localProxyUsernameEmpty": MessageLookupByLibrary.simpleMessage("用户名不能为空"),
     "localProxyUuidEmpty": MessageLookupByLibrary.simpleMessage(
       "VLESS UUID 不能为空",
     ),
@@ -587,6 +602,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "preview": MessageLookupByLibrary.simpleMessage("预览"),
     "prewarmOnStart": MessageLookupByLibrary.simpleMessage("启动时预热"),
     "privateKey": MessageLookupByLibrary.simpleMessage("私钥"),
+    "privateKeyPassphrase": MessageLookupByLibrary.simpleMessage("私钥口令"),
     "process": MessageLookupByLibrary.simpleMessage("进程"),
     "profile": MessageLookupByLibrary.simpleMessage("配置"),
     "profileAutoUpdateIntervalInvalidValidationDesc":
@@ -644,9 +660,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "qrcodeDesc": MessageLookupByLibrary.simpleMessage("扫描二维码获取配置文件"),
     "quicHandshakeTimedOut": MessageLookupByLibrary.simpleMessage("QUIC 握手超时"),
     "quicTest": MessageLookupByLibrary.simpleMessage("QUIC 测试"),
+    "quicTestCustomTarget": MessageLookupByLibrary.simpleMessage("自定义目标"),
+    "quicTestCustomTargetHint": MessageLookupByLibrary.simpleMessage(
+      "主机、主机:端口或 IPv6 地址",
+    ),
     "quicTestDesc": MessageLookupByLibrary.simpleMessage(
       "通过所选节点测试 QUIC（HTTP/3）连通性",
     ),
+    "quicTestTarget": MessageLookupByLibrary.simpleMessage("QUIC 测试目标"),
     "quicVersion": MessageLookupByLibrary.simpleMessage("QUIC 版本"),
     "quickFill": MessageLookupByLibrary.simpleMessage("一键填入"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("彩虹"),
@@ -810,6 +831,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "size": MessageLookupByLibrary.simpleMessage("尺寸"),
     "skipCertVerify": MessageLookupByLibrary.simpleMessage("跳过证书验证"),
     "sni": MessageLookupByLibrary.simpleMessage("SNI"),
+    "socks5": MessageLookupByLibrary.simpleMessage("SOCKS5"),
     "socksPort": MessageLookupByLibrary.simpleMessage("Socks端口"),
     "sort": MessageLookupByLibrary.simpleMessage("排序"),
     "source": MessageLookupByLibrary.simpleMessage("来源"),
@@ -819,9 +841,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedStatistics": MessageLookupByLibrary.simpleMessage("网速统计"),
     "speedTest": MessageLookupByLibrary.simpleMessage("测速"),
     "speedTestDesc": MessageLookupByLibrary.simpleMessage("通过所选节点测试下载速度"),
+    "speedTestPackageSize": MessageLookupByLibrary.simpleMessage("测速包大小"),
     "splitStrategy": MessageLookupByLibrary.simpleMessage("分流策略"),
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage("分流策略不能为空"),
     "ss": MessageLookupByLibrary.simpleMessage("Shadowsocks"),
+    "ssh": MessageLookupByLibrary.simpleMessage("SSH"),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs为空"),
     "stackMode": MessageLookupByLibrary.simpleMessage("栈模式"),
     "standard": MessageLookupByLibrary.simpleMessage("标准"),
@@ -900,6 +924,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "urlTip": m22,
     "useHosts": MessageLookupByLibrary.simpleMessage("使用Hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("使用系统Hosts"),
+    "username": MessageLookupByLibrary.simpleMessage("用户名"),
     "uuid": MessageLookupByLibrary.simpleMessage("UUID"),
     "value": MessageLookupByLibrary.simpleMessage("值"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("活力"),

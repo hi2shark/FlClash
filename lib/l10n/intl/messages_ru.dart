@@ -28,7 +28,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m2(label) => "Вы уверены, что хотите удалить текущий ${label}?";
 
-  static String m3(label) => "Детали {}";
+  static String m3(label) => "Детали ${label}";
 
   static String m4(label) => "${label} не может быть пустым";
 
@@ -515,6 +515,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "healthCheckUrl": MessageLookupByLibrary.simpleMessage("URL проверки"),
     "hideFromList": MessageLookupByLibrary.simpleMessage("Скрыть из списка"),
     "host": MessageLookupByLibrary.simpleMessage("Хост"),
+    "hostKey": MessageLookupByLibrary.simpleMessage("Ключ хоста"),
+    "hostKeyAlgorithms": MessageLookupByLibrary.simpleMessage(
+      "Алгоритмы ключа хоста",
+    ),
     "hostsDesc": MessageLookupByLibrary.simpleMessage("Добавить Hosts"),
     "hotkeyConflict": MessageLookupByLibrary.simpleMessage(
       "Конфликт горячих клавиш",
@@ -658,6 +662,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "Порт должен быть от 1 до 65535",
     ),
+    "localProxyProtocolReimportOnly": MessageLookupByLibrary.simpleMessage(
+      "Этот протокол можно обновить только повторным импортом",
+    ),
     "localProxyReloadFailed": MessageLookupByLibrary.simpleMessage(
       "Не удалось перезагрузить локальные прокси; изменения отменены",
     ),
@@ -666,6 +673,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxySsAuthEmpty": MessageLookupByLibrary.simpleMessage(
       "Укажите шифрование и пароль Shadowsocks",
+    ),
+    "localProxySshAuthEmpty": MessageLookupByLibrary.simpleMessage(
+      "Укажите пароль SSH или приватный ключ",
+    ),
+    "localProxySshPassphraseWithoutKey": MessageLookupByLibrary.simpleMessage(
+      "Для парольной фразы требуется приватный ключ",
+    ),
+    "localProxyTlsKeyPairRequired": MessageLookupByLibrary.simpleMessage(
+      "Сертификат и приватный ключ необходимо указать вместе",
+    ),
+    "localProxyUsernameEmpty": MessageLookupByLibrary.simpleMessage(
+      "Введите имя пользователя",
     ),
     "localProxyUuidEmpty": MessageLookupByLibrary.simpleMessage(
       "Укажите UUID VLESS",
@@ -881,6 +900,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Предварительный прогрев при запуске",
     ),
     "privateKey": MessageLookupByLibrary.simpleMessage("Приватный ключ"),
+    "privateKeyPassphrase": MessageLookupByLibrary.simpleMessage(
+      "Парольная фраза приватного ключа",
+    ),
     "process": MessageLookupByLibrary.simpleMessage("процесс"),
     "profile": MessageLookupByLibrary.simpleMessage("Профиль"),
     "profileAutoUpdateIntervalInvalidValidationDesc":
@@ -962,9 +984,16 @@ class MessageLookup extends MessageLookupByLibrary {
       "Время ожидания рукопожатия QUIC истекло",
     ),
     "quicTest": MessageLookupByLibrary.simpleMessage("Тест QUIC"),
+    "quicTestCustomTarget": MessageLookupByLibrary.simpleMessage(
+      "Пользовательская цель",
+    ),
+    "quicTestCustomTargetHint": MessageLookupByLibrary.simpleMessage(
+      "Хост, хост:порт или IPv6-адрес",
+    ),
     "quicTestDesc": MessageLookupByLibrary.simpleMessage(
       "Проверка QUIC (HTTP/3) соединения через выбранный узел",
     ),
+    "quicTestTarget": MessageLookupByLibrary.simpleMessage("Цель QUIC-теста"),
     "quicVersion": MessageLookupByLibrary.simpleMessage("Версия QUIC"),
     "quickFill": MessageLookupByLibrary.simpleMessage("Быстрое заполнение"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("Радужные"),
@@ -1210,6 +1239,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Пропускать проверку сертификата",
     ),
     "sni": MessageLookupByLibrary.simpleMessage("SNI"),
+    "socks5": MessageLookupByLibrary.simpleMessage("SOCKS5"),
     "socksPort": MessageLookupByLibrary.simpleMessage("Socks-порт"),
     "sort": MessageLookupByLibrary.simpleMessage("Сортировка"),
     "source": MessageLookupByLibrary.simpleMessage("Источник"),
@@ -1223,6 +1253,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedTestDesc": MessageLookupByLibrary.simpleMessage(
       "Проверка скорости загрузки через выбранный узел",
     ),
+    "speedTestPackageSize": MessageLookupByLibrary.simpleMessage(
+      "Размер данных для теста скорости",
+    ),
     "splitStrategy": MessageLookupByLibrary.simpleMessage(
       "Стратегия разделения",
     ),
@@ -1230,6 +1263,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Стратегия разделения не может быть пустой",
     ),
     "ss": MessageLookupByLibrary.simpleMessage("Shadowsocks"),
+    "ssh": MessageLookupByLibrary.simpleMessage("SSH"),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs is empty"),
     "stackMode": MessageLookupByLibrary.simpleMessage("Режим стека"),
     "standard": MessageLookupByLibrary.simpleMessage("Стандартный"),
@@ -1344,6 +1378,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "useSystemHosts": MessageLookupByLibrary.simpleMessage(
       "Использовать системные hosts",
     ),
+    "username": MessageLookupByLibrary.simpleMessage("Имя пользователя"),
     "uuid": MessageLookupByLibrary.simpleMessage("UUID"),
     "value": MessageLookupByLibrary.simpleMessage("Значение"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("Яркие"),

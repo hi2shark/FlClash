@@ -393,6 +393,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "healthCheckUrl": MessageLookupByLibrary.simpleMessage("チェック URL"),
     "hideFromList": MessageLookupByLibrary.simpleMessage("リストから隠す"),
     "host": MessageLookupByLibrary.simpleMessage("ホスト"),
+    "hostKey": MessageLookupByLibrary.simpleMessage("ホストキー"),
+    "hostKeyAlgorithms": MessageLookupByLibrary.simpleMessage("ホストキーアルゴリズム"),
     "hostsDesc": MessageLookupByLibrary.simpleMessage("ホストを追加"),
     "hotkeyConflict": MessageLookupByLibrary.simpleMessage("ホットキー競合"),
     "hotkeyManagement": MessageLookupByLibrary.simpleMessage("ホットキー管理"),
@@ -508,6 +510,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "ポートは 1-65535 の範囲で入力してください",
     ),
+    "localProxyProtocolReimportOnly": MessageLookupByLibrary.simpleMessage(
+      "このプロトコルは再インポートでのみ更新できます",
+    ),
     "localProxyReloadFailed": MessageLookupByLibrary.simpleMessage(
       "ローカルプロキシの再読み込みに失敗したため、変更を元に戻しました",
     ),
@@ -516,6 +521,18 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxySsAuthEmpty": MessageLookupByLibrary.simpleMessage(
       "Shadowsocks の暗号方式とパスワードを入力してください",
+    ),
+    "localProxySshAuthEmpty": MessageLookupByLibrary.simpleMessage(
+      "SSH のパスワードまたは秘密鍵を入力してください",
+    ),
+    "localProxySshPassphraseWithoutKey": MessageLookupByLibrary.simpleMessage(
+      "パスフレーズを使用するには秘密鍵が必要です",
+    ),
+    "localProxyTlsKeyPairRequired": MessageLookupByLibrary.simpleMessage(
+      "証明書と秘密鍵は同時に指定してください",
+    ),
+    "localProxyUsernameEmpty": MessageLookupByLibrary.simpleMessage(
+      "ユーザー名を入力してください",
     ),
     "localProxyUuidEmpty": MessageLookupByLibrary.simpleMessage(
       "VLESS UUID を入力してください",
@@ -675,6 +692,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "preview": MessageLookupByLibrary.simpleMessage("プレビュー"),
     "prewarmOnStart": MessageLookupByLibrary.simpleMessage("起動時に事前ウォームアップ"),
     "privateKey": MessageLookupByLibrary.simpleMessage("秘密鍵"),
+    "privateKeyPassphrase": MessageLookupByLibrary.simpleMessage("秘密鍵のパスフレーズ"),
     "process": MessageLookupByLibrary.simpleMessage("プロセス"),
     "profile": MessageLookupByLibrary.simpleMessage("プロファイル"),
     "profileAutoUpdateIntervalInvalidValidationDesc":
@@ -744,9 +762,14 @@ class MessageLookup extends MessageLookupByLibrary {
       "QUIC ハンドシェイクがタイムアウトしました",
     ),
     "quicTest": MessageLookupByLibrary.simpleMessage("QUIC テスト"),
+    "quicTestCustomTarget": MessageLookupByLibrary.simpleMessage("カスタム対象"),
+    "quicTestCustomTargetHint": MessageLookupByLibrary.simpleMessage(
+      "ホスト、ホスト:ポート、または IPv6 アドレス",
+    ),
     "quicTestDesc": MessageLookupByLibrary.simpleMessage(
       "選択したノードで QUIC（HTTP/3）接続をテストします",
     ),
+    "quicTestTarget": MessageLookupByLibrary.simpleMessage("QUIC テスト対象"),
     "quicVersion": MessageLookupByLibrary.simpleMessage("QUIC バージョン"),
     "quickFill": MessageLookupByLibrary.simpleMessage("クイック入力"),
     "rainbowScheme": MessageLookupByLibrary.simpleMessage("レインボー"),
@@ -942,6 +965,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "size": MessageLookupByLibrary.simpleMessage("サイズ"),
     "skipCertVerify": MessageLookupByLibrary.simpleMessage("証明書検証をスキップ"),
     "sni": MessageLookupByLibrary.simpleMessage("SNI"),
+    "socks5": MessageLookupByLibrary.simpleMessage("SOCKS5"),
     "socksPort": MessageLookupByLibrary.simpleMessage("Socksポート"),
     "sort": MessageLookupByLibrary.simpleMessage("並び替え"),
     "source": MessageLookupByLibrary.simpleMessage("ソース"),
@@ -953,11 +977,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "speedTestDesc": MessageLookupByLibrary.simpleMessage(
       "選択したノードでダウンロード速度をテストします",
     ),
+    "speedTestPackageSize": MessageLookupByLibrary.simpleMessage(
+      "速度テストのデータサイズ",
+    ),
     "splitStrategy": MessageLookupByLibrary.simpleMessage("分流戦略"),
     "splitStrategyNotEmpty": MessageLookupByLibrary.simpleMessage(
       "分流戦略は空にできません",
     ),
     "ss": MessageLookupByLibrary.simpleMessage("Shadowsocks"),
+    "ssh": MessageLookupByLibrary.simpleMessage("SSH"),
     "ssidsEmpty": MessageLookupByLibrary.simpleMessage("SSIDs is empty"),
     "stackMode": MessageLookupByLibrary.simpleMessage("スタックモード"),
     "standard": MessageLookupByLibrary.simpleMessage("標準"),
@@ -1040,6 +1068,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "urlTip": m22,
     "useHosts": MessageLookupByLibrary.simpleMessage("ホストを使用"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("システムホストを使用"),
+    "username": MessageLookupByLibrary.simpleMessage("ユーザー名"),
     "uuid": MessageLookupByLibrary.simpleMessage("UUID"),
     "value": MessageLookupByLibrary.simpleMessage("値"),
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("ビブラント"),

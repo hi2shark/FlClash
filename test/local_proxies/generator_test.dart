@@ -175,6 +175,206 @@ void main() {
       expect(map.containsKey('ech-opts'), false);
     });
 
+    test('emits SOCKS5 provider fields and removes empty values', () {
+      final proxy = _proxy(
+        type: 'socks5',
+        config: {
+          'name': 'SOCKS5',
+          'type': 'socks5',
+          'server': 'socks.example.com',
+          'port': 1080,
+          'username': 'alice',
+          'password': 'secret',
+          'tls': true,
+          'udp': true,
+          'skip-cert-verify': true,
+          'certificate': 'CERTIFICATE',
+          'private-key': 'PRIVATE KEY',
+          'fingerprint': '',
+          'unused': '',
+          'null-value': null,
+          'empty-list': <String>[],
+          'empty-map': <String, dynamic>{},
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final map = _firstProxy(yamlString);
+
+      expect(map['name'], 'SOCKS5');
+      expect(map['type'], 'socks5');
+      expect(map['server'], 'socks.example.com');
+      expect(map['port'], 1080);
+      expect(map['username'], 'alice');
+      expect(map['password'], 'secret');
+      expect(map['tls'], isTrue);
+      expect(map['udp'], isTrue);
+      expect(map['skip-cert-verify'], isTrue);
+      expect(map['certificate'], 'CERTIFICATE');
+      expect(map['private-key'], 'PRIVATE KEY');
+      expect(map.containsKey('fingerprint'), isFalse);
+      expect(map.containsKey('unused'), isFalse);
+      expect(map.containsKey('null-value'), isFalse);
+      expect(map.containsKey('empty-list'), isFalse);
+      expect(map.containsKey('empty-map'), isFalse);
+    });
+
+    test('emits SSH kebab-case fields without UDP', () {
+      final proxy = _proxy(
+        type: 'ssh',
+        config: {
+          'name': 'SSH',
+          'type': 'ssh',
+          'server': 'ssh.example.com',
+          'port': 22,
+          'username': 'root',
+          'password': 'secret',
+          'private-key': 'PRIVATE KEY\nBODY',
+          'private-key-passphrase': 'phrase',
+          'host-key': [
+            'ssh-ed25519 AAAAfirst comment',
+            'ssh-rsa AAAAsecond comment',
+          ],
+          'host-key-algorithms': ['ssh-ed25519', 'rsa-sha2-512'],
+          'udp': true,
+          'unused': '',
+          'null-value': null,
+          'empty-list': <String>[],
+          'empty-map': <String, dynamic>{},
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final map = _firstProxy(yamlString);
+
+      expect(map['name'], 'SSH');
+      expect(map['type'], 'ssh');
+      expect(map['server'], 'ssh.example.com');
+      expect(map['port'], 22);
+      expect(map['username'], 'root');
+      expect(map['password'], 'secret');
+      expect(map['private-key'], 'PRIVATE KEY\nBODY');
+      expect(map['private-key-passphrase'], 'phrase');
+      expect(map['host-key'], [
+        'ssh-ed25519 AAAAfirst comment',
+        'ssh-rsa AAAAsecond comment',
+      ]);
+      expect(map['host-key-algorithms'], ['ssh-ed25519', 'rsa-sha2-512']);
+      expect(map.containsKey('udp'), isFalse);
+      expect(map.containsKey('privateKey'), isFalse);
+      expect(map.containsKey('privateKeyPassphrase'), isFalse);
+      expect(map.containsKey('hostKey'), isFalse);
+      expect(map.containsKey('hostKeyAlgorithms'), isFalse);
+      expect(map.containsKey('unused'), isFalse);
+      expect(map.containsKey('null-value'), isFalse);
+      expect(map.containsKey('empty-list'), isFalse);
+      expect(map.containsKey('empty-map'), isFalse);
+    });
+
+    test('omits explicit false UDP from SSH output', () {
+      final proxy = _proxy(
+        type: 'ssh',
+        config: {
+          'name': 'SSH',
+          'type': 'ssh',
+          'server': 'ssh.example.com',
+          'port': 22,
+          'username': 'root',
+          'password': 'secret',
+          'udp': false,
+        },
+      );
+
+      final map = _firstProxy(generator.generateYaml([proxy]));
+      expect(map.containsKey('udp'), isFalse);
+    });
+
+    test('canonicalizes SSH camelCase-only fields', () {
+      final proxy = _proxy(
+        type: 'ssh',
+        config: {
+          'name': 'Legacy SSH',
+          'type': 'ssh',
+          'server': 'ssh.example.com',
+          'port': 22,
+          'username': 'root',
+          'password': 'secret',
+          'privateKey': 'LEGACY PRIVATE KEY',
+          'privateKeyPassphrase': 'legacy phrase',
+          'hostKey': ['ssh-ed25519 LEGACY'],
+          'hostKeyAlgorithms': ['ssh-ed25519'],
+          'udp': false,
+          'tfo': true,
+          'mptcp': true,
+          'interface-name': 'eth0',
+          'routing-mark': 123,
+          'ip-version': 'ipv4',
+          'dialer-proxy': 'CHAIN',
+        },
+      );
+
+      final map = _firstProxy(generator.generateYaml([proxy]));
+      expect(map['private-key'], 'LEGACY PRIVATE KEY');
+      expect(map['private-key-passphrase'], 'legacy phrase');
+      expect(map['host-key'], ['ssh-ed25519 LEGACY']);
+      expect(map['host-key-algorithms'], ['ssh-ed25519']);
+      expect(map['tfo'], isTrue);
+      expect(map['mptcp'], isTrue);
+      expect(map['interface-name'], 'eth0');
+      expect(map['routing-mark'], 123);
+      expect(map['ip-version'], 'ipv4');
+      expect(map['dialer-proxy'], 'CHAIN');
+      expect(map.containsKey('udp'), isFalse);
+      for (final key in [
+        'privateKey',
+        'privateKeyPassphrase',
+        'hostKey',
+        'hostKeyAlgorithms',
+      ]) {
+        expect(map.containsKey(key), isFalse, reason: key);
+      }
+    });
+
+    test('prefers SSH kebab-case fields over camelCase aliases', () {
+      final proxy = _proxy(
+        type: 'ssh',
+        config: {
+          'name': 'Mixed SSH',
+          'type': 'ssh',
+          'server': 'ssh.example.com',
+          'port': 22,
+          'username': 'root',
+          'password': 'secret',
+          'private-key': 'CANONICAL PRIVATE KEY',
+          'privateKey': 'LEGACY PRIVATE KEY',
+          'private-key-passphrase': 'canonical phrase',
+          'privateKeyPassphrase': 'legacy phrase',
+          'host-key': ['ssh-ed25519 CANONICAL'],
+          'hostKey': ['ssh-ed25519 LEGACY'],
+          'host-key-algorithms': ['canonical-algorithm'],
+          'hostKeyAlgorithms': ['legacy-algorithm'],
+          'tfo': false,
+          'dialer-proxy': 'CHAIN',
+          'udp': true,
+        },
+      );
+
+      final map = _firstProxy(generator.generateYaml([proxy]));
+      expect(map['private-key'], 'CANONICAL PRIVATE KEY');
+      expect(map['private-key-passphrase'], 'canonical phrase');
+      expect(map['host-key'], ['ssh-ed25519 CANONICAL']);
+      expect(map['host-key-algorithms'], ['canonical-algorithm']);
+      expect(map['tfo'], isFalse);
+      expect(map['dialer-proxy'], 'CHAIN');
+      expect(map.containsKey('udp'), isFalse);
+      for (final key in [
+        'privateKey',
+        'privateKeyPassphrase',
+        'hostKey',
+        'hostKeyAlgorithms',
+      ]) {
+        expect(map.containsKey(key), isFalse, reason: key);
+      }
+    });
+
     test('migrates nowhere key and strips pool for udp carriers', () {
       final proxy = _proxy(
         type: 'nowhere',

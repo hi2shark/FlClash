@@ -5688,6 +5688,136 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Test package size`
+  String get speedTestPackageSize {
+    return Intl.message(
+      'Test package size',
+      name: 'speedTestPackageSize',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `QUIC test target`
+  String get quicTestTarget {
+    return Intl.message(
+      'QUIC test target',
+      name: 'quicTestTarget',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Custom target`
+  String get quicTestCustomTarget {
+    return Intl.message(
+      'Custom target',
+      name: 'quicTestCustomTarget',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Host, host:port, or IPv6 address`
+  String get quicTestCustomTargetHint {
+    return Intl.message(
+      'Host, host:port, or IPv6 address',
+      name: 'quicTestCustomTargetHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `SOCKS5`
+  String get socks5 {
+    return Intl.message('SOCKS5', name: 'socks5', desc: '', args: []);
+  }
+
+  /// `SSH`
+  String get ssh {
+    return Intl.message('SSH', name: 'ssh', desc: '', args: []);
+  }
+
+  /// `Username`
+  String get username {
+    return Intl.message('Username', name: 'username', desc: '', args: []);
+  }
+
+  /// `Private key passphrase`
+  String get privateKeyPassphrase {
+    return Intl.message(
+      'Private key passphrase',
+      name: 'privateKeyPassphrase',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Host key`
+  String get hostKey {
+    return Intl.message('Host key', name: 'hostKey', desc: '', args: []);
+  }
+
+  /// `Host key algorithms`
+  String get hostKeyAlgorithms {
+    return Intl.message(
+      'Host key algorithms',
+      name: 'hostKeyAlgorithms',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Username is required`
+  String get localProxyUsernameEmpty {
+    return Intl.message(
+      'Username is required',
+      name: 'localProxyUsernameEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `SSH password or private key is required`
+  String get localProxySshAuthEmpty {
+    return Intl.message(
+      'SSH password or private key is required',
+      name: 'localProxySshAuthEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `A private key is required when using a passphrase`
+  String get localProxySshPassphraseWithoutKey {
+    return Intl.message(
+      'A private key is required when using a passphrase',
+      name: 'localProxySshPassphraseWithoutKey',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate and private key must be provided together`
+  String get localProxyTlsKeyPairRequired {
+    return Intl.message(
+      'Certificate and private key must be provided together',
+      name: 'localProxyTlsKeyPairRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This protocol can only be updated by re-importing it`
+  String get localProxyProtocolReimportOnly {
+    return Intl.message(
+      'This protocol can only be updated by re-importing it',
+      name: 'localProxyProtocolReimportOnly',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

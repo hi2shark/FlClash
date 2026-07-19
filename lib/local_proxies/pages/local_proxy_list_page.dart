@@ -185,6 +185,8 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
       'anytls' => l10n.anytls,
       'nowhere' => l10n.nowhere,
       'hysteria2' => l10n.hysteria2,
+      'socks5' => l10n.socks5,
+      'ssh' => l10n.ssh,
       _ => type.toUpperCase(),
     };
   }
@@ -331,40 +333,53 @@ class _ProxyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return CommonCard(
-      child: ListItem(
-        title: Text(proxy.name),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text('${proxy.displayType} · ${proxy.serverDesc}'),
-            const SizedBox(height: 4),
-            Text(
-              proxy.enabled
-                  ? appLocalizations.enabled
-                  : appLocalizations.disabled,
-              style: context.textTheme.labelMedium?.copyWith(
-                color: proxy.enabled
-                    ? context.colorScheme.primary
-                    : context.colorScheme.outline,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListItem(
+            title: Text(proxy.name),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text('${proxy.displayType} · ${proxy.serverDesc}'),
+                const SizedBox(height: 4),
+                Text(
+                  proxy.enabled
+                      ? appLocalizations.enabled
+                      : appLocalizations.disabled,
+                  style: context.textTheme.labelMedium?.copyWith(
+                    color: proxy.enabled
+                        ? context.colorScheme.primary
+                        : context.colorScheme.outline,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Switch(value: proxy.enabled, onChanged: (_) => onToggle()),
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: onEdit,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outlined),
+                    onPressed: onDelete,
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Switch(value: proxy.enabled, onChanged: (_) => onToggle()),
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: onEdit,
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outlined),
-              onPressed: onDelete,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

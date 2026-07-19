@@ -58,6 +58,42 @@ void main() {
     CoreController.resetInstance();
   });
 
+  group('isNetworkTestCandidate', () {
+    test('filters normalized non-testable and group types', () {
+      const excludedTypes = [
+        'Reject',
+        ' rejectDROP ',
+        'pAsS',
+        'PASSRULE',
+        'Selector',
+        ' UrL-tEsT ',
+        'FALLBACK',
+        'loadbalance',
+        'relay',
+      ];
+
+      for (final type in excludedTypes) {
+        expect(
+          isNetworkTestCandidate({'name': 'node', 'type': type}),
+          isFalse,
+          reason: 'type=$type',
+        );
+      }
+    });
+
+    test('keeps local and ordinary proxies based on actual type', () {
+      const candidates = [
+        {'name': 'REJECT', 'type': 'Shadowsocks'},
+        {'name': 'DIRECT', 'type': 'Direct'},
+        {'name': 'COMPATIBLE', 'type': 'Compatible'},
+      ];
+
+      for (final proxy in candidates) {
+        expect(isNetworkTestCandidate(proxy), isTrue, reason: 'proxy=$proxy');
+      }
+    });
+  });
+
   group('CoreController singleton', () {
     test('test constructor injects mock interface', () {
       expect(controller, isA<CoreController>());
@@ -356,7 +392,7 @@ void main() {
       expect(result.receivedBytes, 0);
     });
 
-    test('getAllProxies filters out group types', () async {
+    test('getAllProxies filters group types case-insensitively', () async {
       when(() => mock.getProxies()).thenAnswer(
         (_) async => const ProxiesData(
           proxies: {
@@ -364,14 +400,70 @@ void main() {
             'Group1': {'name': 'Group1', 'type': 'Selector'},
             'ProxyB': {'name': 'ProxyB', 'type': 'Vmess'},
             'Group2': {'name': 'Group2', 'type': 'URLTest'},
+            'Group3': {'name': 'Group3', 'type': 'sElEcT'},
+            'Group4': {'name': 'Group4', 'type': ' url-test '},
+            'Group5': {'name': 'Group5', 'type': 'LOAD-BALANCE'},
+            'Group6': {'name': 'Group6', 'type': 'relay'},
+            'Group7': {'name': 'Group7', 'type': 'FaLlBaCk'},
           },
-          all: ['ProxyA', 'Group1', 'ProxyB', 'Group2'],
+          all: [
+            'ProxyA',
+            'Group1',
+            'ProxyB',
+            'Group2',
+            'Group3',
+            'Group4',
+            'Group5',
+            'Group6',
+            'Group7',
+          ],
         ),
       );
       final result = await controller.getAllProxies();
       expect(result.map((proxy) => proxy.name), ['ProxyA', 'ProxyB']);
       expect(result.every((proxy) => proxy.type != 'Selector'), true);
     });
+
+    test(
+      'getAllProxies filters non-testable adapter types case-insensitively',
+      () async {
+        when(() => mock.getProxies()).thenAnswer(
+          (_) async => const ProxiesData(
+            proxies: {
+              'RejectAdapter': {'name': 'RejectAdapter', 'type': '  rEjEcT '},
+              'RejectDropAdapter': {
+                'name': 'RejectDropAdapter',
+                'type': 'REJECTDROP',
+              },
+              'PassAdapter': {'name': 'PassAdapter', 'type': 'Pass'},
+              'PassRuleAdapter': {
+                'name': 'PassRuleAdapter',
+                'type': 'pAsSrUlE',
+              },
+              'REJECT': {'name': 'REJECT', 'type': 'Shadowsocks'},
+              'DIRECT': {'name': 'DIRECT', 'type': 'Direct'},
+              'COMPATIBLE': {'name': 'COMPATIBLE', 'type': 'Compatible'},
+            },
+            all: [
+              'RejectAdapter',
+              'RejectDropAdapter',
+              'PassAdapter',
+              'PassRuleAdapter',
+              'REJECT',
+              'DIRECT',
+              'COMPATIBLE',
+            ],
+          ),
+        );
+        final result = await controller.getAllProxies();
+
+        expect(result.map((proxy) => proxy.name).toSet(), {
+          'REJECT',
+          'DIRECT',
+          'COMPATIBLE',
+        });
+      },
+    );
 
     test('getAllProxies returns empty list when no proxies', () async {
       when(

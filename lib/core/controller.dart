@@ -11,6 +11,28 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 
+const _nonTestableProxyTypes = {'reject', 'rejectdrop', 'pass', 'passrule'};
+
+@visibleForTesting
+bool isNetworkTestCandidate(Object? proxy) {
+  if (proxy is! Map<Object?, Object?>) {
+    return false;
+  }
+  final type = proxy['type'];
+  if (type is! String) {
+    return false;
+  }
+  final normalizedType = type.trim().toLowerCase();
+  if (_nonTestableProxyTypes.contains(normalizedType)) {
+    return false;
+  }
+  return !GroupType.values.any(
+    (groupType) =>
+        groupType.name.toLowerCase() == normalizedType ||
+        groupType.value.toLowerCase() == normalizedType,
+  );
+}
+
 class CoreController {
   static CoreController? _instance;
   late CoreHandlerInterface _interface;
@@ -221,9 +243,7 @@ class CoreController {
   Future<List<Proxy>> getAllProxies() async {
     final proxiesData = await _interface.getProxies();
     return proxiesData.proxies.values
-        .where(
-          (proxy) => !GroupTypeExtension.valueList.contains(proxy['type']),
-        )
+        .where(isNetworkTestCandidate)
         .map((proxy) => Proxy.fromJson(Map<String, Object?>.from(proxy)))
         .toList();
   }

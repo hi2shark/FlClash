@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 
 const manualProxyTypes = [
   'ss',
+  'socks5',
+  'ssh',
   'vless',
   'trojan',
   'anytls',
@@ -18,6 +20,8 @@ const manualProxyTypes = [
 
 const _manualProxyTypeSet = {
   'ss',
+  'socks5',
+  'ssh',
   'vless',
   'trojan',
   'anytls',
@@ -92,6 +96,103 @@ const _nowhereControlledFields = {
   'max-udp-relay-packet-size',
 };
 
+const _commonControlledFields = {'name', 'type', 'server', 'port', 'udp'};
+
+const _transportControlledFields = {
+  'network',
+  'net',
+  'servername',
+  'sni',
+  'tls',
+  'skip-cert-verify',
+  'alpn',
+  'client-fingerprint',
+  'fingerprint',
+  'certificate',
+  'private-key',
+  'reality-opts',
+  'ws-opts',
+  'grpc-opts',
+  'http-opts',
+  'h2-opts',
+  'xhttp-opts',
+};
+
+const _packetControlledFields = {'packet-encoding', 'xudp', 'packet-addr'};
+
+const _ssControlledFields = {'cipher', 'password'};
+
+const _socks5ControlledFields = {
+  'username',
+  'password',
+  'tls',
+  'skip-cert-verify',
+  'fingerprint',
+  'certificate',
+  'private-key',
+};
+
+const _sshControlledFields = {
+  'username',
+  'password',
+  'private-key',
+  'private-key-passphrase',
+  'host-key',
+  'host-key-algorithms',
+  'privateKey',
+  'privateKeyPassphrase',
+  'hostKey',
+  'hostKeyAlgorithms',
+};
+
+const _vlessControlledFields = {
+  ..._transportControlledFields,
+  ..._packetControlledFields,
+  'uuid',
+  'flow',
+  'encryption',
+};
+
+const _trojanControlledFields = {..._transportControlledFields, 'password'};
+
+const _anyTlsControlledFields = {
+  'password',
+  'sni',
+  'alpn',
+  'client-fingerprint',
+  'fingerprint',
+  'certificate',
+  'private-key',
+  'skip-cert-verify',
+  'ech-opts',
+  'idle-session-check-interval',
+  'idle-session-timeout',
+  'min-idle-session',
+};
+
+const _hysteria2ControlledFields = {
+  'password',
+  'sni',
+  'obfs',
+  'obfs-password',
+  'alpn',
+  'fingerprint',
+  'up',
+  'down',
+  'skip-cert-verify',
+};
+
+const _controlledFieldsByType = <String, Set<String>>{
+  'ss': _ssControlledFields,
+  'socks5': _socks5ControlledFields,
+  'ssh': _sshControlledFields,
+  'vless': _vlessControlledFields,
+  'trojan': _trojanControlledFields,
+  'anytls': _anyTlsControlledFields,
+  'nowhere': _nowhereControlledFields,
+  'hysteria2': _hysteria2ControlledFields,
+};
+
 class LocalProxyEditPage extends StatefulWidget {
   final LocalProxy? proxy;
   final String? initialType;
@@ -107,6 +208,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late final TextEditingController _nameController;
   late final TextEditingController _serverController;
   late final TextEditingController _portController;
+  late final TextEditingController _usernameController;
   late final TextEditingController _passwordController;
   late final TextEditingController _cipherController;
   late final TextEditingController _uuidController;
@@ -117,6 +219,9 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late final TextEditingController _fingerprintController;
   late final TextEditingController _certificateController;
   late final TextEditingController _privateKeyController;
+  late final TextEditingController _privateKeyPassphraseController;
+  late final TextEditingController _hostKeyController;
+  late final TextEditingController _hostKeyAlgorithmsController;
   late final TextEditingController _echConfigController;
   late final TextEditingController _echQueryServerNameController;
   late final TextEditingController _idleSessionCheckIntervalController;
@@ -152,6 +257,8 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
 
   late bool _tls;
   late bool _udp;
+  late bool _udpWasSpecified;
+  bool _udpTouched = false;
   late bool _skipCertVerify;
   late bool _echEnabled;
   late bool _prewarmOnStart;
@@ -182,6 +289,9 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     );
     _portController = TextEditingController(
       text: config['port']?.toString() ?? '',
+    );
+    _usernameController = TextEditingController(
+      text: config['username']?.toString() ?? '',
     );
     _passwordController = TextEditingController(
       text: config['password']?.toString() ?? '',
@@ -216,7 +326,26 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       text: config['certificate']?.toString() ?? '',
     );
     _privateKeyController = TextEditingController(
-      text: config['private-key']?.toString() ?? '',
+      text:
+          _sshConfigValue(config, 'private-key', 'privateKey')?.toString() ??
+          '',
+    );
+    _privateKeyPassphraseController = TextEditingController(
+      text:
+          _sshConfigValue(
+            config,
+            'private-key-passphrase',
+            'privateKeyPassphrase',
+          )?.toString() ??
+          '',
+    );
+    _hostKeyController = TextEditingController(
+      text: _listToLines(_sshConfigValue(config, 'host-key', 'hostKey')),
+    );
+    _hostKeyAlgorithmsController = TextEditingController(
+      text: _listToLines(
+        _sshConfigValue(config, 'host-key-algorithms', 'hostKeyAlgorithms'),
+      ),
     );
     final echOpts = config['ech-opts'] as Map?;
     _echEnabled = echOpts?['enable'] == true;
@@ -346,7 +475,8 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _xhttpAdvancedExpanded = false;
 
     _tls = config['tls'] == true;
-    _udp = config['udp'] != false;
+    _udpWasSpecified = config.containsKey('udp');
+    _udp = _udpWasSpecified ? config['udp'] == true : _type != 'socks5';
     _skipCertVerify = config['skip-cert-verify'] == true;
     _prewarmOnStart = config['prewarm-on-start'] == true;
     final legacyCarrier = (config['network'] ?? config['net'])?.toString();
@@ -386,6 +516,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _nameController.dispose();
     _serverController.dispose();
     _portController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     _cipherController.dispose();
     _uuidController.dispose();
@@ -396,6 +527,9 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _fingerprintController.dispose();
     _certificateController.dispose();
     _privateKeyController.dispose();
+    _privateKeyPassphraseController.dispose();
+    _hostKeyController.dispose();
+    _hostKeyAlgorithmsController.dispose();
     _echConfigController.dispose();
     _echQueryServerNameController.dispose();
     _idleSessionCheckIntervalController.dispose();
@@ -450,6 +584,33 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       return value.map((e) => e.toString()).join(', ');
     }
     return value.toString();
+  }
+
+  String _listToLines(dynamic value) {
+    if (value == null) return '';
+    if (value is List) {
+      return value.map((e) => e.toString()).join('\n');
+    }
+    return value.toString();
+  }
+
+  dynamic _sshConfigValue(
+    Map<String, dynamic> config,
+    String canonicalKey,
+    String legacyKey,
+  ) {
+    if (_type != 'ssh' || config.containsKey(canonicalKey)) {
+      return config[canonicalKey];
+    }
+    return config[legacyKey];
+  }
+
+  List<String> _splitLines(String text, {bool preserveSpaces = false}) {
+    return const LineSplitter()
+        .convert(text)
+        .map((line) => preserveSpaces ? line : line.trim())
+        .where((line) => line.trim().isNotEmpty)
+        .toList();
   }
 
   List<String> _splitCsv(String text) {
@@ -508,26 +669,85 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
 
   bool get _isTransportProtocol => _type == 'vless' || _type == 'trojan';
 
+  Set<String> _controlledFieldsForType(String type) {
+    return _controlledFieldsByType[type] ?? const <String>{};
+  }
+
   Map<String, dynamic> _buildConfig() {
-    final base = _type == 'nowhere' && widget.proxy?.type == 'nowhere'
-        ? Map<String, dynamic>.from(widget.proxy!.config)
-        : <String, dynamic>{};
-    if (_type == 'nowhere') {
-      for (final field in _nowhereControlledFields) {
-        base.remove(field);
-      }
+    final base = widget.proxy == null
+        ? <String, dynamic>{}
+        : Map<String, dynamic>.from(widget.proxy!.config);
+    final fieldsToClear = <String>{
+      ..._commonControlledFields,
+      ..._controlledFieldsForType(_type),
+    };
+    final previousType = widget.proxy?.type;
+    if (previousType != null && previousType != _type) {
+      fieldsToClear.addAll(_controlledFieldsForType(previousType));
+    }
+    for (final field in fieldsToClear) {
+      base.remove(field);
     }
     base.addAll({
       'name': _nameController.text.trim(),
       'type': _type,
       'server': _serverController.text.trim(),
       'port': _port,
-      'udp': _udp,
     });
+    final preserveMissingUdp =
+        widget.proxy != null &&
+        !_udpWasSpecified &&
+        !_udpTouched &&
+        previousType == _type;
+    if (_type != 'ssh' && !preserveMissingUdp) {
+      base['udp'] = _udp;
+    }
     switch (_type) {
       case 'ss':
         base['cipher'] = _cipherController.text.trim();
         base['password'] = _passwordController.text;
+      case 'socks5':
+        if (_usernameController.text.trim().isNotEmpty) {
+          base['username'] = _usernameController.text.trim();
+        }
+        if (_passwordController.text.isNotEmpty) {
+          base['password'] = _passwordController.text;
+        }
+        base['tls'] = _tls;
+        if (_tls) {
+          base['skip-cert-verify'] = _skipCertVerify;
+          if (_fingerprintController.text.trim().isNotEmpty) {
+            base['fingerprint'] = _fingerprintController.text.trim();
+          }
+          if (_certificateController.text.trim().isNotEmpty) {
+            base['certificate'] = _certificateController.text.trim();
+          }
+          if (_privateKeyController.text.trim().isNotEmpty) {
+            base['private-key'] = _privateKeyController.text.trim();
+          }
+        }
+      case 'ssh':
+        base['username'] = _usernameController.text.trim();
+        if (_passwordController.text.isNotEmpty) {
+          base['password'] = _passwordController.text;
+        }
+        if (_privateKeyController.text.trim().isNotEmpty) {
+          base['private-key'] = _privateKeyController.text.trim();
+        }
+        if (_privateKeyPassphraseController.text.isNotEmpty) {
+          base['private-key-passphrase'] = _privateKeyPassphraseController.text;
+        }
+        final hostKeys = _splitLines(
+          _hostKeyController.text,
+          preserveSpaces: true,
+        );
+        if (hostKeys.isNotEmpty) {
+          base['host-key'] = hostKeys;
+        }
+        final hostKeyAlgorithms = _splitCsv(_hostKeyAlgorithmsController.text);
+        if (hostKeyAlgorithms.isNotEmpty) {
+          base['host-key-algorithms'] = hostKeyAlgorithms;
+        }
       case 'vless':
         base['uuid'] = _uuidController.text.trim();
         if (_flow.isNotEmpty) {
@@ -828,6 +1048,29 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             _passwordController.text.isEmpty) {
           return appLocalizations.localProxySsAuthEmpty;
         }
+      case 'socks5':
+        if (_passwordController.text.isNotEmpty &&
+            _usernameController.text.trim().isEmpty) {
+          return appLocalizations.localProxyUsernameEmpty;
+        }
+        if (_tls) {
+          final hasCertificate = _certificateController.text.trim().isNotEmpty;
+          final hasPrivateKey = _privateKeyController.text.trim().isNotEmpty;
+          if (hasCertificate != hasPrivateKey) {
+            return appLocalizations.localProxyTlsKeyPairRequired;
+          }
+        }
+      case 'ssh':
+        if (_usernameController.text.trim().isEmpty) {
+          return appLocalizations.localProxyUsernameEmpty;
+        }
+        final hasPrivateKey = _privateKeyController.text.trim().isNotEmpty;
+        if (_privateKeyPassphraseController.text.isNotEmpty && !hasPrivateKey) {
+          return appLocalizations.localProxySshPassphraseWithoutKey;
+        }
+        if (_passwordController.text.isEmpty && !hasPrivateKey) {
+          return appLocalizations.localProxySshAuthEmpty;
+        }
       case 'vless':
         if (_uuidController.text.trim().isEmpty) {
           return appLocalizations.localProxyUuidEmpty;
@@ -906,6 +1149,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       type: _type,
       enabled: widget.proxy?.enabled ?? true,
       config: config,
+      tags: widget.proxy?.tags ?? const [],
       sortIndex: widget.proxy?.sortIndex,
       createdAt: widget.proxy?.createdAt ?? now,
       updatedAt: now,
@@ -924,6 +1168,8 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     final l10n = context.appLocalizations;
     return switch (_type) {
       'ss' => l10n.ss,
+      'socks5' => l10n.socks5,
+      'ssh' => l10n.ssh,
       'vless' => l10n.vless,
       'trojan' => l10n.trojan,
       'anytls' => l10n.anytls,
@@ -1016,6 +1262,32 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           _buildTextField(_passwordController, appLocalizations.password),
         ],
       ),
+      'socks5' => Column(
+        children: [
+          _buildTextField(_usernameController, appLocalizations.username),
+          const SizedBox(height: 16),
+          _buildTextField(_passwordController, appLocalizations.password),
+        ],
+      ),
+      'ssh' => Column(
+        children: [
+          _buildTextField(_usernameController, appLocalizations.username),
+          const SizedBox(height: 16),
+          _buildTextField(_passwordController, appLocalizations.password),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _privateKeyController,
+            appLocalizations.privateKey,
+            minLines: 3,
+            maxLines: 8,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _privateKeyPassphraseController,
+            appLocalizations.privateKeyPassphrase,
+          ),
+        ],
+      ),
       'vless' => Column(
         children: [
           _buildTextField(_uuidController, appLocalizations.uuid),
@@ -1053,6 +1325,67 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
 
   Widget _buildTransportFields() {
     final appLocalizations = context.appLocalizations;
+    if (_type == 'socks5') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListItem.switchItem(
+            title: Text(appLocalizations.tls),
+            delegate: SwitchDelegate<bool>(
+              value: _tls,
+              onChanged: (value) => setState(() => _tls = value),
+            ),
+          ),
+          if (_tls) ...[
+            ListItem.switchItem(
+              title: Text(appLocalizations.skipCertVerify),
+              delegate: SwitchDelegate<bool>(
+                value: _skipCertVerify,
+                onChanged: (value) => setState(() => _skipCertVerify = value),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              _fingerprintController,
+              appLocalizations.fingerprint,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              _certificateController,
+              appLocalizations.certificate,
+              minLines: 3,
+              maxLines: 6,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              _privateKeyController,
+              appLocalizations.privateKey,
+              minLines: 3,
+              maxLines: 8,
+            ),
+          ],
+        ],
+      );
+    }
+    if (_type == 'ssh') {
+      return Column(
+        children: [
+          _buildTextField(
+            _hostKeyController,
+            appLocalizations.hostKey,
+            minLines: 3,
+            maxLines: 8,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _hostKeyAlgorithmsController,
+            appLocalizations.hostKeyAlgorithms,
+            minLines: 2,
+            maxLines: 6,
+          ),
+        ],
+      );
+    }
     if (_isTransportProtocol) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1456,7 +1789,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           title: Text(appLocalizations.udp),
           delegate: SwitchDelegate<bool>(
             value: _udp,
-            onChanged: (value) => setState(() => _udp = value),
+            onChanged: (value) => setState(() {
+              _udp = value;
+              _udpTouched = true;
+            }),
           ),
         ),
         if (_type == 'vless') ...[
@@ -1578,7 +1914,8 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                 const Icon(Icons.info_outline, size: 48),
                 const SizedBox(height: 16),
                 Text(
-                  'This protocol (${_type.toUpperCase()}) is currently only editable by re-importing its URI.',
+                  '${_type.toUpperCase()}: '
+                  '${appLocalizations.localProxyProtocolReimportOnly}',
                   textAlign: TextAlign.center,
                   style: context.textTheme.bodyLarge,
                 ),
@@ -1667,16 +2004,18 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                 ],
               ),
             ],
-            const SizedBox(height: 8),
-            ExpansionTile(
-              initiallyExpanded: false,
-              tilePadding: EdgeInsets.zero,
-              title: Text(
-                appLocalizations.advancedSettings,
-                style: context.textTheme.titleSmall,
+            if (_type != 'ssh') ...[
+              const SizedBox(height: 8),
+              ExpansionTile(
+                initiallyExpanded: false,
+                tilePadding: EdgeInsets.zero,
+                title: Text(
+                  appLocalizations.advancedSettings,
+                  style: context.textTheme.titleSmall,
+                ),
+                children: [_buildAdvancedFields(), const SizedBox(height: 8)],
               ),
-              children: [_buildAdvancedFields(), const SizedBox(height: 8)],
-            ),
+            ],
           ],
         ),
       ),

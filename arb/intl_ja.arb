@@ -723,5 +723,20 @@
   "sentPackets": "送信パケット",
   "receivedPackets": "受信パケット",
   "errorDetails": "エラー",
-  "quicHandshakeTimedOut": "QUIC ハンドシェイクがタイムアウトしました"
+  "quicHandshakeTimedOut": "QUIC ハンドシェイクがタイムアウトしました",
+  "speedTestPackageSize": "速度テストのデータサイズ",
+  "quicTestTarget": "QUIC テスト対象",
+  "quicTestCustomTarget": "カスタム対象",
+  "quicTestCustomTargetHint": "ホスト、ホスト:ポート、または IPv6 アドレス",
+  "socks5": "SOCKS5",
+  "ssh": "SSH",
+  "username": "ユーザー名",
+  "privateKeyPassphrase": "秘密鍵のパスフレーズ",
+  "hostKey": "ホストキー",
+  "hostKeyAlgorithms": "ホストキーアルゴリズム",
+  "localProxyUsernameEmpty": "ユーザー名を入力してください",
+  "localProxySshAuthEmpty": "SSH のパスワードまたは秘密鍵を入力してください",
+  "localProxySshPassphraseWithoutKey": "パスフレーズを使用するには秘密鍵が必要です",
+  "localProxyTlsKeyPairRequired": "証明書と秘密鍵は同時に指定してください",
+  "localProxyProtocolReimportOnly": "このプロトコルは再インポートでのみ更新できます"
 }

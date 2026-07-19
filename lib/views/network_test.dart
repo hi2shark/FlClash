@@ -4,8 +4,56 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
+const _speedTestPackageSizes = <int>[10, 25, 100];
+const _defaultSpeedTestPackageSize = 25;
+const _speedTestTimeouts = <int, Duration>{
+  10: Duration(seconds: 20),
+  25: Duration(seconds: 30),
+  100: Duration(seconds: 90),
+};
+const _quicTestTimeout = Duration(seconds: 10);
+const _quicTestTargets = <String>[
+  'cloudflare-quic.com:443',
+  'www.google.com:443',
+  'www.youtube.com:443',
+  'nghttp2.org:443',
+];
+const _customQuicTargetValue = '__custom__';
+const _nonTestableProxyTypes = {'reject', 'rejectdrop', 'pass', 'passrule'};
+
+String _speedTestUrl(int packageSize) {
+  return 'https://speed.cloudflare.com/__down?bytes=${packageSize * 1000000}';
+}
+
+Duration _speedTestTimeout(int packageSize) {
+  return _speedTestTimeouts[packageSize] ?? const Duration(seconds: 30);
+}
+
+@visibleForTesting
+List<int> get networkTestPackageSizes => _speedTestPackageSizes;
+
+@visibleForTesting
+int get networkTestDefaultPackageSize => _defaultSpeedTestPackageSize;
+
+@visibleForTesting
+String networkTestSpeedTestUrl(int packageSize) => _speedTestUrl(packageSize);
+
+@visibleForTesting
+Duration networkTestSpeedTestTimeout(int packageSize) =>
+    _speedTestTimeout(packageSize);
+
+@visibleForTesting
+bool isNetworkTestableProxy(Proxy proxy) =>
+    !_nonTestableProxyTypes.contains(proxy.type.trim().toLowerCase());
+
+@visibleForTesting
+List<Proxy> filterNetworkTestProxies(Iterable<Proxy> proxies) =>
+    proxies.where(isNetworkTestableProxy).toList();
+
 class NetworkTestView extends StatefulWidget {
-  const NetworkTestView({super.key});
+  final CoreController? controller;
+
+  const NetworkTestView({super.key, this.controller});
 
   @override
   State<NetworkTestView> createState() => _NetworkTestViewState();
@@ -13,42 +61,94 @@ class NetworkTestView extends StatefulWidget {
 
 class _NetworkTestViewState extends State<NetworkTestView> {
   String _proxyName = 'DIRECT';
+  int _speedTestPackageSize = _defaultSpeedTestPackageSize;
   bool _isSpeedTesting = false;
   SpeedTestResult? _speedTestResult;
   bool _isQuicTesting = false;
   QuicTestResult? _quicTestResult;
+  String _quicTestTarget = _quicTestTargets.first;
+  bool _useCustomQuicTarget = false;
+  late final TextEditingController _customQuicTargetController;
+  late final ExpansibleController _customQuicTargetExpansionController;
+  int _speedTestGeneration = 0;
+  int _quicTestGeneration = 0;
+  int? _activeSpeedTestGeneration;
+  int? _activeQuicTestGeneration;
+
+  CoreController get _controller => widget.controller ?? coreController;
+
+  @override
+  void initState() {
+    super.initState();
+    _customQuicTargetController = TextEditingController();
+    _customQuicTargetExpansionController = ExpansibleController();
+  }
+
+  @override
+  void dispose() {
+    _customQuicTargetController.dispose();
+    _customQuicTargetExpansionController.dispose();
+    super.dispose();
+  }
+
+  String get _effectiveQuicTarget {
+    if (_useCustomQuicTarget) {
+      return _customQuicTargetController.text.trim();
+    }
+    return _quicTestTarget;
+  }
+
+  void _clearSpeedTestResult() {
+    _speedTestGeneration++;
+    _speedTestResult = null;
+  }
+
+  void _clearQuicTestResult() {
+    _quicTestGeneration++;
+    _quicTestResult = null;
+  }
 
   Future<void> _handleSpeedTest() async {
     if (_isSpeedTesting) {
       return;
     }
+    final proxyName = _proxyName;
+    final packageSize = _speedTestPackageSize;
+    final generation = ++_speedTestGeneration;
+    _activeSpeedTestGeneration = generation;
     setState(() {
       _isSpeedTesting = true;
+      _speedTestResult = null;
     });
     try {
-      final result = await coreController.getSpeedTest(
-        SpeedTestParams(proxyName: _proxyName),
+      final result = await _controller.getSpeedTest(
+        SpeedTestParams(
+          proxyName: proxyName,
+          testUrl: _speedTestUrl(packageSize),
+          timeout: _speedTestTimeout(packageSize).inMilliseconds,
+        ),
       );
-      if (!mounted) {
+      if (!mounted || generation != _speedTestGeneration) {
         return;
       }
       setState(() {
         _speedTestResult = result;
       });
     } catch (e) {
-      if (!mounted) {
+      if (!mounted || generation != _speedTestGeneration) {
         return;
       }
       setState(() {
         _speedTestResult = SpeedTestResult(
-          name: _proxyName,
+          name: proxyName,
           error: e.toString(),
         );
       });
     } finally {
-      if (mounted) {
+      if (mounted && _activeSpeedTestGeneration == generation) {
         setState(() {
           _isSpeedTesting = false;
+          _activeSpeedTestGeneration = null;
         });
       }
     }
@@ -58,30 +158,57 @@ class _NetworkTestViewState extends State<NetworkTestView> {
     if (_isQuicTesting) {
       return;
     }
+    final proxyName = _proxyName;
+    final target = _effectiveQuicTarget;
+    final generation = ++_quicTestGeneration;
+    _activeQuicTestGeneration = generation;
+    setState(() {
+      _quicTestResult = null;
+    });
+    if (target.isEmpty) {
+      _activeQuicTestGeneration = null;
+      setState(() {
+        _quicTestResult = QuicTestResult(
+          name: proxyName,
+          stage: 'target_parse',
+          error: context.appLocalizations.quicTestCustomTargetHint,
+        );
+      });
+      return;
+    }
     setState(() {
       _isQuicTesting = true;
     });
     try {
-      final result = await coreController.getQuicTest(
-        QuicTestParams(proxyName: _proxyName),
+      final result = await _controller.getQuicTest(
+        QuicTestParams(
+          proxyName: proxyName,
+          host: target,
+          timeout: _quicTestTimeout.inMilliseconds,
+        ),
       );
-      if (!mounted) {
+      if (!mounted || generation != _quicTestGeneration) {
         return;
       }
       setState(() {
         _quicTestResult = result;
       });
     } catch (e) {
-      if (!mounted) {
+      if (!mounted || generation != _quicTestGeneration) {
         return;
       }
       setState(() {
-        _quicTestResult = QuicTestResult(name: _proxyName, error: e.toString());
+        _quicTestResult = QuicTestResult(
+          name: proxyName,
+          target: target,
+          error: e.toString(),
+        );
       });
     } finally {
-      if (mounted) {
+      if (mounted && _activeQuicTestGeneration == generation) {
         setState(() {
           _isQuicTesting = false;
+          _activeQuicTestGeneration = null;
         });
       }
     }
@@ -201,11 +328,145 @@ class _NetworkTestViewState extends State<NetworkTestView> {
     );
   }
 
+  Widget _buildSpeedTestPackageSelector() {
+    final appLocalizations = context.appLocalizations;
+    return ListItem<int>.options(
+      title: Text(appLocalizations.speedTestPackageSize),
+      subtitle: Text('$_speedTestPackageSize MB'),
+      delegate: OptionsDelegate<int>(
+        title: appLocalizations.speedTestPackageSize,
+        options: _speedTestPackageSizes,
+        value: _speedTestPackageSize,
+        textBuilder: (value) => '$value MB',
+        onChanged: (value) {
+          if (value == null || value == _speedTestPackageSize) {
+            return;
+          }
+          setState(() {
+            _speedTestPackageSize = value;
+            _clearSpeedTestResult();
+          });
+        },
+      ),
+    );
+  }
+
+  void _selectQuicPreset(String target) {
+    if (_customQuicTargetExpansionController.isExpanded) {
+      _customQuicTargetExpansionController.collapse();
+    }
+    setState(() {
+      _useCustomQuicTarget = false;
+      _quicTestTarget = target;
+      _clearQuicTestResult();
+    });
+  }
+
+  void _selectCustomQuicTarget() {
+    if (!_useCustomQuicTarget) {
+      setState(() {
+        _useCustomQuicTarget = true;
+        _clearQuicTestResult();
+      });
+    }
+    if (!_customQuicTargetExpansionController.isExpanded) {
+      _customQuicTargetExpansionController.expand();
+    }
+  }
+
+  Widget _buildQuicTargetSelector() {
+    final appLocalizations = context.appLocalizations;
+    final customTarget = _customQuicTargetController.text.trim();
+    final groupValue = _useCustomQuicTarget
+        ? _customQuicTargetValue
+        : _quicTestTarget;
+    final targetSubtitle = _useCustomQuicTarget && customTarget.isEmpty
+        ? appLocalizations.quicTestCustomTargetHint
+        : _effectiveQuicTarget;
+    return ExpansionTile(
+      initiallyExpanded: true,
+      title: Text(appLocalizations.quicTestTarget),
+      subtitle: Text(
+        targetSubtitle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      children: [
+        RadioGroup<String>(
+          groupValue: groupValue,
+          onChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            if (value == _customQuicTargetValue) {
+              _selectCustomQuicTarget();
+            } else {
+              _selectQuicPreset(value);
+            }
+          },
+          child: Column(
+            children: [
+              for (final target in _quicTestTargets)
+                RadioListTile<String>(
+                  value: target,
+                  title: Text(target),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ExpansionTile(
+                controller: _customQuicTargetExpansionController,
+                initiallyExpanded: false,
+                maintainState: true,
+                leading: const Radio<String>(value: _customQuicTargetValue),
+                title: Text(appLocalizations.quicTestCustomTarget),
+                subtitle: Text(
+                  customTarget.isEmpty
+                      ? appLocalizations.quicTestCustomTargetHint
+                      : customTarget,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onExpansionChanged: (expanded) {
+                  if (expanded) {
+                    _selectCustomQuicTarget();
+                  }
+                },
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: TextField(
+                      controller: _customQuicTargetController,
+                      keyboardType: TextInputType.url,
+                      textInputAction: TextInputAction.done,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      maxLines: 1,
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        labelText: appLocalizations.quicTestCustomTarget,
+                        hintText: appLocalizations.quicTestCustomTargetHint,
+                      ),
+                      onChanged: (_) {
+                        if (_useCustomQuicTarget) {
+                          setState(_clearQuicTestResult);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTestCard({
     required String description,
     required bool isTesting,
     required VoidCallback onStart,
     required Widget? result,
+    Widget? configuration,
   }) {
     final appLocalizations = context.appLocalizations;
     return Padding(
@@ -225,6 +486,10 @@ class _NetworkTestViewState extends State<NetworkTestView> {
                   style: context.textTheme.bodyMedium?.toLight,
                 ),
               ),
+              if (configuration != null) ...[
+                const SizedBox(height: 8),
+                configuration,
+              ],
               const SizedBox(height: 12),
               FilledButton.icon(
                 onPressed: isTesting ? null : onStart,
@@ -260,16 +525,21 @@ class _NetworkTestViewState extends State<NetworkTestView> {
           ...generateSection(
             title: appLocalizations.selectNode,
             items: [
-              ListItem<String>.open(
+              ListItem<dynamic>.open(
                 leading: const Icon(Icons.dns),
                 title: Text(appLocalizations.selectNode),
                 subtitle: Text(_proxyName),
-                delegate: OpenDelegate(
-                  widget: _NodeSelectionView(currentName: _proxyName),
+                delegate: OpenDelegate<dynamic>(
+                  widget: _NodeSelectionView(
+                    currentName: _proxyName,
+                    controller: widget.controller,
+                  ),
                   onChanged: (name) {
                     if (name is String && name != _proxyName) {
                       setState(() {
                         _proxyName = name;
+                        _clearSpeedTestResult();
+                        _clearQuicTestResult();
                       });
                     }
                   },
@@ -284,6 +554,7 @@ class _NetworkTestViewState extends State<NetworkTestView> {
                 description: appLocalizations.speedTestDesc,
                 isTesting: _isSpeedTesting,
                 onStart: _handleSpeedTest,
+                configuration: _buildSpeedTestPackageSelector(),
                 result: _buildSpeedTestResult(),
               ),
             ],
@@ -295,6 +566,7 @@ class _NetworkTestViewState extends State<NetworkTestView> {
                 description: appLocalizations.quicTestDesc,
                 isTesting: _isQuicTesting,
                 onStart: _handleQuicTest,
+                configuration: _buildQuicTargetSelector(),
                 result: _buildQuicTestResult(),
               ),
             ],
@@ -307,18 +579,19 @@ class _NetworkTestViewState extends State<NetworkTestView> {
 
 class _NodeSelectionView extends StatefulWidget {
   final String currentName;
+  final CoreController? controller;
 
-  const _NodeSelectionView({required this.currentName});
+  const _NodeSelectionView({required this.currentName, this.controller});
 
   @override
   State<_NodeSelectionView> createState() => _NodeSelectionViewState();
 }
 
 class _NodeSelectionViewState extends State<_NodeSelectionView> {
-  static const _localNodeNames = ['DIRECT', 'REJECT'];
+  static const _localNodeNames = ['DIRECT', 'COMPATIBLE'];
 
-  late final Future<List<Proxy>> _proxiesFuture = coreController
-      .getAllProxies();
+  late final Future<List<Proxy>> _proxiesFuture =
+      (widget.controller ?? coreController).getAllProxies();
 
   Widget _buildProxyItem(Proxy proxy) {
     return ListItem(
@@ -350,14 +623,15 @@ class _NodeSelectionViewState extends State<_NodeSelectionView> {
           if (proxies == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (proxies.isEmpty) {
+          final testableProxies = filterNetworkTestProxies(proxies);
+          if (testableProxies.isEmpty) {
             return NullStatus(label: appLocalizations.noData);
           }
-          final localProxies = proxies
+          final localProxies = testableProxies
               .where((proxy) => _localNodeNames.contains(proxy.name))
               .toList();
           final otherProxies =
-              proxies
+              testableProxies
                   .where((proxy) => !_localNodeNames.contains(proxy.name))
                   .toList()
                 ..sort((a, b) => a.name.compareTo(b.name));

@@ -723,5 +723,20 @@
   "sentPackets": "Sent Packets",
   "receivedPackets": "Received Packets",
   "errorDetails": "Error",
-  "quicHandshakeTimedOut": "QUIC handshake timed out"
+  "quicHandshakeTimedOut": "QUIC handshake timed out",
+  "speedTestPackageSize": "Test package size",
+  "quicTestTarget": "QUIC test target",
+  "quicTestCustomTarget": "Custom target",
+  "quicTestCustomTargetHint": "Host, host:port, or IPv6 address",
+  "socks5": "SOCKS5",
+  "ssh": "SSH",
+  "username": "Username",
+  "privateKeyPassphrase": "Private key passphrase",
+  "hostKey": "Host key",
+  "hostKeyAlgorithms": "Host key algorithms",
+  "localProxyUsernameEmpty": "Username is required",
+  "localProxySshAuthEmpty": "SSH password or private key is required",
+  "localProxySshPassphraseWithoutKey": "A private key is required when using a passphrase",
+  "localProxyTlsKeyPairRequired": "Certificate and private key must be provided together",
+  "localProxyProtocolReimportOnly": "This protocol can only be updated by re-importing it"
 }
