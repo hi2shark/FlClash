@@ -684,6 +684,58 @@ abstract class _$OnDemandEnabled extends $Notifier<bool> {
   }
 }
 
+@ProviderFor(UnlockTestSetting)
+final unlockTestSettingProvider = UnlockTestSettingProvider._();
+
+final class UnlockTestSettingProvider
+    extends $NotifierProvider<UnlockTestSetting, UnlockTestProps> {
+  UnlockTestSettingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'unlockTestSettingProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$unlockTestSettingHash();
+
+  @$internal
+  @override
+  UnlockTestSetting create() => UnlockTestSetting();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(UnlockTestProps value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<UnlockTestProps>(value),
+    );
+  }
+}
+
+String _$unlockTestSettingHash() => r'45ac3a57ca16ff02e93ee3a7b1b03fdea369cf32';
+
+abstract class _$UnlockTestSetting extends $Notifier<UnlockTestProps> {
+  UnlockTestProps build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<UnlockTestProps, UnlockTestProps>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<UnlockTestProps, UnlockTestProps>,
+              UnlockTestProps,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(_config)
 final configProvider = _ConfigProvider._();
 
@@ -722,4 +774,4 @@ final class _ConfigProvider extends $FunctionalProvider<Config, Config, Config>
   }
 }
 
-String _$_configHash() => r'406f9bcf8f77d520e8e4d89022d94aaaf322d477';
+String _$_configHash() => r'15d99bb28e476328182b0cd107e4975915f5ee78';

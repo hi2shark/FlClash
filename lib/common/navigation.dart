@@ -66,6 +66,14 @@ class Navigation {
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
+        icon: const Icon(Icons.vpn_key),
+        label: PageLabel.unlockTest,
+        description: 'unlockTestDesc',
+        builder: (_) =>
+            const UnlockTestView(key: GlobalObjectKey(PageLabel.unlockTest)),
+        modes: [NavigationItemMode.more],
+      ),
+      NavigationItem(
         icon: const Icon(Icons.merge_type),
         label: PageLabel.localProxies,
         description: 'localMixinDesc',

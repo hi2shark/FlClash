@@ -446,6 +446,65 @@ class NetworkDetection extends _$NetworkDetection
 }
 
 @Riverpod(keepAlive: true)
+class UnlockDetection extends _$UnlockDetection with AutoDisposeNotifierMixin {
+  int _checkVersion = 0;
+
+  @override
+  UnlockDetectionState build() {
+    return const UnlockDetectionState(
+      isLoading: false,
+      proxyName: '',
+      results: {},
+    );
+  }
+
+  Future<void> startCheck({
+    String? proxyName,
+    CoreController? controller,
+  }) async {
+    final unlockTestProps = ref.read(unlockTestSettingProvider);
+    if (!unlockTestProps.enable) {
+      return;
+    }
+    final targets = resolveUnlockTestTargets(unlockTestProps.selectedTargets);
+    if (targets.isEmpty) {
+      return;
+    }
+    final effectiveProxyName = proxyName ?? unlockTestGlobalProxyName;
+    final effectiveController = controller ?? coreController;
+    final version = ++_checkVersion;
+    state = state.copyWith(
+      isLoading: true,
+      proxyName: effectiveProxyName,
+      error: '',
+    );
+    try {
+      final result = await effectiveController.getUnlockTest(
+        UnlockTestParams(
+          proxyName: effectiveProxyName,
+          timeout: httpTimeoutDuration.inMilliseconds,
+          tests: targets.map((target) => target.toItem()).toList(),
+        ),
+      );
+      if (!ref.mounted || version != _checkVersion) {
+        return;
+      }
+      state = state.copyWith(
+        isLoading: false,
+        error: result.error,
+        results: {for (final item in result.results) item.id: item},
+      );
+    } catch (e) {
+      commonPrint.log('unlockDetection startCheck error: $e');
+      if (!ref.mounted || version != _checkVersion) {
+        return;
+      }
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+}
+
+@Riverpod(keepAlive: true)
 class CurrentSSID extends _$CurrentSSID with AutoDisposeNotifierMixin {
   @override
   String? build() {

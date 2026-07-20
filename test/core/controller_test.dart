@@ -46,6 +46,7 @@ void main() {
     );
     registerFallbackValue(const SpeedTestParams(proxyName: 'P'));
     registerFallbackValue(const QuicTestParams(proxyName: 'P'));
+    registerFallbackValue(const UnlockTestParams(proxyName: 'P'));
   });
 
   setUp(() {
@@ -471,6 +472,57 @@ void main() {
       ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
       final result = await controller.getAllProxies();
       expect(result, isEmpty);
+    });
+
+    test('getUnlockTest parses JSON response', () async {
+      const params = UnlockTestParams(
+        proxyName: 'P1',
+        tests: [UnlockTestItem(id: 'chatgpt', url: 'https://x.com')],
+      );
+      when(() => mock.unlockTest(params)).thenAnswer(
+        (_) async => json.encode({
+          'name': 'P1',
+          'results': [
+            {
+              'id': 'chatgpt',
+              'status': 200,
+              'latency': 321,
+              'region': 'US',
+              'unlocked': true,
+              'error': '',
+            },
+            {
+              'id': 'netflix',
+              'status': 403,
+              'latency': 120,
+              'region': '',
+              'unlocked': false,
+              'error': '',
+            },
+          ],
+          'error': '',
+        }),
+      );
+      final result = await controller.getUnlockTest(params);
+      expect(result.name, 'P1');
+      expect(result.results, hasLength(2));
+      expect(result.results[0].id, 'chatgpt');
+      expect(result.results[0].unlocked, true);
+      expect(result.results[0].region, 'US');
+      expect(result.results[0].latency, 321);
+      expect(result.results[1].unlocked, false);
+      expect(result.error, '');
+    });
+
+    test('getUnlockTest applies defaults for missing fields', () async {
+      const params = UnlockTestParams(proxyName: 'P1');
+      when(
+        () => mock.unlockTest(any()),
+      ).thenAnswer((_) async => json.encode({'name': 'P1', 'error': 'x'}));
+      final result = await controller.getUnlockTest(params);
+      expect(result.name, 'P1');
+      expect(result.results, isEmpty);
+      expect(result.error, 'x');
     });
   });
 }

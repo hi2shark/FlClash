@@ -113,6 +113,12 @@ func handleAction(action *Action, result ActionResult) {
 			result.success(value)
 		})
 		return
+	case unlockTestMethod:
+		data := action.Data.(string)
+		handleUnlockTest(data, func(value string) {
+			result.success(value)
+		})
+		return
 	case getConnectionsMethod:
 		result.success(handleGetConnections())
 		return

@@ -4071,6 +4071,278 @@ $IpInfoCopyWith<$Res>? get ipInfo {
 }
 
 /// @nodoc
+mixin _$UnlockDetectionState {
+
+ bool get isLoading; String get proxyName; Map<String, UnlockTestResultItem> get results; String get error;
+/// Create a copy of UnlockDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$UnlockDetectionStateCopyWith<UnlockDetectionState> get copyWith => _$UnlockDetectionStateCopyWithImpl<UnlockDetectionState>(this as UnlockDetectionState, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnlockDetectionState&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&const DeepCollectionEquality().equals(other.results, results)&&(identical(other.error, error) || other.error == error));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,isLoading,proxyName,const DeepCollectionEquality().hash(results),error);
+
+@override
+String toString() {
+  return 'UnlockDetectionState(isLoading: $isLoading, proxyName: $proxyName, results: $results, error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $UnlockDetectionStateCopyWith<$Res>  {
+  factory $UnlockDetectionStateCopyWith(UnlockDetectionState value, $Res Function(UnlockDetectionState) _then) = _$UnlockDetectionStateCopyWithImpl;
+@useResult
+$Res call({
+ bool isLoading, String proxyName, Map<String, UnlockTestResultItem> results, String error
+});
+
+
+
+
+}
+/// @nodoc
+class _$UnlockDetectionStateCopyWithImpl<$Res>
+    implements $UnlockDetectionStateCopyWith<$Res> {
+  _$UnlockDetectionStateCopyWithImpl(this._self, this._then);
+
+  final UnlockDetectionState _self;
+  final $Res Function(UnlockDetectionState) _then;
+
+/// Create a copy of UnlockDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? isLoading = null,Object? proxyName = null,Object? results = null,Object? error = null,}) {
+  return _then(_self.copyWith(
+isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,results: null == results ? _self.results : results // ignore: cast_nullable_to_non_nullable
+as Map<String, UnlockTestResultItem>,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [UnlockDetectionState].
+extension UnlockDetectionStatePatterns on UnlockDetectionState {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _UnlockDetectionState value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _UnlockDetectionState() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _UnlockDetectionState value)  $default,){
+final _that = this;
+switch (_that) {
+case _UnlockDetectionState():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _UnlockDetectionState value)?  $default,){
+final _that = this;
+switch (_that) {
+case _UnlockDetectionState() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isLoading,  String proxyName,  Map<String, UnlockTestResultItem> results,  String error)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _UnlockDetectionState() when $default != null:
+return $default(_that.isLoading,_that.proxyName,_that.results,_that.error);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isLoading,  String proxyName,  Map<String, UnlockTestResultItem> results,  String error)  $default,) {final _that = this;
+switch (_that) {
+case _UnlockDetectionState():
+return $default(_that.isLoading,_that.proxyName,_that.results,_that.error);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isLoading,  String proxyName,  Map<String, UnlockTestResultItem> results,  String error)?  $default,) {final _that = this;
+switch (_that) {
+case _UnlockDetectionState() when $default != null:
+return $default(_that.isLoading,_that.proxyName,_that.results,_that.error);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _UnlockDetectionState implements UnlockDetectionState {
+  const _UnlockDetectionState({required this.isLoading, required this.proxyName, required final  Map<String, UnlockTestResultItem> results, this.error = ''}): _results = results;
+  
+
+@override final  bool isLoading;
+@override final  String proxyName;
+ final  Map<String, UnlockTestResultItem> _results;
+@override Map<String, UnlockTestResultItem> get results {
+  if (_results is EqualUnmodifiableMapView) return _results;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_results);
+}
+
+@override@JsonKey() final  String error;
+
+/// Create a copy of UnlockDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$UnlockDetectionStateCopyWith<_UnlockDetectionState> get copyWith => __$UnlockDetectionStateCopyWithImpl<_UnlockDetectionState>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UnlockDetectionState&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&const DeepCollectionEquality().equals(other._results, _results)&&(identical(other.error, error) || other.error == error));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,isLoading,proxyName,const DeepCollectionEquality().hash(_results),error);
+
+@override
+String toString() {
+  return 'UnlockDetectionState(isLoading: $isLoading, proxyName: $proxyName, results: $results, error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$UnlockDetectionStateCopyWith<$Res> implements $UnlockDetectionStateCopyWith<$Res> {
+  factory _$UnlockDetectionStateCopyWith(_UnlockDetectionState value, $Res Function(_UnlockDetectionState) _then) = __$UnlockDetectionStateCopyWithImpl;
+@override @useResult
+$Res call({
+ bool isLoading, String proxyName, Map<String, UnlockTestResultItem> results, String error
+});
+
+
+
+
+}
+/// @nodoc
+class __$UnlockDetectionStateCopyWithImpl<$Res>
+    implements _$UnlockDetectionStateCopyWith<$Res> {
+  __$UnlockDetectionStateCopyWithImpl(this._self, this._then);
+
+  final _UnlockDetectionState _self;
+  final $Res Function(_UnlockDetectionState) _then;
+
+/// Create a copy of UnlockDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? isLoading = null,Object? proxyName = null,Object? results = null,Object? error = null,}) {
+  return _then(_UnlockDetectionState(
+isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,results: null == results ? _self._results : results // ignore: cast_nullable_to_non_nullable
+as Map<String, UnlockTestResultItem>,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$TrayState {
 
  Mode get mode; int get port; bool get autoLaunch; bool get systemProxy; bool get tunEnable; bool get isStart; String? get locale; Brightness? get brightness; List<Group> get groups; Map<String, String> get selectedMap; bool get showTrayTitle;

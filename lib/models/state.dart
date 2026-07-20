@@ -121,6 +121,16 @@ abstract class NetworkDetectionState with _$NetworkDetectionState {
 }
 
 @freezed
+abstract class UnlockDetectionState with _$UnlockDetectionState {
+  const factory UnlockDetectionState({
+    required bool isLoading,
+    required String proxyName,
+    required Map<String, UnlockTestResultItem> results,
+    @Default('') String error,
+  }) = _UnlockDetectionState;
+}
+
+@freezed
 abstract class TrayState with _$TrayState {
   const factory TrayState({
     required Mode mode,

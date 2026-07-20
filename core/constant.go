@@ -68,6 +68,20 @@ type QuicTestParams struct {
 	Timeout   int64  `json:"timeout"`
 }
 
+type UnlockTestItem struct {
+	Id             string `json:"id"`
+	Url            string `json:"url"`
+	Method         string `json:"method"`
+	RegionRegex    string `json:"region-regex"`
+	ExpectedStatus []int  `json:"expected-status"`
+}
+
+type UnlockTestParams struct {
+	ProxyName string           `json:"proxy-name"`
+	Timeout   int64            `json:"timeout"`
+	Tests     []UnlockTestItem `json:"tests"`
+}
+
 type ExternalProvider struct {
 	Name             string                     `json:"name"`
 	Type             string                     `json:"type"`
@@ -99,6 +113,7 @@ const (
 	asyncTestDelayMethod           Method = "asyncTestDelay"
 	speedTestMethod                Method = "speedTest"
 	quicTestMethod                 Method = "quicTest"
+	unlockTestMethod               Method = "unlockTest"
 	getConnectionsMethod           Method = "getConnections"
 	closeConnectionsMethod         Method = "closeConnections"
 	resetConnectionsMethod         Method = "resetConnections"

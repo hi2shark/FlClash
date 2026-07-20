@@ -567,7 +567,7 @@ class _NetworkTestViewState extends State<NetworkTestView> {
                 title: Text(appLocalizations.selectNode),
                 subtitle: Text(_proxyName),
                 delegate: OpenDelegate<dynamic>(
-                  widget: _NodeSelectionView(
+                  widget: NodeSelectionView(
                     currentName: _proxyName,
                     controller: widget.controller,
                   ),
@@ -614,17 +614,21 @@ class _NetworkTestViewState extends State<NetworkTestView> {
   }
 }
 
-class _NodeSelectionView extends StatefulWidget {
+class NodeSelectionView extends StatefulWidget {
   final String currentName;
   final CoreController? controller;
 
-  const _NodeSelectionView({required this.currentName, this.controller});
+  const NodeSelectionView({
+    super.key,
+    required this.currentName,
+    this.controller,
+  });
 
   @override
-  State<_NodeSelectionView> createState() => _NodeSelectionViewState();
+  State<NodeSelectionView> createState() => _NodeSelectionViewState();
 }
 
-class _NodeSelectionViewState extends State<_NodeSelectionView> {
+class _NodeSelectionViewState extends State<NodeSelectionView> {
   static const _localNodeNames = ['DIRECT', 'COMPATIBLE'];
 
   late final Future<List<Proxy>> _proxiesFuture =

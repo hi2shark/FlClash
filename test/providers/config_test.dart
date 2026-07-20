@@ -190,7 +190,7 @@ void main() {
         overrideDns: true,
       );
       final overrides = buildConfigOverrides(config);
-      expect(overrides.length, 13);
+      expect(overrides.length, 14);
 
       final overrideContainer = ProviderContainer(overrides: overrides);
       addTearDown(overrideContainer.dispose);
@@ -198,6 +198,7 @@ void main() {
       expect(overrideContainer.read(currentProfileIdProvider), 7);
       expect(overrideContainer.read(overrideDnsProvider), true);
       expect(overrideContainer.read(onDemandEnabledProvider), true);
+      expect(overrideContainer.read(unlockTestSettingProvider).enable, false);
       expect(
         overrideContainer.read(appSettingProvider).onlyStatisticsProxy,
         false,

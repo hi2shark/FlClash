@@ -292,6 +292,7 @@ const _$ActionMethodEnumMap = {
   ActionMethod.deleteFile: 'deleteFile',
   ActionMethod.speedTest: 'speedTest',
   ActionMethod.quicTest: 'quicTest',
+  ActionMethod.unlockTest: 'unlockTest',
   ActionMethod.setState: 'setState',
   ActionMethod.startTun: 'startTun',
   ActionMethod.stopTun: 'stopTun',
@@ -407,4 +408,84 @@ Map<String, dynamic> _$QuicTestResultToJson(_QuicTestResult instance) =>
       'sent-bytes': instance.sentBytes,
       'received-packets': instance.receivedPackets,
       'received-bytes': instance.receivedBytes,
+    };
+
+_UnlockTestItem _$UnlockTestItemFromJson(Map<String, dynamic> json) =>
+    _UnlockTestItem(
+      id: json['id'] as String,
+      url: json['url'] as String,
+      method: json['method'] as String?,
+      regionRegex: json['region-regex'] as String?,
+      expectedStatus: (json['expected-status'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList(),
+    );
+
+Map<String, dynamic> _$UnlockTestItemToJson(_UnlockTestItem instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'url': instance.url,
+      'method': instance.method,
+      'region-regex': instance.regionRegex,
+      'expected-status': instance.expectedStatus,
+    };
+
+_UnlockTestParams _$UnlockTestParamsFromJson(Map<String, dynamic> json) =>
+    _UnlockTestParams(
+      proxyName: json['proxy-name'] as String,
+      timeout: (json['timeout'] as num?)?.toInt(),
+      tests:
+          (json['tests'] as List<dynamic>?)
+              ?.map((e) => UnlockTestItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+
+Map<String, dynamic> _$UnlockTestParamsToJson(_UnlockTestParams instance) =>
+    <String, dynamic>{
+      'proxy-name': instance.proxyName,
+      'timeout': instance.timeout,
+      'tests': instance.tests,
+    };
+
+_UnlockTestResultItem _$UnlockTestResultItemFromJson(
+  Map<String, dynamic> json,
+) => _UnlockTestResultItem(
+  id: json['id'] as String? ?? '',
+  status: (json['status'] as num?)?.toInt() ?? 0,
+  latency: (json['latency'] as num?)?.toInt() ?? 0,
+  region: json['region'] as String? ?? '',
+  unlocked: json['unlocked'] as bool? ?? false,
+  error: json['error'] as String? ?? '',
+);
+
+Map<String, dynamic> _$UnlockTestResultItemToJson(
+  _UnlockTestResultItem instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'status': instance.status,
+  'latency': instance.latency,
+  'region': instance.region,
+  'unlocked': instance.unlocked,
+  'error': instance.error,
+};
+
+_UnlockTestResult _$UnlockTestResultFromJson(Map<String, dynamic> json) =>
+    _UnlockTestResult(
+      name: json['name'] as String? ?? '',
+      results:
+          (json['results'] as List<dynamic>?)
+              ?.map(
+                (e) => UnlockTestResultItem.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          const [],
+      error: json['error'] as String? ?? '',
+    );
+
+Map<String, dynamic> _$UnlockTestResultToJson(_UnlockTestResult instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'results': instance.results,
+      'error': instance.error,
     };

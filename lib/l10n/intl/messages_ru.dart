@@ -140,6 +140,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Расширенные настройки",
     ),
     "agree": MessageLookupByLibrary.simpleMessage("Согласен"),
+    "aiServices": MessageLookupByLibrary.simpleMessage("AI-сервисы"),
     "allNodes": MessageLookupByLibrary.simpleMessage("Все узлы"),
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Разрешить приложениям обходить VPN",
@@ -702,6 +703,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "Location Permission Required",
     ),
+    "locked": MessageLookupByLibrary.simpleMessage("Заблокировано"),
     "log": MessageLookupByLibrary.simpleMessage("Журнал"),
     "logLevel": MessageLookupByLibrary.simpleMessage("Уровень логов"),
     "logcat": MessageLookupByLibrary.simpleMessage("Logcat"),
@@ -735,6 +737,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "maxUdpRelayPacketSize": MessageLookupByLibrary.simpleMessage(
       "Макс. размер UDP-пакета",
     ),
+    "mediaServices": MessageLookupByLibrary.simpleMessage("Медиасервисы"),
+    "mediaShort": MessageLookupByLibrary.simpleMessage("Медиа"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Информация о памяти"),
     "messageTest": MessageLookupByLibrary.simpleMessage(
       "Тестирование сообщения",
@@ -1365,6 +1369,25 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "Неизвестная сетевая ошибка",
     ),
+    "unlockTest": MessageLookupByLibrary.simpleMessage(
+      "Проверка разблокировки",
+    ),
+    "unlockTestDesc": MessageLookupByLibrary.simpleMessage(
+      "Проверка доступности AI и медиасервисов через выбранный узел",
+    ),
+    "unlockTestDisabledTip": MessageLookupByLibrary.simpleMessage(
+      "Включите на странице проверки разблокировки",
+    ),
+    "unlockTestEnable": MessageLookupByLibrary.simpleMessage(
+      "Включить проверку разблокировки",
+    ),
+    "unlockTestNoTargets": MessageLookupByLibrary.simpleMessage(
+      "Выберите хотя бы одну цель теста выше",
+    ),
+    "unlockTestRunDesc": MessageLookupByLibrary.simpleMessage(
+      "Проверить доступность выбранных AI и медиасервисов через выбранный узел",
+    ),
+    "unlocked": MessageLookupByLibrary.simpleMessage("Разблокировано"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Без имени"),
     "up": MessageLookupByLibrary.simpleMessage("Up"),
     "update": MessageLookupByLibrary.simpleMessage("Обновить"),

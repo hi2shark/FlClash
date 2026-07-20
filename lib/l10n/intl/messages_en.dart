@@ -140,6 +140,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Advanced settings",
     ),
     "agree": MessageLookupByLibrary.simpleMessage("Agree"),
+    "aiServices": MessageLookupByLibrary.simpleMessage("AI Services"),
     "allNodes": MessageLookupByLibrary.simpleMessage("All Nodes"),
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Allow applications to bypass VPN",
@@ -686,6 +687,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "Location Permission Required",
     ),
+    "locked": MessageLookupByLibrary.simpleMessage("Blocked"),
     "log": MessageLookupByLibrary.simpleMessage("Log"),
     "logLevel": MessageLookupByLibrary.simpleMessage("LogLevel"),
     "logcat": MessageLookupByLibrary.simpleMessage("Logcat"),
@@ -713,6 +715,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "maxUdpRelayPacketSize": MessageLookupByLibrary.simpleMessage(
       "Max UDP relay packet size",
     ),
+    "mediaServices": MessageLookupByLibrary.simpleMessage("Media Services"),
+    "mediaShort": MessageLookupByLibrary.simpleMessage("Media"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Memory info"),
     "messageTest": MessageLookupByLibrary.simpleMessage("Message test"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage(
@@ -1293,6 +1297,23 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "Unknown network error",
     ),
+    "unlockTest": MessageLookupByLibrary.simpleMessage("Unlock Detection"),
+    "unlockTestDesc": MessageLookupByLibrary.simpleMessage(
+      "Check AI and media service availability through a node",
+    ),
+    "unlockTestDisabledTip": MessageLookupByLibrary.simpleMessage(
+      "Enable it on the unlock detection page",
+    ),
+    "unlockTestEnable": MessageLookupByLibrary.simpleMessage(
+      "Enable unlock detection",
+    ),
+    "unlockTestNoTargets": MessageLookupByLibrary.simpleMessage(
+      "Select at least one test target above",
+    ),
+    "unlockTestRunDesc": MessageLookupByLibrary.simpleMessage(
+      "Test whether the selected AI and media services are available through the selected node",
+    ),
+    "unlocked": MessageLookupByLibrary.simpleMessage("Unlocked"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Unnamed"),
     "up": MessageLookupByLibrary.simpleMessage("Up"),
     "update": MessageLookupByLibrary.simpleMessage("Update"),

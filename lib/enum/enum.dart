@@ -254,6 +254,7 @@ enum ActionMethod {
   deleteFile,
   speedTest,
   quicTest,
+  unlockTest,
 
   ///Android,
   setState,
@@ -319,7 +320,8 @@ enum DashboardWidget {
     platforms: desktopPlatforms,
   ),
   intranetIp(GridItem(crossAxisCellCount: 4, child: IntranetIP())),
-  memoryInfo(GridItem(crossAxisCellCount: 4, child: MemoryInfo()));
+  memoryInfo(GridItem(crossAxisCellCount: 4, child: MemoryInfo())),
+  unlockDetection(GridItem(crossAxisCellCount: 4, child: UnlockDetection()));
 
   final GridItem widget;
   final List<SupportPlatform> platforms;
@@ -337,6 +339,8 @@ enum DashboardWidget {
 
 enum GeodataLoader { standard, memconservative }
 
+enum UnlockTestGroup { ai, media }
+
 enum PageLabel {
   dashboard,
   proxies,
@@ -348,6 +352,7 @@ enum PageLabel {
   connections,
   localProxies,
   networkTest,
+  unlockTest,
 }
 
 enum RuleAction {

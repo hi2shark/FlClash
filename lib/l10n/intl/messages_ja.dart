@@ -114,6 +114,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage("多様な設定を提供"),
     "advancedSettings": MessageLookupByLibrary.simpleMessage("詳細設定"),
     "agree": MessageLookupByLibrary.simpleMessage("同意"),
+    "aiServices": MessageLookupByLibrary.simpleMessage("AI サービス"),
     "allNodes": MessageLookupByLibrary.simpleMessage("すべてのノード"),
     "allowBypass": MessageLookupByLibrary.simpleMessage("アプリがVPNをバイパスすることを許可"),
     "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
@@ -550,6 +551,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "Location Permission Required",
     ),
+    "locked": MessageLookupByLibrary.simpleMessage("ブロック"),
     "log": MessageLookupByLibrary.simpleMessage("ログ"),
     "logLevel": MessageLookupByLibrary.simpleMessage("ログレベル"),
     "logcat": MessageLookupByLibrary.simpleMessage("ログキャット"),
@@ -569,6 +571,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "maxUdpRelayPacketSize": MessageLookupByLibrary.simpleMessage(
       "最大 UDP リレーパケットサイズ",
     ),
+    "mediaServices": MessageLookupByLibrary.simpleMessage("メディアサービス"),
+    "mediaShort": MessageLookupByLibrary.simpleMessage("メディア"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("メモリ情報"),
     "messageTest": MessageLookupByLibrary.simpleMessage("メッセージテスト"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage("これはメッセージです。"),
@@ -1059,6 +1063,21 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("不明"),
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage("不明なネットワークエラー"),
+    "unlockTest": MessageLookupByLibrary.simpleMessage("アンロック検出"),
+    "unlockTestDesc": MessageLookupByLibrary.simpleMessage(
+      "選択したノードで AI・メディアサービスの利用可否を検出",
+    ),
+    "unlockTestDisabledTip": MessageLookupByLibrary.simpleMessage(
+      "アンロック検出ページで有効化してください",
+    ),
+    "unlockTestEnable": MessageLookupByLibrary.simpleMessage("アンロック検出を有効化"),
+    "unlockTestNoTargets": MessageLookupByLibrary.simpleMessage(
+      "上でテスト対象を1つ以上選択してください",
+    ),
+    "unlockTestRunDesc": MessageLookupByLibrary.simpleMessage(
+      "選択したノードで AI・メディアサービスへのアクセス可否をテスト",
+    ),
+    "unlocked": MessageLookupByLibrary.simpleMessage("解除済み"),
     "unnamed": MessageLookupByLibrary.simpleMessage("無題"),
     "up": MessageLookupByLibrary.simpleMessage("アップ"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),

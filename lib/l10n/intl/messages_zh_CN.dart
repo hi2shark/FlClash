@@ -112,6 +112,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage("提供多样化配置"),
     "advancedSettings": MessageLookupByLibrary.simpleMessage("高级设置"),
     "agree": MessageLookupByLibrary.simpleMessage("同意"),
+    "aiServices": MessageLookupByLibrary.simpleMessage("AI 服务"),
     "allNodes": MessageLookupByLibrary.simpleMessage("全部节点"),
     "allowBypass": MessageLookupByLibrary.simpleMessage("允许应用绕过VPN"),
     "allowBypassDesc": MessageLookupByLibrary.simpleMessage("开启后部分应用可绕过VPN"),
@@ -484,6 +485,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "需要位置权限",
     ),
+    "locked": MessageLookupByLibrary.simpleMessage("未解锁"),
     "log": MessageLookupByLibrary.simpleMessage("日志"),
     "logLevel": MessageLookupByLibrary.simpleMessage("日志等级"),
     "logcat": MessageLookupByLibrary.simpleMessage("日志捕获"),
@@ -503,6 +505,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "maxUdpRelayPacketSize": MessageLookupByLibrary.simpleMessage(
       "最大 UDP 转发包大小",
     ),
+    "mediaServices": MessageLookupByLibrary.simpleMessage("媒体服务"),
+    "mediaShort": MessageLookupByLibrary.simpleMessage("媒体"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("内存信息"),
     "messageTest": MessageLookupByLibrary.simpleMessage("消息测试"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage("这是一条消息。"),
@@ -915,6 +919,21 @@ class MessageLookup extends MessageLookupByLibrary {
     "unifiedDelayDesc": MessageLookupByLibrary.simpleMessage("去除握手等额外延迟"),
     "unknown": MessageLookupByLibrary.simpleMessage("未知"),
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage("未知网络错误"),
+    "unlockTest": MessageLookupByLibrary.simpleMessage("解锁检测"),
+    "unlockTestDesc": MessageLookupByLibrary.simpleMessage(
+      "通过所选节点检测 AI 与媒体服务的可用性",
+    ),
+    "unlockTestDisabledTip": MessageLookupByLibrary.simpleMessage(
+      "在解锁检测页面启用后检测",
+    ),
+    "unlockTestEnable": MessageLookupByLibrary.simpleMessage("启用解锁检测"),
+    "unlockTestNoTargets": MessageLookupByLibrary.simpleMessage(
+      "请先在上方选择至少一个测试目标",
+    ),
+    "unlockTestRunDesc": MessageLookupByLibrary.simpleMessage(
+      "检测所选节点访问 AI 与媒体服务的可用性",
+    ),
+    "unlocked": MessageLookupByLibrary.simpleMessage("已解锁"),
     "unnamed": MessageLookupByLibrary.simpleMessage("未命名"),
     "up": MessageLookupByLibrary.simpleMessage("上行"),
     "update": MessageLookupByLibrary.simpleMessage("更新"),

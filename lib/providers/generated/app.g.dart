@@ -1864,6 +1864,58 @@ abstract class _$NetworkDetection extends $Notifier<NetworkDetectionState> {
   }
 }
 
+@ProviderFor(UnlockDetection)
+final unlockDetectionProvider = UnlockDetectionProvider._();
+
+final class UnlockDetectionProvider
+    extends $NotifierProvider<UnlockDetection, UnlockDetectionState> {
+  UnlockDetectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'unlockDetectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$unlockDetectionHash();
+
+  @$internal
+  @override
+  UnlockDetection create() => UnlockDetection();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(UnlockDetectionState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<UnlockDetectionState>(value),
+    );
+  }
+}
+
+String _$unlockDetectionHash() => r'9dc900881358da523f026d06ae5364a159e503c9';
+
+abstract class _$UnlockDetection extends $Notifier<UnlockDetectionState> {
+  UnlockDetectionState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<UnlockDetectionState, UnlockDetectionState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<UnlockDetectionState, UnlockDetectionState>,
+              UnlockDetectionState,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(CurrentSSID)
 final currentSSIDProvider = CurrentSSIDProvider._();
 

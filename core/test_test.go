@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	"net/netip"
 	"strings"
 	"testing"
@@ -206,8 +208,156 @@ func TestHandleQuicTestProxyWithoutUDP(t *testing.T) {
 	}
 }
 
-func TestNormalizeQuicTarget(t *testing.T) {
-	tests := []struct {
+func TestHandleUnlockTestInvalidParams(t *testing.T) {
+	ch := make(chan string, 1)
+	handleUnlockTest("not-a-json", func(value string) { ch <- value })
+
+	var result UnlockTestResult
+	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
+		t.Fatalf("result is not valid json: %v", err)
+	}
+	if !strings.Contains(result.Error, "invalid params") {
+		t.Fatalf("expected invalid params error, got %q", result.Error)
+	}
+}
+
+func TestHandleUnlockTestNoTargets(t *testing.T) {
+	ch := make(chan string, 1)
+	handleUnlockTest(`{"proxy-name":"DIRECT"}`, func(value string) { ch <- value })
+
+	var result UnlockTestResult
+	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
+		t.Fatalf("result is not valid json: %v", err)
+	}
+	if !strings.Contains(result.Error, "no unlock test targets") {
+		t.Fatalf("expected no targets error, got %q", result.Error)
+	}
+}
+
+func TestHandleUnlockTestProxyNotFound(t *testing.T) {
+	t.Cleanup(func() {
+		tunnel.UpdateProxies(map[string]C.Proxy{}, map[string]P.ProxyProvider{})
+	})
+	tunnel.UpdateProxies(map[string]C.Proxy{}, map[string]P.ProxyProvider{})
+
+	ch := make(chan string, 1)
+	handleUnlockTest(
+		`{"proxy-name":"nonexistent-unlock-proxy","tests":[{"id":"a","url":"http://127.0.0.1/"}]}`,
+		func(value string) { ch <- value },
+	)
+
+	var result UnlockTestResult
+	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
+		t.Fatalf("result is not valid json: %v", err)
+	}
+	if result.Name != "nonexistent-unlock-proxy" {
+		t.Fatalf("expected name to echo proxy-name, got %q", result.Name)
+	}
+	if !strings.Contains(result.Error, "not found") {
+		t.Fatalf("expected not found error, got %q", result.Error)
+	}
+}
+
+func TestHandleUnlockTestRejectProxy(t *testing.T) {
+	t.Cleanup(func() {
+		tunnel.UpdateProxies(map[string]C.Proxy{}, map[string]P.ProxyProvider{})
+	})
+	tunnel.UpdateProxies(
+		map[string]C.Proxy{"REJECT": adapter.NewProxy(outbound.NewReject())},
+		map[string]P.ProxyProvider{},
+	)
+
+	ch := make(chan string, 1)
+	handleUnlockTest(
+		`{"proxy-name":"REJECT","timeout":100,"tests":[{"id":"a","url":"http://127.0.0.1/"}]}`,
+		func(value string) { ch <- value },
+	)
+
+	var result UnlockTestResult
+	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
+		t.Fatalf("result is not valid json: %v", err)
+	}
+	if result.Error == "" {
+		t.Fatal("expected error for REJECT proxy, got empty error")
+	}
+}
+
+func TestHandleUnlockTestDirect(t *testing.T) {
+	t.Cleanup(func() {
+		tunnel.UpdateProxies(map[string]C.Proxy{}, map[string]P.ProxyProvider{})
+	})
+	tunnel.UpdateProxies(
+		map[string]C.Proxy{"DIRECT": adapter.NewProxy(outbound.NewDirect())},
+		map[string]P.ProxyProvider{},
+	)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/trace":
+			_, _ = w.Write([]byte("fl=1\nloc=US\n"))
+		case "/blocked":
+			w.WriteHeader(http.StatusForbidden)
+		case "/redirect":
+			w.Header().Set("Location", "/trace")
+			w.WriteHeader(http.StatusFound)
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	params, err := json.Marshal(UnlockTestParams{
+		ProxyName: "DIRECT",
+		Timeout:   2000,
+		Tests: []UnlockTestItem{
+			{Id: "trace", Url: server.URL + "/trace", RegionRegex: "loc=([A-Z]{2})"},
+			{Id: "blocked", Url: server.URL + "/blocked"},
+			{Id: "redirect", Url: server.URL + "/redirect", ExpectedStatus: []int{http.StatusFound}},
+			{Id: "bad-regex", Url: server.URL + "/trace", RegionRegex: "loc=("},
+			{Id: "empty-url"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal params: %v", err)
+	}
+
+	ch := make(chan string, 1)
+	handleUnlockTest(string(params), func(value string) { ch <- value })
+
+	var result UnlockTestResult
+	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
+		t.Fatalf("result is not valid json: %v", err)
+	}
+	if result.Error != "" {
+		t.Fatalf("unexpected top-level error: %q", result.Error)
+	}
+	if len(result.Results) != 5 {
+		t.Fatalf("expected 5 results, got %d", len(result.Results))
+	}
+	items := make(map[string]UnlockTestResultItem, len(result.Results))
+	for _, item := range result.Results {
+		items[item.Id] = item
+	}
+
+	trace := items["trace"]
+	if !trace.Unlocked || trace.Status != http.StatusOK || trace.Region != "US" {
+		t.Fatalf("trace result = %+v, want unlocked 200 US", trace)
+	}
+	blocked := items["blocked"]
+	if blocked.Unlocked || blocked.Status != http.StatusForbidden {
+		t.Fatalf("blocked result = %+v, want locked 403", blocked)
+	}
+	redirect := items["redirect"]
+	if !redirect.Unlocked || redirect.Status != http.StatusFound {
+		t.Fatalf("redirect result = %+v, want unlocked 302", redirect)
+	}
+	if badRegex := items["bad-regex"]; !strings.Contains(badRegex.Error, "invalid region regex") {
+		t.Fatalf("bad-regex result = %+v, want regex error", badRegex)
+	}
+	if emptyUrl := items["empty-url"]; emptyUrl.Error == "" {
+		t.Fatalf("empty-url result = %+v, want error", emptyUrl)
+	}
+}
+
+func TestNormalizeQuicTarget(t *testing.T) {	tests := []struct {
 		name       string
 		input      string
 		wantTarget string

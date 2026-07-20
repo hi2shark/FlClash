@@ -5,4 +5,5 @@ export 'outbound_mode.dart';
 export 'quick_options.dart';
 export 'traffic_usage.dart';
 export 'memory_info.dart';
+export 'unlock_detection.dart';
 export 'wifi_watch.dart';

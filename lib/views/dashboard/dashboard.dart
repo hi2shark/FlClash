@@ -229,6 +229,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardStateProvider);
+    final unlockTestEnabled = ref.watch(
+      unlockTestSettingProvider.select((state) => state.enable),
+    );
     final columns = max(4 * ((dashboardState.contentWidth / 280).ceil()), 8);
     final spacing = 14.mAp;
     final children = [
@@ -243,7 +246,8 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           .where(
             (item) =>
                 !children.contains(item.widget) &&
-                item.platforms.contains(SupportPlatform.currentPlatform),
+                item.platforms.contains(SupportPlatform.currentPlatform) &&
+                (item != DashboardWidget.unlockDetection || unlockTestEnabled),
           )
           .map((item) => item.widget)
           .toList();

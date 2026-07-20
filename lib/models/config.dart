@@ -34,6 +34,7 @@ const defaultNetworkProps = NetworkProps();
 const defaultProxiesStyleProps = ProxiesStyleProps();
 const defaultWindowProps = WindowProps();
 const defaultAccessControlProps = AccessControlProps();
+const defaultUnlockTestProps = UnlockTestProps();
 const defaultThemeProps = ThemeProps(primaryColor: defaultPrimaryColor);
 
 const List<DashboardWidget> defaultDashboardWidgets = [
@@ -127,6 +128,17 @@ extension AccessControlPropsExt on AccessControlProps {
     AccessControlMode.acceptSelected => copyWith(acceptList: value),
     AccessControlMode.rejectSelected => copyWith(rejectList: value),
   };
+}
+
+@freezed
+abstract class UnlockTestProps with _$UnlockTestProps {
+  const factory UnlockTestProps({
+    @Default(false) bool enable,
+    @Default(defaultUnlockTestTargetIds) List<String> selectedTargets,
+  }) = _UnlockTestProps;
+
+  factory UnlockTestProps.fromJson(Map<String, Object?> json) =>
+      _$UnlockTestPropsFromJson(json);
 }
 
 @freezed
@@ -247,6 +259,7 @@ abstract class Config with _$Config {
     @Default(defaultClashConfig) PatchClashConfig patchClashConfig,
     @Default(true) bool onDemandEnabled,
     @Default([]) List<String> excludeSSIDs,
+    @Default(defaultUnlockTestProps) UnlockTestProps unlockTestProps,
   }) = _Config;
 
   factory Config.fromJson(Map<String, Object?> json) => _$ConfigFromJson(json);

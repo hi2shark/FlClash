@@ -26,6 +26,8 @@ mixin CoreInterface {
 
   Future<String> quicTest(QuicTestParams params);
 
+  Future<String> unlockTest(UnlockTestParams params);
+
   Future<String> updateConfig(UpdateParams updateParams);
 
   Future<String> setupConfig(SetupParams setupParams);
@@ -372,6 +374,27 @@ abstract class CoreHandlerInterface with CoreInterface {
             error: 'core QUIC test did not respond before the client timeout',
           ),
         );
+  }
+
+  @override
+  Future<String> unlockTest(UnlockTestParams params) async {
+    final requestedTimeout = params.timeout;
+    final perTestTimeout = requestedTimeout != null && requestedTimeout > 0
+        ? requestedTimeout
+        : httpTimeoutDuration.inMilliseconds;
+    final testCount = params.tests.length;
+    final batches = testCount == 0
+        ? 1
+        : (testCount + unlockTestConcurrency - 1) ~/ unlockTestConcurrency;
+    final invokeTimeout = Duration(
+      milliseconds: perTestTimeout * batches + 5000,
+    );
+    return await _invoke<String>(
+          method: ActionMethod.unlockTest,
+          data: json.encode(params.toJson()),
+          timeout: invokeTimeout,
+        ) ??
+        json.encode(UnlockTestResult(name: params.proxyName, error: 'timeout'));
   }
 
   @override

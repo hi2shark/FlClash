@@ -5729,6 +5729,96 @@ class AppLocalizations {
     );
   }
 
+  /// `Unlock Detection`
+  String get unlockTest {
+    return Intl.message(
+      'Unlock Detection',
+      name: 'unlockTest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check AI and media service availability through a node`
+  String get unlockTestDesc {
+    return Intl.message(
+      'Check AI and media service availability through a node',
+      name: 'unlockTestDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable unlock detection`
+  String get unlockTestEnable {
+    return Intl.message(
+      'Enable unlock detection',
+      name: 'unlockTestEnable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Test whether the selected AI and media services are available through the selected node`
+  String get unlockTestRunDesc {
+    return Intl.message(
+      'Test whether the selected AI and media services are available through the selected node',
+      name: 'unlockTestRunDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select at least one test target above`
+  String get unlockTestNoTargets {
+    return Intl.message(
+      'Select at least one test target above',
+      name: 'unlockTestNoTargets',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable it on the unlock detection page`
+  String get unlockTestDisabledTip {
+    return Intl.message(
+      'Enable it on the unlock detection page',
+      name: 'unlockTestDisabledTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `AI Services`
+  String get aiServices {
+    return Intl.message('AI Services', name: 'aiServices', desc: '', args: []);
+  }
+
+  /// `Media Services`
+  String get mediaServices {
+    return Intl.message(
+      'Media Services',
+      name: 'mediaServices',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Media`
+  String get mediaShort {
+    return Intl.message('Media', name: 'mediaShort', desc: '', args: []);
+  }
+
+  /// `Unlocked`
+  String get unlocked {
+    return Intl.message('Unlocked', name: 'unlocked', desc: '', args: []);
+  }
+
+  /// `Blocked`
+  String get locked {
+    return Intl.message('Blocked', name: 'locked', desc: '', args: []);
+  }
+
   /// `SOCKS5`
   String get socks5 {
     return Intl.message('SOCKS5', name: 'socks5', desc: '', args: []);
