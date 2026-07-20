@@ -132,24 +132,70 @@ void main() {
     controller = CoreController.test(mock);
   });
 
-  test('speed test sizes and URL use decimal megabytes', () {
-    expect(networkTestPackageSizes, [10, 25, 100]);
-    expect(networkTestDefaultPackageSize, 25);
+  test('speed test presets keep source, size, URL, bytes, and timeout', () {
+    final presets = networkTestSpeedTestPresets;
+    final presetsByLabel = {for (final preset in presets) preset.label: preset};
+
+    expect(presets, hasLength(5));
     expect(
-      networkTestSpeedTestUrl(10),
+      presetsByLabel.keys,
+      containsAll([
+        'Cloudflare 10 MB',
+        'Cloudflare 25 MB',
+        'Cloudflare 50 MB',
+        'OVH 10 MiB',
+        'OVH 100 MiB',
+      ]),
+    );
+    expect(presetsByLabel, isNot(contains('Cloudflare 100 MB')));
+    expect(
+      presets.map((preset) => preset.url),
+      isNot(contains('https://speed.cloudflare.com/__down?bytes=100000000')),
+    );
+
+    expect(presetsByLabel['Cloudflare 10 MB']?.bytes, 10000000);
+    expect(
+      presetsByLabel['Cloudflare 10 MB']?.url,
       'https://speed.cloudflare.com/__down?bytes=10000000',
     );
     expect(
-      networkTestSpeedTestUrl(25),
+      presetsByLabel['Cloudflare 10 MB']?.timeout,
+      const Duration(seconds: 20),
+    );
+    expect(presetsByLabel['Cloudflare 25 MB']?.bytes, 25000000);
+    expect(
+      presetsByLabel['Cloudflare 25 MB']?.url,
       'https://speed.cloudflare.com/__down?bytes=25000000',
     );
     expect(
-      networkTestSpeedTestUrl(100),
-      'https://speed.cloudflare.com/__down?bytes=100000000',
+      presetsByLabel['Cloudflare 25 MB']?.timeout,
+      const Duration(seconds: 30),
     );
-    expect(networkTestSpeedTestTimeout(10), const Duration(seconds: 20));
-    expect(networkTestSpeedTestTimeout(25), const Duration(seconds: 30));
-    expect(networkTestSpeedTestTimeout(100), const Duration(seconds: 90));
+    expect(presetsByLabel['Cloudflare 50 MB']?.bytes, 50000000);
+    expect(
+      presetsByLabel['Cloudflare 50 MB']?.url,
+      'https://speed.cloudflare.com/__down?bytes=50000000',
+    );
+    expect(
+      presetsByLabel['Cloudflare 50 MB']?.timeout,
+      const Duration(seconds: 60),
+    );
+    expect(presetsByLabel['OVH 10 MiB']?.bytes, 10485760);
+    expect(
+      presetsByLabel['OVH 10 MiB']?.url,
+      'https://proof.ovh.net/files/10Mb.dat',
+    );
+    expect(presetsByLabel['OVH 10 MiB']?.timeout, const Duration(seconds: 25));
+    expect(presetsByLabel['OVH 100 MiB']?.bytes, 104857600);
+    expect(
+      presetsByLabel['OVH 100 MiB']?.url,
+      'https://proof.ovh.net/files/100Mb.dat',
+    );
+    expect(
+      presetsByLabel['OVH 100 MiB']?.timeout,
+      const Duration(seconds: 120),
+    );
+    expect(networkTestDefaultSpeedTestPreset.label, 'Cloudflare 25 MB');
   });
 
   test('network candidate filtering is type-based, not name-based', () {
@@ -241,7 +287,7 @@ void main() {
     });
   });
 
-  testWidgets('NetworkTestView builds with single-select presets', (
+  testWidgets('NetworkTestView starts with the QUIC targets collapsed', (
     tester,
   ) async {
     when(() => mock.speedTest(any())).thenAnswer((_) async => _speedResult());
@@ -252,15 +298,33 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byType(NetworkTestView), findsOneWidget);
-    expect(find.text('25 MB'), findsOneWidget);
-    expect(find.text('cloudflare-quic.com:443'), findsAtLeastNWidgets(1));
-    expect(find.text('nghttp2.org:443'), findsAtLeastNWidgets(1));
-    expect(find.text('quic.rocks:443'), findsNothing);
+    expect(find.text('Cloudflare 25 MB'), findsOneWidget);
+    expect(find.text('Cloudflare 100 MB'), findsNothing);
+    expect(find.text('cloudflare-quic.com:443'), findsOneWidget);
+    expect(find.text('www.google.com:443'), findsNothing);
+    expect(find.text('nghttp2.org:443'), findsNothing);
+    expect(find.text('Custom target'), findsNothing);
+    expect(find.byType(TextField), findsNothing);
+
+    final quicTargetTile = find.widgetWithText(
+      ExpansionTile,
+      'QUIC test target',
+    );
+    expect(quicTargetTile, findsOneWidget);
+    expect(
+      tester.widget<ExpansionTile>(quicTargetTile).initiallyExpanded,
+      isFalse,
+    );
+    await _tapVisible(tester, quicTargetTile);
+    await tester.pumpAndSettle();
+
+    expect(find.text('www.google.com:443'), findsOneWidget);
+    expect(find.text('nghttp2.org:443'), findsOneWidget);
     expect(find.text('Custom target'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
   });
 
-  testWidgets('speed test sends selected decimal URL and timeout', (
+  testWidgets('speed test sends the selected preset URL and timeout', (
     tester,
   ) async {
     final calls = <SpeedTestParams>[];
@@ -272,9 +336,13 @@ void main() {
     await tester.pumpWidget(_wrap(NetworkTestView(controller: controller)));
     await tester.pumpAndSettle();
 
-    await _tapVisible(tester, find.text('25 MB'));
+    await _tapVisible(tester, find.text('Cloudflare 25 MB'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('100 MB'));
+    expect(find.text('Cloudflare 100 MB'), findsNothing);
+    expect(find.text('Cloudflare 50 MB'), findsOneWidget);
+    expect(find.text('OVH 10 MiB'), findsOneWidget);
+    expect(find.text('OVH 100 MiB'), findsOneWidget);
+    await tester.tap(find.text('OVH 100 MiB'));
     await tester.pumpAndSettle();
 
     final speedButton = find.widgetWithText(FilledButton, 'Start Test').first;
@@ -282,8 +350,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(calls, hasLength(1));
-    expect(calls.single.testUrl, networkTestSpeedTestUrl(100));
-    expect(calls.single.timeout, 90000);
+    expect(calls.single.testUrl, 'https://proof.ovh.net/files/100Mb.dat');
+    expect(calls.single.timeout, 120000);
   });
 
   testWidgets('QUIC preset and custom host are sent exclusively', (
@@ -298,6 +366,11 @@ void main() {
     await tester.pumpWidget(_wrap(NetworkTestView(controller: controller)));
     await tester.pumpAndSettle();
 
+    await _tapVisible(
+      tester,
+      find.widgetWithText(ExpansionTile, 'QUIC test target'),
+    );
+    await tester.pumpAndSettle();
     await _tapVisible(tester, find.text('nghttp2.org:443'));
     await tester.pumpAndSettle();
     final quicButton = find.widgetWithText(FilledButton, 'Start Test').last;
@@ -337,9 +410,9 @@ void main() {
     await tester.pump();
     expect(find.text('Testing...'), findsOneWidget);
 
-    await _tapVisible(tester, find.text('25 MB'));
+    await _tapVisible(tester, find.text('Cloudflare 25 MB'));
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('100 MB'));
+    await tester.tap(find.text('Cloudflare 50 MB'));
     await tester.pump(const Duration(seconds: 1));
 
     firstResult.complete(_speedResult(latency: 111));
@@ -368,6 +441,12 @@ void main() {
     });
 
     await tester.pumpWidget(_wrap(NetworkTestView(controller: controller)));
+    await tester.pumpAndSettle();
+
+    await _tapVisible(
+      tester,
+      find.widgetWithText(ExpansionTile, 'QUIC test target'),
+    );
     await tester.pumpAndSettle();
 
     final quicButton = find.widgetWithText(FilledButton, 'Start Test').last;

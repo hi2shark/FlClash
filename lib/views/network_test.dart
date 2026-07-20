@@ -4,13 +4,63 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
-const _speedTestPackageSizes = <int>[10, 25, 100];
-const _defaultSpeedTestPackageSize = 25;
-const _speedTestTimeouts = <int, Duration>{
-  10: Duration(seconds: 20),
-  25: Duration(seconds: 30),
-  100: Duration(seconds: 90),
-};
+@visibleForTesting
+class NetworkTestSpeedPreset {
+  final String source;
+  final String sizeLabel;
+  final String url;
+  final int bytes;
+  final Duration timeout;
+
+  const NetworkTestSpeedPreset({
+    required this.source,
+    required this.sizeLabel,
+    required this.url,
+    required this.bytes,
+    required this.timeout,
+  });
+
+  String get label => '$source $sizeLabel';
+}
+
+const _defaultSpeedTestPreset = NetworkTestSpeedPreset(
+  source: 'Cloudflare',
+  sizeLabel: '25 MB',
+  url: 'https://speed.cloudflare.com/__down?bytes=25000000',
+  bytes: 25000000,
+  timeout: Duration(seconds: 30),
+);
+const _speedTestPresets = <NetworkTestSpeedPreset>[
+  NetworkTestSpeedPreset(
+    source: 'Cloudflare',
+    sizeLabel: '10 MB',
+    url: 'https://speed.cloudflare.com/__down?bytes=10000000',
+    bytes: 10000000,
+    timeout: Duration(seconds: 20),
+  ),
+  _defaultSpeedTestPreset,
+  NetworkTestSpeedPreset(
+    source: 'Cloudflare',
+    sizeLabel: '50 MB',
+    url: 'https://speed.cloudflare.com/__down?bytes=50000000',
+    bytes: 50000000,
+    timeout: Duration(seconds: 60),
+  ),
+  NetworkTestSpeedPreset(
+    source: 'OVH',
+    sizeLabel: '10 MiB',
+    url: 'https://proof.ovh.net/files/10Mb.dat',
+    bytes: 10485760,
+    timeout: Duration(seconds: 25),
+  ),
+  NetworkTestSpeedPreset(
+    source: 'OVH',
+    sizeLabel: '100 MiB',
+    url: 'https://proof.ovh.net/files/100Mb.dat',
+    bytes: 104857600,
+    timeout: Duration(seconds: 120),
+  ),
+];
 const _quicTestTimeout = Duration(seconds: 10);
 const _quicTestTargets = <String>[
   'cloudflare-quic.com:443',
@@ -21,26 +71,13 @@ const _quicTestTargets = <String>[
 const _customQuicTargetValue = '__custom__';
 const _nonTestableProxyTypes = {'reject', 'rejectdrop', 'pass', 'passrule'};
 
-String _speedTestUrl(int packageSize) {
-  return 'https://speed.cloudflare.com/__down?bytes=${packageSize * 1000000}';
-}
-
-Duration _speedTestTimeout(int packageSize) {
-  return _speedTestTimeouts[packageSize] ?? const Duration(seconds: 30);
-}
+@visibleForTesting
+List<NetworkTestSpeedPreset> get networkTestSpeedTestPresets =>
+    _speedTestPresets;
 
 @visibleForTesting
-List<int> get networkTestPackageSizes => _speedTestPackageSizes;
-
-@visibleForTesting
-int get networkTestDefaultPackageSize => _defaultSpeedTestPackageSize;
-
-@visibleForTesting
-String networkTestSpeedTestUrl(int packageSize) => _speedTestUrl(packageSize);
-
-@visibleForTesting
-Duration networkTestSpeedTestTimeout(int packageSize) =>
-    _speedTestTimeout(packageSize);
+NetworkTestSpeedPreset get networkTestDefaultSpeedTestPreset =>
+    _defaultSpeedTestPreset;
 
 @visibleForTesting
 bool isNetworkTestableProxy(Proxy proxy) =>
@@ -61,7 +98,7 @@ class NetworkTestView extends StatefulWidget {
 
 class _NetworkTestViewState extends State<NetworkTestView> {
   String _proxyName = 'DIRECT';
-  int _speedTestPackageSize = _defaultSpeedTestPackageSize;
+  NetworkTestSpeedPreset _speedTestPreset = _defaultSpeedTestPreset;
   bool _isSpeedTesting = false;
   SpeedTestResult? _speedTestResult;
   bool _isQuicTesting = false;
@@ -113,7 +150,7 @@ class _NetworkTestViewState extends State<NetworkTestView> {
       return;
     }
     final proxyName = _proxyName;
-    final packageSize = _speedTestPackageSize;
+    final preset = _speedTestPreset;
     final generation = ++_speedTestGeneration;
     _activeSpeedTestGeneration = generation;
     setState(() {
@@ -124,8 +161,8 @@ class _NetworkTestViewState extends State<NetworkTestView> {
       final result = await _controller.getSpeedTest(
         SpeedTestParams(
           proxyName: proxyName,
-          testUrl: _speedTestUrl(packageSize),
-          timeout: _speedTestTimeout(packageSize).inMilliseconds,
+          testUrl: preset.url,
+          timeout: preset.timeout.inMilliseconds,
         ),
       );
       if (!mounted || generation != _speedTestGeneration) {
@@ -330,20 +367,20 @@ class _NetworkTestViewState extends State<NetworkTestView> {
 
   Widget _buildSpeedTestPackageSelector() {
     final appLocalizations = context.appLocalizations;
-    return ListItem<int>.options(
+    return ListItem<NetworkTestSpeedPreset>.options(
       title: Text(appLocalizations.speedTestPackageSize),
-      subtitle: Text('$_speedTestPackageSize MB'),
-      delegate: OptionsDelegate<int>(
+      subtitle: Text(_speedTestPreset.label),
+      delegate: OptionsDelegate<NetworkTestSpeedPreset>(
         title: appLocalizations.speedTestPackageSize,
-        options: _speedTestPackageSizes,
-        value: _speedTestPackageSize,
-        textBuilder: (value) => '$value MB',
-        onChanged: (value) {
-          if (value == null || value == _speedTestPackageSize) {
+        options: _speedTestPresets,
+        value: _speedTestPreset,
+        textBuilder: (preset) => preset.label,
+        onChanged: (preset) {
+          if (preset == null || preset == _speedTestPreset) {
             return;
           }
           setState(() {
-            _speedTestPackageSize = value;
+            _speedTestPreset = preset;
             _clearSpeedTestResult();
           });
         },
@@ -384,7 +421,7 @@ class _NetworkTestViewState extends State<NetworkTestView> {
         ? appLocalizations.quicTestCustomTargetHint
         : _effectiveQuicTarget;
     return ExpansionTile(
-      initiallyExpanded: true,
+      initiallyExpanded: false,
       title: Text(appLocalizations.quicTestTarget),
       subtitle: Text(
         targetSubtitle,
