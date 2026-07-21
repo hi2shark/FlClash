@@ -46,7 +46,12 @@ void main() {
     );
     registerFallbackValue(const SpeedTestParams(proxyName: 'P'));
     registerFallbackValue(const QuicTestParams(proxyName: 'P'));
-    registerFallbackValue(const UnlockTestParams(proxyName: 'P'));
+    registerFallbackValue(
+      const UnlockTestRunParams(
+        runId: 'fallback',
+        routeMode: UnlockTestRouteMode.appRoute,
+      ),
+    );
   });
 
   setUp(() {
@@ -475,52 +480,59 @@ void main() {
     });
 
     test('getUnlockTest parses JSON response', () async {
-      const params = UnlockTestParams(
+      const params = UnlockTestRunParams(
+        runId: 'run-1',
+        routeMode: UnlockTestRouteMode.proxy,
         proxyName: 'P1',
-        tests: [UnlockTestItem(id: 'chatgpt', url: 'https://x.com')],
+        targetIds: ['chatgpt', 'netflix'],
       );
       when(() => mock.unlockTest(params)).thenAnswer(
         (_) async => json.encode({
-          'name': 'P1',
+          'run-id': 'run-1',
+          'route-mode': 'proxy',
+          'proxy-name': 'P1',
           'results': [
             {
               'id': 'chatgpt',
-              'status': 200,
+              'status': 'unlocked',
+              'reason': '',
               'latency': 321,
               'region': 'US',
-              'unlocked': true,
-              'error': '',
+              'outbound-chains': ['P1', 'DIRECT'],
             },
             {
               'id': 'netflix',
-              'status': 403,
+              'status': 'locked',
+              'reason': 'geoBlocked',
               'latency': 120,
-              'region': '',
-              'unlocked': false,
-              'error': '',
             },
           ],
           'error': '',
         }),
       );
       final result = await controller.getUnlockTest(params);
-      expect(result.name, 'P1');
+      expect(result.runId, 'run-1');
+      expect(result.proxyName, 'P1');
       expect(result.results, hasLength(2));
       expect(result.results[0].id, 'chatgpt');
-      expect(result.results[0].unlocked, true);
+      expect(result.results[0].status, UnlockTestStatus.unlocked);
       expect(result.results[0].region, 'US');
       expect(result.results[0].latency, 321);
-      expect(result.results[1].unlocked, false);
+      expect(result.results[1].status, UnlockTestStatus.locked);
+      expect(result.results[1].reason, UnlockTestReason.geoBlocked);
       expect(result.error, '');
     });
 
     test('getUnlockTest applies defaults for missing fields', () async {
-      const params = UnlockTestParams(proxyName: 'P1');
+      const params = UnlockTestRunParams(
+        runId: 'run-1',
+        routeMode: UnlockTestRouteMode.appRoute,
+      );
       when(
         () => mock.unlockTest(any()),
-      ).thenAnswer((_) async => json.encode({'name': 'P1', 'error': 'x'}));
+      ).thenAnswer((_) async => json.encode({'run-id': 'run-1', 'error': 'x'}));
       final result = await controller.getUnlockTest(params);
-      expect(result.name, 'P1');
+      expect(result.runId, 'run-1');
       expect(result.results, isEmpty);
       expect(result.error, 'x');
     });

@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/event.dart';
+import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/service.dart';
@@ -14,6 +16,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
 part 'generated/app.g.dart';
+
+typedef UnlockTestHistoryWriter =
+    Future<void> Function(UnlockTestRunRecord record);
+
+@Riverpod(keepAlive: true)
+UnlockTestHistoryWriter unlockTestHistoryWriter(Ref ref) {
+  return database.unlockTestRunsDao.insertAndPrune;
+}
 
 @riverpod
 class RealTunEnable extends _$RealTunEnable with AutoDisposeNotifierMixin {
@@ -446,11 +456,16 @@ class NetworkDetection extends _$NetworkDetection
 }
 
 @Riverpod(keepAlive: true)
-class UnlockDetection extends _$UnlockDetection with AutoDisposeNotifierMixin {
+class UnlockDetection extends _$UnlockDetection
+    with AutoDisposeNotifierMixin, CoreEventListener {
   int _checkVersion = 0;
+  String? _activeRunId;
+  DateTime? _startedAt;
 
   @override
   UnlockDetectionState build() {
+    coreEventManager.addListener(this);
+    ref.onDispose(() => coreEventManager.removeListener(this));
     return const UnlockDetectionState(
       isLoading: false,
       proxyName: '',
@@ -459,6 +474,7 @@ class UnlockDetection extends _$UnlockDetection with AutoDisposeNotifierMixin {
   }
 
   Future<void> startCheck({
+    UnlockTestRouteMode routeMode = UnlockTestRouteMode.appRoute,
     String? proxyName,
     CoreController? controller,
   }) async {
@@ -470,37 +486,158 @@ class UnlockDetection extends _$UnlockDetection with AutoDisposeNotifierMixin {
     if (targets.isEmpty) {
       return;
     }
-    final effectiveProxyName = proxyName ?? unlockTestGlobalProxyName;
+    if (routeMode == UnlockTestRouteMode.proxy &&
+        (proxyName == null || proxyName.isEmpty)) {
+      state = state.copyWith(error: 'A proxy must be selected');
+      return;
+    }
     final effectiveController = controller ?? coreController;
     final version = ++_checkVersion;
+    final runId = 'unlock-${DateTime.now().microsecondsSinceEpoch}-${utils.id}';
+    _activeRunId = runId;
+    _startedAt = DateTime.now();
     state = state.copyWith(
       isLoading: true,
-      proxyName: effectiveProxyName,
+      proxyName: routeMode == UnlockTestRouteMode.proxy ? proxyName! : '',
       error: '',
+      testedAt: null,
+      results: {
+        for (final target in targets)
+          target.id: UnlockTestRunItem.untested(target.id),
+      },
     );
     try {
       final result = await effectiveController.getUnlockTest(
-        UnlockTestParams(
-          proxyName: effectiveProxyName,
-          timeout: httpTimeoutDuration.inMilliseconds,
-          tests: targets.map((target) => target.toItem()).toList(),
+        UnlockTestRunParams(
+          runId: runId,
+          routeMode: routeMode,
+          proxyName: routeMode == UnlockTestRouteMode.proxy ? proxyName : null,
+          timeout: unlockTestTimeout,
+          targetIds: targets.map((target) => target.id).toList(growable: false),
         ),
       );
-      if (!ref.mounted || version != _checkVersion) {
+      if (!ref.mounted || version != _checkVersion || _activeRunId != runId) {
         return;
       }
+      final merged = Map<String, UnlockTestRunItem>.from(state.results);
+      for (final item in result.results) {
+        merged[item.id] = item;
+      }
+      _activeRunId = null;
+      final completedAt = DateTime.now();
       state = state.copyWith(
         isLoading: false,
         error: result.error,
-        results: {for (final item in result.results) item.id: item},
+        results: merged,
+        testedAt: result.cancelled || result.error.isNotEmpty
+            ? null
+            : completedAt,
       );
+      if (!result.cancelled && result.error.isEmpty) {
+        await _saveCompletedRun(
+          result.runId.isEmpty
+              ? UnlockTestRunResult(
+                  runId: runId,
+                  routeMode: routeMode,
+                  proxyName: proxyName,
+                  results: merged.values.toList(growable: false),
+                )
+              : UnlockTestRunResult(
+                  runId: result.runId,
+                  routeMode: result.routeMode,
+                  proxyName: result.proxyName,
+                  results: merged.values.toList(growable: false),
+                ),
+          completedAt: completedAt,
+        );
+      }
     } catch (e) {
       commonPrint.log('unlockDetection startCheck error: $e');
-      if (!ref.mounted || version != _checkVersion) {
+      if (!ref.mounted || version != _checkVersion || _activeRunId != runId) {
         return;
       }
+      _activeRunId = null;
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  Future<void> stopCheck({CoreController? controller}) async {
+    final runId = _activeRunId;
+    if (runId == null) {
+      return;
+    }
+    _activeRunId = null;
+    _checkVersion++;
+    state = state.copyWith(isLoading: false);
+    await (controller ?? coreController).cancelUnlockTest(runId);
+  }
+
+  @override
+  void onUnlockTestProgress(UnlockTestProgress progress) {
+    if (!ref.mounted || progress.runId != _activeRunId) {
+      return;
+    }
+    state = state.copyWith(
+      results: {...state.results, progress.item.id: progress.item},
+    );
+  }
+
+  Future<void> _saveCompletedRun(
+    UnlockTestRunResult result, {
+    required DateTime completedAt,
+  }) async {
+    try {
+      final startedAt = _startedAt ?? DateTime.now();
+      await ref.read(unlockTestHistoryWriterProvider)(
+        UnlockTestRunRecord(
+          runId: result.runId,
+          createdAt: completedAt,
+          durationMs: completedAt.difference(startedAt).inMilliseconds,
+          routeMode: result.routeMode.name,
+          proxyName: result.proxyName,
+          catalogVersion: unlockTestCatalogVersion,
+          resultsJson: jsonEncode(result.toJson()),
+        ),
+      );
+    } catch (error) {
+      commonPrint.log(
+        'unlockDetection save history error: $error',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
+}
+
+Future<List<UnlockTestHistoryEntry>> loadUnlockTestHistory() async {
+  final records = await database.unlockTestRunsDao.latest();
+  return records
+      .map(_historyEntryFromRecord)
+      .whereType<UnlockTestHistoryEntry>()
+      .toList();
+}
+
+Future<UnlockTestHistoryEntry?> loadLatestAppRouteUnlockTest() async {
+  final record = await database.unlockTestRunsDao.latestAppRoute();
+  return record == null ? null : _historyEntryFromRecord(record);
+}
+
+UnlockTestHistoryEntry? _historyEntryFromRecord(UnlockTestRunRecord record) {
+  try {
+    final result = UnlockTestRunResult.fromJson(
+      Map<String, dynamic>.from(jsonDecode(record.resultsJson) as Map),
+    );
+    return UnlockTestHistoryEntry(
+      createdAt: record.createdAt,
+      durationMs: record.durationMs,
+      catalogVersion: record.catalogVersion,
+      result: result,
+    );
+  } catch (error) {
+    commonPrint.log(
+      'unlockDetection decode history error: $error',
+      logLevel: LogLevel.warning,
+    );
+    return null;
   }
 }
 

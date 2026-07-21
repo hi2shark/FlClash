@@ -5819,6 +5819,326 @@ class AppLocalizations {
     return Intl.message('Blocked', name: 'locked', desc: '', args: []);
   }
 
+  /// `Partial`
+  String get unlockTestPartial {
+    return Intl.message(
+      'Partial',
+      name: 'unlockTestPartial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Error`
+  String get unlockTestError {
+    return Intl.message('Error', name: 'unlockTestError', desc: '', args: []);
+  }
+
+  /// `Untested`
+  String get unlockTestUntested {
+    return Intl.message(
+      'Untested',
+      name: 'unlockTestUntested',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Follow current routing`
+  String get unlockTestFollowRules {
+    return Intl.message(
+      'Follow current routing',
+      name: 'unlockTestFollowRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Specified node`
+  String get unlockTestSpecifiedNode {
+    return Intl.message(
+      'Specified node',
+      name: 'unlockTestSpecifiedNode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select services`
+  String get unlockTestSelectTargets {
+    return Intl.message(
+      'Select services',
+      name: 'unlockTestSelectTargets',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All`
+  String get unlockTestAll {
+    return Intl.message('All', name: 'unlockTestAll', desc: '', args: []);
+  }
+
+  /// `Done`
+  String get unlockTestDone {
+    return Intl.message('Done', name: 'unlockTestDone', desc: '', args: []);
+  }
+
+  /// `Search services`
+  String get unlockTestSearch {
+    return Intl.message(
+      'Search services',
+      name: 'unlockTestSearch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Recent tests`
+  String get unlockTestHistory {
+    return Intl.message(
+      'Recent tests',
+      name: 'unlockTestHistory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current results`
+  String get unlockTestCurrentResults {
+    return Intl.message(
+      'Current results',
+      name: 'unlockTestCurrentResults',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `History result`
+  String get unlockTestHistoryResult {
+    return Intl.message(
+      'History result',
+      name: 'unlockTestHistoryResult',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No test results yet`
+  String get unlockTestNoResults {
+    return Intl.message(
+      'No test results yet',
+      name: 'unlockTestNoResults',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop test`
+  String get unlockTestStop {
+    return Intl.message(
+      'Stop test',
+      name: 'unlockTestStop',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Outbound`
+  String get unlockTestActualOutbound {
+    return Intl.message(
+      'Outbound',
+      name: 'unlockTestActualOutbound',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Region`
+  String get unlockTestRegion {
+    return Intl.message('Region', name: 'unlockTestRegion', desc: '', args: []);
+  }
+
+  /// `Latency`
+  String get unlockTestLatency {
+    return Intl.message(
+      'Latency',
+      name: 'unlockTestLatency',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restore defaults`
+  String get unlockTestResetDefault {
+    return Intl.message(
+      'Restore defaults',
+      name: 'unlockTestResetDefault',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select all`
+  String get unlockTestSelectAll {
+    return Intl.message(
+      'Select all',
+      name: 'unlockTestSelectAll',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear all`
+  String get unlockTestClearAll {
+    return Intl.message(
+      'Clear all',
+      name: 'unlockTestClearAll',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `View all`
+  String get unlockTestViewAll {
+    return Intl.message(
+      'View all',
+      name: 'unlockTestViewAll',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Global media`
+  String get unlockTestGroupGlobalMedia {
+    return Intl.message(
+      'Global media',
+      name: 'unlockTestGroupGlobalMedia',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `UK & Europe`
+  String get unlockTestGroupEurope {
+    return Intl.message(
+      'UK & Europe',
+      name: 'unlockTestGroupEurope',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hong Kong & Taiwan`
+  String get unlockTestGroupHongKongTaiwan {
+    return Intl.message(
+      'Hong Kong & Taiwan',
+      name: 'unlockTestGroupHongKongTaiwan',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Japan`
+  String get unlockTestGroupJapan {
+    return Intl.message(
+      'Japan',
+      name: 'unlockTestGroupJapan',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Korea`
+  String get unlockTestGroupKorea {
+    return Intl.message(
+      'Korea',
+      name: 'unlockTestGroupKorea',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only part of the catalog is available`
+  String get unlockReasonContentLimited {
+    return Intl.message(
+      'Only part of the catalog is available',
+      name: 'unlockReasonContentLimited',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unavailable in this region`
+  String get unlockReasonGeoBlocked {
+    return Intl.message(
+      'Unavailable in this region',
+      name: 'unlockReasonGeoBlocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy or VPN was rejected`
+  String get unlockReasonVpnBlocked {
+    return Intl.message(
+      'Proxy or VPN was rejected',
+      name: 'unlockReasonVpnBlocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Service rate limited the test`
+  String get unlockReasonRateLimited {
+    return Intl.message(
+      'Service rate limited the test',
+      name: 'unlockReasonRateLimited',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request timed out`
+  String get unlockReasonTimeout {
+    return Intl.message(
+      'Request timed out',
+      name: 'unlockReasonTimeout',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Network request failed`
+  String get unlockReasonNetworkError {
+    return Intl.message(
+      'Network request failed',
+      name: 'unlockReasonNetworkError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Temporary session initialization failed`
+  String get unlockReasonBootstrapFailed {
+    return Intl.message(
+      'Temporary session initialization failed',
+      name: 'unlockReasonBootstrapFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The service response could not be recognized`
+  String get unlockReasonUnexpectedResponse {
+    return Intl.message(
+      'The service response could not be recognized',
+      name: 'unlockReasonUnexpectedResponse',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `SOCKS5`
   String get socks5 {
     return Intl.message('SOCKS5', name: 'socks5', desc: '', args: []);

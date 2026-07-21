@@ -135,7 +135,7 @@ enum ResultType {
   error,
 }
 
-enum CoreEventType { log, delay, request, loaded, crash }
+enum CoreEventType { log, delay, request, loaded, unlockTestProgress, crash }
 
 enum InvokeMessageType { protect, process }
 
@@ -255,6 +255,7 @@ enum ActionMethod {
   speedTest,
   quicTest,
   unlockTest,
+  cancelUnlockTest,
 
   ///Android,
   setState,
@@ -321,7 +322,13 @@ enum DashboardWidget {
   ),
   intranetIp(GridItem(crossAxisCellCount: 4, child: IntranetIP())),
   memoryInfo(GridItem(crossAxisCellCount: 4, child: MemoryInfo())),
-  unlockDetection(GridItem(crossAxisCellCount: 4, child: UnlockDetection()));
+  unlockDetection(
+    GridItem(
+      crossAxisCellCount: 8,
+      mainAxisCellCount: 2,
+      child: UnlockDetection(),
+    ),
+  );
 
   final GridItem widget;
   final List<SupportPlatform> platforms;
@@ -338,8 +345,6 @@ enum DashboardWidget {
 }
 
 enum GeodataLoader { standard, memconservative }
-
-enum UnlockTestGroup { ai, media }
 
 enum PageLabel {
   dashboard,

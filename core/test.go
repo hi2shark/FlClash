@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"core/unlocktest"
 	gotls "crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,6 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -17,7 +17,10 @@ import (
 	"time"
 	"unicode"
 
+	N "github.com/metacubex/mihomo/common/net"
 	C "github.com/metacubex/mihomo/constant"
+	T "github.com/metacubex/mihomo/tunnel"
+	"github.com/metacubex/mihomo/tunnel/statistic"
 	quic "github.com/metacubex/quic-go"
 	"github.com/metacubex/tls"
 )
@@ -27,11 +30,6 @@ const (
 	defaultSpeedTestTimeout = 15 * time.Second
 	defaultQuicTestHost     = "cloudflare-quic.com:443"
 	defaultQuicTestTimeout  = 8 * time.Second
-
-	defaultUnlockTestTimeout = 5 * time.Second
-	unlockTestConcurrency    = 4
-	unlockTestMaxBodyBytes   = 256 * 1024
-	unlockTestUserAgent      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
 )
 
 type SpeedTestResult struct {
@@ -56,21 +54,6 @@ type QuicTestResult struct {
 	SentBytes       int64  `json:"sent-bytes"`
 	ReceivedPackets int64  `json:"received-packets"`
 	ReceivedBytes   int64  `json:"received-bytes"`
-}
-
-type UnlockTestResultItem struct {
-	Id       string `json:"id"`
-	Status   int    `json:"status"`
-	Latency  int64  `json:"latency"` // time to response headers, ms
-	Region   string `json:"region"`
-	Unlocked bool   `json:"unlocked"`
-	Error    string `json:"error"`
-}
-
-type UnlockTestResult struct {
-	Name    string                 `json:"name"`
-	Results []UnlockTestResultItem `json:"results"`
-	Error   string                 `json:"error"`
 }
 
 // quicPacketConn adapts a mihomo constant.PacketConn to net.PacketConn for quic-go.
@@ -451,156 +434,122 @@ func handleQuicTest(paramsString string, fn func(string)) {
 	}()
 }
 
+var unlockManager = unlocktest.NewManager(unlocktest.Runner{})
+
 func handleUnlockTest(paramsString string, fn func(string)) {
 	go func() {
-		var params = &UnlockTestParams{}
-		if err := json.Unmarshal([]byte(paramsString), params); err != nil {
-			sendTestResult(fn, &UnlockTestResult{Error: fmt.Sprintf("invalid params: %s", err)})
+		var request unlocktest.Request
+		if err := json.Unmarshal([]byte(paramsString), &request); err != nil {
+			sendTestResult(fn, &unlocktest.Result{Error: "invalid unlock test params"})
 			return
 		}
-
-		result := &UnlockTestResult{Name: params.ProxyName}
-
-		if len(params.Tests) == 0 {
-			result.Error = "no unlock test targets"
-			sendTestResult(fn, result)
-			return
-		}
-
-		proxy := getProxiesWithProviders()[params.ProxyName]
-		if proxy == nil {
-			result.Error = fmt.Sprintf("proxy %s not found", params.ProxyName)
-			sendTestResult(fn, result)
-			return
-		}
-		if rejectLikeProxy(proxy) {
-			result.Error = fmt.Sprintf("proxy %s can not be tested", params.ProxyName)
-			sendTestResult(fn, result)
-			return
-		}
-
-		timeout := time.Duration(params.Timeout) * time.Millisecond
-		if timeout <= 0 {
-			timeout = defaultUnlockTestTimeout
-		}
-
-		items := make([]UnlockTestResultItem, len(params.Tests))
-		var wg sync.WaitGroup
-		semaphore := make(chan struct{}, unlockTestConcurrency)
-		for i, item := range params.Tests {
-			wg.Add(1)
-			go func(index int, testItem UnlockTestItem) {
-				defer wg.Done()
-				semaphore <- struct{}{}
-				defer func() { <-semaphore }()
-				items[index] = runUnlockTestItem(proxy, testItem, timeout)
-			}(i, item)
-		}
-		wg.Wait()
-		result.Results = items
-		sendTestResult(fn, result)
+		result := unlockManager.Run(
+			context.Background(),
+			request,
+			dialUnlockTestContext,
+			func(progress unlocktest.Progress) {
+				sendMessage(Message{
+					Type: UnlockTestProgressMessage,
+					Data: progress,
+				})
+			},
+		)
+		sendTestResult(fn, &result)
 	}()
 }
 
-func runUnlockTestItem(proxy C.Proxy, item UnlockTestItem, timeout time.Duration) UnlockTestResultItem {
-	result := UnlockTestResultItem{Id: item.Id}
+func handleCancelUnlockTest(runID string) bool {
+	return unlockManager.Cancel(runID)
+}
 
-	if item.Url == "" {
-		result.Error = "empty test url"
-		return result
+type unlockChainState struct {
+	mu     sync.RWMutex
+	chains []string
+}
+
+func (state *unlockChainState) update(chains []string) {
+	state.mu.Lock()
+	state.chains = append([]string(nil), chains...)
+	state.mu.Unlock()
+}
+
+func (state *unlockChainState) snapshot() []string {
+	state.mu.RLock()
+	defer state.mu.RUnlock()
+	return append([]string(nil), state.chains...)
+}
+
+type unlockTrackedConn struct {
+	net.Conn
+	metadata *C.Metadata
+	state    *unlockChainState
+	closed   chan struct{}
+	closeErr error
+	close    sync.Once
+}
+
+func (conn *unlockTrackedConn) OutboundChains() []string {
+	return conn.state.snapshot()
+}
+
+func (conn *unlockTrackedConn) Close() error {
+	conn.close.Do(func() {
+		unlockChainObservers.Delete(conn.metadata)
+		close(conn.closed)
+		conn.closeErr = conn.Conn.Close()
+	})
+	return conn.closeErr
+}
+
+var unlockChainObservers sync.Map
+
+func captureUnlockTestChain(tracker statistic.Tracker) {
+	info := tracker.Info()
+	if info == nil || info.Metadata == nil {
+		return
 	}
-
-	method := strings.ToUpper(strings.TrimSpace(item.Method))
-	if method == "" {
-		method = http.MethodGet
+	value, ok := unlockChainObservers.Load(info.Metadata)
+	if !ok {
+		return
 	}
+	value.(*unlockChainState).update(info.Chain)
+}
 
-	expectedStatus := item.ExpectedStatus
-	if len(expectedStatus) == 0 {
-		expectedStatus = []int{http.StatusOK}
+func dialUnlockTestContext(
+	ctx context.Context,
+	network string,
+	address string,
+	specialProxy string,
+) (net.Conn, []string, error) {
+	if network != "tcp" && network != "tcp4" && network != "tcp6" {
+		return nil, nil, fmt.Errorf("unsupported unlock test network %s", network)
 	}
-
-	var regionRegex *regexp.Regexp
-	if item.RegionRegex != "" {
-		compiled, err := regexp.Compile(item.RegionRegex)
-		if err != nil {
-			result.Error = fmt.Sprintf("invalid region regex: %s", err)
-			return result
+	metadata := &C.Metadata{
+		NetWork:      C.TCP,
+		Type:         C.INNER,
+		DNSMode:      C.DNSNormal,
+		Process:      C.MihomoName,
+		SpecialProxy: specialProxy,
+	}
+	if err := metadata.SetRemoteAddress(address); err != nil {
+		return nil, nil, err
+	}
+	localConn, tunnelConn := N.Pipe()
+	state := &unlockChainState{}
+	trackedConn := &unlockTrackedConn{
+		Conn:     localConn,
+		metadata: metadata,
+		state:    state,
+		closed:   make(chan struct{}),
+	}
+	unlockChainObservers.Store(metadata, state)
+	go T.Tunnel.HandleTCPConn(tunnelConn, metadata)
+	go func() {
+		select {
+		case <-ctx.Done():
+			_ = trackedConn.Close()
+		case <-trackedConn.closed:
 		}
-		regionRegex = compiled
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	transport := &http.Transport{
-		DisableKeepAlives: true,
-		TLSClientConfig:   &gotls.Config{InsecureSkipVerify: true},
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			host, portString, err := net.SplitHostPort(addr)
-			if err != nil {
-				return nil, err
-			}
-			port, err := strconv.ParseUint(portString, 10, 16)
-			if err != nil {
-				return nil, err
-			}
-			metadata := &C.Metadata{
-				NetWork: C.TCP,
-				Host:    host,
-				DstPort: uint16(port),
-			}
-			return proxy.DialContext(ctx, metadata)
-		},
-	}
-	defer transport.CloseIdleConnections()
-
-	// Inspect the first response instead of following redirects: region
-	// blocks usually show up as an immediate redirect or error status.
-	client := &http.Client{
-		Transport: transport,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-
-	req, err := http.NewRequestWithContext(ctx, method, item.Url, nil)
-	if err != nil {
-		result.Error = err.Error()
-		return result
-	}
-	req.Header.Set("User-Agent", unlockTestUserAgent)
-
-	start := time.Now()
-	resp, err := client.Do(req)
-	if err != nil {
-		result.Error = err.Error()
-		return result
-	}
-	defer resp.Body.Close()
-
-	result.Latency = time.Since(start).Milliseconds()
-	result.Status = resp.StatusCode
-
-	if regionRegex != nil {
-		body, err := io.ReadAll(io.LimitReader(resp.Body, unlockTestMaxBodyBytes))
-		if err != nil {
-			result.Error = err.Error()
-			return result
-		}
-		if matches := regionRegex.FindSubmatch(body); len(matches) > 1 {
-			result.Region = string(matches[1])
-		}
-	} else {
-		_, _ = io.Copy(io.Discard, resp.Body)
-	}
-
-	for _, status := range expectedStatus {
-		if resp.StatusCode == status {
-			result.Unlocked = true
-			break
-		}
-	}
-
-	return result
+	}()
+	return trackedConn, nil, nil
 }

@@ -7,4 +7,5 @@ export 'local_proxy.dart';
 export 'local_proxy_provider_config.dart';
 export 'profile.dart';
 export 'state.dart';
+export 'unlock_test.dart';
 export 'wifi_watch_state.dart';

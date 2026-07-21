@@ -119,6 +119,10 @@ func handleAction(action *Action, result ActionResult) {
 			result.success(value)
 		})
 		return
+	case cancelUnlockTestMethod:
+		runID := action.Data.(string)
+		result.success(handleCancelUnlockTest(runID))
+		return
 	case getConnectionsMethod:
 		result.success(handleGetConnections())
 		return

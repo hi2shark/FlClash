@@ -1297,22 +1297,94 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "Unknown network error",
     ),
+    "unlockReasonBootstrapFailed": MessageLookupByLibrary.simpleMessage(
+      "Temporary session initialization failed",
+    ),
+    "unlockReasonContentLimited": MessageLookupByLibrary.simpleMessage(
+      "Only part of the catalog is available",
+    ),
+    "unlockReasonGeoBlocked": MessageLookupByLibrary.simpleMessage(
+      "Unavailable in this region",
+    ),
+    "unlockReasonNetworkError": MessageLookupByLibrary.simpleMessage(
+      "Network request failed",
+    ),
+    "unlockReasonRateLimited": MessageLookupByLibrary.simpleMessage(
+      "Service rate limited the test",
+    ),
+    "unlockReasonTimeout": MessageLookupByLibrary.simpleMessage(
+      "Request timed out",
+    ),
+    "unlockReasonUnexpectedResponse": MessageLookupByLibrary.simpleMessage(
+      "The service response could not be recognized",
+    ),
+    "unlockReasonVpnBlocked": MessageLookupByLibrary.simpleMessage(
+      "Proxy or VPN was rejected",
+    ),
     "unlockTest": MessageLookupByLibrary.simpleMessage("Unlock Detection"),
+    "unlockTestActualOutbound": MessageLookupByLibrary.simpleMessage(
+      "Outbound",
+    ),
+    "unlockTestAll": MessageLookupByLibrary.simpleMessage("All"),
+    "unlockTestClearAll": MessageLookupByLibrary.simpleMessage("Clear all"),
+    "unlockTestCurrentResults": MessageLookupByLibrary.simpleMessage(
+      "Current results",
+    ),
     "unlockTestDesc": MessageLookupByLibrary.simpleMessage(
       "Check AI and media service availability through a node",
     ),
     "unlockTestDisabledTip": MessageLookupByLibrary.simpleMessage(
       "Enable it on the unlock detection page",
     ),
+    "unlockTestDone": MessageLookupByLibrary.simpleMessage("Done"),
     "unlockTestEnable": MessageLookupByLibrary.simpleMessage(
       "Enable unlock detection",
+    ),
+    "unlockTestError": MessageLookupByLibrary.simpleMessage("Error"),
+    "unlockTestFollowRules": MessageLookupByLibrary.simpleMessage(
+      "Follow current routing",
+    ),
+    "unlockTestGroupEurope": MessageLookupByLibrary.simpleMessage(
+      "UK & Europe",
+    ),
+    "unlockTestGroupGlobalMedia": MessageLookupByLibrary.simpleMessage(
+      "Global media",
+    ),
+    "unlockTestGroupHongKongTaiwan": MessageLookupByLibrary.simpleMessage(
+      "Hong Kong & Taiwan",
+    ),
+    "unlockTestGroupJapan": MessageLookupByLibrary.simpleMessage("Japan"),
+    "unlockTestGroupKorea": MessageLookupByLibrary.simpleMessage("Korea"),
+    "unlockTestHistory": MessageLookupByLibrary.simpleMessage("Recent tests"),
+    "unlockTestHistoryResult": MessageLookupByLibrary.simpleMessage(
+      "History result",
+    ),
+    "unlockTestLatency": MessageLookupByLibrary.simpleMessage("Latency"),
+    "unlockTestNoResults": MessageLookupByLibrary.simpleMessage(
+      "No test results yet",
     ),
     "unlockTestNoTargets": MessageLookupByLibrary.simpleMessage(
       "Select at least one test target above",
     ),
+    "unlockTestPartial": MessageLookupByLibrary.simpleMessage("Partial"),
+    "unlockTestRegion": MessageLookupByLibrary.simpleMessage("Region"),
+    "unlockTestResetDefault": MessageLookupByLibrary.simpleMessage(
+      "Restore defaults",
+    ),
     "unlockTestRunDesc": MessageLookupByLibrary.simpleMessage(
       "Test whether the selected AI and media services are available through the selected node",
     ),
+    "unlockTestSearch": MessageLookupByLibrary.simpleMessage("Search services"),
+    "unlockTestSelectAll": MessageLookupByLibrary.simpleMessage("Select all"),
+    "unlockTestSelectTargets": MessageLookupByLibrary.simpleMessage(
+      "Select services",
+    ),
+    "unlockTestSpecifiedNode": MessageLookupByLibrary.simpleMessage(
+      "Specified node",
+    ),
+    "unlockTestStop": MessageLookupByLibrary.simpleMessage("Stop test"),
+    "unlockTestUntested": MessageLookupByLibrary.simpleMessage("Untested"),
+    "unlockTestViewAll": MessageLookupByLibrary.simpleMessage("View all"),
     "unlocked": MessageLookupByLibrary.simpleMessage("Unlocked"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Unnamed"),
     "up": MessageLookupByLibrary.simpleMessage("Up"),

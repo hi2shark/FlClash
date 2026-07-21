@@ -98,6 +98,7 @@ dev_dependencies:
   drift_dev: ^2.31.0
   intl_utils: ^2.8.14
   path_provider_platform_interface: ^2.1.2
+  sqlite3: ^2.9.4
   test: ^1.30.0
   mocktail: ^1.0.4
 

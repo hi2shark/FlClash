@@ -12,8 +12,8 @@ void main() {
     // guarantees didExceedMaxLines is true under the test font, without
     // relying on degenerate 1px layout behavior. The SSID · status pair
     // mirrors the production consumer in WifiWatchCard.
-    final richText = Text.rich(
-      const TextSpan(
+    const richText = Text.rich(
+      TextSpan(
         children: [
           TextSpan(text: 'Home'),
           TextSpan(text: ' · Excluded'),
@@ -29,7 +29,7 @@ void main() {
         home: Builder(
           builder: (context) {
             globalState.measure = Measure.of(context, 1);
-            return Center(
+            return const Center(
               child: SizedBox(width: 20, child: TooltipText(text: richText)),
             );
           },
@@ -56,11 +56,8 @@ void main() {
         home: Builder(
           builder: (context) {
             globalState.measure = Measure.of(context, 1);
-            return Center(
-              child: SizedBox(
-                width: 1000,
-                child: const TooltipText(text: text),
-              ),
+            return const Center(
+              child: SizedBox(width: 1000, child: TooltipText(text: text)),
             );
           },
         ),

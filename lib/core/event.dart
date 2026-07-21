@@ -13,6 +13,8 @@ abstract mixin class CoreEventListener {
 
   void onLoaded(String providerName) {}
 
+  void onUnlockTestProgress(UnlockTestProgress progress) {}
+
   void onCrash(String message) {}
 }
 
@@ -34,6 +36,13 @@ class CoreEventManager {
             break;
           case CoreEventType.loaded:
             listener.onLoaded(event.data);
+            break;
+          case CoreEventType.unlockTestProgress:
+            listener.onUnlockTestProgress(
+              UnlockTestProgress.fromJson(
+                Map<String, dynamic>.from(event.data as Map),
+              ),
+            );
             break;
           case CoreEventType.crash:
             listener.onCrash(event.data);

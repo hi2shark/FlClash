@@ -1,11 +1,11 @@
 package main
 
 import (
+	"context"
+	"core/unlocktest"
 	"encoding/json"
 	"errors"
 	"net"
-	"net/http"
-	"net/http/httptest"
 	"net/netip"
 	"strings"
 	"testing"
@@ -15,6 +15,7 @@ import (
 	"github.com/metacubex/mihomo/adapter/outbound"
 	C "github.com/metacubex/mihomo/constant"
 	P "github.com/metacubex/mihomo/constant/provider"
+	RC "github.com/metacubex/mihomo/rules/common"
 	"github.com/metacubex/mihomo/tunnel"
 )
 
@@ -212,20 +213,23 @@ func TestHandleUnlockTestInvalidParams(t *testing.T) {
 	ch := make(chan string, 1)
 	handleUnlockTest("not-a-json", func(value string) { ch <- value })
 
-	var result UnlockTestResult
+	var result unlocktest.Result
 	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
 		t.Fatalf("result is not valid json: %v", err)
 	}
-	if !strings.Contains(result.Error, "invalid params") {
+	if !strings.Contains(result.Error, "invalid unlock test params") {
 		t.Fatalf("expected invalid params error, got %q", result.Error)
 	}
 }
 
 func TestHandleUnlockTestNoTargets(t *testing.T) {
 	ch := make(chan string, 1)
-	handleUnlockTest(`{"proxy-name":"DIRECT"}`, func(value string) { ch <- value })
+	handleUnlockTest(
+		`{"run-id":"empty","route-mode":"appRoute","target-ids":[]}`,
+		func(value string) { ch <- value },
+	)
 
-	var result UnlockTestResult
+	var result unlocktest.Result
 	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
 		t.Fatalf("result is not valid json: %v", err)
 	}
@@ -234,130 +238,88 @@ func TestHandleUnlockTestNoTargets(t *testing.T) {
 	}
 }
 
-func TestHandleUnlockTestProxyNotFound(t *testing.T) {
+func TestDialUnlockTestContextFollowsModeAndSpecialProxy(t *testing.T) {
+	previousMode := tunnel.Mode()
+	previousStatus := tunnel.Status()
 	t.Cleanup(func() {
-		tunnel.UpdateProxies(map[string]C.Proxy{}, map[string]P.ProxyProvider{})
-	})
-	tunnel.UpdateProxies(map[string]C.Proxy{}, map[string]P.ProxyProvider{})
-
-	ch := make(chan string, 1)
-	handleUnlockTest(
-		`{"proxy-name":"nonexistent-unlock-proxy","tests":[{"id":"a","url":"http://127.0.0.1/"}]}`,
-		func(value string) { ch <- value },
-	)
-
-	var result UnlockTestResult
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
-	if result.Name != "nonexistent-unlock-proxy" {
-		t.Fatalf("expected name to echo proxy-name, got %q", result.Name)
-	}
-	if !strings.Contains(result.Error, "not found") {
-		t.Fatalf("expected not found error, got %q", result.Error)
-	}
-}
-
-func TestHandleUnlockTestRejectProxy(t *testing.T) {
-	t.Cleanup(func() {
-		tunnel.UpdateProxies(map[string]C.Proxy{}, map[string]P.ProxyProvider{})
-	})
-	tunnel.UpdateProxies(
-		map[string]C.Proxy{"REJECT": adapter.NewProxy(outbound.NewReject())},
-		map[string]P.ProxyProvider{},
-	)
-
-	ch := make(chan string, 1)
-	handleUnlockTest(
-		`{"proxy-name":"REJECT","timeout":100,"tests":[{"id":"a","url":"http://127.0.0.1/"}]}`,
-		func(value string) { ch <- value },
-	)
-
-	var result UnlockTestResult
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
-	if result.Error == "" {
-		t.Fatal("expected error for REJECT proxy, got empty error")
-	}
-}
-
-func TestHandleUnlockTestDirect(t *testing.T) {
-	t.Cleanup(func() {
-		tunnel.UpdateProxies(map[string]C.Proxy{}, map[string]P.ProxyProvider{})
-	})
-	tunnel.UpdateProxies(
-		map[string]C.Proxy{"DIRECT": adapter.NewProxy(outbound.NewDirect())},
-		map[string]P.ProxyProvider{},
-	)
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/trace":
-			_, _ = w.Write([]byte("fl=1\nloc=US\n"))
-		case "/blocked":
-			w.WriteHeader(http.StatusForbidden)
-		case "/redirect":
-			w.Header().Set("Location", "/trace")
-			w.WriteHeader(http.StatusFound)
+		tunnel.SetMode(previousMode)
+		switch previousStatus {
+		case tunnel.Running:
+			tunnel.OnRunning()
+		case tunnel.Inner:
+			tunnel.OnInnerLoading()
+		default:
+			tunnel.OnSuspend()
 		}
-	}))
-	t.Cleanup(server.Close)
-
-	params, err := json.Marshal(UnlockTestParams{
-		ProxyName: "DIRECT",
-		Timeout:   2000,
-		Tests: []UnlockTestItem{
-			{Id: "trace", Url: server.URL + "/trace", RegionRegex: "loc=([A-Z]{2})"},
-			{Id: "blocked", Url: server.URL + "/blocked"},
-			{Id: "redirect", Url: server.URL + "/redirect", ExpectedStatus: []int{http.StatusFound}},
-			{Id: "bad-regex", Url: server.URL + "/trace", RegionRegex: "loc=("},
-			{Id: "empty-url"},
-		},
+		tunnel.UpdateRules(nil, nil, nil)
+		tunnel.UpdateProxies(nil, nil)
 	})
-	if err != nil {
-		t.Fatalf("marshal params: %v", err)
+	tunnel.OnRunning()
+
+	proxies := make(map[string]C.Proxy)
+	for _, name := range []string{"DIRECT", "GLOBAL", "RULE", "FORCED"} {
+		proxies[name] = adapter.NewProxy(outbound.NewRejectWithOption(
+			outbound.RejectOption{Name: name},
+		))
+	}
+	tunnel.UpdateProxies(proxies, map[string]P.ProxyProvider{})
+	tunnel.UpdateRules(
+		[]C.Rule{RC.NewMatch("RULE")},
+		map[string][]C.Rule{},
+		map[string]P.RuleProvider{},
+	)
+
+	testCases := []struct {
+		name         string
+		mode         tunnel.TunnelMode
+		specialProxy string
+		wantChain    string
+	}{
+		{name: "direct mode", mode: tunnel.Direct, wantChain: "DIRECT"},
+		{name: "global mode", mode: tunnel.Global, wantChain: "GLOBAL"},
+		{name: "rule mode", mode: tunnel.Rule, wantChain: "RULE"},
+		{
+			name:         "specified proxy overrides mode",
+			mode:         tunnel.Direct,
+			specialProxy: "FORCED",
+			wantChain:    "FORCED",
+		},
 	}
 
-	ch := make(chan string, 1)
-	handleUnlockTest(string(params), func(value string) { ch <- value })
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			tunnel.SetMode(testCase.mode)
+			conn, _, err := dialUnlockTestContext(
+				context.Background(),
+				"tcp",
+				"192.0.2.1:443",
+				testCase.specialProxy,
+			)
+			if err != nil {
+				t.Fatalf("dialUnlockTestContext() error = %v", err)
+			}
+			defer conn.Close()
+			_ = conn.SetDeadline(time.Now().Add(time.Second))
+			_, _ = conn.Write([]byte("GET / HTTP/1.1\r\nHost: example.test\r\n\r\n"))
 
-	var result UnlockTestResult
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
-	if result.Error != "" {
-		t.Fatalf("unexpected top-level error: %q", result.Error)
-	}
-	if len(result.Results) != 5 {
-		t.Fatalf("expected 5 results, got %d", len(result.Results))
-	}
-	items := make(map[string]UnlockTestResultItem, len(result.Results))
-	for _, item := range result.Results {
-		items[item.Id] = item
-	}
-
-	trace := items["trace"]
-	if !trace.Unlocked || trace.Status != http.StatusOK || trace.Region != "US" {
-		t.Fatalf("trace result = %+v, want unlocked 200 US", trace)
-	}
-	blocked := items["blocked"]
-	if blocked.Unlocked || blocked.Status != http.StatusForbidden {
-		t.Fatalf("blocked result = %+v, want locked 403", blocked)
-	}
-	redirect := items["redirect"]
-	if !redirect.Unlocked || redirect.Status != http.StatusFound {
-		t.Fatalf("redirect result = %+v, want unlocked 302", redirect)
-	}
-	if badRegex := items["bad-regex"]; !strings.Contains(badRegex.Error, "invalid region regex") {
-		t.Fatalf("bad-regex result = %+v, want regex error", badRegex)
-	}
-	if emptyUrl := items["empty-url"]; emptyUrl.Error == "" {
-		t.Fatalf("empty-url result = %+v, want error", emptyUrl)
+			source, ok := conn.(interface{ OutboundChains() []string })
+			if !ok {
+				t.Fatal("dialed connection does not expose outbound chains")
+			}
+			deadline := time.Now().Add(time.Second)
+			for len(source.OutboundChains()) == 0 && time.Now().Before(deadline) {
+				time.Sleep(time.Millisecond)
+			}
+			chains := source.OutboundChains()
+			if len(chains) == 0 || chains[0] != testCase.wantChain {
+				t.Fatalf("chains = %v, want first chain %q", chains, testCase.wantChain)
+			}
+		})
 	}
 }
 
-func TestNormalizeQuicTarget(t *testing.T) {	tests := []struct {
+func TestNormalizeQuicTarget(t *testing.T) {
+	tests := []struct {
 		name       string
 		input      string
 		wantTarget string

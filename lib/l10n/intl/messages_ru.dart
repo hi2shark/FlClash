@@ -1369,8 +1369,38 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "Неизвестная сетевая ошибка",
     ),
+    "unlockReasonBootstrapFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось создать временный сеанс",
+    ),
+    "unlockReasonContentLimited": MessageLookupByLibrary.simpleMessage(
+      "Доступна только часть каталога",
+    ),
+    "unlockReasonGeoBlocked": MessageLookupByLibrary.simpleMessage(
+      "Недоступно в этом регионе",
+    ),
+    "unlockReasonNetworkError": MessageLookupByLibrary.simpleMessage(
+      "Ошибка сетевого запроса",
+    ),
+    "unlockReasonRateLimited": MessageLookupByLibrary.simpleMessage(
+      "Сервис ограничил частоту проверки",
+    ),
+    "unlockReasonTimeout": MessageLookupByLibrary.simpleMessage(
+      "Время ожидания истекло",
+    ),
+    "unlockReasonUnexpectedResponse": MessageLookupByLibrary.simpleMessage(
+      "Не удалось распознать ответ сервиса",
+    ),
+    "unlockReasonVpnBlocked": MessageLookupByLibrary.simpleMessage(
+      "Прокси или VPN отклонён сервисом",
+    ),
     "unlockTest": MessageLookupByLibrary.simpleMessage(
       "Проверка разблокировки",
+    ),
+    "unlockTestActualOutbound": MessageLookupByLibrary.simpleMessage("Выход"),
+    "unlockTestAll": MessageLookupByLibrary.simpleMessage("Все"),
+    "unlockTestClearAll": MessageLookupByLibrary.simpleMessage("Очистить"),
+    "unlockTestCurrentResults": MessageLookupByLibrary.simpleMessage(
+      "Текущие результаты",
     ),
     "unlockTestDesc": MessageLookupByLibrary.simpleMessage(
       "Проверка доступности AI и медиасервисов через выбранный узел",
@@ -1378,15 +1408,59 @@ class MessageLookup extends MessageLookupByLibrary {
     "unlockTestDisabledTip": MessageLookupByLibrary.simpleMessage(
       "Включите на странице проверки разблокировки",
     ),
+    "unlockTestDone": MessageLookupByLibrary.simpleMessage("Готово"),
     "unlockTestEnable": MessageLookupByLibrary.simpleMessage(
       "Включить проверку разблокировки",
+    ),
+    "unlockTestError": MessageLookupByLibrary.simpleMessage("Ошибка"),
+    "unlockTestFollowRules": MessageLookupByLibrary.simpleMessage(
+      "Следовать текущей маршрутизации",
+    ),
+    "unlockTestGroupEurope": MessageLookupByLibrary.simpleMessage(
+      "Великобритания и Европа",
+    ),
+    "unlockTestGroupGlobalMedia": MessageLookupByLibrary.simpleMessage(
+      "Глобальные медиа",
+    ),
+    "unlockTestGroupHongKongTaiwan": MessageLookupByLibrary.simpleMessage(
+      "Гонконг и Тайвань",
+    ),
+    "unlockTestGroupJapan": MessageLookupByLibrary.simpleMessage("Япония"),
+    "unlockTestGroupKorea": MessageLookupByLibrary.simpleMessage("Корея"),
+    "unlockTestHistory": MessageLookupByLibrary.simpleMessage(
+      "Недавние проверки",
+    ),
+    "unlockTestHistoryResult": MessageLookupByLibrary.simpleMessage(
+      "Результат из истории",
+    ),
+    "unlockTestLatency": MessageLookupByLibrary.simpleMessage("Задержка"),
+    "unlockTestNoResults": MessageLookupByLibrary.simpleMessage(
+      "Результатов пока нет",
     ),
     "unlockTestNoTargets": MessageLookupByLibrary.simpleMessage(
       "Выберите хотя бы одну цель теста выше",
     ),
+    "unlockTestPartial": MessageLookupByLibrary.simpleMessage("Частично"),
+    "unlockTestRegion": MessageLookupByLibrary.simpleMessage("Регион"),
+    "unlockTestResetDefault": MessageLookupByLibrary.simpleMessage(
+      "Восстановить по умолчанию",
+    ),
     "unlockTestRunDesc": MessageLookupByLibrary.simpleMessage(
       "Проверить доступность выбранных AI и медиасервисов через выбранный узел",
     ),
+    "unlockTestSearch": MessageLookupByLibrary.simpleMessage("Поиск сервисов"),
+    "unlockTestSelectAll": MessageLookupByLibrary.simpleMessage("Выбрать все"),
+    "unlockTestSelectTargets": MessageLookupByLibrary.simpleMessage(
+      "Выбрать сервисы",
+    ),
+    "unlockTestSpecifiedNode": MessageLookupByLibrary.simpleMessage(
+      "Указанный узел",
+    ),
+    "unlockTestStop": MessageLookupByLibrary.simpleMessage(
+      "Остановить проверку",
+    ),
+    "unlockTestUntested": MessageLookupByLibrary.simpleMessage("Не проверено"),
+    "unlockTestViewAll": MessageLookupByLibrary.simpleMessage("Показать все"),
     "unlocked": MessageLookupByLibrary.simpleMessage("Разблокировано"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Без имени"),
     "up": MessageLookupByLibrary.simpleMessage("Up"),

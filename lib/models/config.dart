@@ -139,6 +139,24 @@ abstract class UnlockTestProps with _$UnlockTestProps {
 
   factory UnlockTestProps.fromJson(Map<String, Object?> json) =>
       _$UnlockTestPropsFromJson(json);
+
+  factory UnlockTestProps.safeFromJson(Map<String, Object?>? json) {
+    if (json == null) {
+      return defaultUnlockTestProps;
+    }
+    try {
+      final rawSelectedTargets = json['selectedTargets'];
+      final rawTargets = rawSelectedTargets is List
+          ? rawSelectedTargets.whereType<String>().toList(growable: false)
+          : defaultUnlockTestTargetIds;
+      return UnlockTestProps(
+        enable: json['enable'] is bool ? json['enable']! as bool : false,
+        selectedTargets: migrateUnlockTestTargetIds(rawTargets),
+      );
+    } catch (_) {
+      return defaultUnlockTestProps;
+    }
+  }
 }
 
 @freezed
@@ -259,7 +277,9 @@ abstract class Config with _$Config {
     @Default(defaultClashConfig) PatchClashConfig patchClashConfig,
     @Default(true) bool onDemandEnabled,
     @Default([]) List<String> excludeSSIDs,
-    @Default(defaultUnlockTestProps) UnlockTestProps unlockTestProps,
+    @JsonKey(fromJson: UnlockTestProps.safeFromJson)
+    @Default(defaultUnlockTestProps)
+    UnlockTestProps unlockTestProps,
   }) = _Config;
 
   factory Config.fromJson(Map<String, Object?> json) => _$ConfigFromJson(json);

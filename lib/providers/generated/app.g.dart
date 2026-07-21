@@ -9,6 +9,54 @@ part of '../app.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(unlockTestHistoryWriter)
+final unlockTestHistoryWriterProvider = UnlockTestHistoryWriterProvider._();
+
+final class UnlockTestHistoryWriterProvider
+    extends
+        $FunctionalProvider<
+          UnlockTestHistoryWriter,
+          UnlockTestHistoryWriter,
+          UnlockTestHistoryWriter
+        >
+    with $Provider<UnlockTestHistoryWriter> {
+  UnlockTestHistoryWriterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'unlockTestHistoryWriterProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$unlockTestHistoryWriterHash();
+
+  @$internal
+  @override
+  $ProviderElement<UnlockTestHistoryWriter> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  UnlockTestHistoryWriter create(Ref ref) {
+    return unlockTestHistoryWriter(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(UnlockTestHistoryWriter value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<UnlockTestHistoryWriter>(value),
+    );
+  }
+}
+
+String _$unlockTestHistoryWriterHash() =>
+    r'a66a8f97eaacb2896715a94a84eef765b3ec9851';
+
 @ProviderFor(RealTunEnable)
 final realTunEnableProvider = RealTunEnableProvider._();
 
@@ -1896,7 +1944,7 @@ final class UnlockDetectionProvider
   }
 }
 
-String _$unlockDetectionHash() => r'9dc900881358da523f026d06ae5364a159e503c9';
+String _$unlockDetectionHash() => r'34c19b8dc77d9dc05ea0b43dd7ad86d55c4b586e';
 
 abstract class _$UnlockDetection extends $Notifier<UnlockDetectionState> {
   UnlockDetectionState build();

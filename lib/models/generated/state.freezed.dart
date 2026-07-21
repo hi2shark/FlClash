@@ -4073,7 +4073,7 @@ $IpInfoCopyWith<$Res>? get ipInfo {
 /// @nodoc
 mixin _$UnlockDetectionState {
 
- bool get isLoading; String get proxyName; Map<String, UnlockTestResultItem> get results; String get error;
+ bool get isLoading; String get proxyName; Map<String, UnlockTestRunItem> get results; String get error; DateTime? get testedAt;
 /// Create a copy of UnlockDetectionState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -4084,16 +4084,16 @@ $UnlockDetectionStateCopyWith<UnlockDetectionState> get copyWith => _$UnlockDete
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnlockDetectionState&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&const DeepCollectionEquality().equals(other.results, results)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnlockDetectionState&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&const DeepCollectionEquality().equals(other.results, results)&&(identical(other.error, error) || other.error == error)&&(identical(other.testedAt, testedAt) || other.testedAt == testedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isLoading,proxyName,const DeepCollectionEquality().hash(results),error);
+int get hashCode => Object.hash(runtimeType,isLoading,proxyName,const DeepCollectionEquality().hash(results),error,testedAt);
 
 @override
 String toString() {
-  return 'UnlockDetectionState(isLoading: $isLoading, proxyName: $proxyName, results: $results, error: $error)';
+  return 'UnlockDetectionState(isLoading: $isLoading, proxyName: $proxyName, results: $results, error: $error, testedAt: $testedAt)';
 }
 
 
@@ -4104,7 +4104,7 @@ abstract mixin class $UnlockDetectionStateCopyWith<$Res>  {
   factory $UnlockDetectionStateCopyWith(UnlockDetectionState value, $Res Function(UnlockDetectionState) _then) = _$UnlockDetectionStateCopyWithImpl;
 @useResult
 $Res call({
- bool isLoading, String proxyName, Map<String, UnlockTestResultItem> results, String error
+ bool isLoading, String proxyName, Map<String, UnlockTestRunItem> results, String error, DateTime? testedAt
 });
 
 
@@ -4121,13 +4121,14 @@ class _$UnlockDetectionStateCopyWithImpl<$Res>
 
 /// Create a copy of UnlockDetectionState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? isLoading = null,Object? proxyName = null,Object? results = null,Object? error = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? isLoading = null,Object? proxyName = null,Object? results = null,Object? error = null,Object? testedAt = freezed,}) {
   return _then(_self.copyWith(
 isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
 as String,results: null == results ? _self.results : results // ignore: cast_nullable_to_non_nullable
-as Map<String, UnlockTestResultItem>,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String,
+as Map<String, UnlockTestRunItem>,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,testedAt: freezed == testedAt ? _self.testedAt : testedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 
@@ -4212,10 +4213,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isLoading,  String proxyName,  Map<String, UnlockTestResultItem> results,  String error)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isLoading,  String proxyName,  Map<String, UnlockTestRunItem> results,  String error,  DateTime? testedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UnlockDetectionState() when $default != null:
-return $default(_that.isLoading,_that.proxyName,_that.results,_that.error);case _:
+return $default(_that.isLoading,_that.proxyName,_that.results,_that.error,_that.testedAt);case _:
   return orElse();
 
 }
@@ -4233,10 +4234,10 @@ return $default(_that.isLoading,_that.proxyName,_that.results,_that.error);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isLoading,  String proxyName,  Map<String, UnlockTestResultItem> results,  String error)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isLoading,  String proxyName,  Map<String, UnlockTestRunItem> results,  String error,  DateTime? testedAt)  $default,) {final _that = this;
 switch (_that) {
 case _UnlockDetectionState():
-return $default(_that.isLoading,_that.proxyName,_that.results,_that.error);case _:
+return $default(_that.isLoading,_that.proxyName,_that.results,_that.error,_that.testedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -4253,10 +4254,10 @@ return $default(_that.isLoading,_that.proxyName,_that.results,_that.error);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isLoading,  String proxyName,  Map<String, UnlockTestResultItem> results,  String error)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isLoading,  String proxyName,  Map<String, UnlockTestRunItem> results,  String error,  DateTime? testedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _UnlockDetectionState() when $default != null:
-return $default(_that.isLoading,_that.proxyName,_that.results,_that.error);case _:
+return $default(_that.isLoading,_that.proxyName,_that.results,_that.error,_that.testedAt);case _:
   return null;
 
 }
@@ -4268,19 +4269,20 @@ return $default(_that.isLoading,_that.proxyName,_that.results,_that.error);case 
 
 
 class _UnlockDetectionState implements UnlockDetectionState {
-  const _UnlockDetectionState({required this.isLoading, required this.proxyName, required final  Map<String, UnlockTestResultItem> results, this.error = ''}): _results = results;
+  const _UnlockDetectionState({required this.isLoading, required this.proxyName, required final  Map<String, UnlockTestRunItem> results, this.error = '', this.testedAt}): _results = results;
   
 
 @override final  bool isLoading;
 @override final  String proxyName;
- final  Map<String, UnlockTestResultItem> _results;
-@override Map<String, UnlockTestResultItem> get results {
+ final  Map<String, UnlockTestRunItem> _results;
+@override Map<String, UnlockTestRunItem> get results {
   if (_results is EqualUnmodifiableMapView) return _results;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_results);
 }
 
 @override@JsonKey() final  String error;
+@override final  DateTime? testedAt;
 
 /// Create a copy of UnlockDetectionState
 /// with the given fields replaced by the non-null parameter values.
@@ -4292,16 +4294,16 @@ _$UnlockDetectionStateCopyWith<_UnlockDetectionState> get copyWith => __$UnlockD
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UnlockDetectionState&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&const DeepCollectionEquality().equals(other._results, _results)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UnlockDetectionState&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&const DeepCollectionEquality().equals(other._results, _results)&&(identical(other.error, error) || other.error == error)&&(identical(other.testedAt, testedAt) || other.testedAt == testedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isLoading,proxyName,const DeepCollectionEquality().hash(_results),error);
+int get hashCode => Object.hash(runtimeType,isLoading,proxyName,const DeepCollectionEquality().hash(_results),error,testedAt);
 
 @override
 String toString() {
-  return 'UnlockDetectionState(isLoading: $isLoading, proxyName: $proxyName, results: $results, error: $error)';
+  return 'UnlockDetectionState(isLoading: $isLoading, proxyName: $proxyName, results: $results, error: $error, testedAt: $testedAt)';
 }
 
 
@@ -4312,7 +4314,7 @@ abstract mixin class _$UnlockDetectionStateCopyWith<$Res> implements $UnlockDete
   factory _$UnlockDetectionStateCopyWith(_UnlockDetectionState value, $Res Function(_UnlockDetectionState) _then) = __$UnlockDetectionStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool isLoading, String proxyName, Map<String, UnlockTestResultItem> results, String error
+ bool isLoading, String proxyName, Map<String, UnlockTestRunItem> results, String error, DateTime? testedAt
 });
 
 
@@ -4329,13 +4331,14 @@ class __$UnlockDetectionStateCopyWithImpl<$Res>
 
 /// Create a copy of UnlockDetectionState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? isLoading = null,Object? proxyName = null,Object? results = null,Object? error = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? isLoading = null,Object? proxyName = null,Object? results = null,Object? error = null,Object? testedAt = freezed,}) {
   return _then(_UnlockDetectionState(
 isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
 as String,results: null == results ? _self._results : results // ignore: cast_nullable_to_non_nullable
-as Map<String, UnlockTestResultItem>,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String,
+as Map<String, UnlockTestRunItem>,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,testedAt: freezed == testedAt ? _self.testedAt : testedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

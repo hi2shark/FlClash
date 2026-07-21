@@ -240,9 +240,15 @@ class CoreController {
     return QuicTestResult.fromJson(json.decode(data));
   }
 
-  Future<UnlockTestResult> getUnlockTest(UnlockTestParams params) async {
+  Future<UnlockTestRunResult> getUnlockTest(UnlockTestRunParams params) async {
     final data = await _interface.unlockTest(params);
-    return UnlockTestResult.fromJson(json.decode(data));
+    return UnlockTestRunResult.fromJson(
+      Map<String, dynamic>.from(json.decode(data) as Map),
+    );
+  }
+
+  Future<bool> cancelUnlockTest(String runId) {
+    return _interface.cancelUnlockTest(runId);
   }
 
   Future<List<Proxy>> getAllProxies() async {

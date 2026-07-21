@@ -26,7 +26,9 @@ mixin CoreInterface {
 
   Future<String> quicTest(QuicTestParams params);
 
-  Future<String> unlockTest(UnlockTestParams params);
+  Future<String> unlockTest(UnlockTestRunParams params);
+
+  Future<bool> cancelUnlockTest(String runId);
 
   Future<String> updateConfig(UpdateParams updateParams);
 
@@ -377,12 +379,11 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
-  Future<String> unlockTest(UnlockTestParams params) async {
-    final requestedTimeout = params.timeout;
-    final perTestTimeout = requestedTimeout != null && requestedTimeout > 0
-        ? requestedTimeout
+  Future<String> unlockTest(UnlockTestRunParams params) async {
+    final perTestTimeout = params.timeout > 0
+        ? params.timeout
         : httpTimeoutDuration.inMilliseconds;
-    final testCount = params.tests.length;
+    final testCount = params.targetIds.length;
     final batches = testCount == 0
         ? 1
         : (testCount + unlockTestConcurrency - 1) ~/ unlockTestConcurrency;
@@ -394,7 +395,24 @@ abstract class CoreHandlerInterface with CoreInterface {
           data: json.encode(params.toJson()),
           timeout: invokeTimeout,
         ) ??
-        json.encode(UnlockTestResult(name: params.proxyName, error: 'timeout'));
+        json.encode(
+          UnlockTestRunResult(
+            runId: params.runId,
+            routeMode: params.routeMode,
+            proxyName: params.proxyName,
+            error: 'timeout',
+          ).toJson(),
+        );
+  }
+
+  @override
+  Future<bool> cancelUnlockTest(String runId) async {
+    return await _invoke<bool>(
+          method: ActionMethod.cancelUnlockTest,
+          data: runId,
+          timeout: const Duration(seconds: 2),
+        ) ??
+        false;
   }
 
   @override

@@ -17,6 +17,26 @@ part 'links.dart';
 part 'profiles.dart';
 part 'rules.dart';
 part 'scripts.dart';
+part 'unlock_tests.dart';
+
+class UnlockTestRuns extends Table {
+  TextColumn get runId => text()();
+
+  IntColumn get createdAt => integer()();
+
+  IntColumn get durationMs => integer()();
+
+  TextColumn get routeMode => text()();
+
+  TextColumn get proxyName => text().nullable()();
+
+  IntColumn get catalogVersion => integer()();
+
+  TextColumn get resultsJson => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {runId};
+}
 
 @DriftDatabase(
   tables: [
@@ -26,14 +46,17 @@ part 'scripts.dart';
     ProfileRuleLinks,
     ProxyGroups,
     IconRecords,
+    UnlockTestRuns,
   ],
   daos: [ProfilesDao, ScriptsDao, RulesDao, ProxyGroupsDao, IconRecordsDao],
 )
 class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
+  late final UnlockTestRunsDao unlockTestRunsDao = UnlockTestRunsDao(this);
+
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -45,12 +68,20 @@ class Database extends _$Database {
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
+      onCreate: (m) async {
+        await m.createAll();
+        await _createUnlockTestRunsIndex();
+      },
       onUpgrade: (m, from, to) async {
         if (from < 2) {
           await m.createTable(proxyGroups);
           await m.createTable(iconRecords);
           await _resetOrders();
           await _migrateRules(m);
+        }
+        if (from < 3) {
+          await m.createTable(unlockTestRuns);
+          await _createUnlockTestRunsIndex();
         }
       },
       beforeOpen: (details) async {
@@ -61,6 +92,13 @@ class Database extends _$Database {
         // await m.createTable(proxyGroups);
       },
     );
+  }
+
+  Future<void> _createUnlockTestRunsIndex() async {
+    await customStatement('''
+      CREATE INDEX IF NOT EXISTS unlock_test_runs_created_at
+      ON unlock_test_runs(created_at DESC)
+    ''');
   }
 
   Future<void> _migrateRules(Migrator m) async {

@@ -569,6 +569,7 @@ func init() {
 		})
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
+		captureUnlockTestChain(c)
 		sendMessage(Message{
 			Type: RequestMessage,
 			Data: c,

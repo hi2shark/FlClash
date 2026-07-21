@@ -68,20 +68,6 @@ type QuicTestParams struct {
 	Timeout   int64  `json:"timeout"`
 }
 
-type UnlockTestItem struct {
-	Id             string `json:"id"`
-	Url            string `json:"url"`
-	Method         string `json:"method"`
-	RegionRegex    string `json:"region-regex"`
-	ExpectedStatus []int  `json:"expected-status"`
-}
-
-type UnlockTestParams struct {
-	ProxyName string           `json:"proxy-name"`
-	Timeout   int64            `json:"timeout"`
-	Tests     []UnlockTestItem `json:"tests"`
-}
-
 type ExternalProvider struct {
 	Name             string                     `json:"name"`
 	Type             string                     `json:"type"`
@@ -114,6 +100,7 @@ const (
 	speedTestMethod                Method = "speedTest"
 	quicTestMethod                 Method = "quicTest"
 	unlockTestMethod               Method = "unlockTest"
+	cancelUnlockTestMethod         Method = "cancelUnlockTest"
 	getConnectionsMethod           Method = "getConnections"
 	closeConnectionsMethod         Method = "closeConnections"
 	resetConnectionsMethod         Method = "resetConnections"
@@ -152,10 +139,11 @@ type Message struct {
 }
 
 const (
-	LogMessage     MessageType = "log"
-	DelayMessage   MessageType = "delay"
-	RequestMessage MessageType = "request"
-	LoadedMessage  MessageType = "loaded"
+	LogMessage                MessageType = "log"
+	DelayMessage              MessageType = "delay"
+	RequestMessage            MessageType = "request"
+	LoadedMessage             MessageType = "loaded"
+	UnlockTestProgressMessage MessageType = "unlockTestProgress"
 )
 
 func (message *Message) Json() (string, error) {

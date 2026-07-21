@@ -87,7 +87,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                           },
                         ),
                         onPressed: _handleConnection,
-                        icon: const Icon(Icons.check, fontWeight: FontWeight.w900),
+                        icon: const Icon(
+                          Icons.check,
+                          fontWeight: FontWeight.w900,
+                        ),
                       )
                     : FilledButton.icon(
                         key: ValueKey(coreStatus),
@@ -229,9 +232,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardStateProvider);
-    final unlockTestEnabled = ref.watch(
-      unlockTestSettingProvider.select((state) => state.enable),
-    );
     final columns = max(4 * ((dashboardState.contentWidth / 280).ceil()), 8);
     final spacing = 14.mAp;
     final children = [
@@ -246,8 +246,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           .where(
             (item) =>
                 !children.contains(item.widget) &&
-                item.platforms.contains(SupportPlatform.currentPlatform) &&
-                (item != DashboardWidget.unlockDetection || unlockTestEnabled),
+                item.platforms.contains(SupportPlatform.currentPlatform),
           )
           .map((item) => item.widget)
           .toList();

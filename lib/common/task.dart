@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:archive/archive_io.dart';
 import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart';
@@ -342,10 +343,10 @@ Future<String> _encodeLogsTask(List<Log> data) async {
 
 Future<MigrationData> oldToNowTask(Map<String, Object?> data) async {
   final homeDir = await appPath.homeDirPath;
-  return compute<
-    VM3<Map<String, Object?>, String, String>,
-    MigrationData
-  >(_oldToNowTask, VM3(data, homeDir, homeDir));
+  return compute<VM3<Map<String, Object?>, String, String>, MigrationData>(
+    _oldToNowTask,
+    VM3(data, homeDir, homeDir),
+  );
 }
 
 Future<MigrationData> _oldToNowTask(
@@ -490,6 +491,18 @@ Future<String> backupTask(
   >(_backupTask, VM3(configMap, fileNames, RootIsolateToken.instance!));
 }
 
+Future<void> stripUnlockTestHistoryFromBackup(File backupDatabaseFile) async {
+  if (!await backupDatabaseFile.exists()) {
+    return;
+  }
+  final backupDatabase = Database(NativeDatabase(backupDatabaseFile));
+  try {
+    await backupDatabase.unlockTestRunsDao.clear();
+  } finally {
+    await backupDatabase.close();
+  }
+}
+
 Future<String> _backupTask<T>(
   VM3<Map<String, dynamic>, Iterable<String>, RootIsolateToken> args,
 ) async {
@@ -507,6 +520,7 @@ Future<String> _backupTask<T>(
   final dbFile = File(dbPath);
   if (await dbFile.exists()) {
     await dbFile.copy(tempDBFile.path);
+    await stripUnlockTestHistoryFromBackup(tempDBFile);
   }
   final encoder = ZipFileEncoder();
   encoder.create(tempZipFilePath);

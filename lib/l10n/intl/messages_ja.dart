@@ -1063,20 +1063,76 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "unknown": MessageLookupByLibrary.simpleMessage("不明"),
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage("不明なネットワークエラー"),
+    "unlockReasonBootstrapFailed": MessageLookupByLibrary.simpleMessage(
+      "一時セッションの初期化に失敗しました",
+    ),
+    "unlockReasonContentLimited": MessageLookupByLibrary.simpleMessage(
+      "一部のコンテンツのみ利用できます",
+    ),
+    "unlockReasonGeoBlocked": MessageLookupByLibrary.simpleMessage(
+      "この地域では利用できません",
+    ),
+    "unlockReasonNetworkError": MessageLookupByLibrary.simpleMessage(
+      "ネットワークリクエストに失敗しました",
+    ),
+    "unlockReasonRateLimited": MessageLookupByLibrary.simpleMessage(
+      "サービスのレート制限に達しました",
+    ),
+    "unlockReasonTimeout": MessageLookupByLibrary.simpleMessage(
+      "リクエストがタイムアウトしました",
+    ),
+    "unlockReasonUnexpectedResponse": MessageLookupByLibrary.simpleMessage(
+      "サービスの応答を認識できません",
+    ),
+    "unlockReasonVpnBlocked": MessageLookupByLibrary.simpleMessage(
+      "プロキシまたは VPN が拒否されました",
+    ),
     "unlockTest": MessageLookupByLibrary.simpleMessage("アンロック検出"),
+    "unlockTestActualOutbound": MessageLookupByLibrary.simpleMessage("実際の出口"),
+    "unlockTestAll": MessageLookupByLibrary.simpleMessage("すべて"),
+    "unlockTestClearAll": MessageLookupByLibrary.simpleMessage("すべて解除"),
+    "unlockTestCurrentResults": MessageLookupByLibrary.simpleMessage("現在の結果"),
     "unlockTestDesc": MessageLookupByLibrary.simpleMessage(
       "選択したノードで AI・メディアサービスの利用可否を検出",
     ),
     "unlockTestDisabledTip": MessageLookupByLibrary.simpleMessage(
       "アンロック検出ページで有効化してください",
     ),
+    "unlockTestDone": MessageLookupByLibrary.simpleMessage("完了"),
     "unlockTestEnable": MessageLookupByLibrary.simpleMessage("アンロック検出を有効化"),
+    "unlockTestError": MessageLookupByLibrary.simpleMessage("検出エラー"),
+    "unlockTestFollowRules": MessageLookupByLibrary.simpleMessage(
+      "現在のルーティングに従う",
+    ),
+    "unlockTestGroupEurope": MessageLookupByLibrary.simpleMessage("英国・欧州"),
+    "unlockTestGroupGlobalMedia": MessageLookupByLibrary.simpleMessage(
+      "グローバルメディア",
+    ),
+    "unlockTestGroupHongKongTaiwan": MessageLookupByLibrary.simpleMessage(
+      "香港・台湾",
+    ),
+    "unlockTestGroupJapan": MessageLookupByLibrary.simpleMessage("日本"),
+    "unlockTestGroupKorea": MessageLookupByLibrary.simpleMessage("韓国"),
+    "unlockTestHistory": MessageLookupByLibrary.simpleMessage("最近の検出"),
+    "unlockTestHistoryResult": MessageLookupByLibrary.simpleMessage("履歴結果"),
+    "unlockTestLatency": MessageLookupByLibrary.simpleMessage("遅延"),
+    "unlockTestNoResults": MessageLookupByLibrary.simpleMessage("検出結果はまだありません"),
     "unlockTestNoTargets": MessageLookupByLibrary.simpleMessage(
       "上でテスト対象を1つ以上選択してください",
     ),
+    "unlockTestPartial": MessageLookupByLibrary.simpleMessage("一部利用可能"),
+    "unlockTestRegion": MessageLookupByLibrary.simpleMessage("地域"),
+    "unlockTestResetDefault": MessageLookupByLibrary.simpleMessage("初期設定に戻す"),
     "unlockTestRunDesc": MessageLookupByLibrary.simpleMessage(
       "選択したノードで AI・メディアサービスへのアクセス可否をテスト",
     ),
+    "unlockTestSearch": MessageLookupByLibrary.simpleMessage("サービスを検索"),
+    "unlockTestSelectAll": MessageLookupByLibrary.simpleMessage("すべて選択"),
+    "unlockTestSelectTargets": MessageLookupByLibrary.simpleMessage("サービスを選択"),
+    "unlockTestSpecifiedNode": MessageLookupByLibrary.simpleMessage("指定ノード"),
+    "unlockTestStop": MessageLookupByLibrary.simpleMessage("検出を停止"),
+    "unlockTestUntested": MessageLookupByLibrary.simpleMessage("未検出"),
+    "unlockTestViewAll": MessageLookupByLibrary.simpleMessage("すべて表示"),
     "unlocked": MessageLookupByLibrary.simpleMessage("解除済み"),
     "unnamed": MessageLookupByLibrary.simpleMessage("無題"),
     "up": MessageLookupByLibrary.simpleMessage("アップ"),

@@ -368,8 +368,8 @@ _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
       const [],
   unlockTestProps: json['unlockTestProps'] == null
       ? defaultUnlockTestProps
-      : UnlockTestProps.fromJson(
-          json['unlockTestProps'] as Map<String, dynamic>,
+      : UnlockTestProps.safeFromJson(
+          json['unlockTestProps'] as Map<String, Object?>?,
         ),
 );
 
