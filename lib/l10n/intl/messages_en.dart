@@ -1194,6 +1194,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "specialRules": MessageLookupByLibrary.simpleMessage("special rules"),
     "speedStatistics": MessageLookupByLibrary.simpleMessage("Speed statistics"),
     "speedTest": MessageLookupByLibrary.simpleMessage("Speed Test"),
+    "speedTestCustomUrl": MessageLookupByLibrary.simpleMessage(
+      "Custom download URL",
+    ),
+    "speedTestCustomUrlHint": MessageLookupByLibrary.simpleMessage(
+      "https://example.com/file.bin",
+    ),
     "speedTestDesc": MessageLookupByLibrary.simpleMessage(
       "Test download speed through the selected node",
     ),

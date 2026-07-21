@@ -725,6 +725,8 @@
   "errorDetails": "错误",
   "quicHandshakeTimedOut": "QUIC 握手超时",
   "speedTestPackageSize": "测速包大小",
+  "speedTestCustomUrl": "自定义下载地址",
+  "speedTestCustomUrlHint": "https://example.com/file.bin",
   "quicTestTarget": "QUIC 测试目标",
   "quicTestCustomTarget": "自定义目标",
   "quicTestCustomTargetHint": "主机、主机:端口或 IPv6 地址",

@@ -136,17 +136,17 @@ void main() {
     final presets = networkTestSpeedTestPresets;
     final presetsByLabel = {for (final preset in presets) preset.label: preset};
 
-    expect(presets, hasLength(5));
+    expect(presets, hasLength(4));
     expect(
       presetsByLabel.keys,
       containsAll([
         'Cloudflare 10 MB',
         'Cloudflare 25 MB',
         'Cloudflare 50 MB',
-        'OVH 10 MiB',
-        'OVH 100 MiB',
+        'CacheFly 100 MB',
       ]),
     );
+    expect(presetsByLabel.keys.where((label) => label.startsWith('OVH')), isEmpty);
     expect(presetsByLabel, isNot(contains('Cloudflare 100 MB')));
     expect(
       presets.map((preset) => preset.url),
@@ -180,19 +180,13 @@ void main() {
       presetsByLabel['Cloudflare 50 MB']?.timeout,
       const Duration(seconds: 60),
     );
-    expect(presetsByLabel['OVH 10 MiB']?.bytes, 10485760);
+    expect(presetsByLabel['CacheFly 100 MB']?.bytes, 104857600);
     expect(
-      presetsByLabel['OVH 10 MiB']?.url,
-      'https://proof.ovh.net/files/10Mb.dat',
-    );
-    expect(presetsByLabel['OVH 10 MiB']?.timeout, const Duration(seconds: 25));
-    expect(presetsByLabel['OVH 100 MiB']?.bytes, 104857600);
-    expect(
-      presetsByLabel['OVH 100 MiB']?.url,
-      'https://proof.ovh.net/files/100Mb.dat',
+      presetsByLabel['CacheFly 100 MB']?.url,
+      'https://cachefly.cachefly.net/100mb.test',
     );
     expect(
-      presetsByLabel['OVH 100 MiB']?.timeout,
+      presetsByLabel['CacheFly 100 MB']?.timeout,
       const Duration(seconds: 120),
     );
     expect(networkTestDefaultSpeedTestPreset.label, 'Cloudflare 25 MB');
@@ -287,7 +281,7 @@ void main() {
     });
   });
 
-  testWidgets('NetworkTestView starts with the QUIC targets collapsed', (
+  testWidgets('NetworkTestView starts with speed and QUIC targets collapsed', (
     tester,
   ) async {
     when(() => mock.speedTest(any())).thenAnswer((_) async => _speedResult());
@@ -300,11 +294,23 @@ void main() {
     expect(find.byType(NetworkTestView), findsOneWidget);
     expect(find.text('Cloudflare 25 MB'), findsOneWidget);
     expect(find.text('Cloudflare 100 MB'), findsNothing);
+    expect(find.text('CacheFly 100 MB'), findsNothing);
     expect(find.text('cloudflare-quic.com:443'), findsOneWidget);
     expect(find.text('www.google.com:443'), findsNothing);
     expect(find.text('nghttp2.org:443'), findsNothing);
+    expect(find.text('Custom download URL'), findsNothing);
     expect(find.text('Custom target'), findsNothing);
     expect(find.byType(TextField), findsNothing);
+
+    final speedTargetTile = find.widgetWithText(
+      ExpansionTile,
+      'Test package size',
+    );
+    expect(speedTargetTile, findsOneWidget);
+    expect(
+      tester.widget<ExpansionTile>(speedTargetTile).initiallyExpanded,
+      isFalse,
+    );
 
     final quicTargetTile = find.widgetWithText(
       ExpansionTile,
@@ -336,13 +342,17 @@ void main() {
     await tester.pumpWidget(_wrap(NetworkTestView(controller: controller)));
     await tester.pumpAndSettle();
 
-    await _tapVisible(tester, find.text('Cloudflare 25 MB'));
+    await _tapVisible(
+      tester,
+      find.widgetWithText(ExpansionTile, 'Test package size'),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Cloudflare 100 MB'), findsNothing);
     expect(find.text('Cloudflare 50 MB'), findsOneWidget);
-    expect(find.text('OVH 10 MiB'), findsOneWidget);
-    expect(find.text('OVH 100 MiB'), findsOneWidget);
-    await tester.tap(find.text('OVH 100 MiB'));
+    expect(find.text('CacheFly 100 MB'), findsOneWidget);
+    expect(find.text('OVH 10 MiB'), findsNothing);
+    expect(find.text('OVH 100 MiB'), findsNothing);
+    await tester.tap(find.text('CacheFly 100 MB'));
     await tester.pumpAndSettle();
 
     final speedButton = find.widgetWithText(FilledButton, 'Start Test').first;
@@ -350,8 +360,43 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(calls, hasLength(1));
-    expect(calls.single.testUrl, 'https://proof.ovh.net/files/100Mb.dat');
+    expect(calls.single.testUrl, 'https://cachefly.cachefly.net/100mb.test');
     expect(calls.single.timeout, 120000);
+  });
+
+  testWidgets('speed test sends custom download URL with default timeout', (
+    tester,
+  ) async {
+    final calls = <SpeedTestParams>[];
+    when(() => mock.speedTest(any())).thenAnswer((invocation) {
+      calls.add(invocation.positionalArguments.single as SpeedTestParams);
+      return Future.value(_speedResult());
+    });
+
+    await tester.pumpWidget(_wrap(NetworkTestView(controller: controller)));
+    await tester.pumpAndSettle();
+
+    await _tapVisible(
+      tester,
+      find.widgetWithText(ExpansionTile, 'Test package size'),
+    );
+    await tester.pumpAndSettle();
+    await _tapVisible(tester, find.text('Custom download URL'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsOneWidget);
+    await tester.enterText(
+      find.byType(TextField),
+      ' https://offline.invalid/custom.bin ',
+    );
+    await tester.pump();
+
+    final speedButton = find.widgetWithText(FilledButton, 'Start Test').first;
+    await _tapVisible(tester, speedButton);
+    await tester.pumpAndSettle();
+
+    expect(calls, hasLength(1));
+    expect(calls.single.testUrl, 'https://offline.invalid/custom.bin');
+    expect(calls.single.timeout, 60000);
   });
 
   testWidgets('QUIC preset and custom host are sent exclusively', (
@@ -405,25 +450,29 @@ void main() {
     await tester.pumpWidget(_wrap(NetworkTestView(controller: controller)));
     await tester.pumpAndSettle();
 
+    await _tapVisible(
+      tester,
+      find.widgetWithText(ExpansionTile, 'Test package size'),
+    );
+    await tester.pumpAndSettle();
+
     final speedButton = find.widgetWithText(FilledButton, 'Start Test').first;
     await _tapVisible(tester, speedButton);
     await tester.pump();
     expect(find.text('Testing...'), findsOneWidget);
 
-    await _tapVisible(tester, find.text('Cloudflare 25 MB'));
-    await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('Cloudflare 50 MB'));
-    await tester.pump(const Duration(seconds: 1));
+    await _tapVisible(tester, find.text('Cloudflare 10 MB'));
+    await tester.pump();
 
     firstResult.complete(_speedResult(latency: 111));
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.text('111 ms'), findsNothing);
     expect(find.text('Testing...'), findsNothing);
 
     await _tapVisible(tester, speedButton);
     await tester.pump();
     secondResult.complete(_speedResult(latency: 222));
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     expect(find.text('222 ms'), findsOneWidget);
     expect(find.text('111 ms'), findsNothing);

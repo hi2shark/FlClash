@@ -47,27 +47,22 @@ const _speedTestPresets = <NetworkTestSpeedPreset>[
     timeout: Duration(seconds: 60),
   ),
   NetworkTestSpeedPreset(
-    source: 'OVH',
-    sizeLabel: '10 MiB',
-    url: 'https://proof.ovh.net/files/10Mb.dat',
-    bytes: 10485760,
-    timeout: Duration(seconds: 25),
-  ),
-  NetworkTestSpeedPreset(
-    source: 'OVH',
-    sizeLabel: '100 MiB',
-    url: 'https://proof.ovh.net/files/100Mb.dat',
+    source: 'CacheFly',
+    sizeLabel: '100 MB',
+    url: 'https://cachefly.cachefly.net/100mb.test',
     bytes: 104857600,
     timeout: Duration(seconds: 120),
   ),
 ];
 const _quicTestTimeout = Duration(seconds: 10);
+const _defaultCustomSpeedTestTimeout = Duration(seconds: 60);
 const _quicTestTargets = <String>[
   'cloudflare-quic.com:443',
   'www.google.com:443',
   'www.youtube.com:443',
   'nghttp2.org:443',
 ];
+const _customSpeedTestUrlValue = '__custom_speed__';
 const _customQuicTargetValue = '__custom__';
 const _nonTestableProxyTypes = {'reject', 'rejectdrop', 'pass', 'passrule'};
 
@@ -99,12 +94,15 @@ class NetworkTestView extends StatefulWidget {
 class _NetworkTestViewState extends State<NetworkTestView> {
   String _proxyName = 'DIRECT';
   NetworkTestSpeedPreset _speedTestPreset = _defaultSpeedTestPreset;
+  bool _useCustomSpeedTestUrl = false;
   bool _isSpeedTesting = false;
   SpeedTestResult? _speedTestResult;
   bool _isQuicTesting = false;
   QuicTestResult? _quicTestResult;
   String _quicTestTarget = _quicTestTargets.first;
   bool _useCustomQuicTarget = false;
+  late final TextEditingController _customSpeedTestUrlController;
+  late final ExpansibleController _customSpeedTestUrlExpansionController;
   late final TextEditingController _customQuicTargetController;
   late final ExpansibleController _customQuicTargetExpansionController;
   int _speedTestGeneration = 0;
@@ -117,15 +115,33 @@ class _NetworkTestViewState extends State<NetworkTestView> {
   @override
   void initState() {
     super.initState();
+    _customSpeedTestUrlController = TextEditingController();
+    _customSpeedTestUrlExpansionController = ExpansibleController();
     _customQuicTargetController = TextEditingController();
     _customQuicTargetExpansionController = ExpansibleController();
   }
 
   @override
   void dispose() {
+    _customSpeedTestUrlController.dispose();
+    _customSpeedTestUrlExpansionController.dispose();
     _customQuicTargetController.dispose();
     _customQuicTargetExpansionController.dispose();
     super.dispose();
+  }
+
+  String get _effectiveSpeedTestUrl {
+    if (_useCustomSpeedTestUrl) {
+      return _customSpeedTestUrlController.text.trim();
+    }
+    return _speedTestPreset.url;
+  }
+
+  Duration get _effectiveSpeedTestTimeout {
+    if (_useCustomSpeedTestUrl) {
+      return _defaultCustomSpeedTestTimeout;
+    }
+    return _speedTestPreset.timeout;
   }
 
   String get _effectiveQuicTarget {
@@ -150,19 +166,32 @@ class _NetworkTestViewState extends State<NetworkTestView> {
       return;
     }
     final proxyName = _proxyName;
-    final preset = _speedTestPreset;
+    final testUrl = _effectiveSpeedTestUrl;
+    final timeout = _effectiveSpeedTestTimeout;
     final generation = ++_speedTestGeneration;
     _activeSpeedTestGeneration = generation;
     setState(() {
-      _isSpeedTesting = true;
       _speedTestResult = null;
+    });
+    if (testUrl.isEmpty) {
+      _activeSpeedTestGeneration = null;
+      setState(() {
+        _speedTestResult = SpeedTestResult(
+          name: proxyName,
+          error: context.appLocalizations.speedTestCustomUrlHint,
+        );
+      });
+      return;
+    }
+    setState(() {
+      _isSpeedTesting = true;
     });
     try {
       final result = await _controller.getSpeedTest(
         SpeedTestParams(
           proxyName: proxyName,
-          testUrl: preset.url,
-          timeout: preset.timeout.inMilliseconds,
+          testUrl: testUrl,
+          timeout: timeout.inMilliseconds,
         ),
       );
       if (!mounted || generation != _speedTestGeneration) {
@@ -365,26 +394,120 @@ class _NetworkTestViewState extends State<NetworkTestView> {
     );
   }
 
+  void _selectSpeedTestPreset(NetworkTestSpeedPreset preset) {
+    if (_customSpeedTestUrlExpansionController.isExpanded) {
+      _customSpeedTestUrlExpansionController.collapse();
+    }
+    setState(() {
+      _useCustomSpeedTestUrl = false;
+      _speedTestPreset = preset;
+      _clearSpeedTestResult();
+    });
+  }
+
+  void _selectCustomSpeedTestUrl() {
+    if (!_useCustomSpeedTestUrl) {
+      setState(() {
+        _useCustomSpeedTestUrl = true;
+        _clearSpeedTestResult();
+      });
+    }
+    if (!_customSpeedTestUrlExpansionController.isExpanded) {
+      _customSpeedTestUrlExpansionController.expand();
+    }
+  }
+
   Widget _buildSpeedTestPackageSelector() {
     final appLocalizations = context.appLocalizations;
-    return ListItem<NetworkTestSpeedPreset>.options(
+    final customUrl = _customSpeedTestUrlController.text.trim();
+    final groupValue = _useCustomSpeedTestUrl
+        ? _customSpeedTestUrlValue
+        : _speedTestPreset.url;
+    final sourceSubtitle = _useCustomSpeedTestUrl && customUrl.isEmpty
+        ? appLocalizations.speedTestCustomUrlHint
+        : _useCustomSpeedTestUrl
+        ? customUrl
+        : _speedTestPreset.label;
+    return ExpansionTile(
+      initiallyExpanded: false,
       title: Text(appLocalizations.speedTestPackageSize),
-      subtitle: Text(_speedTestPreset.label),
-      delegate: OptionsDelegate<NetworkTestSpeedPreset>(
-        title: appLocalizations.speedTestPackageSize,
-        options: _speedTestPresets,
-        value: _speedTestPreset,
-        textBuilder: (preset) => preset.label,
-        onChanged: (preset) {
-          if (preset == null || preset == _speedTestPreset) {
-            return;
-          }
-          setState(() {
-            _speedTestPreset = preset;
-            _clearSpeedTestResult();
-          });
-        },
+      subtitle: Text(
+        sourceSubtitle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
+      children: [
+        RadioGroup<String>(
+          groupValue: groupValue,
+          onChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            if (value == _customSpeedTestUrlValue) {
+              _selectCustomSpeedTestUrl();
+              return;
+            }
+            final preset = _speedTestPresets
+                .where((item) => item.url == value)
+                .firstOrNull;
+            if (preset != null) {
+              _selectSpeedTestPreset(preset);
+            }
+          },
+          child: Column(
+            children: [
+              for (final preset in _speedTestPresets)
+                RadioListTile<String>(
+                  value: preset.url,
+                  title: Text(preset.label),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ExpansionTile(
+                controller: _customSpeedTestUrlExpansionController,
+                initiallyExpanded: false,
+                maintainState: true,
+                leading: const Radio<String>(value: _customSpeedTestUrlValue),
+                title: Text(appLocalizations.speedTestCustomUrl),
+                subtitle: Text(
+                  customUrl.isEmpty
+                      ? appLocalizations.speedTestCustomUrlHint
+                      : customUrl,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onExpansionChanged: (expanded) {
+                  if (expanded) {
+                    _selectCustomSpeedTestUrl();
+                  }
+                },
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: TextField(
+                      controller: _customSpeedTestUrlController,
+                      keyboardType: TextInputType.url,
+                      textInputAction: TextInputAction.done,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      maxLines: 1,
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        labelText: appLocalizations.speedTestCustomUrl,
+                        hintText: appLocalizations.speedTestCustomUrlHint,
+                      ),
+                      onChanged: (_) {
+                        if (_useCustomSpeedTestUrl) {
+                          setState(_clearSpeedTestResult);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

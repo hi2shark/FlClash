@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/unlock_test.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/views/views.dart';
@@ -65,14 +66,15 @@ class Navigation {
             const NetworkTestView(key: GlobalObjectKey(PageLabel.networkTest)),
         modes: [NavigationItemMode.more],
       ),
-      NavigationItem(
-        icon: const Icon(Icons.vpn_key),
-        label: PageLabel.unlockTest,
-        description: 'unlockTestDesc',
-        builder: (_) =>
-            const UnlockTestView(key: GlobalObjectKey(PageLabel.unlockTest)),
-        modes: [NavigationItemMode.more],
-      ),
+      if (kUnlockTestFeatureEnabled)
+        NavigationItem(
+          icon: const Icon(Icons.vpn_key),
+          label: PageLabel.unlockTest,
+          description: 'unlockTestDesc',
+          builder: (_) =>
+              const UnlockTestView(key: GlobalObjectKey(PageLabel.unlockTest)),
+          modes: [NavigationItemMode.more],
+        ),
       NavigationItem(
         icon: const Icon(Icons.merge_type),
         label: PageLabel.localProxies,

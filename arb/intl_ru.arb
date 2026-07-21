@@ -725,6 +725,8 @@
   "errorDetails": "Ошибка",
   "quicHandshakeTimedOut": "Время ожидания рукопожатия QUIC истекло",
   "speedTestPackageSize": "Размер данных для теста скорости",
+  "speedTestCustomUrl": "Свой URL загрузки",
+  "speedTestCustomUrlHint": "https://example.com/file.bin",
   "quicTestTarget": "Цель QUIC-теста",
   "quicTestCustomTarget": "Пользовательская цель",
   "quicTestCustomTargetHint": "Хост, хост:порт или IPv6-адрес",

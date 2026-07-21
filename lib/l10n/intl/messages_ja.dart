@@ -978,6 +978,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "specialRules": MessageLookupByLibrary.simpleMessage("特殊ルール"),
     "speedStatistics": MessageLookupByLibrary.simpleMessage("速度統計"),
     "speedTest": MessageLookupByLibrary.simpleMessage("速度テスト"),
+    "speedTestCustomUrl": MessageLookupByLibrary.simpleMessage(
+      "カスタムダウンロード URL",
+    ),
+    "speedTestCustomUrlHint": MessageLookupByLibrary.simpleMessage(
+      "https://example.com/file.bin",
+    ),
     "speedTestDesc": MessageLookupByLibrary.simpleMessage(
       "選択したノードでダウンロード速度をテストします",
     ),

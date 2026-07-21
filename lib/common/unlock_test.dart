@@ -1,5 +1,9 @@
 import 'package:fl_clash/models/unlock_test.dart';
 
+/// Temporary kill switch for unlock detection UI entry points.
+/// Keep Go/Dart implementation; set to true to restore Tools + dashboard widget.
+const kUnlockTestFeatureEnabled = false;
+
 const unlockTestCatalogVersion = 2;
 const unlockTestConcurrency = 4;
 const unlockTestTimeout = 10000;

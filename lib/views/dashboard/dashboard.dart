@@ -237,7 +237,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final children = [
       ...dashboardState.dashboardWidgets
           .where(
-            (item) => item.platforms.contains(SupportPlatform.currentPlatform),
+            (item) =>
+                item.platforms.contains(SupportPlatform.currentPlatform) &&
+                (kUnlockTestFeatureEnabled ||
+                    item != DashboardWidget.unlockDetection),
           )
           .map((item) => item.widget),
     ];
@@ -246,7 +249,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           .where(
             (item) =>
                 !children.contains(item.widget) &&
-                item.platforms.contains(SupportPlatform.currentPlatform),
+                item.platforms.contains(SupportPlatform.currentPlatform) &&
+                (kUnlockTestFeatureEnabled ||
+                    item != DashboardWidget.unlockDetection),
           )
           .map((item) => item.widget)
           .toList();

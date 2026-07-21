@@ -844,6 +844,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "specialRules": MessageLookupByLibrary.simpleMessage("特殊规则"),
     "speedStatistics": MessageLookupByLibrary.simpleMessage("网速统计"),
     "speedTest": MessageLookupByLibrary.simpleMessage("测速"),
+    "speedTestCustomUrl": MessageLookupByLibrary.simpleMessage("自定义下载地址"),
+    "speedTestCustomUrlHint": MessageLookupByLibrary.simpleMessage(
+      "https://example.com/file.bin",
+    ),
     "speedTestDesc": MessageLookupByLibrary.simpleMessage("通过所选节点测试下载速度"),
     "speedTestPackageSize": MessageLookupByLibrary.simpleMessage("测速包大小"),
     "splitStrategy": MessageLookupByLibrary.simpleMessage("分流策略"),

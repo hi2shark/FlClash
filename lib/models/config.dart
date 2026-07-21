@@ -52,10 +52,17 @@ List<DashboardWidget> dashboardWidgetsSafeFormJson(
   List<dynamic>? dashboardWidgets,
 ) {
   try {
-    return dashboardWidgets
+    final widgets =
+        dashboardWidgets
             ?.map((e) => $enumDecode(_$DashboardWidgetEnumMap, e))
             .toList() ??
         defaultDashboardWidgets;
+    if (kUnlockTestFeatureEnabled) {
+      return widgets;
+    }
+    return widgets
+        .where((item) => item != DashboardWidget.unlockDetection)
+        .toList();
   } catch (_) {
     return defaultDashboardWidgets;
   }

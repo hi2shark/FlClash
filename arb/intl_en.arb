@@ -725,6 +725,8 @@
   "errorDetails": "Error",
   "quicHandshakeTimedOut": "QUIC handshake timed out",
   "speedTestPackageSize": "Test package size",
+  "speedTestCustomUrl": "Custom download URL",
+  "speedTestCustomUrlHint": "https://example.com/file.bin",
   "quicTestTarget": "QUIC test target",
   "quicTestCustomTarget": "Custom target",
   "quicTestCustomTargetHint": "Host, host:port, or IPv6 address",

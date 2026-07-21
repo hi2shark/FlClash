@@ -725,6 +725,8 @@
   "errorDetails": "エラー",
   "quicHandshakeTimedOut": "QUIC ハンドシェイクがタイムアウトしました",
   "speedTestPackageSize": "速度テストのデータサイズ",
+  "speedTestCustomUrl": "カスタムダウンロード URL",
+  "speedTestCustomUrlHint": "https://example.com/file.bin",
   "quicTestTarget": "QUIC テスト対象",
   "quicTestCustomTarget": "カスタム対象",
   "quicTestCustomTargetHint": "ホスト、ホスト:ポート、または IPv6 アドレス",

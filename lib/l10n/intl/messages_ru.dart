@@ -1254,6 +1254,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Статистика скорости",
     ),
     "speedTest": MessageLookupByLibrary.simpleMessage("Тест скорости"),
+    "speedTestCustomUrl": MessageLookupByLibrary.simpleMessage(
+      "Свой URL загрузки",
+    ),
+    "speedTestCustomUrlHint": MessageLookupByLibrary.simpleMessage(
+      "https://example.com/file.bin",
+    ),
     "speedTestDesc": MessageLookupByLibrary.simpleMessage(
       "Проверка скорости загрузки через выбранный узел",
     ),

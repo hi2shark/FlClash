@@ -5699,6 +5699,26 @@ class AppLocalizations {
     );
   }
 
+  /// `Custom download URL`
+  String get speedTestCustomUrl {
+    return Intl.message(
+      'Custom download URL',
+      name: 'speedTestCustomUrl',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `https://example.com/file.bin`
+  String get speedTestCustomUrlHint {
+    return Intl.message(
+      'https://example.com/file.bin',
+      name: 'speedTestCustomUrlHint',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `QUIC test target`
   String get quicTestTarget {
     return Intl.message(
