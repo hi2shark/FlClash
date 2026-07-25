@@ -229,15 +229,21 @@ abstract class Tun with _$Tun {
 }
 
 extension TunExt on Tun {
-  Tun getRealTun(RouteMode routeMode) {
+  Tun getRealTun(RouteMode routeMode, {required bool dnsEnable}) {
     final mRouteAddress = routeMode == RouteMode.bypassPrivate
         ? defaultBypassPrivateRouteAddress
         : routeAddress;
+    final mDnsHijack = dnsEnable ? dnsHijack : const <String>[];
     return switch (system.isDesktop) {
-      true => copyWith(autoRoute: true, routeAddress: []),
+      true => copyWith(
+        autoRoute: true,
+        routeAddress: [],
+        dnsHijack: mDnsHijack,
+      ),
       false => copyWith(
         autoRoute: mRouteAddress.isEmpty ? true : false,
         routeAddress: mRouteAddress,
+        dnsHijack: mDnsHijack,
       ),
     };
   }
@@ -266,12 +272,12 @@ abstract class Dns with _$Dns {
     @Default(false) @JsonKey(name: 'prefer-h3') bool preferH3,
     @Default(true) @JsonKey(name: 'use-hosts') bool useHosts,
     @Default(true) @JsonKey(name: 'use-system-hosts') bool useSystemHosts,
-    @Default(false) @JsonKey(name: 'respect-rules') bool respectRules,
+    @Default(true) @JsonKey(name: 'respect-rules') bool respectRules,
     @Default(false) bool ipv6,
     @Default(['223.5.5.5'])
     @JsonKey(name: 'default-nameserver')
     List<String> defaultNameserver,
-    @Default(DnsMode.fakeIp)
+    @Default(DnsMode.redirHost)
     @JsonKey(name: 'enhanced-mode')
     DnsMode enhancedMode,
     @Default('198.18.0.1/16')

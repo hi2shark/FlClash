@@ -204,17 +204,28 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
   final isEnableDns = rawConfig['dns']['enable'] == true;
   const systemDns = 'system://';
   if (overrideDns || !isEnableDns) {
-    final dns = switch (!isEnableDns) {
+    var dns = switch (!isEnableDns) {
       true => realPatchConfig.dns.copyWith(
         nameserver: [...realPatchConfig.dns.nameserver, systemDns],
       ),
       false => realPatchConfig.dns,
     };
+    // mihomo requires proxy-server-nameserver when respect-rules is on.
+    if (dns.respectRules && dns.proxyServerNameserver.isEmpty) {
+      dns = dns.copyWith(respectRules: false);
+    }
     rawConfig['dns'] = dns.toJson();
     rawConfig['dns']['nameserver-policy'] = {};
     for (final entry in dns.nameserverPolicy.entries) {
       rawConfig['dns']['nameserver-policy'][entry.key] =
           entry.value.splitByMultipleSeparators;
+    }
+  } else if (rawConfig['dns']['respect-rules'] == true) {
+    final List<dynamic> proxyServerNameserver = List<dynamic>.from(
+      rawConfig['dns']['proxy-server-nameserver'] ?? [],
+    );
+    if (proxyServerNameserver.isEmpty) {
+      rawConfig['dns']['respect-rules'] = false;
     }
   }
   if (appendSystemDns) {

@@ -257,4 +257,55 @@ void main() {
       expect(synced.suspendOnWifiSsids, ['Home']);
     });
   });
+
+  group('VpnOptions', () {
+    test('round-trip includes dnsEnable', () {
+      const options = VpnOptions(
+        enable: true,
+        port: 7890,
+        ipv6: false,
+        dnsHijacking: false,
+        dnsEnable: true,
+        accessControlProps: AccessControlProps(),
+        allowBypass: true,
+        systemProxy: true,
+        bypassDomain: ['localhost'],
+        stack: 'mixed',
+      );
+
+      final restored = VpnOptions.fromJson(
+        jsonDecode(jsonEncode(options.toJson())) as Map<String, Object?>,
+      );
+
+      expect(restored.dnsEnable, true);
+      expect(restored.dnsHijacking, false);
+      expect(restored.port, 7890);
+      expect(restored.stack, 'mixed');
+    });
+
+    test('fromJson reads dnsEnable', () {
+      final options = VpnOptions.fromJson({
+        'enable': false,
+        'port': 7890,
+        'ipv6': true,
+        'dnsHijacking': true,
+        'dnsEnable': false,
+        'accessControlProps': {
+          'enable': false,
+          'mode': 'acceptSelected',
+          'acceptList': <String>[],
+          'rejectList': <String>[],
+        },
+        'allowBypass': false,
+        'systemProxy': false,
+        'bypassDomain': <String>[],
+        'stack': 'system',
+        'routeAddress': <String>[],
+      });
+
+      expect(options.dnsEnable, false);
+      expect(options.dnsHijacking, true);
+      expect(options.ipv6, true);
+    });
+  });
 }

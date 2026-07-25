@@ -309,6 +309,7 @@ abstract class VpnState with _$VpnState {
   const factory VpnState({
     required TunStack stack,
     required VpnProps vpnProps,
+    required bool dnsEnable,
   }) = _VpnState;
 }
 

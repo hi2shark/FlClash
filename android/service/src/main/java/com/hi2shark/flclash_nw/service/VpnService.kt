@@ -140,6 +140,9 @@ class VpnService : SystemVpnService(), IBaseService,
 
     val VpnOptions.dns
         get(): String {
+            if (!dnsEnable) {
+                return ""
+            }
             if (dnsHijacking) {
                 return NET_ANY
             }
@@ -238,9 +241,11 @@ class VpnService : SystemVpnService(), IBaseService,
                     addRoute(NET_ANY6, 0)
                 }
             }
-            addDnsServer(DNS)
-            if (options.ipv6) {
-                addDnsServer(DNS6)
+            if (options.dnsEnable) {
+                addDnsServer(DNS)
+                if (options.ipv6) {
+                    addDnsServer(DNS6)
+                }
             }
             setMtu(9000)
             options.accessControlProps.let { accessControl ->

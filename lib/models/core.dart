@@ -44,6 +44,7 @@ abstract class VpnOptions with _$VpnOptions {
     required int port,
     required bool ipv6,
     required bool dnsHijacking,
+    required bool dnsEnable,
     required AccessControlProps accessControlProps,
     required bool allowBypass,
     required bool systemProxy,

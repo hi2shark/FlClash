@@ -8428,7 +8428,7 @@ as String?,
 /// @nodoc
 mixin _$VpnState {
 
- TunStack get stack; VpnProps get vpnProps;
+ TunStack get stack; VpnProps get vpnProps; bool get dnsEnable;
 /// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -8439,16 +8439,16 @@ $VpnStateCopyWith<VpnState> get copyWith => _$VpnStateCopyWithImpl<VpnState>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VpnState&&(identical(other.stack, stack) || other.stack == stack)&&(identical(other.vpnProps, vpnProps) || other.vpnProps == vpnProps));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VpnState&&(identical(other.stack, stack) || other.stack == stack)&&(identical(other.vpnProps, vpnProps) || other.vpnProps == vpnProps)&&(identical(other.dnsEnable, dnsEnable) || other.dnsEnable == dnsEnable));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,stack,vpnProps);
+int get hashCode => Object.hash(runtimeType,stack,vpnProps,dnsEnable);
 
 @override
 String toString() {
-  return 'VpnState(stack: $stack, vpnProps: $vpnProps)';
+  return 'VpnState(stack: $stack, vpnProps: $vpnProps, dnsEnable: $dnsEnable)';
 }
 
 
@@ -8459,7 +8459,7 @@ abstract mixin class $VpnStateCopyWith<$Res>  {
   factory $VpnStateCopyWith(VpnState value, $Res Function(VpnState) _then) = _$VpnStateCopyWithImpl;
 @useResult
 $Res call({
- TunStack stack, VpnProps vpnProps
+ TunStack stack, VpnProps vpnProps, bool dnsEnable
 });
 
 
@@ -8476,11 +8476,12 @@ class _$VpnStateCopyWithImpl<$Res>
 
 /// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? stack = null,Object? vpnProps = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? stack = null,Object? vpnProps = null,Object? dnsEnable = null,}) {
   return _then(_self.copyWith(
 stack: null == stack ? _self.stack : stack // ignore: cast_nullable_to_non_nullable
 as TunStack,vpnProps: null == vpnProps ? _self.vpnProps : vpnProps // ignore: cast_nullable_to_non_nullable
-as VpnProps,
+as VpnProps,dnsEnable: null == dnsEnable ? _self.dnsEnable : dnsEnable // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 /// Create a copy of VpnState
@@ -8574,10 +8575,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( TunStack stack,  VpnProps vpnProps)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( TunStack stack,  VpnProps vpnProps,  bool dnsEnable)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VpnState() when $default != null:
-return $default(_that.stack,_that.vpnProps);case _:
+return $default(_that.stack,_that.vpnProps,_that.dnsEnable);case _:
   return orElse();
 
 }
@@ -8595,10 +8596,10 @@ return $default(_that.stack,_that.vpnProps);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( TunStack stack,  VpnProps vpnProps)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( TunStack stack,  VpnProps vpnProps,  bool dnsEnable)  $default,) {final _that = this;
 switch (_that) {
 case _VpnState():
-return $default(_that.stack,_that.vpnProps);case _:
+return $default(_that.stack,_that.vpnProps,_that.dnsEnable);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -8615,10 +8616,10 @@ return $default(_that.stack,_that.vpnProps);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( TunStack stack,  VpnProps vpnProps)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( TunStack stack,  VpnProps vpnProps,  bool dnsEnable)?  $default,) {final _that = this;
 switch (_that) {
 case _VpnState() when $default != null:
-return $default(_that.stack,_that.vpnProps);case _:
+return $default(_that.stack,_that.vpnProps,_that.dnsEnable);case _:
   return null;
 
 }
@@ -8630,11 +8631,12 @@ return $default(_that.stack,_that.vpnProps);case _:
 
 
 class _VpnState implements VpnState {
-  const _VpnState({required this.stack, required this.vpnProps});
+  const _VpnState({required this.stack, required this.vpnProps, required this.dnsEnable});
   
 
 @override final  TunStack stack;
 @override final  VpnProps vpnProps;
+@override final  bool dnsEnable;
 
 /// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
@@ -8646,16 +8648,16 @@ _$VpnStateCopyWith<_VpnState> get copyWith => __$VpnStateCopyWithImpl<_VpnState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VpnState&&(identical(other.stack, stack) || other.stack == stack)&&(identical(other.vpnProps, vpnProps) || other.vpnProps == vpnProps));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VpnState&&(identical(other.stack, stack) || other.stack == stack)&&(identical(other.vpnProps, vpnProps) || other.vpnProps == vpnProps)&&(identical(other.dnsEnable, dnsEnable) || other.dnsEnable == dnsEnable));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,stack,vpnProps);
+int get hashCode => Object.hash(runtimeType,stack,vpnProps,dnsEnable);
 
 @override
 String toString() {
-  return 'VpnState(stack: $stack, vpnProps: $vpnProps)';
+  return 'VpnState(stack: $stack, vpnProps: $vpnProps, dnsEnable: $dnsEnable)';
 }
 
 
@@ -8666,7 +8668,7 @@ abstract mixin class _$VpnStateCopyWith<$Res> implements $VpnStateCopyWith<$Res>
   factory _$VpnStateCopyWith(_VpnState value, $Res Function(_VpnState) _then) = __$VpnStateCopyWithImpl;
 @override @useResult
 $Res call({
- TunStack stack, VpnProps vpnProps
+ TunStack stack, VpnProps vpnProps, bool dnsEnable
 });
 
 
@@ -8683,11 +8685,12 @@ class __$VpnStateCopyWithImpl<$Res>
 
 /// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? stack = null,Object? vpnProps = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? stack = null,Object? vpnProps = null,Object? dnsEnable = null,}) {
   return _then(_VpnState(
 stack: null == stack ? _self.stack : stack // ignore: cast_nullable_to_non_nullable
 as TunStack,vpnProps: null == vpnProps ? _self.vpnProps : vpnProps // ignore: cast_nullable_to_non_nullable
-as VpnProps,
+as VpnProps,dnsEnable: null == dnsEnable ? _self.dnsEnable : dnsEnable // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

@@ -331,4 +331,44 @@ void main() {
       expect(props, defaultUnlockTestProps);
     });
   });
+
+  group('Dns defaults', () {
+    test('respect-rules and redir-host are the new defaults', () {
+      const dns = Dns();
+      expect(dns.enable, true);
+      expect(dns.respectRules, true);
+      expect(dns.enhancedMode, DnsMode.redirHost);
+      expect(dns.proxyServerNameserver, isNotEmpty);
+    });
+
+    test('fromJson falls back to new defaults when fields are missing', () {
+      final dns = Dns.fromJson({});
+      expect(dns.respectRules, true);
+      expect(dns.enhancedMode, DnsMode.redirHost);
+    });
+
+    test('round-trip preserves respect-rules and enhanced-mode', () {
+      const dns = Dns(
+        respectRules: false,
+        enhancedMode: DnsMode.fakeIp,
+      );
+      final restored = roundTrip(() => dns.toJson(), Dns.fromJson);
+      expect(restored.respectRules, false);
+      expect(restored.enhancedMode, DnsMode.fakeIp);
+    });
+  });
+
+  group('Tun.getRealTun dnsEnable', () {
+    test('clears dns-hijack when dns is disabled', () {
+      const tun = Tun(dnsHijack: ['any:53']);
+      final real = tun.getRealTun(RouteMode.config, dnsEnable: false);
+      expect(real.dnsHijack, isEmpty);
+    });
+
+    test('keeps dns-hijack when dns is enabled', () {
+      const tun = Tun(dnsHijack: ['any:53']);
+      final real = tun.getRealTun(RouteMode.config, dnsEnable: true);
+      expect(real.dnsHijack, ['any:53']);
+    });
+  });
 }

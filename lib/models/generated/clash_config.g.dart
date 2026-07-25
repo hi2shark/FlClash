@@ -224,7 +224,7 @@ _Dns _$DnsFromJson(Map<String, dynamic> json) => _Dns(
   preferH3: json['prefer-h3'] as bool? ?? false,
   useHosts: json['use-hosts'] as bool? ?? true,
   useSystemHosts: json['use-system-hosts'] as bool? ?? true,
-  respectRules: json['respect-rules'] as bool? ?? false,
+  respectRules: json['respect-rules'] as bool? ?? true,
   ipv6: json['ipv6'] as bool? ?? false,
   defaultNameserver:
       (json['default-nameserver'] as List<dynamic>?)
@@ -233,7 +233,7 @@ _Dns _$DnsFromJson(Map<String, dynamic> json) => _Dns(
       const ['223.5.5.5'],
   enhancedMode:
       $enumDecodeNullable(_$DnsModeEnumMap, json['enhanced-mode']) ??
-      DnsMode.fakeIp,
+      DnsMode.redirHost,
   fakeIpRange: json['fake-ip-range'] as String? ?? '198.18.0.1/16',
   fakeIpFilter:
       (json['fake-ip-filter'] as List<dynamic>?)

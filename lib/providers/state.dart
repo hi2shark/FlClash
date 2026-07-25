@@ -84,7 +84,7 @@ UpdateParams updateParams(Ref ref) {
   return ref.watch(
     patchClashConfigProvider.select(
       (state) => UpdateParams(
-        tun: state.tun.getRealTun(routeMode),
+        tun: state.tun.getRealTun(routeMode, dnsEnable: state.dns.enable),
         allowLan: state.allowLan,
         findProcessMode: state.findProcessMode,
         mode: state.mode,
@@ -170,10 +170,16 @@ TrayTitleState trayTitleState(Ref ref) {
 @riverpod
 VpnState vpnState(Ref ref) {
   final vpnProps = ref.watch(vpnSettingProvider);
-  final stack = ref.watch(
-    patchClashConfigProvider.select((state) => state.tun.stack),
+  final clashConfigVM2 = ref.watch(
+    patchClashConfigProvider.select(
+      (state) => VM2(state.tun.stack, state.dns.enable),
+    ),
   );
-  return VpnState(stack: stack, vpnProps: vpnProps);
+  return VpnState(
+    stack: clashConfigVM2.a,
+    vpnProps: vpnProps,
+    dnsEnable: clashConfigVM2.b,
+  );
 }
 
 @riverpod
@@ -606,9 +612,9 @@ SharedState sharedState(Ref ref) {
   final bypassDomain = ref.watch(
     networkSettingProvider.select((state) => state.bypassDomain),
   );
-  final clashConfigVM2 = ref.watch(
+  final clashConfigVM3 = ref.watch(
     patchClashConfigProvider.select(
-      (state) => VM2(state.tun.stack.name, state.mixedPort),
+      (state) => VM3(state.tun.stack.name, state.mixedPort, state.dns.enable),
     ),
   );
   final vpnSetting = ref.watch(vpnSettingProvider);
@@ -619,8 +625,9 @@ SharedState sharedState(Ref ref) {
   final onlyStatisticsProxy = appSettingVM3.a;
   final crashlytics = appSettingVM3.b;
   final testUrl = appSettingVM3.c;
-  final stack = clashConfigVM2.a;
-  final port = clashConfigVM2.b;
+  final stack = clashConfigVM3.a;
+  final port = clashConfigVM3.b;
+  final dnsEnable = clashConfigVM3.c;
   return SharedState(
     currentProfileName: currentProfileName,
     onlyStatisticsProxy: onlyStatisticsProxy,
@@ -637,6 +644,7 @@ SharedState sharedState(Ref ref) {
       port: port,
       ipv6: vpnSetting.ipv6,
       dnsHijacking: vpnSetting.dnsHijacking,
+      dnsEnable: dnsEnable,
       accessControlProps: vpnSetting.accessControlProps,
       allowBypass: vpnSetting.allowBypass,
       bypassDomain: bypassDomain,

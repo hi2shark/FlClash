@@ -316,7 +316,10 @@ class SetupAction extends _$SetupAction {
       rules.addAll(setupState.rules);
     }
     final realPatchConfig = patchConfig.copyWith(
-      tun: patchConfig.tun.getRealTun(routeMode),
+      tun: patchConfig.tun.getRealTun(
+        routeMode,
+        dnsEnable: patchConfig.dns.enable,
+      ),
     );
     Map<String, dynamic> rawConfig = configMap;
     if (scriptContent?.isNotEmpty == true) {
