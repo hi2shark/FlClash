@@ -702,6 +702,8 @@
   "wifiWatchExcludedWillSuspend": "{seconds} 秒后挂起",
   "networkTest": "网络测试",
   "networkTestDesc": "节点测速与 QUIC 连通性测试",
+  "effectiveConfig": "生效配置",
+  "effectiveConfigDesc": "预览最终下发给内核的配置文件全文",
   "speedTest": "测速",
   "speedTestDesc": "通过所选节点测试下载速度",
   "quicTest": "QUIC 测试",

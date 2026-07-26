@@ -418,6 +418,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "editRule": MessageLookupByLibrary.simpleMessage("Редактировать правило"),
     "editSsid": MessageLookupByLibrary.simpleMessage("Изменить SSID"),
+    "effectiveConfig": MessageLookupByLibrary.simpleMessage(
+      "Активная конфигурация",
+    ),
+    "effectiveConfigDesc": MessageLookupByLibrary.simpleMessage(
+      "Просмотр полного текста итоговой конфигурации ядра",
+    ),
     "emptyTip": m4,
     "en": MessageLookupByLibrary.simpleMessage("Английский"),
     "enableHealthCheck": MessageLookupByLibrary.simpleMessage(

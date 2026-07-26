@@ -702,6 +702,8 @@
   "wifiWatchExcludedWillSuspend": "Suspend in {seconds}s",
   "networkTest": "Network Test",
   "networkTestDesc": "Node speed test and QUIC connectivity test",
+  "effectiveConfig": "Effective Config",
+  "effectiveConfigDesc": "Preview the full final config delivered to the core",
   "speedTest": "Speed Test",
   "speedTestDesc": "Test download speed through the selected node",
   "quicTest": "QUIC Test",

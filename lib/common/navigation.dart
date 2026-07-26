@@ -59,6 +59,15 @@ class Navigation {
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
+        icon: const Icon(Icons.description),
+        label: PageLabel.effectiveConfig,
+        description: 'effectiveConfigDesc',
+        builder: (_) => const EffectiveConfigView(
+          key: GlobalObjectKey(PageLabel.effectiveConfig),
+        ),
+        modes: [NavigationItemMode.more],
+      ),
+      NavigationItem(
         icon: const Icon(Icons.speed),
         label: PageLabel.networkTest,
         description: 'networkTestDesc',

@@ -702,6 +702,8 @@
   "wifiWatchExcludedWillSuspend": "Приостановка через {seconds} с",
   "networkTest": "Тест сети",
   "networkTestDesc": "Тест скорости узла и проверка QUIC-соединения",
+  "effectiveConfig": "Активная конфигурация",
+  "effectiveConfigDesc": "Просмотр полного текста итоговой конфигурации ядра",
   "speedTest": "Тест скорости",
   "speedTestDesc": "Проверка скорости загрузки через выбранный узел",
   "quicTest": "Тест QUIC",

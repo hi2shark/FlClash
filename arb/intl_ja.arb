@@ -702,6 +702,8 @@
   "wifiWatchExcludedWillSuspend": "{seconds}秒後に一時停止",
   "networkTest": "ネットワークテスト",
   "networkTestDesc": "ノードの速度テストと QUIC 接続テスト",
+  "effectiveConfig": "有効な設定",
+  "effectiveConfigDesc": "コアに適用される最終的な設定ファイル全文をプレビュー",
   "speedTest": "速度テスト",
   "speedTestDesc": "選択したノードでダウンロード速度をテストします",
   "quicTest": "QUIC テスト",

@@ -286,6 +286,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "editProxyGroup": MessageLookupByLibrary.simpleMessage("编辑策略组"),
     "editRule": MessageLookupByLibrary.simpleMessage("编辑规则"),
     "editSsid": MessageLookupByLibrary.simpleMessage("编辑SSID"),
+    "effectiveConfig": MessageLookupByLibrary.simpleMessage("生效配置"),
+    "effectiveConfigDesc": MessageLookupByLibrary.simpleMessage(
+      "预览最终下发给内核的配置文件全文",
+    ),
     "emptyTip": m4,
     "en": MessageLookupByLibrary.simpleMessage("英语"),
     "enableHealthCheck": MessageLookupByLibrary.simpleMessage("启用健康检查"),

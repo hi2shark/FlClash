@@ -316,6 +316,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "editProxyGroup": MessageLookupByLibrary.simpleMessage("プロキシグループを編集"),
     "editRule": MessageLookupByLibrary.simpleMessage("ルールを編集"),
     "editSsid": MessageLookupByLibrary.simpleMessage("SSIDを編集"),
+    "effectiveConfig": MessageLookupByLibrary.simpleMessage("有効な設定"),
+    "effectiveConfigDesc": MessageLookupByLibrary.simpleMessage(
+      "コアに適用される最終的な設定ファイル全文をプレビュー",
+    ),
     "emptyTip": m4,
     "en": MessageLookupByLibrary.simpleMessage("英語"),
     "enableHealthCheck": MessageLookupByLibrary.simpleMessage("ヘルスチェックを有効化"),

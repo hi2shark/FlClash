@@ -406,6 +406,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "editProxyGroup": MessageLookupByLibrary.simpleMessage("Edit proxy group"),
     "editRule": MessageLookupByLibrary.simpleMessage("Edit rule"),
     "editSsid": MessageLookupByLibrary.simpleMessage("Edit SSID"),
+    "effectiveConfig": MessageLookupByLibrary.simpleMessage("Effective Config"),
+    "effectiveConfigDesc": MessageLookupByLibrary.simpleMessage(
+      "Preview the full final config delivered to the core",
+    ),
     "emptyTip": m4,
     "en": MessageLookupByLibrary.simpleMessage("English"),
     "enableHealthCheck": MessageLookupByLibrary.simpleMessage(

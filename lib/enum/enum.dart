@@ -358,6 +358,7 @@ enum PageLabel {
   localProxies,
   networkTest,
   unlockTest,
+  effectiveConfig,
 }
 
 enum RuleAction {

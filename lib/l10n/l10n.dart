@@ -5539,6 +5539,26 @@ class AppLocalizations {
     );
   }
 
+  /// `Effective Config`
+  String get effectiveConfig {
+    return Intl.message(
+      'Effective Config',
+      name: 'effectiveConfig',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Preview the full final config delivered to the core`
+  String get effectiveConfigDesc {
+    return Intl.message(
+      'Preview the full final config delivered to the core',
+      name: 'effectiveConfigDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Speed Test`
   String get speedTest {
     return Intl.message('Speed Test', name: 'speedTest', desc: '', args: []);

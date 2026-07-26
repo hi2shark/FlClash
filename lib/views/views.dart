@@ -7,6 +7,7 @@ export 'connection/connections.dart';
 export 'connection/requests.dart';
 export 'dashboard/dashboard.dart';
 export 'developer.dart';
+export 'effective_config.dart';
 export 'local_proxies.dart';
 export 'logs.dart';
 export 'network_test.dart';
