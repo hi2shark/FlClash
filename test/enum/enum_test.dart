@@ -10,6 +10,7 @@ void main() {
       expect(GroupType.parse('URLTEST'), GroupType.URLTest);
       expect(GroupType.parse('selector'), GroupType.Selector);
       expect(GroupType.parse('loadbalance'), GroupType.LoadBalance);
+      expect(GroupType.parse('relay'), GroupType.Relay);
     });
 
     test('throws for unsupported group type', () {
@@ -22,6 +23,12 @@ void main() {
       expect(GroupTypeExtension.getGroupType('Selector'), GroupType.Selector);
       expect(GroupTypeExtension.getGroupType('URLTest'), GroupType.URLTest);
       expect(GroupTypeExtension.getGroupType('missing'), isNull);
+    });
+
+    test('excludes relay removed by the core from supported values', () {
+      expect(GroupTypeExtension.supportedValues, isNot(contains(GroupType.Relay)));
+      expect(GroupTypeExtension.valueList, isNot(contains('Relay')));
+      expect(GroupTypeExtension.getGroupType('Relay'), isNull);
     });
 
     test('marks only computed selection types', () {

@@ -426,7 +426,7 @@ class _EditProxyGroupViewState extends ConsumerState<_EditProxyGroupView> {
     final value = await globalState.showCommonDialog<GroupType>(
       child: OptionsDialog<GroupType>(
         title: context.appLocalizations.proxyType,
-        options: GroupType.values,
+        options: GroupTypeExtension.supportedValues,
         textBuilder: (item) => item.name,
         value: type,
       ),

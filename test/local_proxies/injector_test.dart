@@ -245,7 +245,7 @@ void main() {
     expect(rawConfig['proxy-providers'], isA<Map>());
   });
 
-  test('throws when proxy-groups is missing without mutation', () async {
+  test('reports missing target group when proxy-groups is absent', () async {
     await _addEnabledNode();
     await localProxyStore.saveConfig(
       const LocalProxyProviderConfig(enabled: true, targetGroups: ['SELECT']),
@@ -255,11 +255,38 @@ void main() {
 
     await expectLater(
       localProxyConfigInjector.inject(rawConfig),
-      throwsA(isA<StateError>()),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.toString(),
+          'message',
+          allOf(contains('SELECT'), contains('was not found')),
+        ),
+      ),
     );
 
     expect(rawConfig, {'proxies': proxies});
     expect(identical(rawConfig['proxies'], proxies), isTrue);
+  });
+
+  test('throws when proxy-groups is not a List without mutation', () async {
+    await _addEnabledNode();
+    await localProxyStore.saveConfig(
+      const LocalProxyProviderConfig(enabled: true, targetGroups: ['SELECT']),
+    );
+    final rawConfig = <String, dynamic>{'proxy-groups': 'invalid'};
+
+    await expectLater(
+      localProxyConfigInjector.inject(rawConfig),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.toString(),
+          'message',
+          contains('must be a List'),
+        ),
+      ),
+    );
+
+    expect(rawConfig['proxy-groups'], 'invalid');
   });
 
   test('throws for missing target group without partial mutation', () async {

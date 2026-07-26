@@ -68,8 +68,12 @@ enum GroupType {
 }
 
 extension GroupTypeExtension on GroupType {
+  /// Group types supported by the mihomo core (relay was removed).
+  static List<GroupType> get supportedValues =>
+      GroupType.values.where((type) => type != GroupType.Relay).toList();
+
   static List<String> get valueList =>
-      GroupType.values.map((e) => e.toString().split('.').last).toList();
+      supportedValues.map((e) => e.toString().split('.').last).toList();
 
   bool get isComputedSelected {
     return [GroupType.URLTest, GroupType.Fallback].contains(this);
@@ -78,7 +82,7 @@ extension GroupTypeExtension on GroupType {
   static GroupType? getGroupType(String value) {
     final index = GroupTypeExtension.valueList.indexOf(value);
     if (index == -1) return null;
-    return GroupType.values[index];
+    return GroupTypeExtension.supportedValues[index];
   }
 }
 
@@ -359,9 +363,9 @@ enum GeoResource {
   MMDB,
   @JsonValue('asn')
   ASN,
-  @JsonValue('geo-ip')
+  @JsonValue('geoip')
   GEOIP,
-  @JsonValue('geo-site')
+  @JsonValue('geosite')
   GEOSITE;
 
   static GeoResource fromJson(String value) {
@@ -380,8 +384,8 @@ extension GeoResourceExt on GeoResource {
     return switch (this) {
       GeoResource.MMDB => 'mmdb',
       GeoResource.ASN => 'asn',
-      GeoResource.GEOIP => 'geo-ip',
-      GeoResource.GEOSITE => 'geo-site',
+      GeoResource.GEOIP => 'geoip',
+      GeoResource.GEOSITE => 'geosite',
     };
   }
 

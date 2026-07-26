@@ -138,7 +138,7 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
   rawConfig['find-process-mode'] = realPatchConfig.findProcessMode.name;
   rawConfig['allow-lan'] = realPatchConfig.allowLan;
   rawConfig['mode'] = realPatchConfig.mode.name;
-  if (rawConfig['tun'] == null) {
+  if (rawConfig['tun'] is! Map) {
     rawConfig['tun'] = {};
   }
   rawConfig['tun']['enable'] = realPatchConfig.tun.enable;
@@ -148,21 +148,28 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
   rawConfig['tun']['route-address'] = realPatchConfig.tun.routeAddress;
   rawConfig['tun']['auto-route'] = realPatchConfig.tun.autoRoute;
   rawConfig['geodata-loader'] = realPatchConfig.geodataLoader.name;
-  if (rawConfig['sniffer']?['sniff'] != null) {
-    for (final value in (rawConfig['sniffer']?['sniff'] as Map).values) {
+  final sniffer = rawConfig['sniffer'];
+  if (sniffer is Map && sniffer['sniff'] is Map) {
+    for (final value in (sniffer['sniff'] as Map).values) {
+      if (value is! Map) {
+        continue;
+      }
       if (value['ports'] != null && value['ports'] is List) {
         value['ports'] =
             value['ports']?.map((item) => item.toString()).toList() ?? [];
       }
     }
   }
-  if (rawConfig['profile'] == null) {
+  if (rawConfig['profile'] is! Map) {
     rawConfig['profile'] = {};
   }
-  if (rawConfig['proxy-providers'] != null) {
+  if (rawConfig['proxy-providers'] is Map) {
     final proxyProviders = rawConfig['proxy-providers'] as Map;
     for (final key in proxyProviders.keys) {
       final proxyProvider = proxyProviders[key];
+      if (proxyProvider is! Map) {
+        continue;
+      }
       if (proxyProvider['type'] != 'http') {
         continue;
       }
@@ -174,10 +181,13 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
       }
     }
   }
-  if (rawConfig['rule-providers'] != null) {
+  if (rawConfig['rule-providers'] is Map) {
     final ruleProviders = rawConfig['rule-providers'] as Map;
     for (final key in ruleProviders.keys) {
       final ruleProvider = ruleProviders[key];
+      if (ruleProvider is! Map) {
+        continue;
+      }
       if (ruleProvider['type'] != 'http') {
         continue;
       }
@@ -192,13 +202,13 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
   rawConfig['profile']['store-selected'] = false;
   rawConfig['geox-url'] = realPatchConfig.geoXUrl.raw;
   rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
-  if (rawConfig['hosts'] == null) {
+  if (rawConfig['hosts'] is! Map) {
     rawConfig['hosts'] = {};
   }
   for (final host in realPatchConfig.hosts.entries) {
     rawConfig['hosts'][host.key] = host.value.splitByMultipleSeparators;
   }
-  if (rawConfig['dns'] == null) {
+  if (rawConfig['dns'] is! Map) {
     rawConfig['dns'] = {};
   }
   final isEnableDns = rawConfig['dns']['enable'] == true;

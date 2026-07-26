@@ -29,7 +29,7 @@ class LocalProxyConfigInjector {
       );
     }
 
-    final proxyGroups = rawConfig['proxy-groups'];
+    final proxyGroups = rawConfig['proxy-groups'] ?? const <dynamic>[];
     if (proxyGroups is! List) {
       throw StateError(
         '"proxy-groups" must be a List for local proxy injection.',
