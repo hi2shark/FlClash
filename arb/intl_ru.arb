@@ -133,6 +133,7 @@
   "app": "Приложение",
   "general": "Общие",
   "systemProxyDesc": "Прикрепить HTTP-прокси к VpnService",
+  "userAgent": "User-Agent",
   "unifiedDelay": "Унифицированная задержка",
   "unifiedDelayDesc": "Убрать дополнительные задержки, такие как рукопожатие",
   "tcpConcurrent": "TCP параллелизм",
@@ -787,5 +788,17 @@
   "localProxySshAuthEmpty": "Укажите пароль SSH или приватный ключ",
   "localProxySshPassphraseWithoutKey": "Для парольной фразы требуется приватный ключ",
   "localProxyTlsKeyPairRequired": "Сертификат и приватный ключ необходимо указать вместе",
-  "localProxyProtocolReimportOnly": "Этот протокол можно обновить только повторным импортом"
+  "localProxyProtocolReimportOnly": "Этот протокол можно обновить только повторным импортом",
+  "geoOptions": "Настройки Geo",
+  "geoAutoUpdate": "Автообновление",
+  "geoAutoUpdateInterval": "Интервал автообновления",
+  "geoAutoUpdateIntervalTip": "Интервал автообновления должен быть больше 0",
+  "hours": "часов",
+  "hoursCount": "{count} часов",
+  "geoResources": "Ресурсы Geo",
+  "geoUpdating": "Обновление {name}...",
+  "geoSkipped": "{name} пропущено",
+  "geoUpdated": "{name} обновлено",
+  "secondsCount": "{count} секунд",
+  "entriesCount": "{count} записей"
 }

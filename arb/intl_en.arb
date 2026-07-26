@@ -133,6 +133,7 @@
   "app": "App",
   "general": "General",
   "systemProxyDesc": "Attach HTTP proxy to VpnService",
+  "userAgent": "User-Agent",
   "unifiedDelay": "Unified delay",
   "unifiedDelayDesc": "Remove extra delays such as handshaking",
   "tcpConcurrent": "TCP concurrent",
@@ -787,5 +788,17 @@
   "localProxySshAuthEmpty": "SSH password or private key is required",
   "localProxySshPassphraseWithoutKey": "A private key is required when using a passphrase",
   "localProxyTlsKeyPairRequired": "Certificate and private key must be provided together",
-  "localProxyProtocolReimportOnly": "This protocol can only be updated by re-importing it"
+  "localProxyProtocolReimportOnly": "This protocol can only be updated by re-importing it",
+  "geoOptions": "Geo Options",
+  "geoAutoUpdate": "Auto Update",
+  "geoAutoUpdateInterval": "Auto Update Interval",
+  "geoAutoUpdateIntervalTip": "Auto update interval must be greater than 0",
+  "hours": "hours",
+  "hoursCount": "{count} hours",
+  "geoResources": "Geo Resources",
+  "geoUpdating": "Updating {name}...",
+  "geoSkipped": "{name} skipped",
+  "geoUpdated": "{name} updated",
+  "secondsCount": "{count} seconds",
+  "entriesCount": "{count} entries"
 }

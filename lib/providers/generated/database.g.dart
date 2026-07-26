@@ -449,7 +449,7 @@ final class GlobalRulesProvider
   GlobalRules create() => GlobalRules();
 }
 
-String _$globalRulesHash() => r'e33b4dba9ea04a778edaee0bc853e62b369b85c3';
+String _$globalRulesHash() => r'209223171050c7d26de48537f8ff4f14d6fe5b1d';
 
 abstract class _$GlobalRules extends $StreamNotifier<List<Rule>> {
   Stream<List<Rule>> build();
@@ -510,7 +510,7 @@ final class ProfileAddedRulesProvider
   }
 }
 
-String _$profileAddedRulesHash() => r'40f840ba1f4c91f4d69ea479659ea3ccd9d0a1a8';
+String _$profileAddedRulesHash() => r'eae5aef723d5fa858c35a530bca21aa0f80f00ad';
 
 final class ProfileAddedRulesFamily extends $Family
     with
@@ -600,7 +600,7 @@ final class ProfileCustomRulesProvider
 }
 
 String _$profileCustomRulesHash() =>
-    r'2f33ec51fcad7e3c4699bc411f103357e4036d75';
+    r'89a8547b746e4c4ff0b1f5ac2dd0b573d1e5892e';
 
 final class ProfileCustomRulesFamily extends $Family
     with
@@ -689,7 +689,7 @@ final class ProxyGroupsProvider
   }
 }
 
-String _$proxyGroupsHash() => r'36e84f77389c58f69d2d774a15adf02fc4cf1f9c';
+String _$proxyGroupsHash() => r'78aa494f41c48600612d1376e1f4a931e8a21aef';
 
 final class ProxyGroupsFamily extends $Family
     with

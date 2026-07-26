@@ -133,6 +133,7 @@
   "app": "应用",
   "general": "常规",
   "systemProxyDesc": "设置系统代理",
+  "userAgent": "用户代理",
   "unifiedDelay": "统一延迟",
   "unifiedDelayDesc": "去除握手等额外延迟",
   "tcpConcurrent": "TCP并发",
@@ -787,5 +788,17 @@
   "localProxySshAuthEmpty": "SSH 密码或私钥至少填写一项",
   "localProxySshPassphraseWithoutKey": "使用私钥口令时必须提供私钥",
   "localProxyTlsKeyPairRequired": "证书和私钥必须同时提供",
-  "localProxyProtocolReimportOnly": "该协议仅支持重新导入，不支持手动编辑"
+  "localProxyProtocolReimportOnly": "该协议仅支持重新导入，不支持手动编辑",
+  "geoOptions": "Geo 选项",
+  "geoAutoUpdate": "自动更新",
+  "geoAutoUpdateInterval": "自动更新间隔",
+  "geoAutoUpdateIntervalTip": "自动更新间隔必须大于0",
+  "hours": "小时",
+  "hoursCount": "{count} 小时",
+  "geoResources": "Geo 资源",
+  "geoUpdating": "正在更新 {name}...",
+  "geoSkipped": "{name} 已跳过",
+  "geoUpdated": "{name} 已更新",
+  "secondsCount": "{count} 秒",
+  "entriesCount": "{count} 个条目"
 }

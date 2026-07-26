@@ -110,7 +110,7 @@ class ProviderItem extends StatelessWidget {
     final count = provider.count;
     return switch (count == 0) {
       true => baseInfo,
-      false => '$baseInfo  ·  $count${context.appLocalizations.entries}',
+      false => '$baseInfo  ·  ${context.appLocalizations.entriesCount(count)}',
     };
   }
 

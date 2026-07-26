@@ -139,9 +139,7 @@ class _EditProxyProvidersViewState extends ConsumerState<EditProxyProvidersView>
 
   void _handleReorder(int oldIndex, int newIndex) {
     ref.read(proxyGroupProvider.notifier).update((state) {
-      final nextItems = List<String>.from(state.use ?? []);
-      final item = nextItems.removeAt(oldIndex);
-      nextItems.insert(newIndex, item);
+      final nextItems = (state.use ?? []).copyAndReorder(oldIndex, newIndex);
       return state.copyWith(use: nextItems);
     });
   }

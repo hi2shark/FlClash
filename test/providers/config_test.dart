@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -109,6 +110,18 @@ void main() {
     test('default is null', () {
       expect(container.read(davSettingProvider), null);
     });
+
+    test('can update WebDAV settings', () {
+      const davProps = DAVProps(
+        uri: 'https://dav.example.com',
+        user: 'user',
+        password: 'password',
+      );
+
+      container.read(davSettingProvider.notifier).update((_) => davProps);
+
+      expect(container.read(davSettingProvider), davProps);
+    });
   });
 
   group('OverrideDns provider', () {
@@ -122,9 +135,42 @@ void main() {
     });
   });
 
+  group('ExcludeSSIDs provider', () {
+    test('reorders with final insertion index semantics', () {
+      container
+          .read(excludeSSIDsProvider.notifier)
+          .update((_) => ['Home', 'Office', 'Cafe', 'Hotel']);
+
+      container.read(excludeSSIDsProvider.notifier).update((value) {
+        return value.copyAndReorder(1, 3);
+      });
+
+      expect(container.read(excludeSSIDsProvider), [
+        'Home',
+        'Cafe',
+        'Hotel',
+        'Office',
+      ]);
+    });
+  });
+
   group('HotKeyActions provider', () {
     test('default is empty list', () {
       expect(container.read(hotKeyActionsProvider), isEmpty);
+    });
+
+    test('can update hotkey actions', () {
+      const actions = [
+        HotKeyAction(
+          action: HotAction.start,
+          key: 1,
+          modifiers: {KeyboardModifier.control},
+        ),
+      ];
+
+      container.read(hotKeyActionsProvider.notifier).update((_) => actions);
+
+      expect(container.read(hotKeyActionsProvider), actions);
     });
   });
 
@@ -168,17 +214,27 @@ void main() {
       expect(config.overrideDns, false);
       expect(config.hotKeyActions, isEmpty);
       expect(config.onDemandEnabled, true);
+      expect(config.patchClashConfig, const PatchClashConfig());
+      expect(config.excludeSSIDs, isEmpty);
     });
 
     test('reflects updated sub-provider values', () {
       container.read(currentProfileIdProvider.notifier).update((_) => 99);
       container.read(overrideDnsProvider.notifier).update((_) => true);
       container.read(onDemandEnabledProvider.notifier).update((_) => false);
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update((_) => const PatchClashConfig(mixedPort: 7890));
+      container
+          .read(excludeSSIDsProvider.notifier)
+          .update((_) => ['Office Wi-Fi']);
 
       final config = container.read(configProvider);
       expect(config.currentProfileId, 99);
       expect(config.overrideDns, true);
       expect(config.onDemandEnabled, false);
+      expect(config.patchClashConfig.mixedPort, 7890);
+      expect(config.excludeSSIDs, ['Office Wi-Fi']);
     });
   });
 
@@ -199,6 +255,11 @@ void main() {
       expect(overrideContainer.read(overrideDnsProvider), true);
       expect(overrideContainer.read(onDemandEnabledProvider), true);
       expect(overrideContainer.read(unlockTestSettingProvider).enable, false);
+      expect(
+        overrideContainer.read(patchClashConfigProvider),
+        config.patchClashConfig,
+      );
+      expect(overrideContainer.read(excludeSSIDsProvider), config.excludeSSIDs);
       expect(
         overrideContainer.read(appSettingProvider).onlyStatisticsProxy,
         false,

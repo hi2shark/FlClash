@@ -8,9 +8,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 class Picker {
   Future<PlatformFile?> pickerFile() async {
-    return FilePicker.pickFile(
-      initialDirectory: await appPath.downloadDirPath,
-    );
+    return FilePicker.pickFile(initialDirectory: await appPath.downloadDirPath);
   }
 
   Future<String?> saveFile(String fileName, Uint8List bytes) async {
@@ -59,10 +57,10 @@ class Picker {
   }
 }
 
-final picker = Picker();
-
 extension PlatformFileExt on PlatformFile {
   Future<Uint8List> readBytes() {
     return readAsBytes();
   }
 }
+
+final picker = Picker();
