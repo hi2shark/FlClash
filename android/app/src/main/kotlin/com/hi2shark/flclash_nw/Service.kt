@@ -172,7 +172,7 @@ object Service {
 
 
     suspend fun startService(options: VpnOptions, runTime: Long): Long {
-        return delegate.useService {
+        return delegate.useService(timeoutMillis = 15000) {
             awaitIResultInterface { callback ->
                 it.startService(options, runTime, callback)
             }
@@ -180,7 +180,7 @@ object Service {
     }
 
     suspend fun stopService(): Long {
-        return delegate.useService {
+        return delegate.useService(timeoutMillis = 15000) {
             awaitIResultInterface { callback ->
                 it.stopService(callback)
             }

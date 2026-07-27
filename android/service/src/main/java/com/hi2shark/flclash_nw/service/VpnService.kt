@@ -185,6 +185,31 @@ class VpnService : SystemVpnService(), IBaseService,
         return binder
     }
 
+    private fun Builder.establishWithRetry(
+        maxAttempts: Int = 3,
+        retryDelayMillis: Long = 300,
+    ): Int {
+        repeat(maxAttempts) { attempt ->
+            if (attempt > 0) {
+                // The system may still be tearing down a previous VPN
+                // interface (rapid stop/start, core restart); give it a
+                // moment before retrying instead of failing immediately.
+                Thread.sleep(retryDelayMillis)
+            }
+            val fd = try {
+                establish()?.detachFd()
+            } catch (e: Exception) {
+                GlobalState.log("VpnService establish attempt ${attempt + 1} exception $e")
+                null
+            }
+            if (fd != null) {
+                return fd
+            }
+            GlobalState.log("VpnService establish attempt ${attempt + 1} rejected by system")
+        }
+        throw NullPointerException("Establish VPN rejected by system")
+    }
+
     private fun handleStart(options: VpnOptions) {
         val fd = with(Builder()) {
             val cidr = IPV4_ADDRESS.toCIDR()
@@ -281,8 +306,7 @@ class VpnService : SystemVpnService(), IBaseService,
                     )
                 )
             }
-            establish()?.detachFd()
-                ?: throw NullPointerException("Establish VPN rejected by system")
+            establishWithRetry()
         }
         Core.startTun(
             fd,

@@ -274,7 +274,7 @@ class SetupAction extends _$SetupAction {
   Future<bool> applyProfile({
     bool silence = false,
     bool force = false,
-    VoidCallback? preloadInvoke,
+    Future<void> Function()? preloadInvoke,
   }) {
     return _setupConfig(
       force: force,
@@ -380,7 +380,7 @@ class SetupAction extends _$SetupAction {
   Future<bool> _setupConfig({
     bool force = false,
     bool silence = false,
-    VoidCallback? preloadInvoke,
+    Future<void> Function()? preloadInvoke,
     FutureOr Function()? onUpdated,
   }) async {
     var profile = ref.read(currentProfileProvider);
@@ -548,10 +548,18 @@ class CoreAction extends _$CoreAction {
     final isDisconnected =
         ref.read(coreStatusProvider) == CoreStatus.disconnected;
     ref.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    final needStart = start || ref.read(isStartProvider);
+    if (needStart && system.isAndroid && coreController.isCompleted) {
+      // On Android, shutdown() only unbinds from RemoteService — the VPN
+      // service keeps running in :remote. Stop it first so the restart
+      // below begins from a clean STOP state; otherwise the native side
+      // keeps reporting START and every later start attempt is rejected.
+      await ref.read(setupActionProvider.notifier).handleStop();
+    }
     await coreController.shutdown(!isDisconnected);
     await connectCore();
     await initCore();
-    if (start || ref.read(isStartProvider)) {
+    if (needStart) {
       await ref
           .read(setupActionProvider.notifier)
           .updateStatus(true, isInit: true);

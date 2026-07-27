@@ -198,8 +198,23 @@ object State {
 
     private suspend fun startService(): Boolean {
         return runLock.withLock {
-            if (runStateFlow.value != RunState.STOP) {
-                return@withLock false
+            when (runStateFlow.value) {
+                RunState.PENDING -> return@withLock false
+                RunState.START -> {
+                    // The VPN service may genuinely be running in :remote (it
+                    // survives core restarts, which only unbind RemoteService).
+                    // Treat start as idempotent: reconcile with the service
+                    // instead of rejecting the call, otherwise the UI deadlocks
+                    // in "stopped" while the tunnel is actually up.
+                    val currentRunTime = Service.getRunTime()
+                    if (currentRunTime != 0L) {
+                        runTime = currentRunTime
+                        return@withLock true
+                    }
+                    runStateFlow.tryEmit(RunState.STOP)
+                }
+
+                RunState.STOP -> Unit
             }
             try {
                 runStateFlow.tryEmit(RunState.PENDING)
@@ -211,9 +226,14 @@ object State {
                 if (!prepared) {
                     return@withLock false
                 }
-                val nextRunTime = Service.startService(options, runTime)
+                var nextRunTime = Service.startService(options, runTime)
                 if (nextRunTime == 0L) {
-                    return@withLock false
+                    // The AIDL round trip may have timed out while the service
+                    // actually started. Reconcile before declaring failure.
+                    nextRunTime = Service.getRunTime()
+                    if (nextRunTime == 0L) {
+                        return@withLock false
+                    }
                 }
                 runTime = nextRunTime
                 runStateFlow.tryEmit(RunState.START)
