@@ -58,8 +58,18 @@ void main() {
       expect(utils.getTimeText(3661000), '01:01:01');
     });
 
-    test('caps at 99:59:59', () {
-      expect(utils.getTimeText(100 * 3600 * 1000), '99:59:59');
+    test('keeps HH:MM:SS just under 24 hours', () {
+      expect(utils.getTimeText(23 * 3600 * 1000 + 59 * 60 * 1000), '23:59:00');
+    });
+
+    test('formats 24 hours as days and hours', () {
+      expect(utils.getTimeText(24 * 3600 * 1000), '1 d 0 h');
+    });
+
+    test('formats multi-day runtime', () {
+      expect(utils.getTimeText(25 * 3600 * 1000), '1 d 1 h');
+      expect(utils.getTimeText(48 * 3600 * 1000), '2 d 0 h');
+      expect(utils.getTimeText(100 * 3600 * 1000), '4 d 4 h');
     });
   });
 

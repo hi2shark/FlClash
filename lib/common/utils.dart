@@ -91,8 +91,10 @@ class Utils {
     }
     final diff = timeStamp / 1000;
     final inHours = (diff / 3600).floor();
-    if (inHours > 99) {
-      return '99:59:59';
+    if (inHours >= 24) {
+      final days = inHours ~/ 24;
+      final hours = inHours % 24;
+      return '$days d $hours h';
     }
     final inMinutes = (diff / 60 % 60).floor();
     final inSeconds = (diff % 60).floor();
