@@ -97,10 +97,16 @@ void main() {
       expect(list, [1, 2, 3]);
     });
 
-    test('does nothing when maxLength is 0', () {
+    test('clears when maxLength is 0', () {
       final list = [1, 2, 3];
       list.truncate(0);
-      expect(list, [1, 2, 3]);
+      expect(list, isEmpty);
+    });
+
+    test('clears when maxLength is negative', () {
+      final list = [1, 2, 3];
+      list.truncate(-1);
+      expect(list, isEmpty);
     });
   });
 
