@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/fixed.dart';
+import 'package:fl_clash/common/iterable.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -18,6 +19,13 @@ void main() {
       expect(list.list, [2, 3, 4]);
     });
 
+    test('maxLength <= 0 keeps list empty', () {
+      final list = FixedList(0, list: [1, 2, 3]);
+      expect(list.length, 0);
+      list.add(4);
+      expect(list.length, 0);
+    });
+
     test('clear empties the list', () {
       final list = FixedList(3, list: [1, 2, 3]);
       list.clear();
@@ -33,6 +41,25 @@ void main() {
       expect(copy.list, [2, 3, 4]);
     });
 
+    test('share reuses backing storage without element copy', () {
+      final original = FixedList(3, list: [1, 2]);
+      final shared = original.share();
+      original.add(3);
+      expect(shared.list, [1, 2, 3]);
+      expect(identical(original.list, shared.list), isFalse);
+      expect(shared.length, 3);
+    });
+
+    test('high-frequency add stays within capacity', () {
+      final list = FixedList(500);
+      for (var i = 0; i < 2000; i++) {
+        list.add(i);
+      }
+      expect(list.length, 500);
+      expect(list[0], 1500);
+      expect(list[499], 1999);
+    });
+
     test('operator [] returns correct element', () {
       final list = FixedList(5, list: [10, 20, 30]);
       expect(list[0], 10);
@@ -43,6 +70,17 @@ void main() {
       final list = FixedList(3, list: [1, 2, 3]);
       final view = list.list;
       expect(() => view.add(4), throwsA(isA<UnsupportedError>()));
+    });
+  });
+
+  group('List.truncate', () {
+    test('maxLength <= 0 clears the list', () {
+      final list = [1, 2, 3];
+      list.truncate(0);
+      expect(list, isEmpty);
+      list.addAll([4, 5]);
+      list.truncate(-1);
+      expect(list, isEmpty);
     });
   });
 
@@ -76,6 +114,12 @@ void main() {
       expect(map.length, 3);
       expect(map.containsKey(1), isFalse);
       expect(map.containsKey(4), isTrue);
+    });
+
+    test('maxLength <= 0 clears map', () {
+      final map = FixedMap<String, int>(0);
+      map.updateCacheValue('a', () => 1);
+      expect(map.length, 0);
     });
 
     test('clear empties the map', () {

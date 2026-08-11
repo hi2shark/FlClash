@@ -81,8 +81,8 @@ type ExternalProvider struct {
 }
 
 type ProxiesData struct {
-	Proxies map[string]constant.Proxy `json:"proxies"`
-	All     []string                  `json:"all"`
+	Proxies map[string]any `json:"proxies"`
+	All     []string       `json:"all"`
 }
 
 const (
@@ -116,6 +116,8 @@ const (
 	sideLoadExternalProviderMethod Method = "sideLoadExternalProvider"
 	startLogMethod                 Method = "startLog"
 	stopLogMethod                  Method = "stopLog"
+	startRequestNotifyMethod       Method = "startRequestNotify"
+	stopRequestNotifyMethod        Method = "stopRequestNotify"
 	startListenerMethod            Method = "startListener"
 	stopListenerMethod             Method = "stopListener"
 	updateDnsMethod                Method = "updateDns"

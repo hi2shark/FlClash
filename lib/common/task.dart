@@ -48,6 +48,10 @@ Future<String> _encodeMD5<T>(String content) async {
 }
 
 Future<List<Group>> toGroupsTask(ComputeGroupsState data) async {
+  // Avoid isolate copy for moderate lists; large payloads still offload.
+  if (data.proxiesData.proxies.length < 400) {
+    return _toGroupsTask(data);
+  }
   return compute<ComputeGroupsState, List<Group>>(_toGroupsTask, data);
 }
 

@@ -147,6 +147,8 @@
   "infiniteTime": "長期有効",
   "connections": "接続",
   "connectionsDesc": "現在の接続データを表示",
+  "connectionsShowAll": "すべての接続を表示",
+  "connectionsLimitDisplay": "表示する接続数を制限",
   "intranetIP": "イントラネットIP",
   "view": "表示",
   "cut": "切り取り",

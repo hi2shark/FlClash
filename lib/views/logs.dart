@@ -140,18 +140,6 @@ class _LogsViewState extends ConsumerState<LogsView> {
               label: appLocalizations.nullTip(appLocalizations.logs),
             );
           }
-          final items = logs
-              .map<Widget>(
-                (log) => LogItem(
-                  key: Key(log.dateTime),
-                  log: log,
-                  onClick: (value) {
-                    context.commonScaffoldState?.addKeyword(value);
-                  },
-                ),
-              )
-              .separated(const Divider(height: 0))
-              .toList();
           return Align(
             alignment: Alignment.topCenter,
             child: ScrollToEndBox(
@@ -168,12 +156,25 @@ class _LogsViewState extends ConsumerState<LogsView> {
                 child: SuperListView.builder(
                   physics: const NextClampingScrollPhysics(),
                   reverse: true,
-                  shrinkWrap: true,
                   controller: _scrollController,
                   itemBuilder: (_, index) {
-                    return items[index];
+                    final log = logs[index];
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        LogItem(
+                          key: Key(log.dateTime),
+                          log: log,
+                          onClick: (value) {
+                            context.commonScaffoldState?.addKeyword(value);
+                          },
+                        ),
+                        if (index < logs.length - 1)
+                          const Divider(height: 0),
+                      ],
+                    );
                   },
-                  itemCount: items.length,
+                  itemCount: logs.length,
                 ),
               ),
             ),

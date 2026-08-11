@@ -41,6 +41,7 @@ var (
 	debugError    = false
 	isAndroid     = runtime.GOOS == "android"
 	testURL       = constant.DefaultTestURL
+	proxyNameListCache []string
 )
 
 func getExternalProvidersRaw() map[string]cp.Provider {
@@ -59,6 +60,9 @@ func getExternalProvidersRaw() map[string]cp.Provider {
 }
 
 func getProxyNameList() []string {
+	if proxyNameListCache != nil {
+		return proxyNameListCache
+	}
 	buf, err := readFile(filepath.Join(constant.Path.HomeDir(), "config.yaml"))
 	if err != nil {
 		return nil
@@ -78,6 +82,7 @@ func getProxyNameList() []string {
 			names = append(names, name)
 		}
 	}
+	proxyNameListCache = names
 	return names
 }
 
@@ -280,6 +285,7 @@ func applyConfig(params *SetupParams) error {
 	defer runLock.Unlock()
 	var err error
 	testURL = params.TestURL
+	proxyNameListCache = nil
 	currentConfig, err = executor.ParseWithPath(filepath.Join(constant.Path.HomeDir(), "config.yaml"))
 	if err != nil {
 		currentConfig, _ = config.ParseRawConfig(config.DefaultRawConfig())

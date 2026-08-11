@@ -2,21 +2,37 @@ import 'iterable.dart';
 
 typedef ValueCallback<T> = T Function();
 
+/// Bounded list that mutates in place. Use [share] after mutation to obtain a
+/// new wrapper (same backing storage) so Riverpod can notify listeners without
+/// copying every element.
 class FixedList<T> {
   final int maxLength;
   final List<T> _list;
 
   FixedList(this.maxLength, {List<T>? list})
-    : _list = (list ?? [])..truncate(maxLength);
+    : _list = List<T>.of(list ?? const []) {
+    _list.truncate(maxLength);
+  }
+
+  FixedList._share(this.maxLength, this._list);
 
   void add(T item) {
+    if (maxLength <= 0) {
+      _list.clear();
+      return;
+    }
     _list.add(item);
-    _list.truncate(maxLength);
+    if (_list.length > maxLength) {
+      _list.removeRange(0, _list.length - maxLength);
+    }
   }
 
   void clear() {
     _list.clear();
   }
+
+  /// New [FixedList] wrapping the same buffer (no element copy).
+  FixedList<T> share() => FixedList._share(maxLength, _list);
 
   List<T> get list => List.unmodifiable(_list);
 
@@ -35,6 +51,7 @@ class FixedMap<K, V> {
 
   FixedMap(this.maxLength, {Map<K, V>? map}) {
     _map = map ?? {};
+    _adjustMap();
   }
 
   V updateCacheValue(K key, ValueCallback<V> callback) {
@@ -58,6 +75,10 @@ class FixedMap<K, V> {
   }
 
   void _adjustMap() {
+    if (maxLength <= 0) {
+      _map.clear();
+      return;
+    }
     if (_map.length > maxLength) {
       _map = Map.fromEntries(map.entries.toList()..truncate(maxLength));
     }

@@ -20,20 +20,11 @@ GroupsState currentGroupsState(Ref ref) {
   final mode = ref.watch(
     patchClashConfigProvider.select((state) => state.mode),
   );
-  final groups = ref.watch(
-    groupsProvider.select(
-      (state) => state.map((item) {
-        return item.copyWith(
-          now: '',
-          all: item.all.map((proxy) => proxy.copyWith(now: '')).toList(),
-        );
-      }),
-    ),
-  );
+  final groups = ref.watch(groupsProvider);
   return GroupsState(
     value: switch (mode) {
-      Mode.direct => [],
-      Mode.global => groups.toList(),
+      Mode.direct => const [],
+      Mode.global => groups,
       Mode.rule =>
         groups
             .where((item) => item.hidden == false)
@@ -508,9 +499,12 @@ String proxyDesc(Ref ref, Proxy proxy) {
   if (!groupTypeNamesList.contains(proxy.type)) {
     return proxy.type;
   } else {
-    final groups = ref.watch(groupsProvider);
-    final index = groups.indexWhere((element) => element.name == proxy.name);
-    if (index == -1) return proxy.type;
+    final isGroup = ref.watch(
+      groupsProvider.select(
+        (state) => state.any((element) => element.name == proxy.name),
+      ),
+    );
+    if (!isGroup) return proxy.type;
     final state = ref.watch(realSelectedProxyStateProvider(proxy.name));
     return "${proxy.type}(${state.proxyName.isNotEmpty ? state.proxyName : '*'})";
   }

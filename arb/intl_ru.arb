@@ -147,6 +147,8 @@
   "infiniteTime": "Долгосрочное действие",
   "connections": "Соединения",
   "connectionsDesc": "Просмотр текущих данных о соединениях",
+  "connectionsShowAll": "Показать все соединения",
+  "connectionsLimitDisplay": "Ограничить отображаемые соединения",
   "intranetIP": "Внутренний IP",
   "view": "Просмотр",
   "cut": "Вырезать",

@@ -147,6 +147,8 @@
   "infiniteTime": "长期有效",
   "connections": "连接",
   "connectionsDesc": "查看当前连接数据",
+  "connectionsShowAll": "显示全部连接",
+  "connectionsLimitDisplay": "限制显示连接数",
   "intranetIP": "内网 IP",
   "view": "查看",
   "cut": "剪切",

@@ -218,6 +218,10 @@ val Long.formatBytes: String
 fun String.chunkedForAidl(charset: Charset = Charsets.UTF_8): List<ByteArray> {
     val allBytes = toByteArray(charset)
     val total = allBytes.size
+    val maxPayload = 32 * 1024 * 1024
+    if (total > maxPayload) {
+        throw IllegalArgumentException("AIDL payload too large: $total")
+    }
     val maxBytes = when {
         total <= 100 * 1024 -> total
         total <= 1024 * 1024 -> 64 * 1024

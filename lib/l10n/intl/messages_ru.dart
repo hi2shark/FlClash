@@ -305,6 +305,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "connectionsDesc": MessageLookupByLibrary.simpleMessage(
       "Просмотр текущих данных о соединениях",
     ),
+    "connectionsLimitDisplay": MessageLookupByLibrary.simpleMessage(
+      "Ограничить отображаемые соединения",
+    ),
+    "connectionsShowAll": MessageLookupByLibrary.simpleMessage(
+      "Показать все соединения",
+    ),
     "connectivity": MessageLookupByLibrary.simpleMessage("Связь："),
     "content": MessageLookupByLibrary.simpleMessage("Содержание"),
     "contentNotEmpty": MessageLookupByLibrary.simpleMessage(

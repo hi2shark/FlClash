@@ -1159,6 +1159,26 @@ class AppLocalizations {
     );
   }
 
+  /// `Show all connections`
+  String get connectionsShowAll {
+    return Intl.message(
+      'Show all connections',
+      name: 'connectionsShowAll',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Limit displayed connections`
+  String get connectionsLimitDisplay {
+    return Intl.message(
+      'Limit displayed connections',
+      name: 'connectionsLimitDisplay',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Intranet IP`
   String get intranetIP {
     return Intl.message('Intranet IP', name: 'intranetIP', desc: '', args: []);

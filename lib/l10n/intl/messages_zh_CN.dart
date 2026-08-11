@@ -213,6 +213,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "connection": MessageLookupByLibrary.simpleMessage("连接"),
     "connections": MessageLookupByLibrary.simpleMessage("连接"),
     "connectionsDesc": MessageLookupByLibrary.simpleMessage("查看当前连接数据"),
+    "connectionsLimitDisplay": MessageLookupByLibrary.simpleMessage("限制显示连接数"),
+    "connectionsShowAll": MessageLookupByLibrary.simpleMessage("显示全部连接"),
     "connectivity": MessageLookupByLibrary.simpleMessage("连通性："),
     "content": MessageLookupByLibrary.simpleMessage("内容"),
     "contentNotEmpty": MessageLookupByLibrary.simpleMessage("内容不能为空"),

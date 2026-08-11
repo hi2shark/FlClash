@@ -297,6 +297,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "connectionsDesc": MessageLookupByLibrary.simpleMessage(
       "View current connections data",
     ),
+    "connectionsLimitDisplay": MessageLookupByLibrary.simpleMessage(
+      "Limit displayed connections",
+    ),
+    "connectionsShowAll": MessageLookupByLibrary.simpleMessage(
+      "Show all connections",
+    ),
     "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity："),
     "content": MessageLookupByLibrary.simpleMessage("Content"),
     "contentNotEmpty": MessageLookupByLibrary.simpleMessage(

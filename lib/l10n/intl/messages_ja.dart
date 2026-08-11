@@ -235,6 +235,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "connection": MessageLookupByLibrary.simpleMessage("接続"),
     "connections": MessageLookupByLibrary.simpleMessage("接続"),
     "connectionsDesc": MessageLookupByLibrary.simpleMessage("現在の接続データを表示"),
+    "connectionsLimitDisplay": MessageLookupByLibrary.simpleMessage("表示する接続数を制限"),
+    "connectionsShowAll": MessageLookupByLibrary.simpleMessage("すべての接続を表示"),
     "connectivity": MessageLookupByLibrary.simpleMessage("接続性："),
     "content": MessageLookupByLibrary.simpleMessage("内容"),
     "contentNotEmpty": MessageLookupByLibrary.simpleMessage("内容は空にできません"),

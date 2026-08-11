@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -43,6 +44,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
     _requestsStateNotifier.value = _requestsStateNotifier.value.copyWith(
       trackerInfos: _requests,
     );
+    coreController.startRequestNotify();
     ref.listenManual(requestsProvider.select((state) => VM(state.list)), (
       prev,
       next,
@@ -54,6 +56,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
 
   @override
   void dispose() {
+    coreController.stopRequestNotify();
     _requestsStateNotifier.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -118,21 +121,6 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
               label: appLocalizations.nullTip(appLocalizations.requests),
             );
           }
-          final items = requests
-              .map<Widget>(
-                (trackerInfo) => TrackerInfoItem(
-                  key: Key(trackerInfo.id),
-                  trackerInfo: trackerInfo,
-                  onClickKeyword: (value) {
-                    context.commonScaffoldState?.addKeyword(value);
-                  },
-                  detailTitle: appLocalizations.details(
-                    appLocalizations.request,
-                  ),
-                ),
-              )
-              .separated(const Divider(height: 0))
-              .toList();
           return Align(
             alignment: Alignment.topCenter,
             child: CommonScrollBar(
@@ -148,13 +136,29 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
                 },
                 child: SuperListView.builder(
                   reverse: true,
-                  shrinkWrap: true,
                   physics: const NextClampingScrollPhysics(),
                   controller: _scrollController,
                   itemBuilder: (_, index) {
-                    return items[index];
+                    final trackerInfo = requests[index];
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TrackerInfoItem(
+                          key: Key(trackerInfo.id),
+                          trackerInfo: trackerInfo,
+                          onClickKeyword: (value) {
+                            context.commonScaffoldState?.addKeyword(value);
+                          },
+                          detailTitle: appLocalizations.details(
+                            appLocalizations.request,
+                          ),
+                        ),
+                        if (index < requests.length - 1)
+                          const Divider(height: 0),
+                      ],
+                    );
                   },
-                  itemCount: items.length,
+                  itemCount: requests.length,
                 ),
               ),
             ),

@@ -182,7 +182,15 @@ pub fn send_ipc_message(data: Vec<u8>) -> Result<(), String> {
         .map_err(|e| format!("Failed to send: {e}"))
 }
 
+const MAX_FRAME_LEN: usize = 32 * 1024 * 1024; // 32 MiB
+
 fn write_frame(mut writer: impl Write, data: &[u8]) -> io::Result<()> {
+    if data.len() > MAX_FRAME_LEN {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("ipc frame too large: {}", data.len()),
+        ));
+    }
     let len = data.len() as u32;
     writer.write_all(&len.to_le_bytes())?;
     writer.write_all(data)?;
@@ -193,6 +201,12 @@ fn read_frame(mut reader: impl Read) -> io::Result<Vec<u8>> {
     let mut len_buf = [0u8; 4];
     reader.read_exact(&mut len_buf)?;
     let len = u32::from_le_bytes(len_buf) as usize;
+    if len > MAX_FRAME_LEN {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("ipc frame too large: {len}"),
+        ));
+    }
     let mut payload = vec![0u8; len];
     reader.read_exact(&mut payload)?;
     Ok(payload)

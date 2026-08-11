@@ -20,6 +20,7 @@ class Navigation {
             const DashboardView(key: GlobalObjectKey(PageLabel.dashboard)),
       ),
       NavigationItem(
+        keep: false,
         icon: const Icon(Icons.article),
         label: PageLabel.proxies,
         builder: (_) =>
@@ -35,6 +36,7 @@ class Navigation {
             const ProfilesView(key: GlobalObjectKey(PageLabel.profiles)),
       ),
       NavigationItem(
+        keep: false,
         icon: const Icon(Icons.view_timeline),
         label: PageLabel.requests,
         builder: (_) =>
@@ -43,6 +45,7 @@ class Navigation {
         modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       NavigationItem(
+        keep: false,
         icon: const Icon(Icons.ballot),
         label: PageLabel.connections,
         builder: (_) =>
@@ -94,6 +97,7 @@ class Navigation {
         modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       NavigationItem(
+        keep: false,
         icon: const Icon(Icons.adb),
         label: PageLabel.logs,
         builder: (_) => const LogsView(key: GlobalObjectKey(PageLabel.logs)),

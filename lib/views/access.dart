@@ -44,6 +44,10 @@ class _AccessViewState extends ConsumerState<AccessView> {
   @override
   void dispose() {
     _controller.dispose();
+    // Release full package list when leaving Access page.
+    try {
+      globalState.container.read(packagesProvider.notifier).value = [];
+    } catch (_) {}
     super.dispose();
   }
 

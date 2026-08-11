@@ -46,14 +46,15 @@ class AndroidServiceSuspended extends _$AndroidServiceSuspended
 class Logs extends _$Logs with AutoDisposeNotifierMixin {
   @override
   FixedList<Log> build() {
-    return FixedList(0);
+    return FixedList(maxLength);
   }
 
   void add(Log value) {
     if (!ref.mounted) {
       return;
     }
-    this.value = state.copyWith()..add(value);
+    state.add(value);
+    this.value = state.share();
   }
 
   Future<bool> exportLogs() async {
@@ -71,11 +72,12 @@ class Logs extends _$Logs with AutoDisposeNotifierMixin {
 class Requests extends _$Requests with AutoDisposeNotifierMixin {
   @override
   FixedList<TrackerInfo> build() {
-    return FixedList(0);
+    return FixedList(maxLength);
   }
 
   void addRequest(TrackerInfo value) {
-    this.value = state.copyWith()..add(value);
+    state.add(value);
+    this.value = state.share();
   }
 }
 
@@ -120,15 +122,17 @@ class SystemBrightness extends _$SystemBrightness
 class Traffics extends _$Traffics with AutoDisposeNotifierMixin {
   @override
   FixedList<Traffic> build() {
-    return FixedList(0);
+    return FixedList(30);
   }
 
   void addTraffic(Traffic value) {
-    this.value = state.copyWith()..add(value);
+    state.add(value);
+    this.value = state.share();
   }
 
   void clear() {
-    value = state.copyWith()..clear();
+    state.clear();
+    value = state.share();
   }
 }
 
@@ -271,20 +275,49 @@ class Groups extends _$Groups with AutoDisposeNotifierMixin {
 
 @Riverpod(keepAlive: true)
 class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
+  static const int _maxUrlBuckets = 3;
+
   @override
   DelayMap build() {
     return {};
   }
 
   void setDelay(Delay delay) {
-    if (state[delay.url]?[delay.name] != delay.value) {
-      final DelayMap newDelayMap = Map.from(state);
-      if (newDelayMap[delay.url] == null) {
-        newDelayMap[delay.url] = {};
-      }
-      newDelayMap[delay.url]![delay.name] = delay.value;
-      value = newDelayMap;
+    if (state[delay.url]?[delay.name] == delay.value) {
+      return;
     }
+    final DelayMap newDelayMap = Map<String, Map<String, int?>>.from(
+      state.map(
+        (key, value) => MapEntry(key, Map<String, int?>.from(value)),
+      ),
+    );
+    final urlBucket = newDelayMap.putIfAbsent(
+      delay.url,
+      () => <String, int?>{},
+    );
+    urlBucket[delay.name] = delay.value;
+    // Move active URL to the end (LRU/MRU by insertion order).
+    final bucket = newDelayMap.remove(delay.url);
+    if (bucket != null) {
+      newDelayMap[delay.url] = bucket;
+    }
+    if (newDelayMap.length > _maxUrlBuckets) {
+      final protected = <String>{delay.url};
+      final defaultTestUrl = ref.read(appSettingProvider).testUrl;
+      if (defaultTestUrl.isNotEmpty) {
+        protected.add(defaultTestUrl);
+      }
+      final keys = newDelayMap.keys.toList();
+      for (final key in keys) {
+        if (newDelayMap.length <= _maxUrlBuckets) {
+          break;
+        }
+        if (!protected.contains(key)) {
+          newDelayMap.remove(key);
+        }
+      }
+    }
+    value = newDelayMap;
   }
 }
 

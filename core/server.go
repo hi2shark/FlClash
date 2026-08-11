@@ -5,6 +5,7 @@ package main
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"sync"
 )
@@ -31,7 +32,12 @@ func sendMessage(message Message) {
 	result.send()
 }
 
+const maxIPCFrameSize = 32 << 20 // 32 MiB
+
 func writeFrame(w io.Writer, data []byte) error {
+	if len(data) > maxIPCFrameSize {
+		return fmt.Errorf("ipc frame too large: %d", len(data))
+	}
 	frame := make([]byte, 4+len(data))
 	binary.LittleEndian.PutUint32(frame, uint32(len(data)))
 	copy(frame[4:], data)
@@ -45,6 +51,9 @@ func readFrame(r io.Reader) ([]byte, error) {
 		return nil, err
 	}
 	length := binary.LittleEndian.Uint32(lenBuf)
+	if int(length) > maxIPCFrameSize {
+		return nil, fmt.Errorf("ipc frame too large: %d", length)
+	}
 	data := make([]byte, length)
 	if _, err := io.ReadFull(r, data); err != nil {
 		return nil, err

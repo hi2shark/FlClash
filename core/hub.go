@@ -25,6 +25,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
+	"sync/atomic"
 	"time"
 )
 
@@ -106,6 +107,14 @@ func handleGetProxies() ProxiesData {
 	hasGlobal := false
 
 	allNames := make([]string, 0, len(nameList)+1)
+	proxiesUI := make(map[string]any, len(proxies))
+
+	for name, proxy := range proxies {
+		if proxy == nil {
+			continue
+		}
+		proxiesUI[name] = slimProxyForUI(proxy)
+	}
 
 	for _, name := range nameList {
 		if name == "GLOBAL" {
@@ -131,8 +140,32 @@ func handleGetProxies() ProxiesData {
 
 	return ProxiesData{
 		All:     allNames,
-		Proxies: proxies,
+		Proxies: proxiesUI,
 	}
+}
+
+// slimProxyForUI builds UI fields without Proxy.MarshalJSON's history/extra remashal.
+func slimProxyForUI(p constant.Proxy) map[string]any {
+	mapping := map[string]any{
+		"name": p.Name(),
+		"type": p.Type().String(),
+	}
+	inner, err := p.Adapter().MarshalJSON()
+	if err != nil {
+		return mapping
+	}
+	adapterMap := map[string]any{}
+	if err := json.Unmarshal(inner, &adapterMap); err != nil {
+		return mapping
+	}
+	for key, value := range adapterMap {
+		if key == "id" {
+			continue
+		}
+		mapping[key] = value
+	}
+	mapping["name"] = p.Name()
+	return mapping
 }
 
 func getProxiesWithProviders() map[string]constant.Proxy {
@@ -448,6 +481,16 @@ func handleStopLog() {
 	}
 }
 
+var requestNotifyEnabled atomic.Bool
+
+func handleStartRequestNotify() {
+	requestNotifyEnabled.Store(true)
+}
+
+func handleStopRequestNotify() {
+	requestNotifyEnabled.Store(false)
+}
+
 func handleGetCountryCode(ip string, fn func(value string)) {
 	go func() {
 		runLock.Lock()
@@ -556,6 +599,9 @@ func init() {
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
 		captureUnlockTestChain(c)
+		if !requestNotifyEnabled.Load() {
+			return
+		}
 		sendMessage(Message{
 			Type: RequestMessage,
 			Data: c,

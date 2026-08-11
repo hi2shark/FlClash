@@ -147,6 +147,8 @@
   "infiniteTime": "Long term effective",
   "connections": "Connections",
   "connectionsDesc": "View current connections data",
+  "connectionsShowAll": "Show all connections",
+  "connectionsLimitDisplay": "Limit displayed connections",
   "intranetIP": "Intranet IP",
   "view": "View",
   "cut": "Cut",

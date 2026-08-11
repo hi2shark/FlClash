@@ -318,6 +318,14 @@ class CoreController {
     _interface.stopLog();
   }
 
+  void startRequestNotify() {
+    _interface.startRequestNotify();
+  }
+
+  void stopRequestNotify() {
+    _interface.stopRequestNotify();
+  }
+
   Future<void> requestGc() async {
     await _interface.forceGc();
   }
