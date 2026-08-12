@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/manager/background_resource_manager.dart';
 import 'package:fl_clash/manager/window_manager.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -92,10 +93,21 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     super.dispose();
   }
 
+  bool _isBackgroundLifecycle(AppLifecycleState state) {
+    return state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        (state == AppLifecycleState.inactive && !system.isDesktop);
+  }
+
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     commonPrint.log('$state');
+    if (_isBackgroundLifecycle(state)) {
+      backgroundResourceManager.enterBackground();
+      return;
+    }
     if (state == AppLifecycleState.resumed) {
+      backgroundResourceManager.leaveBackground();
       permissions.check();
       render?.resume();
       WidgetsBinding.instance.addPostFrameCallback((_) {

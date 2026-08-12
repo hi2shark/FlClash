@@ -82,6 +82,7 @@ const _$DashboardWidgetEnumMap = {
   DashboardWidget.systemProxyButton: 'systemProxyButton',
   DashboardWidget.intranetIp: 'intranetIp',
   DashboardWidget.memoryInfo: 'memoryInfo',
+  DashboardWidget.coreMemoryInfo: 'coreMemoryInfo',
   DashboardWidget.unlockDetection: 'unlockDetection',
 };
 

@@ -9,6 +9,9 @@ import 'package:window_manager/window_manager.dart';
 class Window {
   static Window? _instance;
 
+  VoidCallback? onHide;
+  VoidCallback? onShow;
+
   Window._internal();
 
   factory Window() {
@@ -27,7 +30,7 @@ class Window {
       protocol.register('flclash');
     }
     await windowManager.ensureInitialized();
-    // kDebugMode ? Size(680, 580) :
+    // kReleaseMode ? Size(680, 580) :
     final WindowOptions windowOptions = WindowOptions(
       size: props.size,
       minimumSize: const Size(380, 400),
@@ -71,6 +74,7 @@ class Window {
 
   Future<void> show() async {
     render?.resume();
+    onShow?.call();
     await windowManager.show();
     await windowManager.focus();
     await windowManager.setSkipTaskbar(false);
@@ -92,6 +96,7 @@ class Window {
 
   Future<void> hide() async {
     render?.pause();
+    onHide?.call();
     await windowManager.hide();
     await windowManager.setSkipTaskbar(true);
   }

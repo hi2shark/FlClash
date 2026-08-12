@@ -88,6 +88,15 @@ class CommonService : Service(), IBaseService,
         super.onLowMemory()
     }
 
+    override fun onTrimMemory(level: Int) {
+        if (memoryTrimPolicy.shouldForceGc(level)) {
+            Core.forceGC()
+        }
+        super.onTrimMemory(level)
+    }
+
+    private val memoryTrimPolicy = MemoryTrimPolicy()
+
     private val binder = LocalBinder()
 
     inner class LocalBinder : Binder() {

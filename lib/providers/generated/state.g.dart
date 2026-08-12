@@ -49,7 +49,7 @@ final class CurrentGroupsStateProvider
 }
 
 String _$currentGroupsStateHash() =>
-    r'dbf8f02606a31486c99d7b89d19914cd5a1fc496';
+    r'339f27946d072c2792309a823ff15019b2f1acc1';
 
 @ProviderFor(navigationItemsState)
 final navigationItemsStateProvider = NavigationItemsStateProvider._();
@@ -1799,7 +1799,7 @@ final class ProxyDescProvider
   }
 }
 
-String _$proxyDescHash() => r'16dbf0d090ba4699b1a282d804d1e75a9910696f';
+String _$proxyDescHash() => r'51b5a3954f9de5b50277ae7b05ef9694a1fd42c3';
 
 final class ProxyDescFamily extends $Family
     with $FunctionalFamilyOverride<String, Proxy> {

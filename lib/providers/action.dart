@@ -114,8 +114,11 @@ class CommonAction extends _$CommonAction {
 class SetupAction extends _$SetupAction {
   Timer? _updateTimer;
   DateTime? startTime;
+  bool _pollingPaused = false;
 
   bool get isStart => startTime != null && startTime!.isBeforeNow;
+
+  bool get isPollingPaused => _pollingPaused;
 
   @override
   void build() {}
@@ -136,6 +139,47 @@ class SetupAction extends _$SetupAction {
     ref.read(requestsProvider.notifier).value = FixedList(500);
   }
 
+  Duration get _pollingInterval {
+    if (_pollingPaused &&
+        system.isDesktop &&
+        ref.read(appSettingProvider).showTrayTitle) {
+      return const Duration(seconds: 2);
+    }
+    return const Duration(seconds: 1);
+  }
+
+  void _startPollingTimer() {
+    _updateTimer?.cancel();
+    _updateTimer = Timer.periodic(_pollingInterval, (_) {
+      ref.read(commonActionProvider.notifier).updateRunTime();
+      ref.read(commonActionProvider.notifier).updateTraffic();
+    });
+  }
+
+  void _stopPollingTimer() {
+    _updateTimer?.cancel();
+    _updateTimer = null;
+  }
+
+  /// Pause UI traffic/runtime polling without touching startTime or listener.
+  /// Desktop tray title keeps a reduced 2s interval when enabled.
+  void pausePolling() {
+    if (!isStart) return;
+    _pollingPaused = true;
+    if (system.isDesktop && ref.read(appSettingProvider).showTrayTitle) {
+      _startPollingTimer();
+      return;
+    }
+    _stopPollingTimer();
+  }
+
+  /// Resume full-rate UI polling after returning to foreground.
+  void resumePolling() {
+    _pollingPaused = false;
+    if (!isStart) return;
+    _startPollingTimer();
+  }
+
   Future<bool> _handleStart() async {
     startTime ??= DateTime.now();
     //The local status must be updated when performing the run task
@@ -149,10 +193,8 @@ class SetupAction extends _$SetupAction {
         return false;
       }
     }
-    _updateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      ref.read(commonActionProvider.notifier).updateRunTime();
-      ref.read(commonActionProvider.notifier).updateTraffic();
-    });
+    _pollingPaused = false;
+    _startPollingTimer();
     return true;
   }
 
@@ -162,8 +204,8 @@ class SetupAction extends _$SetupAction {
 
   Future handleStop() async {
     startTime = null;
-    _updateTimer?.cancel();
-    _updateTimer = null;
+    _pollingPaused = false;
+    _stopPollingTimer();
     await coreController.stopListener();
   }
 

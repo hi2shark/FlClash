@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/manager/background_resource_manager.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
@@ -38,8 +39,19 @@ class _WindowContainerState extends ConsumerState<WindowManager>
         });
       }
     });
+    window?.onHide = backgroundResourceManager.enterBackground;
+    window?.onShow = backgroundResourceManager.leaveBackground;
     windowExtManager.addListener(this);
     windowManager.addListener(this);
+  }
+
+  @override
+  Future<void> dispose() async {
+    window?.onHide = null;
+    window?.onShow = null;
+    windowManager.removeListener(this);
+    windowExtManager.removeListener(this);
+    super.dispose();
   }
 
   @override
@@ -87,6 +99,7 @@ class _WindowContainerState extends ConsumerState<WindowManager>
     ref.read(storeActionProvider.notifier).savePreferencesDebounce();
     commonPrint.log('minimize');
     render?.pause();
+    backgroundResourceManager.enterBackground();
     super.onWindowMinimize();
   }
 
@@ -94,14 +107,8 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   void onWindowRestore() {
     commonPrint.log('restore');
     render?.resume();
+    backgroundResourceManager.leaveBackground();
     super.onWindowRestore();
-  }
-
-  @override
-  Future<void> dispose() async {
-    windowManager.removeListener(this);
-    windowExtManager.removeListener(this);
-    super.dispose();
   }
 }
 

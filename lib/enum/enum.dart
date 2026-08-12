@@ -336,6 +336,7 @@ enum DashboardWidget {
   ),
   intranetIp(GridItem(crossAxisCellCount: 4, child: IntranetIP())),
   memoryInfo(GridItem(crossAxisCellCount: 4, child: MemoryInfo())),
+  coreMemoryInfo(GridItem(crossAxisCellCount: 4, child: CoreMemoryInfo())),
   unlockDetection(
     GridItem(
       crossAxisCellCount: 8,

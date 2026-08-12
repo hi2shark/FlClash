@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
@@ -8,16 +7,17 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 
-final _memoryStateNotifier = ValueNotifier<num>(0);
+final _coreMemoryStateNotifier = ValueNotifier<num>(0);
 
-class MemoryInfo extends StatefulWidget {
-  const MemoryInfo({super.key});
+class CoreMemoryInfo extends StatefulWidget {
+  const CoreMemoryInfo({super.key});
 
   @override
-  State<MemoryInfo> createState() => _MemoryInfoState();
+  State<CoreMemoryInfo> createState() => _CoreMemoryInfoState();
 }
 
-class _MemoryInfoState extends State<MemoryInfo> with WidgetsBindingObserver {
+class _CoreMemoryInfoState extends State<CoreMemoryInfo>
+    with WidgetsBindingObserver {
   Timer? timer;
 
   @override
@@ -75,16 +75,15 @@ class _MemoryInfoState extends State<MemoryInfo> with WidgetsBindingObserver {
     if (!mounted || !_shouldPoll) return;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted || !_shouldPoll) return;
-      final rss = ProcessInfo.currentRss;
       try {
         if (coreController.isCompleted) {
-          _memoryStateNotifier.value = await coreController.getMemory() + rss;
+          _coreMemoryStateNotifier.value = await coreController.getMemory();
         } else {
-          _memoryStateNotifier.value = rss;
+          _coreMemoryStateNotifier.value = 0;
         }
       } catch (_) {
         if (!mounted) return;
-        _memoryStateNotifier.value = rss;
+        _coreMemoryStateNotifier.value = 0;
       }
       if (!mounted || !_shouldPoll) return;
       timer = Timer(const Duration(seconds: 2), () {
@@ -101,8 +100,8 @@ class _MemoryInfoState extends State<MemoryInfo> with WidgetsBindingObserver {
       child: RepaintBoundary(
         child: CommonCard(
           info: Info(
-            iconData: Icons.memory,
-            label: appLocalizations.memoryInfo,
+            iconData: Icons.memory_outlined,
+            label: appLocalizations.coreMemoryInfo,
           ),
           onPressed: () {
             coreController.requestGc();
@@ -117,7 +116,7 @@ class _MemoryInfoState extends State<MemoryInfo> with WidgetsBindingObserver {
                 SizedBox(
                   height: globalState.measure.bodyMediumHeight + 2,
                   child: ValueListenableBuilder(
-                    valueListenable: _memoryStateNotifier,
+                    valueListenable: _coreMemoryStateNotifier,
                     builder: (_, memory, _) {
                       final traffic = memory.traffic;
                       return Row(

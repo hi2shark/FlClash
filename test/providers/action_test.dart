@@ -4,6 +4,7 @@ import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
 
@@ -59,6 +60,42 @@ void main() {
 
       container.read(isUpdatingProvider(key).notifier).value = false;
       expect(container.read(isUpdatingProvider(key)), false);
+    });
+  });
+
+  group('SetupAction polling', () {
+    test('pausePolling preserves startTime and only toggles pause flag', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      globalState.container = container;
+
+      final setup = container.read(setupActionProvider.notifier);
+      final startTime = DateTime.now().subtract(const Duration(seconds: 5));
+      setup.startTime = startTime;
+
+      expect(setup.isStart, isTrue);
+      expect(setup.isPollingPaused, isFalse);
+
+      setup.pausePolling();
+      expect(setup.isPollingPaused, isTrue);
+      expect(setup.startTime, startTime);
+      expect(setup.isStart, isTrue);
+
+      setup.resumePolling();
+      expect(setup.isPollingPaused, isFalse);
+      expect(setup.startTime, startTime);
+      expect(setup.isStart, isTrue);
+    });
+
+    test('pausePolling is a no-op when proxy is not started', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      globalState.container = container;
+
+      final setup = container.read(setupActionProvider.notifier);
+      setup.startTime = null;
+      setup.pausePolling();
+      expect(setup.isPollingPaused, isFalse);
     });
   });
 }

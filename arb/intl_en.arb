@@ -276,6 +276,7 @@
   "pleaseInputAdminPassword": "Please enter the admin password",
   "copyEnvVar": "Copying environment variables",
   "memoryInfo": "Memory info",
+  "coreMemoryInfo": "Core memory",
   "cancel": "Cancel",
   "fileIsUpdate": "The file has been modified. Do you want to save the changes?",
   "profileHasUpdate": "The profile has been modified. Do you want to disable auto update?",

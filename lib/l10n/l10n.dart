@@ -2114,6 +2114,16 @@ class AppLocalizations {
     return Intl.message('Memory info', name: 'memoryInfo', desc: '', args: []);
   }
 
+  /// `Core memory`
+  String get coreMemoryInfo {
+    return Intl.message(
+      'Core memory',
+      name: 'coreMemoryInfo',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Cancel`
   String get cancel {
     return Intl.message('Cancel', name: 'cancel', desc: '', args: []);

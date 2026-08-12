@@ -22,7 +22,6 @@ import (
 	"golang.org/x/exp/slices"
 	"net"
 	"os"
-	"runtime"
 	"runtime/debug"
 	"strconv"
 	"sync/atomic"
@@ -60,10 +59,12 @@ func handleStartListener() bool {
 
 func handleStopListener() bool {
 	runLock.Lock()
-	defer runLock.Unlock()
 	isRunning = false
 	listener.Cleanup()
 	resolver.ResetConnection()
+	runLock.Unlock()
+	// Return memory after listener cleanup without holding runLock.
+	go handleForceGC()
 	return true
 }
 
@@ -73,10 +74,7 @@ func handleGetIsInit() bool {
 
 func handleForceGC() {
 	log.Infoln("[APP] request force GC")
-	runtime.GC()
-	if isAndroid {
-		debug.FreeOSMemory()
-	}
+	debug.FreeOSMemory()
 }
 
 func handleShutdown() bool {
@@ -448,6 +446,8 @@ func handleSideLoadExternalProvider(providerName string, data []byte, fn func(va
 func handleSuspend(suspended bool) bool {
 	if suspended {
 		tunnel.OnSuspend()
+		// Reclaim after suspend is already applied; never block resume path.
+		go handleForceGC()
 	} else {
 		tunnel.OnRunning()
 	}
