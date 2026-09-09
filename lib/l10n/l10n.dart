@@ -5244,6 +5244,26 @@ class AppLocalizations {
     return Intl.message('Pool', name: 'pool', desc: '', args: []);
   }
 
+  /// `TLS Mux`
+  String get mux {
+    return Intl.message('TLS Mux', name: 'mux', desc: '', args: []);
+  }
+
+  /// `Mix fallback timeout (seconds)`
+  String get mixFallbackTimeout {
+    return Intl.message(
+      'Mix fallback timeout (seconds)',
+      name: 'mixFallbackTimeout',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate pin`
+  String get pin {
+    return Intl.message('Certificate pin', name: 'pin', desc: '', args: []);
+  }
+
   /// `Prewarm on start`
   String get prewarmOnStart {
     return Intl.message(
@@ -5349,20 +5369,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Carrier must be tcp or udp`
+  /// `Carrier must be tcp, udp, or mix`
   String get localProxyCarrierInvalid {
     return Intl.message(
-      'Carrier must be tcp or udp',
+      'Carrier must be tcp, udp, or mix',
       name: 'localProxyCarrierInvalid',
       desc: '',
       args: [],
     );
   }
 
-  /// `Pool must be 0-9`
+  /// `Pool must be 0-256`
   String get localProxyPoolInvalid {
     return Intl.message(
-      'Pool must be 0-9',
+      'Pool must be 0-256',
       name: 'localProxyPoolInvalid',
       desc: '',
       args: [],

@@ -77,20 +77,23 @@ class LocalProxyProviderGenerator {
 
     _normalizeNowhereAlpn(proxy, map);
 
+    final muxEnabled = _normalizeNowhereMux(proxy, map, carriers);
+    final dedicatedTcpTcp =
+        carriers.$1 == 'tcp' && carriers.$2 == 'tcp' && !muxEnabled;
     final pool = _normalizeNonNegativeInteger(proxy, map, 'pool');
-    final tcpTCP = carriers.$1 == 'tcp' && carriers.$2 == 'tcp';
-    if (tcpTCP) {
-      if (pool != null && pool > 9) {
+    if (dedicatedTcpTcp) {
+      if (pool != null && pool > _nowhereMaxPoolSize) {
         commonPrint.log(
-          '[Nowhere] Proxy "${proxy.name}" pool $pool exceeds maximum 9; using 9.',
+          '[Nowhere] Proxy "${proxy.name}" pool $pool exceeds maximum $_nowhereMaxPoolSize; using $_nowhereMaxPoolSize.',
           logLevel: LogLevel.warning,
         );
-        map['pool'] = 9;
+        map['pool'] = _nowhereMaxPoolSize;
       }
     } else {
       map.remove('pool');
     }
 
+    _normalizeNonNegativeInteger(proxy, map, 'mix-fallback-timeout');
     _normalizeNonNegativeInteger(proxy, map, 'max-concurrent-dials');
     final backoffInitial = _normalizeNonNegativeInteger(
       proxy,
@@ -167,12 +170,49 @@ class LocalProxyProviderGenerator {
     }
 
     if (!_isNowhereCarrier(resolvedUp) || !_isNowhereCarrier(resolvedDown)) {
-      _invalidNowhere(proxy, 'carriers must be exactly "tcp" or "udp"');
+      _invalidNowhere(proxy, 'carriers must be "tcp", "udp", or "mix"');
     }
     return (resolvedUp, resolvedDown);
   }
 
-  bool _isNowhereCarrier(String value) => value == 'tcp' || value == 'udp';
+  static const _nowhereMaxPoolSize = 256;
+
+  bool _isNowhereCarrier(String value) =>
+      value == 'tcp' || value == 'udp' || value == 'mix';
+
+  bool _normalizeNowhereMux(
+    LocalProxy proxy,
+    Map<String, dynamic> map,
+    (String, String) carriers,
+  ) {
+    final value = map['mux'];
+    if (value == null) {
+      map.remove('mux');
+      return false;
+    }
+    final parsed = value is int
+        ? value
+        : value is String
+        ? int.tryParse(value)
+        : null;
+    if (parsed == null || (parsed != 0 && parsed != 1)) {
+      _invalidNowhere(proxy, 'mux must be 0 or 1');
+    }
+    if (parsed == 1 && carriers.$1 == 'udp' && carriers.$2 == 'udp') {
+      commonPrint.log(
+        '[Nowhere] Proxy "${proxy.name}" mux=1 is canonicalized to 0 for udp/udp.',
+        logLevel: LogLevel.warning,
+      );
+      map.remove('mux');
+      return false;
+    }
+    if (parsed == 1) {
+      map['mux'] = 1;
+      return true;
+    }
+    map.remove('mux');
+    return false;
+  }
 
   String? _optionalString(
     LocalProxy proxy,

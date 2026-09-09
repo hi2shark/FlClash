@@ -283,12 +283,19 @@ void main() {
     });
 
     test('normalizes pool with Mihomo-compatible warnings', () {
-      final clamped = parser
+      final kept = parser
           .parseMany('nowhere://key@example.com?up=tcp&down=tcp&pool=12')
           .single;
+      expect(kept.error, isNull);
+      expect(kept.proxy!.config['pool'], 12);
+      expect(kept.warnings, isEmpty);
+
+      final clamped = parser
+          .parseMany('nowhere://key@example.com?up=tcp&down=tcp&pool=300')
+          .single;
       expect(clamped.error, isNull);
-      expect(clamped.proxy!.config['pool'], 9);
-      expect(clamped.warnings.single, contains('using 9'));
+      expect(clamped.proxy!.config['pool'], 256);
+      expect(clamped.warnings.single, contains('using 256'));
 
       for (final value in ['-1', 'invalid']) {
         final result = parser
@@ -312,6 +319,43 @@ void main() {
       expect(explicitZero.error, isNull);
       expect(explicitZero.proxy!.config.containsKey('pool'), isFalse);
       expect(explicitZero.warnings, isEmpty);
+    });
+
+    test('parses mix carriers, mux, and pin', () {
+      final mix = parser
+          .parseMany(
+            'nowhere://key@example.com:2077?up=mix&down=mix&mux=1&pin=abcd#NW',
+          )
+          .single;
+      expect(mix.error, isNull);
+      expect(mix.proxy!.config['up'], 'mix');
+      expect(mix.proxy!.config['down'], 'mix');
+      expect(mix.proxy!.config['mux'], 1);
+      expect(mix.proxy!.config['pin'], 'abcd');
+      expect(mix.proxy!.config.containsKey('pool'), isFalse);
+
+      final canonicalized = parser
+          .parseMany('nowhere://key@example.com?up=udp&down=udp&mux=1')
+          .single;
+      expect(canonicalized.error, isNull);
+      expect(canonicalized.proxy!.config.containsKey('mux'), isFalse);
+      expect(canonicalized.warnings.single, contains('canonicalized'));
+
+      final muxPoolIgnored = parser
+          .parseMany(
+            'nowhere://key@example.com?up=tcp&down=tcp&mux=1&pool=5',
+          )
+          .single;
+      expect(muxPoolIgnored.error, isNull);
+      expect(muxPoolIgnored.proxy!.config['mux'], 1);
+      expect(muxPoolIgnored.proxy!.config.containsKey('pool'), isFalse);
+      expect(muxPoolIgnored.warnings.single, contains('dedicated tcp/tcp'));
+
+      final invalidMux = parser
+          .parseMany('nowhere://key@example.com?up=tcp&down=tcp&mux=2')
+          .single;
+      expect(invalidMux.proxy, isNull);
+      expect(invalidMux.error, contains('mux'));
     });
 
     test('enforces decoded UTF-8 byte limits for key and ALPN', () {

@@ -502,6 +502,11 @@ class LocalProxyParser {
     return parameters;
   }
 
+  static const _nowhereMaxPoolSize = 256;
+
+  bool _isNowhereCarrier(String value) =>
+      value == 'tcp' || value == 'udp' || value == 'mix';
+
   String? _validateNowhereUtf8Value(
     String field,
     String value, {
@@ -585,13 +590,30 @@ class LocalProxyParser {
         down = 'udp';
       }
     }
-    if (!['tcp', 'udp'].contains(up) || !['tcp', 'udp'].contains(down)) {
+    if (!_isNowhereCarrier(up) || !_isNowhereCarrier(down)) {
       return LocalProxyParseResult(
         raw: raw,
-        error: 'Nowhere carrier must be tcp or udp',
+        error: 'Nowhere carrier must be tcp, udp, or mix',
       );
     }
-    final tcpTCP = up == 'tcp' && down == 'tcp';
+
+    var mux = 0;
+    final muxValue = query['mux'];
+    if (muxValue != null && muxValue.isNotEmpty) {
+      final parsedMux = int.tryParse(muxValue);
+      if (parsedMux == null || (parsedMux != 0 && parsedMux != 1)) {
+        return LocalProxyParseResult(
+          raw: raw,
+          error: 'Nowhere mux must be 0 or 1',
+        );
+      }
+      mux = parsedMux;
+      if (mux == 1 && up == 'udp' && down == 'udp') {
+        warnings.add('Nowhere mux=1 is canonicalized to 0 for udp/udp');
+        mux = 0;
+      }
+    }
+    final dedicatedTcpTcp = up == 'tcp' && down == 'tcp' && mux == 0;
 
     final alpnValue = query['alpn'];
     List<String>? alpn;
@@ -626,6 +648,9 @@ class LocalProxyParser {
     if (alpn != null) {
       config['alpn'] = alpn;
     }
+    if (mux == 1) {
+      config['mux'] = 1;
+    }
 
     final poolValue = query['pool'];
     if (poolValue != null && poolValue.isNotEmpty) {
@@ -634,14 +659,18 @@ class LocalProxyParser {
         warnings.add('Nowhere pool is not an integer; ignoring it');
       } else if (pool < 0) {
         warnings.add('Nowhere pool must be non-negative; ignoring it');
-      } else if (tcpTCP) {
-        if (pool > 9) {
-          warnings.add('Nowhere pool exceeds 9; using 9');
-          pool = 9;
+      } else if (dedicatedTcpTcp) {
+        if (pool > _nowhereMaxPoolSize) {
+          warnings.add(
+            'Nowhere pool exceeds $_nowhereMaxPoolSize; using $_nowhereMaxPoolSize',
+          );
+          pool = _nowhereMaxPoolSize;
         }
         config['pool'] = pool;
       } else if (pool != 0) {
-        warnings.add('Nowhere pool is only effective for tcp/tcp; ignoring it');
+        warnings.add(
+          'Nowhere pool is only effective for dedicated tcp/tcp; ignoring it',
+        );
       }
     }
     if (_parseBoolQuery(query['insecure'])) {
@@ -650,6 +679,10 @@ class LocalProxyParser {
     final fingerprint = query['fp'];
     if (fingerprint != null && fingerprint.isNotEmpty) {
       config['fingerprint'] = fingerprint;
+    }
+    final pin = query['pin'];
+    if (pin != null && pin.isNotEmpty && pin != 'none') {
+      config['pin'] = pin;
     }
     final ech = _parseEch(query['ech']);
     if (ech != null) {

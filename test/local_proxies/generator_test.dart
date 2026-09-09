@@ -425,7 +425,7 @@ void main() {
       expect(map['pool'], 7);
     });
 
-    test('clamps tcp/tcp pool above 9 and logs a safe warning', () {
+    test('clamps tcp/tcp pool above 256 and logs a safe warning', () {
       final messages = <String>[];
       final originalDebugPrint = debugPrint;
       debugPrint = (message, {wrapWidth}) {
@@ -443,7 +443,7 @@ void main() {
             'password': 'do-not-log-secret',
             'up': 'tcp',
             'down': 'tcp',
-            'pool': 12,
+            'pool': 300,
             'udp': true,
           },
         );
@@ -452,11 +452,11 @@ void main() {
         debugPrint = originalDebugPrint;
       }
 
-      expect(map['pool'], 9);
+      expect(map['pool'], 256);
       expect(
         messages.any(
           (message) =>
-              message.contains('pool 12') && message.contains('using 9'),
+              message.contains('pool 300') && message.contains('using 256'),
         ),
         isTrue,
       );
@@ -666,6 +666,73 @@ void main() {
       }
     });
 
+    test('keeps mix carriers and mux, and drops pool when mux is enabled', () {
+      final mixMap = _firstProxy(
+        generator.generateYaml([
+          _proxy(
+            type: 'nowhere',
+            config: _validNowhereConfig()
+              ..addAll({
+                'up': 'mix',
+                'down': 'udp',
+                'mux': 1,
+                'mix-fallback-timeout': 2,
+                'pin': 'abcd',
+                'pool': 5,
+              }),
+          ),
+        ]),
+      );
+      expect(mixMap['up'], 'mix');
+      expect(mixMap['down'], 'udp');
+      expect(mixMap['mux'], 1);
+      expect(mixMap['mix-fallback-timeout'], 2);
+      expect(mixMap['pin'], 'abcd');
+      expect(mixMap.containsKey('pool'), isFalse);
+
+      final muxTcp = _firstProxy(
+        generator.generateYaml([
+          _proxy(
+            type: 'nowhere',
+            config: _validNowhereConfig()
+              ..addAll({
+                'up': 'tcp',
+                'down': 'tcp',
+                'mux': 1,
+                'pool': 5,
+              }),
+          ),
+        ]),
+      );
+      expect(muxTcp['mux'], 1);
+      expect(muxTcp.containsKey('pool'), isFalse);
+
+      final messages = <String>[];
+      final originalDebugPrint = debugPrint;
+      debugPrint = (message, {wrapWidth}) {
+        if (message != null) messages.add(message);
+      };
+      late final Map canonicalized;
+      try {
+        canonicalized = _firstProxy(
+          generator.generateYaml([
+            _proxy(
+              type: 'nowhere',
+              config: _validNowhereConfig()
+                ..addAll({'up': 'udp', 'down': 'udp', 'mux': 1}),
+            ),
+          ]),
+        );
+      } finally {
+        debugPrint = originalDebugPrint;
+      }
+      expect(canonicalized.containsKey('mux'), isFalse);
+      expect(
+        messages.any((message) => message.contains('canonicalized')),
+        isTrue,
+      );
+    });
+
     test('enforces decoded UTF-8 byte limits', () {
       final key255 = List.filled(255, 'k').join();
       final alpn255 = List.filled(255, 'a').join();
@@ -731,6 +798,11 @@ void main() {
         ),
         ('warm-backoff-max', _validNowhereConfig()..['warm-backoff-max'] = -1),
         ('cwnd', _validNowhereConfig()..['cwnd'] = -1),
+        ('mux', _validNowhereConfig()..['mux'] = 2),
+        (
+          'mix-fallback-timeout',
+          _validNowhereConfig()..['mix-fallback-timeout'] = -1,
+        ),
         (
           'warm-backoff-initial',
           _validNowhereConfig()..['warm-backoff-initial'] = 31,

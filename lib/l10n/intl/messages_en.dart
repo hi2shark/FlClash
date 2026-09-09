@@ -655,7 +655,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "AnyTLS password is required",
     ),
     "localProxyCarrierInvalid": MessageLookupByLibrary.simpleMessage(
-      "Carrier must be tcp or udp",
+      "Carrier must be tcp, udp, or mix",
     ),
     "localProxyCount": m18,
     "localProxyHealthCheckInvalid": MessageLookupByLibrary.simpleMessage(
@@ -680,7 +680,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Password is required",
     ),
     "localProxyPoolInvalid": MessageLookupByLibrary.simpleMessage(
-      "Pool must be 0-9",
+      "Pool must be 0-256",
     ),
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "Port must be 1-65535",
@@ -767,12 +767,16 @@ class MessageLookup extends MessageLookupByLibrary {
       "Modify the default system exit event",
     ),
     "minutesAgo": m20,
+    "mixFallbackTimeout": MessageLookupByLibrary.simpleMessage(
+      "Mix fallback timeout (seconds)",
+    ),
     "mixedPort": MessageLookupByLibrary.simpleMessage("Mixed Port"),
     "mixinSettings": MessageLookupByLibrary.simpleMessage("Mixin Settings"),
     "mode": MessageLookupByLibrary.simpleMessage("Mode"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Monochrome"),
     "monthsAgo": m21,
     "more": MessageLookupByLibrary.simpleMessage("More"),
+    "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("Name"),
     "nameserver": MessageLookupByLibrary.simpleMessage("Nameserver"),
     "nameserverDesc": MessageLookupByLibrary.simpleMessage(
@@ -874,6 +878,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "One node link per line",
     ),
     "pasteShareLink": MessageLookupByLibrary.simpleMessage("Paste share link"),
+    "pin": MessageLookupByLibrary.simpleMessage("Certificate pin"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "Please bind WebDAV",
     ),

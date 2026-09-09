@@ -517,7 +517,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "AnyTLS パスワードを入力してください",
     ),
     "localProxyCarrierInvalid": MessageLookupByLibrary.simpleMessage(
-      "キャリアは tcp または udp です",
+      "キャリアは tcp、udp、または mix です",
     ),
     "localProxyCount": m18,
     "localProxyHealthCheckInvalid": MessageLookupByLibrary.simpleMessage(
@@ -540,7 +540,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "パスワードを入力してください",
     ),
     "localProxyPoolInvalid": MessageLookupByLibrary.simpleMessage(
-      "プールは 0-9 です",
+      "プールは 0-256 です",
     ),
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "ポートは 1-65535 の範囲で入力してください",
@@ -617,12 +617,16 @@ class MessageLookup extends MessageLookupByLibrary {
       "システムの終了イベントを変更",
     ),
     "minutesAgo": m20,
+    "mixFallbackTimeout": MessageLookupByLibrary.simpleMessage(
+      "Mix フォールバックタイムアウト（秒）",
+    ),
     "mixedPort": MessageLookupByLibrary.simpleMessage("混合ポート"),
     "mixinSettings": MessageLookupByLibrary.simpleMessage("混入設定"),
     "mode": MessageLookupByLibrary.simpleMessage("モード"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("モノクローム"),
     "monthsAgo": m21,
     "more": MessageLookupByLibrary.simpleMessage("詳細"),
+    "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("名前"),
     "nameserver": MessageLookupByLibrary.simpleMessage("ネームサーバー"),
     "nameserverDesc": MessageLookupByLibrary.simpleMessage("ドメイン解決用"),
@@ -708,6 +712,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "1行に1つのノードリンクを貼り付け",
     ),
     "pasteShareLink": MessageLookupByLibrary.simpleMessage("共有リンクを貼り付け"),
+    "pin": MessageLookupByLibrary.simpleMessage("証明書ピン"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "WebDAVをバインドしてください",
     ),

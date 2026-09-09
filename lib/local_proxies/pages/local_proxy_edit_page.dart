@@ -75,7 +75,9 @@ const _nowhereControlledFields = {
   'down',
   'network',
   'net',
+  'mux',
   'pool',
+  'mix-fallback-timeout',
   'prewarm-on-start',
   'max-concurrent-dials',
   'warm-backoff-initial',
@@ -86,6 +88,7 @@ const _nowhereControlledFields = {
   'skip-cert-verify',
   'client-fingerprint',
   'fingerprint',
+  'pin',
   'certificate',
   'private-key',
   'ech-opts',
@@ -228,6 +231,8 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late final TextEditingController _idleSessionTimeoutController;
   late final TextEditingController _minIdleSessionController;
   late final TextEditingController _poolController;
+  late final TextEditingController _mixFallbackTimeoutController;
+  late final TextEditingController _pinController;
   late final TextEditingController _maxConcurrentDialsController;
   late final TextEditingController _warmBackoffInitialController;
   late final TextEditingController _warmBackoffMaxController;
@@ -262,12 +267,16 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late bool _skipCertVerify;
   late bool _echEnabled;
   late bool _prewarmOnStart;
+  late bool _muxEnabled;
   late bool _supportX25519Mlkem768;
   late bool _v2rayHttpUpgrade;
   late bool _v2rayHttpUpgradeFastOpen;
   late bool _xhttpAdvancedExpanded;
   late String _up;
   late String _down;
+
+  bool get _dedicatedTcpTcp =>
+      _up == 'tcp' && _down == 'tcp' && !_muxEnabled;
   late String _network;
   late String _security;
   late String _flow;
@@ -366,6 +375,12 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     );
     _poolController = TextEditingController(
       text: config['pool']?.toString() ?? '',
+    );
+    _mixFallbackTimeoutController = TextEditingController(
+      text: config['mix-fallback-timeout']?.toString() ?? '',
+    );
+    _pinController = TextEditingController(
+      text: config['pin']?.toString() ?? '',
     );
     _maxConcurrentDialsController = TextEditingController(
       text: config['max-concurrent-dials']?.toString() ?? '',
@@ -482,6 +497,17 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     final legacyCarrier = (config['network'] ?? config['net'])?.toString();
     _up = config['up']?.toString() ?? legacyCarrier ?? 'udp';
     _down = config['down']?.toString() ?? legacyCarrier ?? 'udp';
+    if (!const {'tcp', 'udp', 'mix'}.contains(_up)) {
+      _up = 'udp';
+    }
+    if (!const {'tcp', 'udp', 'mix'}.contains(_down)) {
+      _down = 'udp';
+    }
+    final muxValue = config['mux'];
+    _muxEnabled = muxValue == 1 || muxValue == '1';
+    if (_up == 'udp' && _down == 'udp') {
+      _muxEnabled = false;
+    }
     _network = config['network']?.toString() ?? 'tcp';
     if (!_networks.contains(_network)) {
       _network = 'tcp';
@@ -536,6 +562,8 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _idleSessionTimeoutController.dispose();
     _minIdleSessionController.dispose();
     _poolController.dispose();
+    _mixFallbackTimeoutController.dispose();
+    _pinController.dispose();
     _maxConcurrentDialsController.dispose();
     _warmBackoffInitialController.dispose();
     _warmBackoffMaxController.dispose();
@@ -791,11 +819,23 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         _applyEch(base);
         base['up'] = _up;
         base['down'] = _down;
-        if (_up == 'tcp' && _down == 'tcp') {
+        if (_muxEnabled) {
+          base['mux'] = 1;
+        }
+        if (_dedicatedTcpTcp) {
           final pool = _intOrNull(_poolController.text);
           if (pool != null) {
             base['pool'] = pool;
           }
+        }
+        final mixFallbackTimeout = _intOrNull(
+          _mixFallbackTimeoutController.text,
+        );
+        if (mixFallbackTimeout != null) {
+          base['mix-fallback-timeout'] = mixFallbackTimeout;
+        }
+        if (_pinController.text.trim().isNotEmpty) {
+          base['pin'] = _pinController.text.trim();
         }
         base['prewarm-on-start'] = _prewarmOnStart;
         final maxConcurrentDials = _intOrNull(
@@ -1093,17 +1133,19 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             (firstAlpn != null && !_fitsNowhereField(firstAlpn))) {
           return appLocalizations.localProxyNowhereInputTooLong;
         }
-        if (!['tcp', 'udp'].contains(_up) || !['tcp', 'udp'].contains(_down)) {
+        if (!['tcp', 'udp', 'mix'].contains(_up) ||
+            !['tcp', 'udp', 'mix'].contains(_down)) {
           return appLocalizations.localProxyCarrierInvalid;
         }
-        if (_up == 'tcp' && _down == 'tcp') {
+        if (_dedicatedTcpTcp) {
           final pool = _intOrNull(_poolController.text);
           if (_poolController.text.trim().isNotEmpty &&
-              (pool == null || pool < 0 || pool > 9)) {
+              (pool == null || pool < 0 || pool > 256)) {
             return appLocalizations.localProxyPoolInvalid;
           }
         }
-        if (!_isValidNonNegativeInteger(_maxConcurrentDialsController) ||
+        if (!_isValidNonNegativeInteger(_mixFallbackTimeoutController) ||
+            !_isValidNonNegativeInteger(_maxConcurrentDialsController) ||
             !_isValidNonNegativeInteger(_warmBackoffInitialController) ||
             !_isValidNonNegativeInteger(_warmBackoffMaxController) ||
             !_isValidNonNegativeInteger(_cwndController)) {
@@ -1611,7 +1653,12 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                 child: _buildCarrierDropdown(
                   label: appLocalizations.up,
                   value: _up,
-                  onChanged: (value) => setState(() => _up = value ?? 'udp'),
+                  onChanged: (value) => setState(() {
+                    _up = value ?? 'udp';
+                    if (_up == 'udp' && _down == 'udp') {
+                      _muxEnabled = false;
+                    }
+                  }),
                 ),
               ),
               const SizedBox(width: 16),
@@ -1619,12 +1666,27 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                 child: _buildCarrierDropdown(
                   label: appLocalizations.down,
                   value: _down,
-                  onChanged: (value) => setState(() => _down = value ?? 'udp'),
+                  onChanged: (value) => setState(() {
+                    _down = value ?? 'udp';
+                    if (_up == 'udp' && _down == 'udp') {
+                      _muxEnabled = false;
+                    }
+                  }),
                 ),
               ),
             ],
           ),
-          if (_up == 'tcp' && _down == 'tcp') ...[
+          if (_up != 'udp' || _down != 'udp') ...[
+            const SizedBox(height: 8),
+            ListItem.switchItem(
+              title: Text(appLocalizations.mux),
+              delegate: SwitchDelegate<bool>(
+                value: _muxEnabled,
+                onChanged: (value) => setState(() => _muxEnabled = value),
+              ),
+            ),
+          ],
+          if (_dedicatedTcpTcp) ...[
             const SizedBox(height: 16),
             _buildTextField(
               _poolController,
@@ -1692,6 +1754,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       items: const [
         DropdownMenuItem(value: 'tcp', child: Text('TCP')),
         DropdownMenuItem(value: 'udp', child: Text('UDP')),
+        DropdownMenuItem(value: 'mix', child: Text('Mix')),
       ],
       onChanged: onChanged,
     );
@@ -1730,6 +1793,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         ),
         const SizedBox(height: 16),
         _buildTextField(_fingerprintController, appLocalizations.fingerprint),
+        if (_type == 'nowhere') ...[
+          const SizedBox(height: 16),
+          _buildTextField(_pinController, appLocalizations.pin),
+        ],
         const SizedBox(height: 16),
         _buildTextField(
           _certificateController,
@@ -1859,6 +1926,12 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               value: _prewarmOnStart,
               onChanged: (value) => setState(() => _prewarmOnStart = value),
             ),
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _mixFallbackTimeoutController,
+            appLocalizations.mixFallbackTimeout,
+            keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
           _buildTextField(

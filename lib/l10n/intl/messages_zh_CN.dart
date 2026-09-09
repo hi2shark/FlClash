@@ -461,7 +461,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "AnyTLS 密码不能为空",
     ),
     "localProxyCarrierInvalid": MessageLookupByLibrary.simpleMessage(
-      "传输层必须是 tcp 或 udp",
+      "传输层必须是 tcp、udp 或 mix",
     ),
     "localProxyCount": m18,
     "localProxyHealthCheckInvalid": MessageLookupByLibrary.simpleMessage(
@@ -479,7 +479,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Nowhere 密钥不能为空",
     ),
     "localProxyPasswordEmpty": MessageLookupByLibrary.simpleMessage("密码不能为空"),
-    "localProxyPoolInvalid": MessageLookupByLibrary.simpleMessage("连接池必须是 0-9"),
+    "localProxyPoolInvalid": MessageLookupByLibrary.simpleMessage(
+      "连接池必须是 0-256",
+    ),
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "端口必须是 1-65535",
     ),
@@ -547,12 +549,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage("退出时最小化"),
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage("修改系统默认退出事件"),
     "minutesAgo": m20,
+    "mixFallbackTimeout": MessageLookupByLibrary.simpleMessage("Mix 回退超时（秒）"),
     "mixedPort": MessageLookupByLibrary.simpleMessage("混合端口"),
     "mixinSettings": MessageLookupByLibrary.simpleMessage("混入设置"),
     "mode": MessageLookupByLibrary.simpleMessage("模式"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("单色"),
     "monthsAgo": m21,
     "more": MessageLookupByLibrary.simpleMessage("更多"),
+    "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("名称"),
     "nameserver": MessageLookupByLibrary.simpleMessage("域名服务器"),
     "nameserverDesc": MessageLookupByLibrary.simpleMessage("用于解析域名"),
@@ -620,6 +624,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "paste": MessageLookupByLibrary.simpleMessage("粘贴"),
     "pasteNodeLinkHint": MessageLookupByLibrary.simpleMessage("每行一个节点链接"),
     "pasteShareLink": MessageLookupByLibrary.simpleMessage("粘贴分享链接"),
+    "pin": MessageLookupByLibrary.simpleMessage("证书 Pin"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage("请绑定WebDAV"),
     "pleaseEnterScriptName": MessageLookupByLibrary.simpleMessage("请输入脚本名称"),
     "pleaseInputAdminPassword": MessageLookupByLibrary.simpleMessage(

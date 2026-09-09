@@ -675,7 +675,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Введите пароль AnyTLS",
     ),
     "localProxyCarrierInvalid": MessageLookupByLibrary.simpleMessage(
-      "Канал должен быть tcp или udp",
+      "Канал должен быть tcp, udp или mix",
     ),
     "localProxyCount": m18,
     "localProxyHealthCheckInvalid": MessageLookupByLibrary.simpleMessage(
@@ -698,7 +698,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Введите пароль",
     ),
     "localProxyPoolInvalid": MessageLookupByLibrary.simpleMessage(
-      "Пул должен быть 0-9",
+      "Пул должен быть 0-256",
     ),
     "localProxyPortInvalid": MessageLookupByLibrary.simpleMessage(
       "Порт должен быть от 1 до 65535",
@@ -795,6 +795,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Изменить стандартное событие выхода из системы",
     ),
     "minutesAgo": m20,
+    "mixFallbackTimeout": MessageLookupByLibrary.simpleMessage(
+      "Таймаут отката Mix (с)",
+    ),
     "mixedPort": MessageLookupByLibrary.simpleMessage("Смешанный порт"),
     "mixinSettings": MessageLookupByLibrary.simpleMessage(
       "Настройки подмешивания",
@@ -803,6 +806,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Монохром"),
     "monthsAgo": m21,
     "more": MessageLookupByLibrary.simpleMessage("Еще"),
+    "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("Имя"),
     "nameserver": MessageLookupByLibrary.simpleMessage("Сервер имен"),
     "nameserverDesc": MessageLookupByLibrary.simpleMessage(
@@ -914,6 +918,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "По одной ссылке на строку",
     ),
     "pasteShareLink": MessageLookupByLibrary.simpleMessage("Вставить ссылку"),
+    "pin": MessageLookupByLibrary.simpleMessage("Пин сертификата"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "Пожалуйста, привяжите WebDAV",
     ),
