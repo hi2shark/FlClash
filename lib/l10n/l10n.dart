@@ -5134,6 +5134,326 @@ class AppLocalizations {
     return Intl.message('Hysteria2', name: 'hysteria2', desc: '', args: []);
   }
 
+  /// `EasyTier`
+  String get easytier {
+    return Intl.message('EasyTier', name: 'easytier', desc: '', args: []);
+  }
+
+  /// `Network name`
+  String get networkName {
+    return Intl.message(
+      'Network name',
+      name: 'networkName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Network secret`
+  String get networkSecret {
+    return Intl.message(
+      'Network secret',
+      name: 'networkSecret',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hostname`
+  String get hostname {
+    return Intl.message('Hostname', name: 'hostname', desc: '', args: []);
+  }
+
+  /// `Overlay IPv4`
+  String get overlayIpv4 {
+    return Intl.message(
+      'Overlay IPv4',
+      name: 'overlayIpv4',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DHCP`
+  String get dhcp {
+    return Intl.message('DHCP', name: 'dhcp', desc: '', args: []);
+  }
+
+  /// `Peers`
+  String get peers {
+    return Intl.message('Peers', name: 'peers', desc: '', args: []);
+  }
+
+  /// `Listeners`
+  String get listeners {
+    return Intl.message('Listeners', name: 'listeners', desc: '', args: []);
+  }
+
+  /// `Disable listener`
+  String get noListener {
+    return Intl.message(
+      'Disable listener',
+      name: 'noListener',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Mapped listeners`
+  String get mappedListeners {
+    return Intl.message(
+      'Mapped listeners',
+      name: 'mappedListeners',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Exit nodes`
+  String get exitNodes {
+    return Intl.message('Exit nodes', name: 'exitNodes', desc: '', args: []);
+  }
+
+  /// `Proxy networks`
+  String get proxyNetworks {
+    return Intl.message(
+      'Proxy networks',
+      name: 'proxyNetworks',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Instance name`
+  String get instanceName {
+    return Intl.message(
+      'Instance name',
+      name: 'instanceName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `State directory`
+  String get stateDir {
+    return Intl.message(
+      'State directory',
+      name: 'stateDir',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Accept DNS`
+  String get acceptDns {
+    return Intl.message('Accept DNS', name: 'acceptDns', desc: '', args: []);
+  }
+
+  /// `Enable exit node`
+  String get enableExitNode {
+    return Intl.message(
+      'Enable exit node',
+      name: 'enableExitNode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable encryption`
+  String get enableEncryption {
+    return Intl.message(
+      'Enable encryption',
+      name: 'enableEncryption',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Encryption algorithm`
+  String get encryptionAlgorithm {
+    return Intl.message(
+      'Encryption algorithm',
+      name: 'encryptionAlgorithm',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Private mode`
+  String get privateMode {
+    return Intl.message(
+      'Private mode',
+      name: 'privateMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Latency first`
+  String get latencyFirst {
+    return Intl.message(
+      'Latency first',
+      name: 'latencyFirst',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disable P2P`
+  String get disableP2p {
+    return Intl.message('Disable P2P', name: 'disableP2p', desc: '', args: []);
+  }
+
+  /// `Enable KCP proxy`
+  String get enableKcpProxy {
+    return Intl.message(
+      'Enable KCP proxy',
+      name: 'enableKcpProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disable KCP input`
+  String get disableKcpInput {
+    return Intl.message(
+      'Disable KCP input',
+      name: 'disableKcpInput',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable QUIC proxy`
+  String get enableQuicProxy {
+    return Intl.message(
+      'Enable QUIC proxy',
+      name: 'enableQuicProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disable QUIC input`
+  String get disableQuicInput {
+    return Intl.message(
+      'Disable QUIC input',
+      name: 'disableQuicInput',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `MTU`
+  String get mtu {
+    return Intl.message('MTU', name: 'mtu', desc: '', args: []);
+  }
+
+  /// `TLD DNS zone`
+  String get tldDnsZone {
+    return Intl.message('TLD DNS zone', name: 'tldDnsZone', desc: '', args: []);
+  }
+
+  /// `Secure mode`
+  String get secureMode {
+    return Intl.message('Secure mode', name: 'secureMode', desc: '', args: []);
+  }
+
+  /// `Local private key`
+  String get localPrivateKey {
+    return Intl.message(
+      'Local private key',
+      name: 'localPrivateKey',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local public key`
+  String get localPublicKey {
+    return Intl.message(
+      'Local public key',
+      name: 'localPublicKey',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Interface name`
+  String get interfaceName {
+    return Intl.message(
+      'Interface name',
+      name: 'interfaceName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Routing mark`
+  String get routingMark {
+    return Intl.message(
+      'Routing mark',
+      name: 'routingMark',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `IP version`
+  String get ipVersion {
+    return Intl.message('IP version', name: 'ipVersion', desc: '', args: []);
+  }
+
+  /// `Network name is required`
+  String get localProxyNetworkNameEmpty {
+    return Intl.message(
+      'Network name is required',
+      name: 'localProxyNetworkNameEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add at least one peer when no listener is configured`
+  String get localProxyPeersRequired {
+    return Intl.message(
+      'Add at least one peer when no listener is configured',
+      name: 'localProxyPeersRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local private key and public key must be provided together`
+  String get localProxyEasyTierKeyPairRequired {
+    return Intl.message(
+      'Local private key and public key must be provided together',
+      name: 'localProxyEasyTierKeyPairRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Overlay IPv4 must be CIDR, for example 10.144.0.1/24`
+  String get localProxyIpv4CidrInvalid {
+    return Intl.message(
+      'Overlay IPv4 must be CIDR, for example 10.144.0.1/24',
+      name: 'localProxyIpv4CidrInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `MTU and routing mark must be integers`
+  String get localProxyEasyTierAdvancedInvalid {
+    return Intl.message(
+      'MTU and routing mark must be integers',
+      name: 'localProxyEasyTierAdvancedInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Obfs`
   String get obfs {
     return Intl.message('Obfs', name: 'obfs', desc: '', args: []);

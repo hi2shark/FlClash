@@ -16,6 +16,7 @@ const manualProxyTypes = [
   'anytls',
   'nowhere',
   'hysteria2',
+  'easytier',
 ];
 
 const _manualProxyTypeSet = {
@@ -27,6 +28,7 @@ const _manualProxyTypeSet = {
   'anytls',
   'nowhere',
   'hysteria2',
+  'easytier',
 };
 
 const _ssCiphers = [
@@ -185,6 +187,59 @@ const _hysteria2ControlledFields = {
   'skip-cert-verify',
 };
 
+const _easytierControlledFields = {
+  'network-name',
+  'network-secret',
+  'hostname',
+  'ipv4',
+  'dhcp',
+  'peers',
+  'listeners',
+  'no-listener',
+  'mapped-listeners',
+  'exit-nodes',
+  'proxy-networks',
+  'instance-name',
+  'state-dir',
+  'accept-dns',
+  'enable-exit-node',
+  'enable-encryption',
+  'encryption-algorithm',
+  'private-mode',
+  'latency-first',
+  'disable-p2p',
+  'enable-kcp-proxy',
+  'disable-kcp-input',
+  'enable-quic-proxy',
+  'disable-quic-input',
+  'mtu',
+  'tld-dns-zone',
+  'secure-mode',
+  'local-private-key',
+  'local-public-key',
+  'dialer-proxy',
+  'interface-name',
+  'routing-mark',
+  'ip-version',
+};
+
+const _easytierEncryptionAlgorithms = [
+  '',
+  'aes-gcm',
+  'aes-256-gcm',
+  'chacha20',
+  'xor',
+];
+
+const _easytierIpVersions = [
+  '',
+  'dual',
+  'ipv4',
+  'ipv6',
+  'ipv4-prefer',
+  'ipv6-prefer',
+];
+
 const _controlledFieldsByType = <String, Set<String>>{
   'ss': _ssControlledFields,
   'socks5': _socks5ControlledFields,
@@ -194,6 +249,7 @@ const _controlledFieldsByType = <String, Set<String>>{
   'anytls': _anyTlsControlledFields,
   'nowhere': _nowhereControlledFields,
   'hysteria2': _hysteria2ControlledFields,
+  'easytier': _easytierControlledFields,
 };
 
 class LocalProxyEditPage extends StatefulWidget {
@@ -259,11 +315,43 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late final TextEditingController _xhttpPathController;
   late final TextEditingController _xhttpHostController;
   late final TextEditingController _xhttpHeadersController;
+  late final TextEditingController _networkNameController;
+  late final TextEditingController _networkSecretController;
+  late final TextEditingController _hostnameController;
+  late final TextEditingController _overlayIpv4Controller;
+  late final TextEditingController _peersController;
+  late final TextEditingController _listenersController;
+  late final TextEditingController _mappedListenersController;
+  late final TextEditingController _exitNodesController;
+  late final TextEditingController _proxyNetworksController;
+  late final TextEditingController _instanceNameController;
+  late final TextEditingController _stateDirController;
+  late final TextEditingController _encryptionAlgorithmController;
+  late final TextEditingController _mtuController;
+  late final TextEditingController _tldDnsZoneController;
+  late final TextEditingController _localPrivateKeyController;
+  late final TextEditingController _localPublicKeyController;
+  late final TextEditingController _interfaceNameController;
+  late final TextEditingController _routingMarkController;
 
   late bool _tls;
   late bool _udp;
   late bool _udpWasSpecified;
   bool _udpTouched = false;
+  late bool _dhcp;
+  late bool _noListener;
+  late bool _acceptDns;
+  late bool _enableExitNode;
+  late bool _enableEncryption;
+  late bool _privateMode;
+  late bool _latencyFirst;
+  late bool _disableP2p;
+  late bool _enableKcpProxy;
+  late bool _disableKcpInput;
+  late bool _enableQuicProxy;
+  late bool _disableQuicInput;
+  late bool _secureMode;
+  late String _ipVersion;
   late bool _skipCertVerify;
   late bool _echEnabled;
   late bool _prewarmOnStart;
@@ -490,8 +578,86 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _xhttpAdvancedExpanded = false;
 
     _tls = config['tls'] == true;
+    _networkNameController = TextEditingController(
+      text: config['network-name']?.toString() ?? '',
+    );
+    _networkSecretController = TextEditingController(
+      text: config['network-secret']?.toString() ?? '',
+    );
+    _hostnameController = TextEditingController(
+      text: config['hostname']?.toString() ?? '',
+    );
+    _overlayIpv4Controller = TextEditingController(
+      text: config['ipv4']?.toString() ?? '',
+    );
+    _peersController = TextEditingController(
+      text: _listToLines(config['peers']),
+    );
+    _listenersController = TextEditingController(
+      text: _listToLines(config['listeners']),
+    );
+    _mappedListenersController = TextEditingController(
+      text: _listToLines(config['mapped-listeners']),
+    );
+    _exitNodesController = TextEditingController(
+      text: _listToLines(config['exit-nodes']),
+    );
+    _proxyNetworksController = TextEditingController(
+      text: _listToLines(config['proxy-networks']),
+    );
+    _instanceNameController = TextEditingController(
+      text: config['instance-name']?.toString() ?? '',
+    );
+    _stateDirController = TextEditingController(
+      text: config['state-dir']?.toString() ?? '',
+    );
+    _encryptionAlgorithmController = TextEditingController(
+      text: config['encryption-algorithm']?.toString() ?? '',
+    );
+    _mtuController = TextEditingController(
+      text: config['mtu']?.toString() ?? '',
+    );
+    _tldDnsZoneController = TextEditingController(
+      text: config['tld-dns-zone']?.toString() ?? '',
+    );
+    _localPrivateKeyController = TextEditingController(
+      text: config['local-private-key']?.toString() ?? '',
+    );
+    _localPublicKeyController = TextEditingController(
+      text: config['local-public-key']?.toString() ?? '',
+    );
+    _interfaceNameController = TextEditingController(
+      text: config['interface-name']?.toString() ?? '',
+    );
+    _routingMarkController = TextEditingController(
+      text: config['routing-mark']?.toString() ?? '',
+    );
+    _dhcp = config['dhcp'] == true;
+    _noListener = _configFlag(config, 'no-listener', defaultValue: true);
+    _acceptDns = config['accept-dns'] == true;
+    _enableExitNode = config['enable-exit-node'] == true;
+    _enableEncryption = _configFlag(
+      config,
+      'enable-encryption',
+      defaultValue: true,
+    );
+    _privateMode = config['private-mode'] == true;
+    _latencyFirst = config['latency-first'] == true;
+    _disableP2p = config['disable-p2p'] == true;
+    _enableKcpProxy = config['enable-kcp-proxy'] == true;
+    _disableKcpInput = config['disable-kcp-input'] == true;
+    _enableQuicProxy = config['enable-quic-proxy'] == true;
+    _disableQuicInput = config['disable-quic-input'] == true;
+    _secureMode = config['secure-mode'] == true;
+    _ipVersion = config['ip-version']?.toString() ?? '';
+    if (!_easytierIpVersions.contains(_ipVersion)) {
+      _ipVersion = '';
+    }
+
     _udpWasSpecified = config.containsKey('udp');
-    _udp = _udpWasSpecified ? config['udp'] == true : _type != 'socks5';
+    _udp = _udpWasSpecified
+        ? config['udp'] == true
+        : _type != 'socks5' && _type != 'easytier';
     _skipCertVerify = config['skip-cert-verify'] == true;
     _prewarmOnStart = config['prewarm-on-start'] == true;
     final legacyCarrier = (config['network'] ?? config['net'])?.toString();
@@ -590,6 +756,24 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _xhttpPathController.dispose();
     _xhttpHostController.dispose();
     _xhttpHeadersController.dispose();
+    _networkNameController.dispose();
+    _networkSecretController.dispose();
+    _hostnameController.dispose();
+    _overlayIpv4Controller.dispose();
+    _peersController.dispose();
+    _listenersController.dispose();
+    _mappedListenersController.dispose();
+    _exitNodesController.dispose();
+    _proxyNetworksController.dispose();
+    _instanceNameController.dispose();
+    _stateDirController.dispose();
+    _encryptionAlgorithmController.dispose();
+    _mtuController.dispose();
+    _tldDnsZoneController.dispose();
+    _localPrivateKeyController.dispose();
+    _localPublicKeyController.dispose();
+    _interfaceNameController.dispose();
+    _routingMarkController.dispose();
     super.dispose();
   }
 
@@ -687,6 +871,45 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     return value != null && value >= 0;
   }
 
+  bool _isValidOptionalInteger(TextEditingController controller) {
+    final text = controller.text.trim();
+    if (text.isEmpty) return true;
+    return int.tryParse(text) != null;
+  }
+
+  bool _configFlag(
+    Map<String, dynamic> config,
+    String key, {
+    required bool defaultValue,
+  }) {
+    if (!config.containsKey(key)) {
+      return defaultValue;
+    }
+    return config[key] == true;
+  }
+
+  bool _isValidIpv4Cidr(String value) {
+    final parts = value.split('/');
+    if (parts.length != 2) {
+      return false;
+    }
+    final prefix = int.tryParse(parts[1]);
+    if (prefix == null || prefix < 0 || prefix > 32) {
+      return false;
+    }
+    final octets = parts[0].split('.');
+    if (octets.length != 4) {
+      return false;
+    }
+    for (final octet in octets) {
+      final number = int.tryParse(octet);
+      if (number == null || number < 0 || number > 255) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   bool _fitsNowhereField(String value) {
     try {
       return utf8.encode(value).length <= 255;
@@ -716,18 +939,21 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     for (final field in fieldsToClear) {
       base.remove(field);
     }
-    base.addAll({
-      'name': _nameController.text.trim(),
-      'type': _type,
-      'server': _serverController.text.trim(),
-      'port': _port,
-    });
+    base.addAll({'name': _nameController.text.trim(), 'type': _type});
+    if (_type != 'easytier') {
+      base['server'] = _serverController.text.trim();
+      base['port'] = _port;
+    }
     final preserveMissingUdp =
         widget.proxy != null &&
         !_udpWasSpecified &&
         !_udpTouched &&
         previousType == _type;
-    if (_type != 'ssh' && !preserveMissingUdp) {
+    if (_type == 'easytier') {
+      if (_udp) {
+        base['udp'] = true;
+      }
+    } else if (_type != 'ssh' && !preserveMissingUdp) {
       base['udp'] = _udp;
     }
     switch (_type) {
@@ -887,8 +1113,94 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           base['down'] = _hysteria2DownController.text.trim();
         }
         base['skip-cert-verify'] = _skipCertVerify;
+      case 'easytier':
+        _applyEasyTier(base);
     }
     return base;
+  }
+
+  void _applyEasyTier(Map<String, dynamic> base) {
+    void putString(String key, TextEditingController controller) {
+      final value = controller.text.trim();
+      if (value.isNotEmpty) {
+        base[key] = value;
+      }
+    }
+
+    void putLines(String key, TextEditingController controller) {
+      final values = _splitLines(controller.text);
+      if (values.isNotEmpty) {
+        base[key] = values;
+      }
+    }
+
+    putString('network-name', _networkNameController);
+    putString('network-secret', _networkSecretController);
+    putString('hostname', _hostnameController);
+    putString('ipv4', _overlayIpv4Controller);
+    if (_dhcp) {
+      base['dhcp'] = true;
+    }
+    putLines('peers', _peersController);
+    putLines('listeners', _listenersController);
+    if (!_noListener) {
+      base['no-listener'] = false;
+    }
+    putLines('mapped-listeners', _mappedListenersController);
+    putLines('exit-nodes', _exitNodesController);
+    putLines('proxy-networks', _proxyNetworksController);
+    putString('instance-name', _instanceNameController);
+    putString('state-dir', _stateDirController);
+    if (_acceptDns) {
+      base['accept-dns'] = true;
+    }
+    if (_enableExitNode) {
+      base['enable-exit-node'] = true;
+    }
+    if (!_enableEncryption) {
+      base['enable-encryption'] = false;
+    }
+    putString('encryption-algorithm', _encryptionAlgorithmController);
+    if (_privateMode) {
+      base['private-mode'] = true;
+    }
+    if (_latencyFirst) {
+      base['latency-first'] = true;
+    }
+    if (_disableP2p) {
+      base['disable-p2p'] = true;
+    }
+    if (_enableKcpProxy) {
+      base['enable-kcp-proxy'] = true;
+    }
+    if (_disableKcpInput) {
+      base['disable-kcp-input'] = true;
+    }
+    if (_enableQuicProxy) {
+      base['enable-quic-proxy'] = true;
+    }
+    if (_disableQuicInput) {
+      base['disable-quic-input'] = true;
+    }
+    final mtu = _intOrNull(_mtuController.text);
+    if (mtu != null) {
+      base['mtu'] = mtu;
+    }
+    putString('tld-dns-zone', _tldDnsZoneController);
+    if (_secureMode) {
+      base['secure-mode'] = true;
+    }
+    putString('local-private-key', _localPrivateKeyController);
+    putString('local-public-key', _localPublicKeyController);
+    putString('dialer-proxy', _dialerProxyController);
+    putString('interface-name', _interfaceNameController);
+    final routingMark = _intOrNull(_routingMarkController.text);
+    if (routingMark != null) {
+      base['routing-mark'] = routingMark;
+    }
+    if (_ipVersion.isNotEmpty) {
+      base['ip-version'] = _ipVersion;
+    }
   }
 
   void _applyTransportAndTls(
@@ -1076,11 +1388,13 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     if (_nameController.text.trim().isEmpty) {
       return appLocalizations.localProxyNameEmpty;
     }
-    if (_serverController.text.trim().isEmpty) {
-      return appLocalizations.localProxyServerEmpty;
-    }
-    if (_port == null) {
-      return appLocalizations.localProxyPortInvalid;
+    if (_type != 'easytier') {
+      if (_serverController.text.trim().isEmpty) {
+        return appLocalizations.localProxyServerEmpty;
+      }
+      if (_port == null) {
+        return appLocalizations.localProxyPortInvalid;
+      }
     }
     switch (_type) {
       case 'ss':
@@ -1168,6 +1482,28 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         if (_passwordController.text.isEmpty) {
           return appLocalizations.localProxyPasswordEmpty;
         }
+      case 'easytier':
+        if (_networkNameController.text.trim().isEmpty) {
+          return appLocalizations.localProxyNetworkNameEmpty;
+        }
+        final peers = _splitLines(_peersController.text);
+        final listeners = _splitLines(_listenersController.text);
+        if (listeners.isEmpty && _noListener && peers.isEmpty) {
+          return appLocalizations.localProxyPeersRequired;
+        }
+        final hasPrivateKey = _localPrivateKeyController.text.trim().isNotEmpty;
+        final hasPublicKey = _localPublicKeyController.text.trim().isNotEmpty;
+        if (hasPrivateKey != hasPublicKey) {
+          return appLocalizations.localProxyEasyTierKeyPairRequired;
+        }
+        final ipv4 = _overlayIpv4Controller.text.trim();
+        if (ipv4.isNotEmpty && !_isValidIpv4Cidr(ipv4)) {
+          return appLocalizations.localProxyIpv4CidrInvalid;
+        }
+        if (!_isValidOptionalInteger(_mtuController) ||
+            !_isValidOptionalInteger(_routingMarkController)) {
+          return appLocalizations.localProxyEasyTierAdvancedInvalid;
+        }
     }
     return null;
   }
@@ -1217,6 +1553,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       'anytls' => l10n.anytls,
       'nowhere' => l10n.nowhere,
       'hysteria2' => l10n.hysteria2,
+      'easytier' => l10n.easytier,
       _ => _type.toUpperCase(),
     };
   }
@@ -1265,13 +1602,240 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     return Column(
       children: [
         _buildTextField(_nameController, appLocalizations.name),
-        const SizedBox(height: 16),
-        _buildTextField(_serverController, appLocalizations.server),
+        if (_type != 'easytier') ...[
+          const SizedBox(height: 16),
+          _buildTextField(_serverController, appLocalizations.server),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _portController,
+            appLocalizations.port,
+            keyboardType: TextInputType.number,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSwitch({
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return ListItem.switchItem(
+      title: Text(title),
+      delegate: SwitchDelegate<bool>(value: value, onChanged: onChanged),
+    );
+  }
+
+  Widget _buildEasyTierIdentityFields() {
+    final appLocalizations = context.appLocalizations;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          appLocalizations.protocolAuth,
+          style: context.textTheme.titleSmall,
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(_networkNameController, appLocalizations.networkName),
         const SizedBox(height: 16),
         _buildTextField(
-          _portController,
-          appLocalizations.port,
+          _networkSecretController,
+          appLocalizations.networkSecret,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(_hostnameController, appLocalizations.hostname),
+        const SizedBox(height: 16),
+        _buildTextField(_overlayIpv4Controller, appLocalizations.overlayIpv4),
+        _buildSwitch(
+          title: appLocalizations.dhcp,
+          value: _dhcp,
+          onChanged: (value) => setState(() => _dhcp = value),
+        ),
+        const SizedBox(height: 8),
+        _buildTextField(
+          _peersController,
+          appLocalizations.peers,
+          minLines: 3,
+          maxLines: 8,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEasyTierAdvancedFields() {
+    final appLocalizations = context.appLocalizations;
+    return Column(
+      children: [
+        _buildSwitch(
+          title: appLocalizations.noListener,
+          value: _noListener,
+          onChanged: (value) => setState(() => _noListener = value),
+        ),
+        const SizedBox(height: 8),
+        _buildTextField(
+          _listenersController,
+          appLocalizations.listeners,
+          minLines: 2,
+          maxLines: 6,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          _mappedListenersController,
+          appLocalizations.mappedListeners,
+          minLines: 2,
+          maxLines: 6,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          _exitNodesController,
+          appLocalizations.exitNodes,
+          minLines: 2,
+          maxLines: 6,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          _proxyNetworksController,
+          appLocalizations.proxyNetworks,
+          minLines: 2,
+          maxLines: 6,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          _instanceNameController,
+          appLocalizations.instanceName,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(_stateDirController, appLocalizations.stateDir),
+        const SizedBox(height: 16),
+        _buildTextField(
+          _localPrivateKeyController,
+          appLocalizations.localPrivateKey,
+          minLines: 2,
+          maxLines: 4,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          _localPublicKeyController,
+          appLocalizations.localPublicKey,
+          minLines: 2,
+          maxLines: 4,
+        ),
+        _buildSwitch(
+          title: appLocalizations.secureMode,
+          value: _secureMode,
+          onChanged: (value) => setState(() => _secureMode = value),
+        ),
+        _buildSwitch(
+          title: appLocalizations.acceptDns,
+          value: _acceptDns,
+          onChanged: (value) => setState(() => _acceptDns = value),
+        ),
+        _buildSwitch(
+          title: appLocalizations.enableExitNode,
+          value: _enableExitNode,
+          onChanged: (value) => setState(() => _enableExitNode = value),
+        ),
+        _buildSwitch(
+          title: appLocalizations.enableEncryption,
+          value: _enableEncryption,
+          onChanged: (value) => setState(() => _enableEncryption = value),
+        ),
+        const SizedBox(height: 8),
+        _buildDropdown(
+          label: appLocalizations.encryptionAlgorithm,
+          value: _encryptionAlgorithmController.text,
+          items: [
+            for (final algorithm in _easytierEncryptionAlgorithms)
+              DropdownMenuItem(
+                value: algorithm,
+                child: Text(
+                  algorithm.isEmpty ? appLocalizations.noneOption : algorithm,
+                ),
+              ),
+            if (!_easytierEncryptionAlgorithms.contains(
+                  _encryptionAlgorithmController.text,
+                ) &&
+                _encryptionAlgorithmController.text.isNotEmpty)
+              DropdownMenuItem(
+                value: _encryptionAlgorithmController.text,
+                child: Text(_encryptionAlgorithmController.text),
+              ),
+          ],
+          onChanged: (value) {
+            setState(() => _encryptionAlgorithmController.text = value ?? '');
+          },
+        ),
+        _buildSwitch(
+          title: appLocalizations.privateMode,
+          value: _privateMode,
+          onChanged: (value) => setState(() => _privateMode = value),
+        ),
+        _buildSwitch(
+          title: appLocalizations.latencyFirst,
+          value: _latencyFirst,
+          onChanged: (value) => setState(() => _latencyFirst = value),
+        ),
+        _buildSwitch(
+          title: appLocalizations.disableP2p,
+          value: _disableP2p,
+          onChanged: (value) => setState(() => _disableP2p = value),
+        ),
+        _buildSwitch(
+          title: appLocalizations.enableKcpProxy,
+          value: _enableKcpProxy,
+          onChanged: (value) => setState(() => _enableKcpProxy = value),
+        ),
+        _buildSwitch(
+          title: appLocalizations.disableKcpInput,
+          value: _disableKcpInput,
+          onChanged: (value) => setState(() => _disableKcpInput = value),
+        ),
+        _buildSwitch(
+          title: appLocalizations.enableQuicProxy,
+          value: _enableQuicProxy,
+          onChanged: (value) => setState(() => _enableQuicProxy = value),
+        ),
+        _buildSwitch(
+          title: appLocalizations.disableQuicInput,
+          value: _disableQuicInput,
+          onChanged: (value) => setState(() => _disableQuicInput = value),
+        ),
+        const SizedBox(height: 8),
+        _buildTextField(
+          _mtuController,
+          appLocalizations.mtu,
           keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(_tldDnsZoneController, appLocalizations.tldDnsZone),
+        const SizedBox(height: 16),
+        _buildTextField(_dialerProxyController, appLocalizations.dialerProxy),
+        const SizedBox(height: 16),
+        _buildTextField(
+          _interfaceNameController,
+          appLocalizations.interfaceName,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          _routingMarkController,
+          appLocalizations.routingMark,
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        _buildDropdown(
+          label: appLocalizations.ipVersion,
+          value: _ipVersion,
+          items: [
+            for (final version in _easytierIpVersions)
+              DropdownMenuItem(
+                value: version,
+                child: Text(
+                  version.isEmpty ? appLocalizations.noneOption : version,
+                ),
+              ),
+          ],
+          onChanged: (value) => setState(() => _ipVersion = value ?? ''),
         ),
       ],
     );
@@ -1862,6 +2426,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             }),
           ),
         ),
+        if (_type == 'easytier') ...[
+          const SizedBox(height: 8),
+          _buildEasyTierAdvancedFields(),
+        ],
         if (_type == 'vless') ...[
           const SizedBox(height: 8),
           _buildDropdown(
@@ -2022,60 +2590,65 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             ),
             const SizedBox(height: 16),
             _buildCommonFields(),
-            const SizedBox(height: 24),
-            Text(
-              appLocalizations.protocolAuth,
-              style: context.textTheme.titleSmall,
-            ),
-            const SizedBox(height: 12),
-            _buildAuthFields(),
-            const SizedBox(height: 24),
-            Text(
-              appLocalizations.transportSettings,
-              style: context.textTheme.titleSmall,
-            ),
-            const SizedBox(height: 12),
-            _buildTransportFields(),
-            if (_type == 'anytls') ...[
+            if (_type == 'easytier') ...[
               const SizedBox(height: 24),
-              Text(appLocalizations.tls, style: context.textTheme.titleSmall),
+              _buildEasyTierIdentityFields(),
+            ] else ...[
+              const SizedBox(height: 24),
+              Text(
+                appLocalizations.protocolAuth,
+                style: context.textTheme.titleSmall,
+              ),
               const SizedBox(height: 12),
-              _buildTlsFields(),
-              const SizedBox(height: 8),
-              ExpansionTile(
-                initiallyExpanded: false,
-                tilePadding: EdgeInsets.zero,
-                title: Text(
-                  appLocalizations.ech,
-                  style: context.textTheme.titleSmall,
-                ),
-                children: [_buildEchFields(), const SizedBox(height: 8)],
-              ),
-            ],
-            if (_type == 'nowhere') ...[
+              _buildAuthFields(),
               const SizedBox(height: 24),
-              ExpansionTile(
-                initiallyExpanded: false,
-                tilePadding: EdgeInsets.zero,
-                title: Text(
-                  appLocalizations.tls,
-                  style: context.textTheme.titleSmall,
-                ),
-                children: [
-                  const SizedBox(height: 12),
-                  _buildTlsFields(),
-                  const SizedBox(height: 8),
-                  ExpansionTile(
-                    initiallyExpanded: false,
-                    tilePadding: EdgeInsets.zero,
-                    title: Text(
-                      appLocalizations.ech,
-                      style: context.textTheme.titleSmall,
-                    ),
-                    children: [_buildEchFields(), const SizedBox(height: 8)],
-                  ),
-                ],
+              Text(
+                appLocalizations.transportSettings,
+                style: context.textTheme.titleSmall,
               ),
+              const SizedBox(height: 12),
+              _buildTransportFields(),
+              if (_type == 'anytls') ...[
+                const SizedBox(height: 24),
+                Text(appLocalizations.tls, style: context.textTheme.titleSmall),
+                const SizedBox(height: 12),
+                _buildTlsFields(),
+                const SizedBox(height: 8),
+                ExpansionTile(
+                  initiallyExpanded: false,
+                  tilePadding: EdgeInsets.zero,
+                  title: Text(
+                    appLocalizations.ech,
+                    style: context.textTheme.titleSmall,
+                  ),
+                  children: [_buildEchFields(), const SizedBox(height: 8)],
+                ),
+              ],
+              if (_type == 'nowhere') ...[
+                const SizedBox(height: 24),
+                ExpansionTile(
+                  initiallyExpanded: false,
+                  tilePadding: EdgeInsets.zero,
+                  title: Text(
+                    appLocalizations.tls,
+                    style: context.textTheme.titleSmall,
+                  ),
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildTlsFields(),
+                    const SizedBox(height: 8),
+                    ExpansionTile(
+                      initiallyExpanded: false,
+                      tilePadding: EdgeInsets.zero,
+                      title: Text(
+                        appLocalizations.ech,
+                        style: context.textTheme.titleSmall,
+                      ),
+                      children: [_buildEchFields(), const SizedBox(height: 8)],
+                    ),
+                  ],
+                ),
+              ],
             ],
             if (_type != 'ssh') ...[
               const SizedBox(height: 8),

@@ -99,6 +99,7 @@ class MessageLookup extends MessageLookupByLibrary {
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("О программе"),
+    "acceptDns": MessageLookupByLibrary.simpleMessage("Принимать DNS"),
     "accessControl": MessageLookupByLibrary.simpleMessage("Контроль доступа"),
     "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
       "Разрешить только выбранным приложениям доступ к VPN",
@@ -387,10 +388,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
       "Режим разработчика активирован.",
     ),
+    "dhcp": MessageLookupByLibrary.simpleMessage("DHCP"),
     "dialerProxy": MessageLookupByLibrary.simpleMessage(
       "Прокси для подключения",
     ),
     "direct": MessageLookupByLibrary.simpleMessage("Прямой"),
+    "disableKcpInput": MessageLookupByLibrary.simpleMessage(
+      "Отключить вход KCP",
+    ),
+    "disableP2p": MessageLookupByLibrary.simpleMessage("Отключить P2P"),
+    "disableQuicInput": MessageLookupByLibrary.simpleMessage(
+      "Отключить вход QUIC",
+    ),
     "disableUDP": MessageLookupByLibrary.simpleMessage("Отключить UDP"),
     "disabled": MessageLookupByLibrary.simpleMessage("Отключено"),
     "disclaimer": MessageLookupByLibrary.simpleMessage(
@@ -419,6 +428,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "earlyDataHeaderName": MessageLookupByLibrary.simpleMessage(
       "Early Data Header",
     ),
+    "easytier": MessageLookupByLibrary.simpleMessage("EasyTier"),
     "ech": MessageLookupByLibrary.simpleMessage("ECH"),
     "echConfig": MessageLookupByLibrary.simpleMessage("ECH конфиг"),
     "echQueryServerName": MessageLookupByLibrary.simpleMessage(
@@ -445,15 +455,30 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "emptyTip": m4,
     "en": MessageLookupByLibrary.simpleMessage("Английский"),
+    "enableEncryption": MessageLookupByLibrary.simpleMessage(
+      "Включить шифрование",
+    ),
+    "enableExitNode": MessageLookupByLibrary.simpleMessage(
+      "Работа как exit-узел",
+    ),
     "enableHealthCheck": MessageLookupByLibrary.simpleMessage(
       "Включить проверку состояния",
+    ),
+    "enableKcpProxy": MessageLookupByLibrary.simpleMessage(
+      "Включить KCP-прокси",
     ),
     "enableLocalProxyMixin": MessageLookupByLibrary.simpleMessage(
       "Включить подмешивание локальных прокси",
     ),
+    "enableQuicProxy": MessageLookupByLibrary.simpleMessage(
+      "Включить QUIC-прокси",
+    ),
     "enabled": MessageLookupByLibrary.simpleMessage("Включено"),
     "enabledNodes": MessageLookupByLibrary.simpleMessage("Включённые узлы"),
     "encryption": MessageLookupByLibrary.simpleMessage("Шифрование"),
+    "encryptionAlgorithm": MessageLookupByLibrary.simpleMessage(
+      "Алгоритм шифрования",
+    ),
     "entries": MessageLookupByLibrary.simpleMessage(" записей"),
     "entriesCount": m5,
     "errorDetails": MessageLookupByLibrary.simpleMessage("Ошибка"),
@@ -473,6 +498,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "excludeType": MessageLookupByLibrary.simpleMessage("Тип исключения"),
     "existsTip": m6,
     "exit": MessageLookupByLibrary.simpleMessage("Выход"),
+    "exitNodes": MessageLookupByLibrary.simpleMessage("Exit-узлы"),
     "expand": MessageLookupByLibrary.simpleMessage("Стандартный"),
     "expectedStatus": MessageLookupByLibrary.simpleMessage("Ожидаемый статус"),
     "exportFile": MessageLookupByLibrary.simpleMessage("Экспорт файла"),
@@ -558,6 +584,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hostKeyAlgorithms": MessageLookupByLibrary.simpleMessage(
       "Алгоритмы ключа хоста",
     ),
+    "hostname": MessageLookupByLibrary.simpleMessage("Имя хоста"),
     "hostsDesc": MessageLookupByLibrary.simpleMessage("Добавить Hosts"),
     "hotkeyConflict": MessageLookupByLibrary.simpleMessage(
       "Конфликт горячих клавиш",
@@ -621,9 +648,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Введите содержимое правила",
     ),
+    "instanceName": MessageLookupByLibrary.simpleMessage("Имя экземпляра"),
     "intelligentSelected": MessageLookupByLibrary.simpleMessage(
       "Интеллектуальный выбор",
     ),
+    "interfaceName": MessageLookupByLibrary.simpleMessage("Имя интерфейса"),
     "internet": MessageLookupByLibrary.simpleMessage("Интернет"),
     "interval": MessageLookupByLibrary.simpleMessage("Интервал"),
     "intranetIP": MessageLookupByLibrary.simpleMessage("Внутренний IP"),
@@ -634,6 +663,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidProxy": m13,
     "invalidProxyProvider": m14,
     "invalidSubRule": m15,
+    "ipVersion": MessageLookupByLibrary.simpleMessage("Версия IP"),
     "ipcidr": MessageLookupByLibrary.simpleMessage("IPCIDR"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
       "При включении будет возможно получать IPv6 трафик",
@@ -649,10 +679,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "key": MessageLookupByLibrary.simpleMessage("Ключ"),
     "language": MessageLookupByLibrary.simpleMessage("Язык"),
     "latency": MessageLookupByLibrary.simpleMessage("Задержка"),
+    "latencyFirst": MessageLookupByLibrary.simpleMessage("Приоритет задержки"),
     "layout": MessageLookupByLibrary.simpleMessage("Макет"),
     "light": MessageLookupByLibrary.simpleMessage("Светлый"),
     "list": MessageLookupByLibrary.simpleMessage("Список"),
     "listen": MessageLookupByLibrary.simpleMessage("Слушать"),
+    "listeners": MessageLookupByLibrary.simpleMessage("Слушатели"),
     "loadTest": MessageLookupByLibrary.simpleMessage("Тест загрузки"),
     "loading": MessageLookupByLibrary.simpleMessage("Загрузка..."),
     "local": MessageLookupByLibrary.simpleMessage("Локальный"),
@@ -670,6 +702,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "localMixinMissingGroups": m16,
     "localMixinStatus": m17,
     "localNodes": MessageLookupByLibrary.simpleMessage("Локальные узлы"),
+    "localPrivateKey": MessageLookupByLibrary.simpleMessage(
+      "Локальный закрытый ключ",
+    ),
     "localProxies": MessageLookupByLibrary.simpleMessage("Локальные прокси"),
     "localProxyAnyTlsPasswordEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите пароль AnyTLS",
@@ -678,12 +713,24 @@ class MessageLookup extends MessageLookupByLibrary {
       "Канал должен быть tcp, udp или mix",
     ),
     "localProxyCount": m18,
+    "localProxyEasyTierAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
+      "MTU и метка маршрутизации должны быть целыми числами",
+    ),
+    "localProxyEasyTierKeyPairRequired": MessageLookupByLibrary.simpleMessage(
+      "Локальный закрытый и открытый ключи нужно указывать вместе",
+    ),
     "localProxyHealthCheckInvalid": MessageLookupByLibrary.simpleMessage(
       "Некорректные настройки проверки состояния",
+    ),
+    "localProxyIpv4CidrInvalid": MessageLookupByLibrary.simpleMessage(
+      "Overlay IPv4 должен быть в формате CIDR, например 10.144.0.1/24",
     ),
     "localProxyMixin": MessageLookupByLibrary.simpleMessage("Локальные прокси"),
     "localProxyNameEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите имя прокси",
+    ),
+    "localProxyNetworkNameEmpty": MessageLookupByLibrary.simpleMessage(
+      "Укажите имя сети",
     ),
     "localProxyNowhereAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
       "Расширенные целые значения Nowhere должны быть неотрицательными, а начальная задержка с учётом значения по умолчанию — не больше максимальной",
@@ -696,6 +743,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxyPasswordEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите пароль",
+    ),
+    "localProxyPeersRequired": MessageLookupByLibrary.simpleMessage(
+      "Добавьте хотя бы один пир, если слушатель не настроен",
     ),
     "localProxyPoolInvalid": MessageLookupByLibrary.simpleMessage(
       "Пул должен быть 0-256",
@@ -729,6 +779,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxyUuidEmpty": MessageLookupByLibrary.simpleMessage(
       "Укажите UUID VLESS",
+    ),
+    "localPublicKey": MessageLookupByLibrary.simpleMessage(
+      "Локальный открытый ключ",
     ),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Location Permission",
@@ -764,6 +817,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Управление локальными узлами",
     ),
     "manualAdd": MessageLookupByLibrary.simpleMessage("Добавить вручную"),
+    "mappedListeners": MessageLookupByLibrary.simpleMessage(
+      "Внешние слушатели",
+    ),
     "matchSourceIp": MessageLookupByLibrary.simpleMessage(
       "Сопоставить исходный IP",
     ),
@@ -806,6 +862,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Монохром"),
     "monthsAgo": m21,
     "more": MessageLookupByLibrary.simpleMessage("Еще"),
+    "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
     "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("Имя"),
     "nameserver": MessageLookupByLibrary.simpleMessage("Сервер имен"),
@@ -828,6 +885,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkException": MessageLookupByLibrary.simpleMessage(
       "Ошибка сети, проверьте соединение и попробуйте еще раз",
     ),
+    "networkName": MessageLookupByLibrary.simpleMessage("Имя сети"),
+    "networkSecret": MessageLookupByLibrary.simpleMessage("Секрет сети"),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("Скорость сети"),
     "networkTest": MessageLookupByLibrary.simpleMessage("Тест сети"),
     "networkTestDesc": MessageLookupByLibrary.simpleMessage(
@@ -838,6 +897,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noData": MessageLookupByLibrary.simpleMessage("Нет данных"),
     "noHotKey": MessageLookupByLibrary.simpleMessage("Нет горячей клавиши"),
     "noInfo": MessageLookupByLibrary.simpleMessage("Нет информации"),
+    "noListener": MessageLookupByLibrary.simpleMessage("Отключить слушатель"),
     "noLocalProxy": MessageLookupByLibrary.simpleMessage(
       "Нет локальных прокси",
     ),
@@ -890,6 +950,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "outboundMode": MessageLookupByLibrary.simpleMessage(
       "Режим исходящего трафика",
     ),
+    "overlayIpv4": MessageLookupByLibrary.simpleMessage("Overlay IPv4"),
     "override": MessageLookupByLibrary.simpleMessage("Переопределить"),
     "overrideDns": MessageLookupByLibrary.simpleMessage("Переопределить DNS"),
     "overrideDnsDesc": MessageLookupByLibrary.simpleMessage(
@@ -918,6 +979,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "По одной ссылке на строку",
     ),
     "pasteShareLink": MessageLookupByLibrary.simpleMessage("Вставить ссылку"),
+    "peers": MessageLookupByLibrary.simpleMessage("Пиры"),
     "pin": MessageLookupByLibrary.simpleMessage("Пин сертификата"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "Пожалуйста, привяжите WebDAV",
@@ -952,6 +1014,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "privateKeyPassphrase": MessageLookupByLibrary.simpleMessage(
       "Парольная фраза приватного ключа",
     ),
+    "privateMode": MessageLookupByLibrary.simpleMessage("Приватный режим"),
     "process": MessageLookupByLibrary.simpleMessage("процесс"),
     "profile": MessageLookupByLibrary.simpleMessage("Профиль"),
     "profileAutoUpdateIntervalInvalidValidationDesc":
@@ -1011,6 +1074,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "proxyNameserverDesc": MessageLookupByLibrary.simpleMessage(
       "Домен для разрешения прокси-узлов",
     ),
+    "proxyNetworks": MessageLookupByLibrary.simpleMessage("Проксируемые сети"),
     "proxyPort": MessageLookupByLibrary.simpleMessage("Порт прокси"),
     "proxyProviderDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
       "Обнаружена аномалия выбранных провайдеров прокси",
@@ -1129,6 +1193,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "routeMode_config": MessageLookupByLibrary.simpleMessage(
       "Использовать конфигурацию",
     ),
+    "routingMark": MessageLookupByLibrary.simpleMessage("Метка маршрутизации"),
     "rtt": MessageLookupByLibrary.simpleMessage("RTT"),
     "ru": MessageLookupByLibrary.simpleMessage("Русский"),
     "rule": MessageLookupByLibrary.simpleMessage("Правило"),
@@ -1252,6 +1317,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "seconds": MessageLookupByLibrary.simpleMessage("Секунд"),
     "secondsCount": m26,
+    "secureMode": MessageLookupByLibrary.simpleMessage("Безопасный режим"),
     "security": MessageLookupByLibrary.simpleMessage("Безопасность"),
     "selectAll": MessageLookupByLibrary.simpleMessage("Выбрать все"),
     "selectNode": MessageLookupByLibrary.simpleMessage("Выбрать узел"),
@@ -1330,6 +1396,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "startSetup": MessageLookupByLibrary.simpleMessage("Начать настройку"),
     "startTest": MessageLookupByLibrary.simpleMessage("Начать тест"),
     "startVpn": MessageLookupByLibrary.simpleMessage("Запуск VPN..."),
+    "stateDir": MessageLookupByLibrary.simpleMessage("Каталог состояния"),
     "status": MessageLookupByLibrary.simpleMessage("Статус"),
     "statusDesc": MessageLookupByLibrary.simpleMessage(
       "Системный DNS будет использоваться при выключении",
@@ -1391,6 +1458,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "time": MessageLookupByLibrary.simpleMessage("Время"),
     "timeout": MessageLookupByLibrary.simpleMessage("Таймаут"),
     "tip": MessageLookupByLibrary.simpleMessage("подсказка"),
+    "tldDnsZone": MessageLookupByLibrary.simpleMessage("Зона TLD DNS"),
     "tls": MessageLookupByLibrary.simpleMessage("TLS"),
     "toggle": MessageLookupByLibrary.simpleMessage("Переключить"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("Тональный акцент"),

@@ -101,6 +101,7 @@ class MessageLookup extends MessageLookupByLibrary {
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("About"),
+    "acceptDns": MessageLookupByLibrary.simpleMessage("Accept DNS"),
     "accessControl": MessageLookupByLibrary.simpleMessage("AccessControl"),
     "accessControlAllowDesc": MessageLookupByLibrary.simpleMessage(
       "Only allow selected app to enter VPN",
@@ -383,8 +384,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
       "Developer mode is enabled.",
     ),
+    "dhcp": MessageLookupByLibrary.simpleMessage("DHCP"),
     "dialerProxy": MessageLookupByLibrary.simpleMessage("Dialer proxy"),
     "direct": MessageLookupByLibrary.simpleMessage("Direct"),
+    "disableKcpInput": MessageLookupByLibrary.simpleMessage(
+      "Disable KCP input",
+    ),
+    "disableP2p": MessageLookupByLibrary.simpleMessage("Disable P2P"),
+    "disableQuicInput": MessageLookupByLibrary.simpleMessage(
+      "Disable QUIC input",
+    ),
     "disableUDP": MessageLookupByLibrary.simpleMessage("Disable UDP"),
     "disabled": MessageLookupByLibrary.simpleMessage("Disabled"),
     "disclaimer": MessageLookupByLibrary.simpleMessage("Disclaimer"),
@@ -411,6 +420,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "earlyDataHeaderName": MessageLookupByLibrary.simpleMessage(
       "Early Data Header",
     ),
+    "easytier": MessageLookupByLibrary.simpleMessage("EasyTier"),
     "ech": MessageLookupByLibrary.simpleMessage("ECH"),
     "echConfig": MessageLookupByLibrary.simpleMessage("ECH config"),
     "echQueryServerName": MessageLookupByLibrary.simpleMessage(
@@ -431,15 +441,26 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "emptyTip": m4,
     "en": MessageLookupByLibrary.simpleMessage("English"),
+    "enableEncryption": MessageLookupByLibrary.simpleMessage(
+      "Enable encryption",
+    ),
+    "enableExitNode": MessageLookupByLibrary.simpleMessage("Enable exit node"),
     "enableHealthCheck": MessageLookupByLibrary.simpleMessage(
       "Enable health check",
     ),
+    "enableKcpProxy": MessageLookupByLibrary.simpleMessage("Enable KCP proxy"),
     "enableLocalProxyMixin": MessageLookupByLibrary.simpleMessage(
       "Enable local proxy mix-in",
+    ),
+    "enableQuicProxy": MessageLookupByLibrary.simpleMessage(
+      "Enable QUIC proxy",
     ),
     "enabled": MessageLookupByLibrary.simpleMessage("Enabled"),
     "enabledNodes": MessageLookupByLibrary.simpleMessage("Enabled nodes"),
     "encryption": MessageLookupByLibrary.simpleMessage("Encryption"),
+    "encryptionAlgorithm": MessageLookupByLibrary.simpleMessage(
+      "Encryption algorithm",
+    ),
     "entries": MessageLookupByLibrary.simpleMessage(" entries"),
     "entriesCount": m5,
     "errorDetails": MessageLookupByLibrary.simpleMessage("Error"),
@@ -457,6 +478,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "excludeType": MessageLookupByLibrary.simpleMessage("Exclude type"),
     "existsTip": m6,
     "exit": MessageLookupByLibrary.simpleMessage("Exit"),
+    "exitNodes": MessageLookupByLibrary.simpleMessage("Exit nodes"),
     "expand": MessageLookupByLibrary.simpleMessage("Standard"),
     "expectedStatus": MessageLookupByLibrary.simpleMessage("Expected status"),
     "exportFile": MessageLookupByLibrary.simpleMessage("Export file"),
@@ -542,6 +564,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hostKeyAlgorithms": MessageLookupByLibrary.simpleMessage(
       "Host key algorithms",
     ),
+    "hostname": MessageLookupByLibrary.simpleMessage("Hostname"),
     "hostsDesc": MessageLookupByLibrary.simpleMessage("Add Hosts"),
     "hotkeyConflict": MessageLookupByLibrary.simpleMessage("Hotkey conflict"),
     "hotkeyManagement": MessageLookupByLibrary.simpleMessage(
@@ -601,9 +624,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Input rule content",
     ),
+    "instanceName": MessageLookupByLibrary.simpleMessage("Instance name"),
     "intelligentSelected": MessageLookupByLibrary.simpleMessage(
       "Intelligent selection",
     ),
+    "interfaceName": MessageLookupByLibrary.simpleMessage("Interface name"),
     "internet": MessageLookupByLibrary.simpleMessage("Internet"),
     "interval": MessageLookupByLibrary.simpleMessage("Interval"),
     "intranetIP": MessageLookupByLibrary.simpleMessage("Intranet IP"),
@@ -614,6 +639,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidProxy": m13,
     "invalidProxyProvider": m14,
     "invalidSubRule": m15,
+    "ipVersion": MessageLookupByLibrary.simpleMessage("IP version"),
     "ipcidr": MessageLookupByLibrary.simpleMessage("Ipcidr"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
       "When turned on it will be able to receive IPv6 traffic",
@@ -629,10 +655,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "key": MessageLookupByLibrary.simpleMessage("Key"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
     "latency": MessageLookupByLibrary.simpleMessage("Latency"),
+    "latencyFirst": MessageLookupByLibrary.simpleMessage("Latency first"),
     "layout": MessageLookupByLibrary.simpleMessage("Layout"),
     "light": MessageLookupByLibrary.simpleMessage("Light"),
     "list": MessageLookupByLibrary.simpleMessage("List"),
     "listen": MessageLookupByLibrary.simpleMessage("Listen"),
+    "listeners": MessageLookupByLibrary.simpleMessage("Listeners"),
     "loadTest": MessageLookupByLibrary.simpleMessage("Load test"),
     "loading": MessageLookupByLibrary.simpleMessage("Loading..."),
     "local": MessageLookupByLibrary.simpleMessage("Local"),
@@ -650,6 +678,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "localMixinMissingGroups": m16,
     "localMixinStatus": m17,
     "localNodes": MessageLookupByLibrary.simpleMessage("Local Nodes"),
+    "localPrivateKey": MessageLookupByLibrary.simpleMessage(
+      "Local private key",
+    ),
     "localProxies": MessageLookupByLibrary.simpleMessage("Local Proxies"),
     "localProxyAnyTlsPasswordEmpty": MessageLookupByLibrary.simpleMessage(
       "AnyTLS password is required",
@@ -658,14 +689,26 @@ class MessageLookup extends MessageLookupByLibrary {
       "Carrier must be tcp, udp, or mix",
     ),
     "localProxyCount": m18,
+    "localProxyEasyTierAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
+      "MTU and routing mark must be integers",
+    ),
+    "localProxyEasyTierKeyPairRequired": MessageLookupByLibrary.simpleMessage(
+      "Local private key and public key must be provided together",
+    ),
     "localProxyHealthCheckInvalid": MessageLookupByLibrary.simpleMessage(
       "Health check settings are invalid",
+    ),
+    "localProxyIpv4CidrInvalid": MessageLookupByLibrary.simpleMessage(
+      "Overlay IPv4 must be CIDR, for example 10.144.0.1/24",
     ),
     "localProxyMixin": MessageLookupByLibrary.simpleMessage(
       "Local Proxy Mix-in",
     ),
     "localProxyNameEmpty": MessageLookupByLibrary.simpleMessage(
       "Proxy name cannot be empty",
+    ),
+    "localProxyNetworkNameEmpty": MessageLookupByLibrary.simpleMessage(
+      "Network name is required",
     ),
     "localProxyNowhereAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
       "Nowhere advanced integer values must be non-negative, and effective initial backoff must not exceed maximum backoff",
@@ -678,6 +721,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxyPasswordEmpty": MessageLookupByLibrary.simpleMessage(
       "Password is required",
+    ),
+    "localProxyPeersRequired": MessageLookupByLibrary.simpleMessage(
+      "Add at least one peer when no listener is configured",
     ),
     "localProxyPoolInvalid": MessageLookupByLibrary.simpleMessage(
       "Pool must be 0-256",
@@ -712,6 +758,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxyUuidEmpty": MessageLookupByLibrary.simpleMessage(
       "VLESS UUID is required",
     ),
+    "localPublicKey": MessageLookupByLibrary.simpleMessage("Local public key"),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Location Permission",
     ),
@@ -744,6 +791,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Manage Local Nodes",
     ),
     "manualAdd": MessageLookupByLibrary.simpleMessage("Manual add"),
+    "mappedListeners": MessageLookupByLibrary.simpleMessage("Mapped listeners"),
     "matchSourceIp": MessageLookupByLibrary.simpleMessage("Match source IP"),
     "maxConcurrentDials": MessageLookupByLibrary.simpleMessage(
       "Max concurrent dials",
@@ -776,6 +824,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Monochrome"),
     "monthsAgo": m21,
     "more": MessageLookupByLibrary.simpleMessage("More"),
+    "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
     "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("Name"),
     "nameserver": MessageLookupByLibrary.simpleMessage("Nameserver"),
@@ -798,6 +847,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkException": MessageLookupByLibrary.simpleMessage(
       "Network exception, please check your connection and try again",
     ),
+    "networkName": MessageLookupByLibrary.simpleMessage("Network name"),
+    "networkSecret": MessageLookupByLibrary.simpleMessage("Network secret"),
     "networkSpeed": MessageLookupByLibrary.simpleMessage("Network speed"),
     "networkTest": MessageLookupByLibrary.simpleMessage("Network Test"),
     "networkTestDesc": MessageLookupByLibrary.simpleMessage(
@@ -808,6 +859,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noData": MessageLookupByLibrary.simpleMessage("No data"),
     "noHotKey": MessageLookupByLibrary.simpleMessage("No HotKey"),
     "noInfo": MessageLookupByLibrary.simpleMessage("No info"),
+    "noListener": MessageLookupByLibrary.simpleMessage("Disable listener"),
     "noLocalProxy": MessageLookupByLibrary.simpleMessage("No local proxies"),
     "noLongerRemind": MessageLookupByLibrary.simpleMessage(
       "Don\'t remind again",
@@ -856,6 +908,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Other contributors",
     ),
     "outboundMode": MessageLookupByLibrary.simpleMessage("Outbound mode"),
+    "overlayIpv4": MessageLookupByLibrary.simpleMessage("Overlay IPv4"),
     "override": MessageLookupByLibrary.simpleMessage("Override"),
     "overrideDns": MessageLookupByLibrary.simpleMessage("Override Dns"),
     "overrideDnsDesc": MessageLookupByLibrary.simpleMessage(
@@ -878,6 +931,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "One node link per line",
     ),
     "pasteShareLink": MessageLookupByLibrary.simpleMessage("Paste share link"),
+    "peers": MessageLookupByLibrary.simpleMessage("Peers"),
     "pin": MessageLookupByLibrary.simpleMessage("Certificate pin"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "Please bind WebDAV",
@@ -910,6 +964,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "privateKeyPassphrase": MessageLookupByLibrary.simpleMessage(
       "Private key passphrase",
     ),
+    "privateMode": MessageLookupByLibrary.simpleMessage("Private mode"),
     "process": MessageLookupByLibrary.simpleMessage("Process"),
     "profile": MessageLookupByLibrary.simpleMessage("Profile"),
     "profileAutoUpdateIntervalInvalidValidationDesc":
@@ -967,6 +1022,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "proxyNameserverDesc": MessageLookupByLibrary.simpleMessage(
       "Domain for resolving proxy nodes",
     ),
+    "proxyNetworks": MessageLookupByLibrary.simpleMessage("Proxy networks"),
     "proxyPort": MessageLookupByLibrary.simpleMessage("ProxyPort"),
     "proxyProviderDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
       "Detected selected proxy providers are abnormal",
@@ -1073,6 +1129,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Bypass private route address",
     ),
     "routeMode_config": MessageLookupByLibrary.simpleMessage("Use config"),
+    "routingMark": MessageLookupByLibrary.simpleMessage("Routing mark"),
     "rtt": MessageLookupByLibrary.simpleMessage("RTT"),
     "ru": MessageLookupByLibrary.simpleMessage("Russian"),
     "rule": MessageLookupByLibrary.simpleMessage("Rule"),
@@ -1194,6 +1251,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "seconds": MessageLookupByLibrary.simpleMessage("Seconds"),
     "secondsCount": m26,
+    "secureMode": MessageLookupByLibrary.simpleMessage("Secure mode"),
     "security": MessageLookupByLibrary.simpleMessage("Security"),
     "selectAll": MessageLookupByLibrary.simpleMessage("Select all"),
     "selectNode": MessageLookupByLibrary.simpleMessage("Select Node"),
@@ -1266,6 +1324,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "startSetup": MessageLookupByLibrary.simpleMessage("Start Setup"),
     "startTest": MessageLookupByLibrary.simpleMessage("Start Test"),
     "startVpn": MessageLookupByLibrary.simpleMessage("Starting VPN..."),
+    "stateDir": MessageLookupByLibrary.simpleMessage("State directory"),
     "status": MessageLookupByLibrary.simpleMessage("Status"),
     "statusDesc": MessageLookupByLibrary.simpleMessage(
       "System DNS will be used when turned off",
@@ -1321,6 +1380,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "time": MessageLookupByLibrary.simpleMessage("Time"),
     "timeout": MessageLookupByLibrary.simpleMessage("Timeout"),
     "tip": MessageLookupByLibrary.simpleMessage("tip"),
+    "tldDnsZone": MessageLookupByLibrary.simpleMessage("TLD DNS zone"),
     "tls": MessageLookupByLibrary.simpleMessage("TLS"),
     "toggle": MessageLookupByLibrary.simpleMessage("Toggle"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("TonalSpot"),

@@ -591,6 +591,112 @@ void main() {
     );
   });
 
+  testWidgets('saves EasyTier overlay config without server or port', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(const LocalProxyEditPage(initialType: 'easytier')),
+    );
+    await _pumpFrames(tester);
+
+    await _enterField(tester, 'Name', 'Home EasyTier');
+    await _enterField(tester, 'Network name', 'example');
+    await _enterField(tester, 'Network secret', 'secret');
+    await _enterField(
+      tester,
+      'Peers',
+      'tcp://192.0.2.10:11010\nudp://192.0.2.11:11010',
+    );
+
+    await _tapSave(tester);
+
+    expect(localProxyStore.proxies, hasLength(1));
+    final saved = localProxyStore.proxies.single;
+    expect(saved.type, 'easytier');
+    expect(saved.config['name'], 'Home EasyTier');
+    expect(saved.config['type'], 'easytier');
+    expect(saved.config['network-name'], 'example');
+    expect(saved.config['network-secret'], 'secret');
+    expect(saved.config['peers'], [
+      'tcp://192.0.2.10:11010',
+      'udp://192.0.2.11:11010',
+    ]);
+    expect(saved.config.containsKey('server'), isFalse);
+    expect(saved.config.containsKey('port'), isFalse);
+    expect(saved.config.containsKey('udp'), isFalse);
+  });
+
+  testWidgets('validates EasyTier network name and peers', (tester) async {
+    await tester.pumpWidget(
+      _wrap(const LocalProxyEditPage(initialType: 'easytier')),
+    );
+    await _pumpFrames(tester);
+
+    await _enterField(tester, 'Name', 'Incomplete EasyTier');
+    await _tapSave(tester, expectStoreChange: false);
+    expect(localProxyStore.proxies, isEmpty);
+
+    await _enterField(tester, 'Network name', 'example');
+    await _tapSave(tester, expectStoreChange: false);
+    expect(localProxyStore.proxies, isEmpty);
+
+    await _enterField(tester, 'Peers', 'tcp://192.0.2.10:11010');
+    await _tapSave(tester);
+    expect(localProxyStore.proxies, hasLength(1));
+    expect(localProxyStore.proxies.single.config['network-name'], 'example');
+  });
+
+  testWidgets('round-trips an existing EasyTier proxy', (tester) async {
+    final original = _proxy(
+      id: 42,
+      name: 'Existing EasyTier',
+      type: 'easytier',
+      config: {
+        'name': 'Existing EasyTier',
+        'type': 'easytier',
+        'network-name': 'example',
+        'network-secret': 'secret',
+        'hostname': 'mihomo',
+        'ipv4': '10.144.0.1/24',
+        'peers': ['tcp://192.0.2.10:11010'],
+        'udp': true,
+        'dialer-proxy': 'ss1',
+        'interface-name': 'WLAN',
+        'routing-mark': 6666,
+        'ip-version': 'ipv4-prefer',
+      },
+    );
+    await tester.runAsync(() => localProxyStore.add(original));
+    final storedBeforeEdit = localProxyStore.proxies.single;
+
+    await tester.pumpWidget(_wrap(LocalProxyEditPage(proxy: storedBeforeEdit)));
+    await _pumpFrames(tester);
+
+    expect(_fieldController(tester, 'Network name').text, 'example');
+    expect(_fieldController(tester, 'Network secret').text, 'secret');
+    expect(_fieldController(tester, 'Hostname').text, 'mihomo');
+    expect(_fieldController(tester, 'Overlay IPv4').text, '10.144.0.1/24');
+    expect(
+      _fieldController(tester, 'Peers').text,
+      'tcp://192.0.2.10:11010',
+    );
+
+    await _tapSave(tester);
+
+    final saved = localProxyStore.proxies.single;
+    expect(saved.config['network-name'], 'example');
+    expect(saved.config['hostname'], 'mihomo');
+    expect(saved.config['ipv4'], '10.144.0.1/24');
+    expect(saved.config['peers'], ['tcp://192.0.2.10:11010']);
+    expect(saved.config['udp'], isTrue);
+    expect(saved.config['dialer-proxy'], 'ss1');
+    expect(saved.config['interface-name'], 'WLAN');
+    expect(saved.config['routing-mark'], 6666);
+    expect(saved.config['ip-version'], 'ipv4-prefer');
+    expect(saved.config.containsKey('server'), isFalse);
+    expect(saved.config.containsKey('port'), isFalse);
+  });
+
   testWidgets('disposes all added controllers without an exception', (
     tester,
   ) async {

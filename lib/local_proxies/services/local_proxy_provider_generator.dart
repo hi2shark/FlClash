@@ -19,7 +19,11 @@ class LocalProxyProviderGenerator {
   Map<String, dynamic> _buildProxyMap(LocalProxy proxy) {
     final map = Map<String, dynamic>.from(proxy.config);
     final type = proxy.type;
-    map['port'] = _toPort(map['port']);
+    if (type == 'easytier') {
+      _normalizeEasyTier(map);
+    } else {
+      map['port'] = _toPort(map['port']);
+    }
 
     if (type == 'ssh') {
       _normalizeSshFields(map);
@@ -299,6 +303,33 @@ class LocalProxyProviderGenerator {
       if (parsed != null) return parsed;
     }
     return 0;
+  }
+
+  void _normalizeEasyTier(Map<String, dynamic> map) {
+    map.remove('server');
+    map.remove('port');
+    const listKeys = [
+      'peers',
+      'listeners',
+      'mapped-listeners',
+      'exit-nodes',
+      'proxy-networks',
+    ];
+    for (final key in listKeys) {
+      final value = map[key];
+      if (value is String) {
+        final items = const LineSplitter()
+            .convert(value)
+            .map((line) => line.trim())
+            .where((line) => line.isNotEmpty)
+            .toList();
+        if (items.isEmpty) {
+          map.remove(key);
+        } else {
+          map[key] = items;
+        }
+      }
+    }
   }
 
   void _normalizeSshFields(Map<String, dynamic> map) {

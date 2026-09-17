@@ -185,6 +185,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
       'anytls' => l10n.anytls,
       'nowhere' => l10n.nowhere,
       'hysteria2' => l10n.hysteria2,
+      'easytier' => l10n.easytier,
       'socks5' => l10n.socks5,
       'ssh' => l10n.ssh,
       _ => type.toUpperCase(),

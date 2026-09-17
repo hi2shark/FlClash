@@ -208,6 +208,7 @@ void main() {
       'AnyTLS',
       'Nowhere',
       'Hysteria2',
+      'EasyTier',
     ]) {
       expect(find.text(label), findsOneWidget);
     }

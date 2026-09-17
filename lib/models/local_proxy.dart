@@ -23,7 +23,10 @@ abstract class LocalProxy with _$LocalProxy {
 }
 
 extension LocalProxyExt on LocalProxy {
-  String get displayType => type.toUpperCase();
+  String get displayType => switch (type) {
+    'easytier' => 'EasyTier',
+    _ => type.toUpperCase(),
+  };
 
   String get server => (config['server'] ?? '').toString();
 
@@ -34,5 +37,39 @@ extension LocalProxyExt on LocalProxy {
     return null;
   }
 
-  String get serverDesc => '$server:${port ?? ''}';
+  String get serverDesc {
+    if (type == 'easytier') {
+      return _easyTierDesc;
+    }
+    return '$server:${port ?? ''}';
+  }
+
+  String get _easyTierDesc {
+    final networkName = (config['network-name'] ?? '').toString();
+    final firstPeer = _firstPeer;
+    if (networkName.isNotEmpty && firstPeer != null) {
+      return '$networkName · $firstPeer';
+    }
+    if (networkName.isNotEmpty) {
+      return networkName;
+    }
+    return firstPeer ?? '';
+  }
+
+  String? get _firstPeer {
+    final peers = config['peers'];
+    if (peers is List && peers.isNotEmpty) {
+      final value = peers.first.toString().trim();
+      return value.isEmpty ? null : value;
+    }
+    if (peers is String) {
+      for (final line in peers.split('\n')) {
+        final value = line.trim();
+        if (value.isNotEmpty) {
+          return value;
+        }
+      }
+    }
+    return null;
+  }
 }

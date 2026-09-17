@@ -515,6 +515,35 @@ void main() {
       expect(map.containsKey('unused'), false);
     });
 
+    test('emits easytier overlay config without server or port', () {
+      final proxy = _proxy(
+        type: 'easytier',
+        config: {
+          'name': 'EasyTier',
+          'type': 'easytier',
+          'network-name': 'example',
+          'network-secret': 'secret',
+          'peers': 'tcp://192.0.2.10:11010\n\nudp://192.0.2.11:11010',
+          'udp': true,
+          'server': '',
+          'port': 0,
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final doc = yaml.loadYaml(yamlString) as Map;
+      final map = (doc['proxies'] as List).first as Map;
+      expect(map['type'], 'easytier');
+      expect(map['network-name'], 'example');
+      expect(map['network-secret'], 'secret');
+      expect(map['peers'], [
+        'tcp://192.0.2.10:11010',
+        'udp://192.0.2.11:11010',
+      ]);
+      expect(map['udp'], isTrue);
+      expect(map.containsKey('server'), isFalse);
+      expect(map.containsKey('port'), isFalse);
+    });
+
     test('filters disabled proxies', () {
       final enabled = _proxy(
         type: 'ss',
