@@ -676,10 +676,7 @@ void main() {
     expect(_fieldController(tester, 'Network secret').text, 'secret');
     expect(_fieldController(tester, 'Hostname').text, 'mihomo');
     expect(_fieldController(tester, 'Overlay IPv4').text, '10.144.0.1/24');
-    expect(
-      _fieldController(tester, 'Peers').text,
-      'tcp://192.0.2.10:11010',
-    );
+    expect(_fieldController(tester, 'Peers').text, 'tcp://192.0.2.10:11010');
 
     await _tapSave(tester);
 
@@ -695,6 +692,101 @@ void main() {
     expect(saved.config['ip-version'], 'ipv4-prefer');
     expect(saved.config.containsKey('server'), isFalse);
     expect(saved.config.containsKey('port'), isFalse);
+  });
+
+  testWidgets('round-trips Nowhere morph when enabled', (tester) async {
+    final original = _proxy(
+      id: 21,
+      name: 'Nowhere Node',
+      type: 'nowhere',
+      config: {
+        'name': 'Nowhere Node',
+        'type': 'nowhere',
+        'server': 'example.com',
+        'port': 2077,
+        'password': 'secret',
+        'udp': true,
+        'up': 'udp',
+        'down': 'udp',
+        'morph': true,
+      },
+    );
+    await tester.runAsync(() => localProxyStore.add(original));
+    final storedBeforeEdit = localProxyStore.proxies.single;
+
+    await tester.pumpWidget(_wrap(LocalProxyEditPage(proxy: storedBeforeEdit)));
+    await _pumpFrames(tester);
+
+    expect(_fieldController(tester, 'Share key (shared key)').text, 'secret');
+    expect(find.text('Morph'), findsOneWidget);
+
+    await _tapSave(tester);
+    expect(localProxyStore.proxies.single.config['morph'], isTrue);
+    expect(localProxyStore.proxies.single.config['alpn'], ['nw2']);
+  });
+
+  testWidgets('clears Nowhere morph when the switch is turned off', (
+    tester,
+  ) async {
+    final original = _proxy(
+      id: 22,
+      name: 'Nowhere Morph Off',
+      type: 'nowhere',
+      config: {
+        'name': 'Nowhere Morph Off',
+        'type': 'nowhere',
+        'server': 'example.com',
+        'port': 2077,
+        'password': 'secret',
+        'udp': true,
+        'up': 'udp',
+        'down': 'udp',
+        'morph': true,
+      },
+    );
+    await tester.runAsync(() => localProxyStore.add(original));
+    final storedBeforeEdit = localProxyStore.proxies.single;
+
+    await tester.pumpWidget(_wrap(LocalProxyEditPage(proxy: storedBeforeEdit)));
+    await _pumpFrames(tester);
+
+    final morphTile = find
+        .ancestor(of: find.text('Morph'), matching: find.byType(ListTile))
+        .first;
+    final morphSwitch = tester.widget<Switch>(
+      find.descendant(of: morphTile, matching: find.byType(Switch)),
+    );
+    morphSwitch.onChanged!(false);
+    await _pumpFrames(tester);
+    await _tapSave(tester);
+    expect(localProxyStore.proxies.single.config.containsKey('morph'), isFalse);
+  });
+
+  testWidgets('rejects Nowhere ALPN with multiple values', (tester) async {
+    final original = _proxy(
+      id: 23,
+      name: 'Nowhere ALPN',
+      type: 'nowhere',
+      config: {
+        'name': 'Nowhere ALPN',
+        'type': 'nowhere',
+        'server': 'example.com',
+        'port': 2077,
+        'password': 'secret',
+        'udp': true,
+        'up': 'udp',
+        'down': 'udp',
+        'alpn': ['nw2', 'h3'],
+      },
+    );
+    await tester.runAsync(() => localProxyStore.add(original));
+    final storedBeforeEdit = localProxyStore.proxies.single;
+
+    await tester.pumpWidget(_wrap(LocalProxyEditPage(proxy: storedBeforeEdit)));
+    await _pumpFrames(tester);
+
+    await _tapSave(tester, expectStoreChange: false);
+    expect(localProxyStore.proxies.single.config['alpn'], ['nw2', 'h3']);
   });
 
   testWidgets('disposes all added controllers without an exception', (

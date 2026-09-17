@@ -571,8 +571,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxyNowhereAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
       "Nowhere の詳細整数値は 0 以上で、デフォルト適用後の初期バックオフは最大バックオフ以下である必要があります",
     ),
+    "localProxyNowhereAlpnInvalid": MessageLookupByLibrary.simpleMessage(
+      "Nowhere の ALPN はカンマを含まない単一の値にしてください",
+    ),
     "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
-      "Nowhere の共有キーと最初の ALPN はそれぞれ 255 UTF-8 バイト以内で入力してください",
+      "Nowhere の共有キーと ALPN はそれぞれ 255 UTF-8 バイト以内で入力してください",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Nowhere 共有キーを入力してください",
@@ -686,6 +689,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("モノクローム"),
     "monthsAgo": m23,
     "more": MessageLookupByLibrary.simpleMessage("詳細"),
+    "morph": MessageLookupByLibrary.simpleMessage("Morph"),
     "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
     "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("名前"),

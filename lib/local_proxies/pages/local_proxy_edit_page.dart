@@ -78,6 +78,7 @@ const _nowhereControlledFields = {
   'network',
   'net',
   'mux',
+  'morph',
   'pool',
   'mix-fallback-timeout',
   'prewarm-on-start',
@@ -100,6 +101,8 @@ const _nowhereControlledFields = {
   'reduce-rtt',
   'max-udp-relay-packet-size',
 };
+
+const _nowhereDefaultAlpn = 'nw2';
 
 const _commonControlledFields = {'name', 'type', 'server', 'port', 'udp'};
 
@@ -356,6 +359,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late bool _echEnabled;
   late bool _prewarmOnStart;
   late bool _muxEnabled;
+  late bool _morph;
   late bool _supportX25519Mlkem768;
   late bool _v2rayHttpUpgrade;
   late bool _v2rayHttpUpgradeFastOpen;
@@ -363,8 +367,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late String _up;
   late String _down;
 
-  bool get _dedicatedTcpTcp =>
-      _up == 'tcp' && _down == 'tcp' && !_muxEnabled;
+  bool get _dedicatedTcpTcp => _up == 'tcp' && _down == 'tcp' && !_muxEnabled;
   late String _network;
   late String _security;
   late String _flow;
@@ -409,9 +412,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           : config['key']?.toString() ?? '',
     );
     _alpnController = TextEditingController(
-      text: _type == 'nowhere'
-          ? _firstAlpnToString(config['alpn'])
-          : _alpnToString(config['alpn']),
+      text: _alpnToString(config['alpn']),
     );
     _clientFingerprintController = TextEditingController(
       text: config['client-fingerprint']?.toString() ?? '',
@@ -674,6 +675,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     if (_up == 'udp' && _down == 'udp') {
       _muxEnabled = false;
     }
+    _morph = _isNowhereEnabledFlag(config['morph']);
     _network = config['network']?.toString() ?? 'tcp';
     if (!_networks.contains(_network)) {
       _network = 'tcp';
@@ -783,13 +785,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     return value.toString();
   }
 
-  String _firstAlpnToString(dynamic value) {
-    if (value is List) {
-      return value.isEmpty ? '' : value.first.toString();
-    }
-    return (value?.toString() ?? '').split(',').first;
-  }
-
   String _listOrString(dynamic value) {
     if (value == null) return '';
     if (value is List) {
@@ -858,10 +853,21 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     return int.tryParse(text.trim());
   }
 
-  String? get _firstNowhereAlpn {
-    final alpn = _alpnController.text;
+  String? get _nowhereAlpn {
+    final alpn = _alpnController.text.trim();
     if (alpn.isEmpty) return null;
-    return alpn.split(',').first;
+    return alpn;
+  }
+
+  bool _nowhereAlpnHasMultipleValues(String alpn) {
+    return alpn.contains(',') || alpn.contains('，');
+  }
+
+  bool _isNowhereEnabledFlag(dynamic value) {
+    return value == true ||
+        value == 1 ||
+        value == '1' ||
+        value?.toString().toLowerCase() == 'true';
   }
 
   bool _isValidNonNegativeInteger(TextEditingController controller) {
@@ -1047,6 +1053,9 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         base['down'] = _down;
         if (_muxEnabled) {
           base['mux'] = 1;
+        }
+        if (_morph) {
+          base['morph'] = true;
         }
         if (_dedicatedTcpTcp) {
           final pool = _intOrNull(_poolController.text);
@@ -1349,10 +1358,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   }
 
   void _applyNowhereAlpn(Map<String, dynamic> base) {
-    final alpn = _firstNowhereAlpn;
-    if (alpn != null) {
-      base['alpn'] = [alpn];
-    }
+    base['alpn'] = [_nowhereAlpn ?? _nowhereDefaultAlpn];
   }
 
   void _applyTlsOptions(Map<String, dynamic> base) {
@@ -1442,9 +1448,12 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         if (sharedKey.isEmpty) {
           return appLocalizations.localProxyNowhereKeyEmpty;
         }
-        final firstAlpn = _firstNowhereAlpn;
+        final alpn = _nowhereAlpn;
+        if (alpn != null && _nowhereAlpnHasMultipleValues(alpn)) {
+          return appLocalizations.localProxyNowhereAlpnInvalid;
+        }
         if (!_fitsNowhereField(sharedKey) ||
-            (firstAlpn != null && !_fitsNowhereField(firstAlpn))) {
+            (alpn != null && !_fitsNowhereField(alpn))) {
           return appLocalizations.localProxyNowhereInputTooLong;
         }
         if (!['tcp', 'udp', 'mix'].contains(_up) ||
@@ -1564,6 +1573,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     TextInputType? keyboardType,
     int? maxLines,
     int? minLines,
+    String? hintText,
   }) {
     return TextFormField(
       controller: controller,
@@ -1572,6 +1582,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       minLines: minLines,
       decoration: InputDecoration(
         labelText: label,
+        hintText: hintText,
         border: const OutlineInputBorder(),
       ),
     );
@@ -1701,10 +1712,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           maxLines: 6,
         ),
         const SizedBox(height: 16),
-        _buildTextField(
-          _instanceNameController,
-          appLocalizations.instanceName,
-        ),
+        _buildTextField(_instanceNameController, appLocalizations.instanceName),
         const SizedBox(height: 16),
         _buildTextField(_stateDirController, appLocalizations.stateDir),
         const SizedBox(height: 16),
@@ -2250,6 +2258,14 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               ),
             ),
           ],
+          const SizedBox(height: 8),
+          ListItem.switchItem(
+            title: Text(appLocalizations.morph),
+            delegate: SwitchDelegate<bool>(
+              value: _morph,
+              onChanged: (value) => setState(() => _morph = value),
+            ),
+          ),
           if (_dedicatedTcpTcp) ...[
             const SizedBox(height: 16),
             _buildTextField(
@@ -2331,7 +2347,11 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     final appLocalizations = context.appLocalizations;
     return Column(
       children: [
-        _buildTextField(_alpnController, appLocalizations.alpn),
+        _buildTextField(
+          _alpnController,
+          appLocalizations.alpn,
+          hintText: _type == 'nowhere' ? _nowhereDefaultAlpn : null,
+        ),
         const SizedBox(height: 16),
         _buildDropdown(
           label: appLocalizations.clientFingerprint,

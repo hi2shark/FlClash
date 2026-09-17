@@ -80,6 +80,7 @@ class LocalProxyProviderGenerator {
     map.remove('spec');
 
     _normalizeNowhereAlpn(proxy, map);
+    _normalizeNowhereMorph(map);
 
     final muxEnabled = _normalizeNowhereMux(proxy, map, carriers);
     final dedicatedTcpTcp =
@@ -180,6 +181,7 @@ class LocalProxyProviderGenerator {
   }
 
   static const _nowhereMaxPoolSize = 256;
+  static const _nowhereDefaultAlpn = 'nw2';
 
   bool _isNowhereCarrier(String value) =>
       value == 'tcp' || value == 'udp' || value == 'mix';
@@ -233,31 +235,48 @@ class LocalProxyProviderGenerator {
 
   void _normalizeNowhereAlpn(LocalProxy proxy, Map<String, dynamic> map) {
     final value = map['alpn'];
-    if (value == null) return;
+    if (value == null) {
+      map['alpn'] = [_nowhereDefaultAlpn];
+      return;
+    }
 
-    late final String first;
+    late final List<String> entries;
     if (value is String) {
-      first = value.split(',').first;
+      if (value.contains(',')) {
+        _invalidNowhere(proxy, 'ALPN must contain exactly one value');
+      }
+      entries = [value];
     } else if (value is List) {
-      if (value.isEmpty) {
-        map.remove('alpn');
-        return;
+      entries = [];
+      for (final item in value) {
+        if (item is! String) {
+          _invalidNowhere(proxy, 'ALPN entries must be strings');
+        }
+        entries.add(item);
       }
-      final firstValue = value.first;
-      if (firstValue is! String) {
-        _invalidNowhere(proxy, 'the first ALPN entry must be a string');
-      }
-      first = firstValue;
     } else {
       _invalidNowhere(proxy, 'ALPN must be a string or list of strings');
     }
 
-    if (first.isEmpty) {
-      map.remove('alpn');
+    if (entries.length != 1 || entries.first.isEmpty) {
+      _invalidNowhere(proxy, 'ALPN must contain exactly one value');
+    }
+    _validateUtf8Length(proxy, 'ALPN', entries.first);
+    map['alpn'] = [entries.first];
+  }
+
+  void _normalizeNowhereMorph(Map<String, dynamic> map) {
+    final value = map['morph'];
+    final enabled =
+        value == true ||
+        value == 1 ||
+        value == '1' ||
+        value?.toString().toLowerCase() == 'true';
+    if (enabled) {
+      map['morph'] = true;
       return;
     }
-    _validateUtf8Length(proxy, 'ALPN', first);
-    map['alpn'] = [first];
+    map.remove('morph');
   }
 
   int? _normalizeNonNegativeInteger(

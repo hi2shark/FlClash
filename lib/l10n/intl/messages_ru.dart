@@ -749,8 +749,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxyNowhereAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
       "Расширенные целые значения Nowhere должны быть неотрицательными, а начальная задержка с учётом значения по умолчанию — не больше максимальной",
     ),
+    "localProxyNowhereAlpnInvalid": MessageLookupByLibrary.simpleMessage(
+      "ALPN Nowhere должен быть одним значением без запятых",
+    ),
     "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
-      "Общий ключ Nowhere и первый ALPN должны быть не длиннее 255 байт UTF-8 каждый",
+      "Общий ключ Nowhere и ALPN должны быть не длиннее 255 байт UTF-8 каждый",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите ключ обмена Nowhere",
@@ -894,6 +897,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Монохром"),
     "monthsAgo": m23,
     "more": MessageLookupByLibrary.simpleMessage("Еще"),
+    "morph": MessageLookupByLibrary.simpleMessage("Morph"),
     "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
     "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("Имя"),

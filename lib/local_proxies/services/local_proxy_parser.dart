@@ -502,7 +502,27 @@ class LocalProxyParser {
     return parameters;
   }
 
+  List<String> _queryValuesPreservingPlus(String query, String key) {
+    final values = <String>[];
+    if (query.isEmpty) return values;
+
+    for (final component in query.split('&')) {
+      if (component.isEmpty) continue;
+      final separator = component.indexOf('=');
+      final rawKey = separator == -1
+          ? component
+          : component.substring(0, separator);
+      if (Uri.decodeComponent(rawKey) != key) continue;
+      final rawValue = separator == -1
+          ? ''
+          : component.substring(separator + 1);
+      values.add(Uri.decodeComponent(rawValue));
+    }
+    return values;
+  }
+
   static const _nowhereMaxPoolSize = 256;
+  static const _nowhereDefaultAlpn = 'nw2';
 
   bool _isNowhereCarrier(String value) =>
       value == 'tcp' || value == 'udp' || value == 'mix';
@@ -574,21 +594,8 @@ class LocalProxyParser {
       up = upValue;
       down = downValue;
     } else {
-      final net = query['net'] ?? '';
-      final network = query['network'] ?? '';
-      if (net.isNotEmpty) {
-        up = net;
-        down = net;
-      } else if (network.isNotEmpty) {
-        up = network;
-        down = network;
-        warnings.add(
-          'Nowhere share-link parameter "network" is deprecated; use "net"',
-        );
-      } else {
-        up = 'udp';
-        down = 'udp';
-      }
+      up = 'udp';
+      down = 'udp';
     }
     if (!_isNowhereCarrier(up) || !_isNowhereCarrier(down)) {
       return LocalProxyParseResult(
@@ -615,17 +622,22 @@ class LocalProxyParser {
     }
     final dedicatedTcpTcp = up == 'tcp' && down == 'tcp' && mux == 0;
 
-    final alpnValue = query['alpn'];
+    final alpnValues = _queryValuesPreservingPlus(uri.query, 'alpn');
     List<String>? alpn;
-    if (alpnValue != null && alpnValue.isNotEmpty) {
-      alpn = alpnValue.split(',');
-      final effectiveAlpn = alpn.first;
-      if (effectiveAlpn.isNotEmpty) {
-        final alpnError = _validateNowhereUtf8Value('ALPN', effectiveAlpn);
-        if (alpnError != null) {
-          return LocalProxyParseResult(raw: raw, error: alpnError);
-        }
+    if (alpnValues.isNotEmpty) {
+      if (alpnValues.length != 1 ||
+          alpnValues.first.isEmpty ||
+          alpnValues.first.contains(',')) {
+        return LocalProxyParseResult(
+          raw: raw,
+          error: 'Nowhere ALPN must contain exactly one value',
+        );
       }
+      final alpnError = _validateNowhereUtf8Value('ALPN', alpnValues.first);
+      if (alpnError != null) {
+        return LocalProxyParseResult(raw: raw, error: alpnError);
+      }
+      alpn = [alpnValues.first];
     }
 
     final name = _buildName(fragment, 'nowhere', server);
@@ -645,9 +657,7 @@ class LocalProxyParser {
     if (sni != null && sni.isNotEmpty) {
       config['sni'] = sni;
     }
-    if (alpn != null) {
-      config['alpn'] = alpn;
-    }
+    config['alpn'] = alpn ?? [_nowhereDefaultAlpn];
     if (mux == 1) {
       config['mux'] = 1;
     }
@@ -683,6 +693,18 @@ class LocalProxyParser {
     final pin = query['pin'];
     if (pin != null && pin.isNotEmpty && pin != 'none') {
       config['pin'] = pin;
+    }
+    final morphValue = query['morph'];
+    if (morphValue != null && morphValue.isNotEmpty) {
+      if (morphValue != '0' && morphValue != '1') {
+        return LocalProxyParseResult(
+          raw: raw,
+          error: 'Nowhere morph must be 0 or 1',
+        );
+      }
+      if (morphValue == '1') {
+        config['morph'] = true;
+      }
     }
     final ech = _parseEch(query['ech']);
     if (ech != null) {

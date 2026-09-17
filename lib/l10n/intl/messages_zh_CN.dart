@@ -511,8 +511,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxyNowhereAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
       "Nowhere 高级整数必须为非负整数，且按默认值计算后的初始退避不得大于最大退避",
     ),
+    "localProxyNowhereAlpnInvalid": MessageLookupByLibrary.simpleMessage(
+      "Nowhere ALPN 只能填写一个值，且不能包含逗号",
+    ),
     "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
-      "Nowhere 共享密钥和首个 ALPN 均不得超过 255 个 UTF-8 字节",
+      "Nowhere 共享密钥和 ALPN 均不得超过 255 个 UTF-8 字节",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Nowhere 密钥不能为空",
@@ -614,6 +617,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("单色"),
     "monthsAgo": m23,
     "more": MessageLookupByLibrary.simpleMessage("更多"),
+    "morph": MessageLookupByLibrary.simpleMessage("Morph"),
     "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
     "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("名称"),

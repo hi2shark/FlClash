@@ -211,20 +211,13 @@ void main() {
       expect(proxy.config['udp'], true);
     });
 
-    test('uses first duplicate values and preserves literal plus signs', () {
+    test('rejects duplicate ALPN query parameters', () {
       const uri =
-          'nowhere://sec+ret%3Akey@example.com:443?up=tcp&up=udp&down=tcp&down=udp&alpn=h2%2Bdraft,h3&alpn=ignored&sni=cdn%2Bedge.example&pool=2&pool=8#NW';
+          'nowhere://sec+ret%3Akey@example.com:443?up=tcp&up=udp&down=tcp&down=udp&alpn=h2%2Bdraft&alpn=ignored&sni=cdn%2Bedge.example&pool=2&pool=8#NW';
       final result = parser.parseMany(uri).single;
 
-      expect(result.error, isNull);
-      final config = result.proxy!.config;
-      expect(config['password'], 'sec+ret:key');
-      expect(config['up'], 'tcp');
-      expect(config['down'], 'tcp');
-      expect(config.containsKey('spec'), isFalse);
-      expect(config['alpn'], ['h2+draft', 'h3']);
-      expect(config['sni'], 'cdn+edge.example');
-      expect(config['pool'], 2);
+      expect(result.proxy, isNull);
+      expect(result.error, contains('ALPN'));
     });
 
     test('parses nowhere without carriers defaulting to udp', () {
@@ -236,24 +229,25 @@ void main() {
       expect(proxy.config['up'], 'udp');
       expect(proxy.config['down'], 'udp');
       expect(proxy.config['port'], 443);
+      expect(proxy.config['alpn'], ['nw2']);
     });
 
-    test('uses net before network and warns for network compatibility', () {
+    test('ignores legacy net and network aliases', () {
       final netResult = parser
           .parseMany('nowhere://key@example.com?net=tcp&network=udp')
           .single;
       expect(netResult.error, isNull);
-      expect(netResult.proxy!.config['up'], 'tcp');
-      expect(netResult.proxy!.config['down'], 'tcp');
+      expect(netResult.proxy!.config['up'], 'udp');
+      expect(netResult.proxy!.config['down'], 'udp');
       expect(netResult.warnings, isEmpty);
 
       final networkResult = parser
           .parseMany('nowhere://key@example.com?network=tcp')
           .single;
       expect(networkResult.error, isNull);
-      expect(networkResult.proxy!.config['up'], 'tcp');
-      expect(networkResult.proxy!.config['down'], 'tcp');
-      expect(networkResult.warnings.single, contains('network'));
+      expect(networkResult.proxy!.config['up'], 'udp');
+      expect(networkResult.proxy!.config['down'], 'udp');
+      expect(networkResult.warnings, isEmpty);
     });
 
     test('rejects literal password component but accepts encoded colon', () {
@@ -342,9 +336,7 @@ void main() {
       expect(canonicalized.warnings.single, contains('canonicalized'));
 
       final muxPoolIgnored = parser
-          .parseMany(
-            'nowhere://key@example.com?up=tcp&down=tcp&mux=1&pool=5',
-          )
+          .parseMany('nowhere://key@example.com?up=tcp&down=tcp&mux=1&pool=5')
           .single;
       expect(muxPoolIgnored.error, isNull);
       expect(muxPoolIgnored.proxy!.config['mux'], 1);
@@ -362,9 +354,7 @@ void main() {
       final key255 = List.filled(255, 'k').join();
       final alpn255 = List.filled(255, 'a').join();
       final accepted = parser
-          .parseMany(
-            'nowhere://$key255@example.com?alpn=$alpn255',
-          )
+          .parseMany('nowhere://$key255@example.com?alpn=$alpn255')
           .single;
       expect(accepted.error, isNull);
       expect(accepted.proxy!.config['alpn'], [alpn255]);
@@ -388,6 +378,53 @@ void main() {
       expect(legacy.error, isNull);
       expect(legacy.proxy, isNotNull);
       expect(legacy.proxy!.config.containsKey('spec'), isFalse);
+    });
+
+    test('parses morph and rejects invalid morph or ALPN', () {
+      final enabled = parser
+          .parseMany('nowhere://key@example.com:2077?morph=1#NW')
+          .single;
+      expect(enabled.error, isNull);
+      expect(enabled.proxy!.config['morph'], isTrue);
+
+      final disabled = parser
+          .parseMany('nowhere://key@example.com:2077?morph=0#NW')
+          .single;
+      expect(disabled.error, isNull);
+      expect(disabled.proxy!.config.containsKey('morph'), isFalse);
+
+      final omitted = parser.parseMany('nowhere://key@example.com#NW').single;
+      expect(omitted.error, isNull);
+      expect(omitted.proxy!.config.containsKey('morph'), isFalse);
+
+      final invalidMorph = parser
+          .parseMany('nowhere://key@example.com?morph=2')
+          .single;
+      expect(invalidMorph.proxy, isNull);
+      expect(invalidMorph.error, contains('morph'));
+
+      final commaAlpn = parser
+          .parseMany('nowhere://key@example.com?alpn=nw2,h3')
+          .single;
+      expect(commaAlpn.proxy, isNull);
+      expect(commaAlpn.error, contains('ALPN'));
+
+      final emptyAlpn = parser
+          .parseMany('nowhere://key@example.com?alpn=')
+          .single;
+      expect(emptyAlpn.proxy, isNull);
+      expect(emptyAlpn.error, contains('ALPN'));
+
+      final plusAlpn = parser
+          .parseMany(
+            'nowhere://sec+ret%3Akey@example.com:443?up=tcp&down=tcp&alpn=h2%2Bdraft&sni=cdn%2Bedge.example&pool=2#NW',
+          )
+          .single;
+      expect(plusAlpn.error, isNull);
+      expect(plusAlpn.proxy!.config['password'], 'sec+ret:key');
+      expect(plusAlpn.proxy!.config['alpn'], ['h2+draft']);
+      expect(plusAlpn.proxy!.config['sni'], 'cdn+edge.example');
+      expect(plusAlpn.proxy!.config['pool'], 2);
     });
   });
 

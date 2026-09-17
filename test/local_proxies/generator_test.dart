@@ -573,7 +573,8 @@ void main() {
           'network': 'tcp',
           'net': 'udp',
           'pool': '0',
-          'alpn': ['h2', 'h3'],
+          'alpn': ['h2'],
+          'morph': true,
           'prewarm-on-start': true,
           'max-concurrent-dials': '16',
           'warm-backoff-initial': '2',
@@ -608,6 +609,7 @@ void main() {
       expect(map.containsKey('net'), isFalse);
       expect(map['pool'], 0);
       expect(map['alpn'], ['h2']);
+      expect(map['morph'], isTrue);
       expect(map['prewarm-on-start'], isTrue);
       expect(map['max-concurrent-dials'], 16);
       expect(map['warm-backoff-initial'], 2);
@@ -659,29 +661,74 @@ void main() {
       expect(defaultMap['up'], 'udp');
       expect(defaultMap['down'], 'udp');
       expect(defaultMap['network'], 'udp');
+      expect(defaultMap['alpn'], ['nw2']);
     });
 
-    test('keeps only the effective first ALPN value', () {
-      final listConfig = _validNowhereConfig()..['alpn'] = ['h2', 'h3'];
+    test('keeps a single ALPN value and rejects multiple values', () {
+      final omittedMap = _firstProxy(
+        generator.generateYaml([
+          _proxy(type: 'nowhere', config: _validNowhereConfig()),
+        ]),
+      );
+      expect(omittedMap['alpn'], ['nw2']);
+      final listConfig = _validNowhereConfig()..['alpn'] = ['h2'];
       final listMap = _firstProxy(
         generator.generateYaml([_proxy(type: 'nowhere', config: listConfig)]),
       );
       expect(listMap['alpn'], ['h2']);
 
-      final stringConfig = _validNowhereConfig()..['alpn'] = 'h3,h2';
+      final stringConfig = _validNowhereConfig()..['alpn'] = 'h3';
       final stringMap = _firstProxy(
         generator.generateYaml([_proxy(type: 'nowhere', config: stringConfig)]),
       );
       expect(stringMap['alpn'], ['h3']);
 
-      final defaultAlpnConfig = _validNowhereConfig()
-        ..['alpn'] = ['', List.filled(256, 'x').join()];
-      final defaultAlpnMap = _firstProxy(
+      for (final config in [
+        _validNowhereConfig()..['alpn'] = ['h2', 'h3'],
+        _validNowhereConfig()..['alpn'] = 'h3,h2',
+        _validNowhereConfig()..['alpn'] = ['', List.filled(256, 'x').join()],
+      ]) {
+        expect(
+          () =>
+              generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.toString(),
+              'message',
+              contains('ALPN'),
+            ),
+          ),
+        );
+      }
+    });
+
+    test('emits morph only when enabled', () {
+      final enabled = _firstProxy(
         generator.generateYaml([
-          _proxy(type: 'nowhere', config: defaultAlpnConfig),
+          _proxy(
+            type: 'nowhere',
+            config: _validNowhereConfig()..['morph'] = true,
+          ),
         ]),
       );
-      expect(defaultAlpnMap.containsKey('alpn'), isFalse);
+      expect(enabled['morph'], isTrue);
+
+      final fromOne = _firstProxy(
+        generator.generateYaml([
+          _proxy(type: 'nowhere', config: _validNowhereConfig()..['morph'] = 1),
+        ]),
+      );
+      expect(fromOne['morph'], isTrue);
+
+      final disabled = _firstProxy(
+        generator.generateYaml([
+          _proxy(
+            type: 'nowhere',
+            config: _validNowhereConfig()..['morph'] = false,
+          ),
+        ]),
+      );
+      expect(disabled.containsKey('morph'), isFalse);
     });
 
     test('drops pool for every matrix containing UDP', () {
@@ -724,12 +771,7 @@ void main() {
           _proxy(
             type: 'nowhere',
             config: _validNowhereConfig()
-              ..addAll({
-                'up': 'tcp',
-                'down': 'tcp',
-                'mux': 1,
-                'pool': 5,
-              }),
+              ..addAll({'up': 'tcp', 'down': 'tcp', 'mux': 1, 'pool': 5}),
           ),
         ]),
       );
@@ -768,7 +810,7 @@ void main() {
       final validConfig = _validNowhereConfig()
         ..addAll({
           'password': key255,
-          'alpn': [alpn255, List.filled(256, 'z').join()],
+          'alpn': [alpn255],
         });
       final map = _firstProxy(
         generator.generateYaml([_proxy(type: 'nowhere', config: validConfig)]),

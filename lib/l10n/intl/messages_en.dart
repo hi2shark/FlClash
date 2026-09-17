@@ -723,8 +723,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxyNowhereAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
       "Nowhere advanced integer values must be non-negative, and effective initial backoff must not exceed maximum backoff",
     ),
+    "localProxyNowhereAlpnInvalid": MessageLookupByLibrary.simpleMessage(
+      "Nowhere ALPN must be a single value without commas",
+    ),
     "localProxyNowhereInputTooLong": MessageLookupByLibrary.simpleMessage(
-      "Nowhere shared key and first ALPN must each be at most 255 UTF-8 bytes",
+      "Nowhere shared key and ALPN must each be at most 255 UTF-8 bytes",
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Nowhere share key is required",
@@ -850,6 +853,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Monochrome"),
     "monthsAgo": m23,
     "more": MessageLookupByLibrary.simpleMessage("More"),
+    "morph": MessageLookupByLibrary.simpleMessage("Morph"),
     "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
     "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("Name"),

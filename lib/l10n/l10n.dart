@@ -5649,6 +5649,11 @@ class AppLocalizations {
     return Intl.message('TLS Mux', name: 'mux', desc: '', args: []);
   }
 
+  /// `Morph`
+  String get morph {
+    return Intl.message('Morph', name: 'morph', desc: '', args: []);
+  }
+
   /// `Mix fallback timeout (seconds)`
   String get mixFallbackTimeout {
     return Intl.message(
@@ -5789,11 +5794,21 @@ class AppLocalizations {
     );
   }
 
-  /// `Nowhere shared key and first ALPN must each be at most 255 UTF-8 bytes`
+  /// `Nowhere shared key and ALPN must each be at most 255 UTF-8 bytes`
   String get localProxyNowhereInputTooLong {
     return Intl.message(
-      'Nowhere shared key and first ALPN must each be at most 255 UTF-8 bytes',
+      'Nowhere shared key and ALPN must each be at most 255 UTF-8 bytes',
       name: 'localProxyNowhereInputTooLong',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Nowhere ALPN must be a single value without commas`
+  String get localProxyNowhereAlpnInvalid {
+    return Intl.message(
+      'Nowhere ALPN must be a single value without commas',
+      name: 'localProxyNowhereAlpnInvalid',
       desc: '',
       args: [],
     );
