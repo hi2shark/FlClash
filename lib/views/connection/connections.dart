@@ -20,14 +20,19 @@ class ConnectionsView extends ConsumerStatefulWidget {
   ConsumerState<ConnectionsView> createState() => _ConnectionsViewState();
 }
 
-class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
+class _ConnectionsViewState extends ConsumerState<ConnectionsView>
+    with WidgetsBindingObserver {
   final _connectionsStateNotifier = ValueNotifier<TrackerInfosState>(
     const TrackerInfosState(),
   );
   final ScrollController _scrollController = ScrollController();
   bool _showAll = false;
+  bool _appActive = true;
+  bool _pageActive = true;
 
   Timer? timer;
+
+  bool get _shouldPoll => _appActive && _pageActive;
 
   List<Widget> _buildActions() {
     final appLocalizations = context.appLocalizations;
@@ -67,25 +72,59 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
 
   Future<void> _updateConnectionsTask() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) {
+      if (!mounted || !_shouldPoll) {
         return;
       }
       await _updateConnections();
-      if (!mounted) {
+      if (!mounted || !_shouldPoll) {
         return;
       }
       timer = Timer(const Duration(seconds: 1), () async {
-        if (mounted) {
+        if (mounted && _shouldPoll) {
           await _updateConnectionsTask();
         }
       });
     });
   }
 
+  void _syncPolling() {
+    timer?.cancel();
+    timer = null;
+    if (_shouldPoll) {
+      _updateConnectionsTask();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _updateConnectionsTask();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final pageActive = PageActivityScope.of(context);
+    if (pageActive == _pageActive) {
+      return;
+    }
+    _pageActive = pageActive;
+    _syncPolling();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final active =
+        state != AppLifecycleState.paused &&
+        state != AppLifecycleState.inactive &&
+        state != AppLifecycleState.detached &&
+        state != AppLifecycleState.hidden;
+    if (active == _appActive) {
+      return;
+    }
+    _appActive = active;
+    _syncPolling();
   }
 
   Future<void> _updateConnections() async {
@@ -115,6 +154,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     timer?.cancel();
     _connectionsStateNotifier.dispose();
     _scrollController.dispose();
@@ -141,36 +181,31 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView> {
             );
           }
           final visible = _visibleConnections(connections);
-          return SuperListView.builder(
+          return SuperListView.separated(
             controller: _scrollController,
             itemBuilder: (context, index) {
               final trackerInfo = visible[index];
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TrackerInfoItem(
-                    key: Key(trackerInfo.id),
-                    trackerInfo: trackerInfo,
-                    onClickKeyword: (value) {
-                      context.commonScaffoldState?.addKeyword(value);
-                    },
-                    trailing: IconButton(
-                      padding: EdgeInsets.zero,
-                      visualDensity: VisualDensity.compact,
-                      style: IconButton.styleFrom(minimumSize: Size.zero),
-                      icon: const Icon(Icons.block),
-                      onPressed: () {
-                        _handleBlockConnection(trackerInfo.id);
-                      },
-                    ),
-                    detailTitle: appLocalizations.details(
-                      appLocalizations.connection,
-                    ),
-                  ),
-                  if (index < visible.length - 1) const Divider(height: 0),
-                ],
+              return TrackerInfoItem(
+                key: Key(trackerInfo.id),
+                trackerInfo: trackerInfo,
+                onClickKeyword: (value) {
+                  context.commonScaffoldState?.addKeyword(value);
+                },
+                trailing: IconButton(
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                  style: IconButton.styleFrom(minimumSize: Size.zero),
+                  icon: const Icon(Icons.block),
+                  onPressed: () {
+                    _handleBlockConnection(trackerInfo.id);
+                  },
+                ),
+                detailTitle: appLocalizations.details(
+                  appLocalizations.connection,
+                ),
               );
             },
+            separatorBuilder: (_, _) => const Divider(height: 0),
             itemCount: visible.length,
           );
         },

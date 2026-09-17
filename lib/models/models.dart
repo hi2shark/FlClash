@@ -5,6 +5,8 @@ export 'config.dart';
 export 'core.dart';
 export 'local_proxy.dart';
 export 'local_proxy_provider_config.dart';
+export 'local_rule.dart';
+export 'local_rule_mixin_config.dart';
 export 'profile.dart';
 export 'state.dart';
 export 'unlock_test.dart';

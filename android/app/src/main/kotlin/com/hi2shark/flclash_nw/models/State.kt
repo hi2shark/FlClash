@@ -11,6 +11,7 @@ data class SharedState(
     val stopText: String = "Stop",
     val suspendedText: String = "Suspended...",
     val onlyStatisticsProxy: Boolean = false,
+    val showNotificationStopAction: Boolean = true,
     val vpnOptions: VpnOptions? = null,
     val setupParams: SetupParams? = null,
     @SerializedName(value = "suspendOnWifiSsids", alternate = ["excludeSSIDs"])

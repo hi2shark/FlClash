@@ -33,9 +33,10 @@ type UpdateParams struct {
 	TCPConcurrent      *bool              `json:"tcp-concurrent"`
 	ExternalController *string            `json:"external-controller"`
 	Interface          *string            `json:"interface-name"`
-	UnifiedDelay       *bool              `json:"unified-delay"`
+  UnifiedDelay       *bool              `json:"unified-delay"`
 	GeoAutoUpdate      *bool              `json:"geo-auto-update"`
 	GeoUpdateInterval  *int               `json:"geo-update-interval"`
+	Authentication     *[]string          `json:"authentication"`
 }
 
 type tunSchema struct {
@@ -125,6 +126,7 @@ const (
 	setupConfigMethod              Method = "setupConfig"
 	getConfigMethod                Method = "getConfig"
 	deleteFile                     Method = "deleteFile"
+	clearEffectMethod              Method = "clearEffect"
 )
 
 type Method string

@@ -329,6 +329,7 @@ abstract class SharedState with _$SharedState {
     @Default('Suspended...') String suspendedText,
     required bool onlyStatisticsProxy,
     required bool crashlytics,
+    @Default(true) bool showNotificationStopAction,
     @JsonKey(readValue: _readSuspendOnWifiSsids)
     @Default([])
     List<String> suspendOnWifiSsids,
@@ -366,6 +367,7 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required List<Rule> rules,
     required List<Rule> addedRules,
     required String defaultUA,
+    @Default([]) List<String> authentication,
   }) = _MakeRealProfileState;
 }
 

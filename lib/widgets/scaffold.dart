@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 
 import 'chip.dart';
 import 'inherited.dart';
+import 'page_scope.dart';
 
 typedef OnKeywordsUpdateCallback = void Function(List<String> keywords);
 
@@ -53,6 +54,8 @@ class CommonScaffoldState extends State<CommonScaffold> {
   final ValueNotifier<bool> _isFabExtendedNotifier = ValueNotifier(true);
   final ValueNotifier<List<String>> _keywordsNotifier = ValueNotifier([]);
   final _textController = TextEditingController();
+  BackLayerScopeState? _backLayer;
+  bool _backLayerRegistered = false;
 
   bool get _isSearch {
     return _appBarState.value.searchState?.query != null;
@@ -73,6 +76,14 @@ class CommonScaffoldState extends State<CommonScaffold> {
       AppBarState(editState: widget.editState, searchState: widget.searchState),
     );
     _loadingNotifier.value = widget.isLoading;
+    _appBarState.addListener(_syncBackLayer);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _backLayer = BackLayerScope.maybeOf(context);
+    _syncBackLayer();
   }
 
   Future<void> _updateSearchState(AppBarSearchStateBuilder builder) async {
@@ -148,8 +159,37 @@ class CommonScaffoldState extends State<CommonScaffold> {
     _updateSearchState((state) => state?.copyWith(query: null));
   }
 
+  void _handleBackLayerDismiss() {
+    if (_isSearch) {
+      handleExitSearching();
+    }
+    _appBarState.value.editState?.onExit();
+  }
+
+  void _syncBackLayer() {
+    final backLayer = _backLayer;
+    if (backLayer == null) {
+      return;
+    }
+    final shouldRegister = _isEdit || _isSearch;
+    if (shouldRegister && !_backLayerRegistered) {
+      backLayer.push(_handleBackLayerDismiss);
+      _backLayerRegistered = true;
+      return;
+    }
+    if (!shouldRegister && _backLayerRegistered) {
+      backLayer.remove(_handleBackLayerDismiss);
+      _backLayerRegistered = false;
+    }
+  }
+
   @override
   void dispose() {
+    _appBarState.removeListener(_syncBackLayer);
+    if (_backLayerRegistered) {
+      _backLayer?.remove(_handleBackLayerDismiss);
+      _backLayerRegistered = false;
+    }
     _appBarState.dispose();
     _textController.dispose();
     _isFabExtendedNotifier.dispose();

@@ -350,56 +350,50 @@ abstract class Rule with _$Rule {
     );
   }
 
+  // Mirrors mihomo's ParseRulePayload with needTarget set.
   factory Rule.parse(String value, {int? id}) {
     id ??= snowflake.id;
-    if (value.isEmpty) {
+    final fields = value.split(',').map((item) => item.trim()).toList();
+    final type = fields.first.toUpperCase();
+    if (type.isEmpty) {
       return Rule(
         id: id,
         ruleAction: RuleAction.DOMAIN,
         ruleTarget: RuleTarget.DIRECT.name,
       );
     }
-    final splits = value.split(',');
-    final shortSplits = splits
-        .where(
-          (item) =>
-              !item.contains('src') &&
-              !item.contains('no-resolve') &&
-              item.isNotEmpty,
-        )
-        .map((item) => item.trim())
-        .toList();
-    final ruleAction = RuleAction.values.firstWhere(
-      (item) => item.value == shortSplits.first,
+    final action = RuleAction.values.firstWhere(
+      (item) => item.value == type,
       orElse: () => RuleAction.DOMAIN,
     );
-    String? subRule;
-    String? ruleTarget;
-
-    if (ruleAction == RuleAction.SUB_RULE) {
-      subRule = shortSplits.last;
+    final rest = fields.sublist(1);
+    String? payload;
+    String? target;
+    var params = const <String>[];
+    if (action == RuleAction.MATCH) {
+      target = rest.firstOrNull;
+    } else if (action.hasCommaPayload) {
+      target = rest.lastOrNull;
+      payload = rest.length > 1
+          ? rest.sublist(0, rest.length - 1).join(',')
+          : null;
     } else {
-      ruleTarget = shortSplits.last;
+      payload = rest.elementAtOrNull(0);
+      target = rest.elementAtOrNull(1);
+      params = rest.skip(2).toList();
     }
-
-    String? content;
-    String? ruleProvider;
-
-    if (ruleAction == RuleAction.RULE_SET) {
-      ruleProvider = shortSplits[1];
-    } else {
-      content = shortSplits[1];
-    }
+    payload = payload?.isNotEmpty == true ? payload : null;
+    target = target?.isNotEmpty == true ? target : null;
 
     return Rule(
       id: id,
-      ruleAction: ruleAction,
-      content: content,
-      src: splits.contains('src'),
-      ruleProvider: ruleProvider,
-      noResolve: splits.contains('no-resolve'),
-      subRule: subRule,
-      ruleTarget: ruleTarget,
+      ruleAction: action,
+      content: action == RuleAction.RULE_SET ? null : payload,
+      ruleProvider: action == RuleAction.RULE_SET ? payload : null,
+      ruleTarget: action == RuleAction.SUB_RULE ? null : target,
+      subRule: action == RuleAction.SUB_RULE ? target : null,
+      src: params.contains('src'),
+      noResolve: params.contains('no-resolve'),
     );
   }
 
@@ -415,9 +409,10 @@ extension RuleExt on Rule {
   }
 
   String? get realContent {
-    return switch (ruleAction == RuleAction.RULE_SET) {
-      true => ruleProvider,
-      false => content,
+    return switch (ruleAction) {
+      RuleAction.MATCH => null,
+      RuleAction.RULE_SET => ruleProvider,
+      _ => content,
     };
   }
 
@@ -436,10 +431,12 @@ extension RuleExt on Rule {
   }
 
   String get rawValue {
+    final content = realContent;
+    final target = realTarget;
     return [
       ruleAction.value,
-      realContent,
-      realTarget,
+      if (content?.isNotEmpty == true) content!,
+      if (target?.isNotEmpty == true) target!,
       if (ruleAction.hasParams) ...[
         if (src) 'src',
         if (noResolve) 'no-resolve',

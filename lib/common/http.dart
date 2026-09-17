@@ -20,7 +20,12 @@ class FlClashHttpOverrides extends HttpOverrides {
     final mixedPort = ref.read(
       patchClashConfigProvider.select((state) => state.mixedPort),
     );
-    return 'PROXY localhost:$mixedPort';
+    final authentication = ref.read(
+      networkSettingProvider.select((state) => state.authentication),
+    );
+    final credentials = authentication.credentials;
+    final userInfo = credentials.isNotEmpty ? '${credentials.first}@' : '';
+    return 'PROXY ${userInfo}localhost:$mixedPort';
   }
 
   @override

@@ -81,6 +81,27 @@ void main() {
       expect(RuleAction.IP_CIDR.hasParams, isTrue);
       expect(RuleAction.DOMAIN.hasParams, isFalse);
     });
+
+    test('identifies comma payloads used by mihomo logical/regex rules', () {
+      expect(RuleAction.AND.hasCommaPayload, isTrue);
+      expect(RuleAction.OR.hasCommaPayload, isTrue);
+      expect(RuleAction.NOT.hasCommaPayload, isTrue);
+      expect(RuleAction.DOMAIN_REGEX.hasCommaPayload, isTrue);
+      expect(RuleAction.DOMAIN.hasCommaPayload, isFalse);
+      expect(RuleAction.DOMAIN_WILDCARD.hasCommaPayload, isFalse);
+    });
+
+    test('includes new wildcard and rematch actions in added rules', () {
+      expect(
+        RuleAction.addedRuleActions,
+        containsAll([
+          RuleAction.DOMAIN_WILDCARD,
+          RuleAction.REMATCH_NAME,
+          RuleAction.PROCESS_PATH_WILDCARD,
+          RuleAction.PROCESS_NAME_WILDCARD,
+        ]),
+      );
+    });
   });
 
   group('RuleTarget', () {

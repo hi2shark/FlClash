@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/iterable.dart';
 import 'package:test/test.dart';
 
@@ -125,6 +126,16 @@ void main() {
       expect(result, [
         [1, 2],
       ]);
+    });
+
+    test('caps delay tests at the core concurrency limit', () {
+      expect(maxConcurrentDelayTests, 50);
+      final items = List<int>.generate(101, (index) => index);
+      final batches = items.batch(maxConcurrentDelayTests);
+      expect(batches.length, 3);
+      expect(batches.first.length, 50);
+      expect(batches[1].length, 50);
+      expect(batches.last.length, 1);
     });
   });
 

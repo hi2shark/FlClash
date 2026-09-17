@@ -336,14 +336,19 @@ class SetupAction extends _$SetupAction {
     final profileId = setupState.profileId;
     if (profileId == null) return const VM2('', '');
     final defaultUA = globalState.packageInfo.ua;
-    final networkVM2 = ref.read(
+    final networkVM3 = ref.read(
       networkSettingProvider.select(
-        (state) => VM2(state.appendSystemDns, state.routeMode),
+        (state) => VM3(
+          state.appendSystemDns,
+          state.routeMode,
+          state.authentication.credentials,
+        ),
       ),
     );
     final overrideDns = ref.read(overrideDnsProvider);
-    final appendSystemDns = networkVM2.a;
-    final routeMode = networkVM2.b;
+    final appendSystemDns = networkVM3.a;
+    final routeMode = networkVM3.b;
+    final authentication = networkVM3.c;
     final configMap = await coreController.getConfig(profileId);
     String? scriptContent;
     final List<Rule> addedRules = [];
@@ -380,6 +385,7 @@ class SetupAction extends _$SetupAction {
         appendSystemDns: appendSystemDns,
         addedRules: addedRules,
         defaultUA: defaultUA,
+        authentication: authentication,
       ),
     );
     return res;
@@ -1027,15 +1033,12 @@ class ProfilesAction extends _$ProfilesAction {
 
   Future<void> clearEffect(int profileId) async {
     final profilePath = await appPath.getProfilePath(profileId.toString());
-    final providersDirPath = await appPath.getProvidersDirPath(
-      profileId.toString(),
-    );
     final profileFile = File(profilePath);
     final isExists = await profileFile.exists();
     if (isExists) {
       await profileFile.safeDelete(recursive: true);
     }
-    await coreController.deleteFile(providersDirPath);
+    await coreController.clearEffect(profileId);
   }
 }
 

@@ -68,19 +68,31 @@ Future<void> proxyDelayTest(Proxy proxy, [String? testUrl]) async {
   ref
       .read(proxiesActionProvider.notifier)
       .setDelay(Delay(url: currentTestUrl, name: state.proxyName, value: 0));
-  ref
-      .read(proxiesActionProvider.notifier)
-      .setDelay(await coreController.getDelay(currentTestUrl, state.proxyName));
+  try {
+    final delay = await coreController.getDelay(
+      currentTestUrl,
+      state.proxyName,
+    );
+    ref.read(proxiesActionProvider.notifier).setDelay(delay);
+  } catch (error) {
+    commonPrint.log(
+      'Delay test failed for ${state.proxyName}: $error',
+      logLevel: LogLevel.warning,
+    );
+    ref
+        .read(proxiesActionProvider.notifier)
+        .setDelay(Delay(url: currentTestUrl, name: state.proxyName, value: -1));
+  }
 }
 
-Future<void> delayTest(List<Proxy> proxies, [String? testUrl]) async {
-  final delayProxies = proxies.map<Future>((proxy) async {
-    await proxyDelayTest(proxy, testUrl);
-  }).toList();
-
-  final batchesDelayProxies = delayProxies.batch(100);
-  for (final batchDelayProxies in batchesDelayProxies) {
-    await Future.wait(batchDelayProxies);
+Future<void> delayTest(List<Proxy> delayProxies, [String? testUrl]) async {
+  final batches = delayProxies.batch(maxConcurrentDelayTests);
+  for (final batch in batches) {
+    await Future.wait(
+      batch.map((proxy) async {
+        await proxyDelayTest(proxy, testUrl);
+      }),
+    );
   }
   globalState.container.read(sortNumProvider.notifier).add();
 }

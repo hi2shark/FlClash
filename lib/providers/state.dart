@@ -72,6 +72,9 @@ UpdateParams updateParams(Ref ref) {
   final routeMode = ref.watch(
     networkSettingProvider.select((state) => state.routeMode),
   );
+  final authentication = ref.watch(
+    networkSettingProvider.select((state) => state.authentication.credentials),
+  );
   return ref.watch(
     patchClashConfigProvider.select(
       (state) => UpdateParams(
@@ -87,6 +90,7 @@ UpdateParams updateParams(Ref ref) {
         mixedPort: state.mixedPort,
         geoAutoUpdate: state.geoAutoUpdate,
         geoUpdateInterval: state.geoUpdateInterval,
+        authentication: authentication,
       ),
     ),
   );
@@ -614,6 +618,12 @@ SharedState sharedState(Ref ref) {
     ),
   );
   final vpnSetting = ref.watch(vpnSettingProvider);
+  final authentication = ref.watch(
+    networkSettingProvider.select((state) => state.authentication.credentials),
+  );
+  final showNotificationStopAction = ref.watch(
+    appSettingProvider.select((state) => state.showNotificationStopAction),
+  );
   final onDemandEnabled = ref.watch(onDemandEnabledProvider);
   final suspendOnWifiSsids = ref.watch(excludeSSIDsProvider);
   final currentProfileName = currentProfileVM2.a;
@@ -632,11 +642,12 @@ SharedState sharedState(Ref ref) {
     crashlytics: crashlytics,
     stopTip: currentAppLocalizations.stopVpn,
     startTip: currentAppLocalizations.startVpn,
+    showNotificationStopAction: showNotificationStopAction,
     setupParams: SetupParams(selectedMap: selectedMap, testUrl: testUrl),
     vpnOptions: VpnOptions(
       enable: vpnSetting.enable,
       stack: stack,
-      systemProxy: vpnSetting.systemProxy,
+      systemProxy: vpnSetting.systemProxy && authentication.isEmpty,
       port: port,
       ipv6: vpnSetting.ipv6,
       dnsHijacking: vpnSetting.dnsHijacking,

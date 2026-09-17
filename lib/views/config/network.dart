@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -124,6 +125,86 @@ class SystemProxyItem extends ConsumerWidget {
               .update((state) => state.copyWith(systemProxy: value));
         },
       ),
+    );
+  }
+}
+
+class ProxyAuthenticationItem extends ConsumerWidget {
+  const ProxyAuthenticationItem({super.key});
+
+  void _applyProfile(WidgetRef ref) {
+    ref.read(setupActionProvider.notifier).applyProfileDebounce();
+  }
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final appLocalizations = context.appLocalizations;
+    final authentication = ref.watch(
+      networkSettingProvider.select((state) => state.authentication),
+    );
+    return Column(
+      children: [
+        ListItem.switchItem(
+          title: Text(appLocalizations.proxyAuthentication),
+          subtitle: Text(appLocalizations.proxyAuthenticationDesc),
+          delegate: SwitchDelegate(
+            value: authentication.enable,
+            onChanged: (bool value) async {
+              ref
+                  .read(networkSettingProvider.notifier)
+                  .update(
+                    (state) => state.copyWith.authentication(enable: value),
+                  );
+              _applyProfile(ref);
+            },
+          ),
+        ),
+        if (authentication.enable) ...[
+          ListItem.input(
+            title: Text(appLocalizations.username),
+            subtitle: Text(
+              authentication.username.isEmpty
+                  ? appLocalizations.defaultText
+                  : authentication.username,
+            ),
+            delegate: InputDelegate(
+              title: appLocalizations.username,
+              value: authentication.username,
+              onChanged: (value) {
+                ref
+                    .read(networkSettingProvider.notifier)
+                    .update(
+                      (state) => state.copyWith.authentication(
+                        username: value ?? '',
+                      ),
+                    );
+                _applyProfile(ref);
+              },
+            ),
+          ),
+          ListItem.input(
+            title: Text(appLocalizations.password),
+            subtitle: Text(
+              authentication.password.isEmpty
+                  ? appLocalizations.defaultText
+                  : '••••••',
+            ),
+            delegate: InputDelegate(
+              title: appLocalizations.password,
+              value: authentication.password,
+              onChanged: (value) {
+                ref
+                    .read(networkSettingProvider.notifier)
+                    .update(
+                      (state) =>
+                          state.copyWith.authentication(password: value ?? ''),
+                    );
+                _applyProfile(ref);
+              },
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -343,6 +424,7 @@ class NetworkListView extends StatelessWidget {
           title: 'VPN',
           items: [
             const VpnSystemProxyItem(),
+            const ProxyAuthenticationItem(),
             const BypassDomainItem(),
             const AllowBypassItem(),
             const Ipv6Item(),
@@ -352,7 +434,11 @@ class NetworkListView extends StatelessWidget {
       if (system.isDesktop)
         ...generateSection(
           title: appLocalizations.system,
-          items: [const SystemProxyItem(), const BypassDomainItem()],
+          items: [
+            const SystemProxyItem(),
+            const ProxyAuthenticationItem(),
+            const BypassDomainItem(),
+          ],
         ),
       ...generateSection(
         title: appLocalizations.options,

@@ -62,14 +62,15 @@ void main() {
       expect(utils.getTimeText(23 * 3600 * 1000 + 59 * 60 * 1000), '23:59:00');
     });
 
-    test('formats 24 hours as days and hours', () {
-      expect(utils.getTimeText(24 * 3600 * 1000), '1 d 0 h');
+    test('keeps hours in HH:MM:SS past 24 hours', () {
+      expect(utils.getTimeText(24 * 3600 * 1000), '24:00:00');
+      expect(utils.getTimeText(25 * 3600 * 1000), '25:00:00');
+      expect(utils.getTimeText(48 * 3600 * 1000), '48:00:00');
     });
 
-    test('formats multi-day runtime', () {
-      expect(utils.getTimeText(25 * 3600 * 1000), '1 d 1 h');
-      expect(utils.getTimeText(48 * 3600 * 1000), '2 d 0 h');
-      expect(utils.getTimeText(100 * 3600 * 1000), '4 d 4 h');
+    test('shows three-digit hours and caps at 999', () {
+      expect(utils.getTimeText(100 * 3600 * 1000), '100:00:00');
+      expect(utils.getTimeText(1000 * 3600 * 1000), '999:59:59');
     });
   });
 

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 
 	"github.com/metacubex/mihomo/adapter"
@@ -16,6 +17,7 @@ import (
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/adapter/provider"
 	"github.com/metacubex/mihomo/common/batch"
+	"github.com/metacubex/mihomo/component/auth"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/profile/cachefile"
 	"github.com/metacubex/mihomo/component/resolver"
@@ -27,6 +29,7 @@ import (
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/hub/route"
 	"github.com/metacubex/mihomo/listener"
+	authStore "github.com/metacubex/mihomo/listener/auth"
 	"github.com/metacubex/mihomo/log"
 	rp "github.com/metacubex/mihomo/rules/provider"
 	"github.com/metacubex/mihomo/tunnel"
@@ -272,11 +275,27 @@ func updateConfig(params *UpdateParams) {
 	if params.GeoUpdateInterval != nil {
 		updater.SetGeoUpdateInterval(*params.GeoUpdateInterval)
 	}
+	if params.Authentication != nil {
+		updateAuthentication(*params.Authentication)
+	}
 
 	updateListeners()
 	if updater.GeoAutoUpdate() {
 		updater.RegisterGeoUpdaterWithCancel()
 	}
+}
+
+func updateAuthentication(records []string) {
+	users := make([]auth.AuthUser, 0, len(records))
+	for _, record := range records {
+		user, pass, found := strings.Cut(record, ":")
+		if !found {
+			pass = ""
+		}
+		users = append(users, auth.AuthUser{User: user, Pass: pass})
+	}
+	authStore.Default.SetAuthenticator(auth.NewAuthenticator(users))
+	inbound.SetSkipAuthPrefixes(nil)
 }
 
 func applyConfig(params *SetupParams) error {

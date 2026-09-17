@@ -97,6 +97,15 @@ class Navigation {
         modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       NavigationItem(
+        icon: const Icon(Icons.rule),
+        label: PageLabel.localRules,
+        description: 'localRulesDesc',
+        builder: (_) => const LocalRulesView(
+          key: GlobalObjectKey(PageLabel.localRules),
+        ),
+        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+      ),
+      NavigationItem(
         keep: false,
         icon: const Icon(Icons.adb),
         label: PageLabel.logs,

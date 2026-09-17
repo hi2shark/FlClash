@@ -30,6 +30,7 @@ const defaultBypassDomain = [
 
 const defaultAppSettingProps = AppSettingProps();
 const defaultVpnProps = VpnProps();
+const defaultAuthenticationProps = AuthenticationProps();
 const defaultNetworkProps = NetworkProps();
 const defaultProxiesStyleProps = ProxiesStyleProps();
 const defaultWindowProps = WindowProps();
@@ -81,6 +82,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool autoRun,
     @Default(false) bool openLogs,
     @Default(true) bool closeConnections,
+    @Default(true) bool showNotificationStopAction,
     @Default(defaultTestUrl) String testUrl,
     @Default(true) bool isAnimateToPage,
     @Default(true) bool autoCheckUpdate,
@@ -202,6 +204,25 @@ abstract class VpnProps with _$VpnProps {
 }
 
 @freezed
+abstract class AuthenticationProps with _$AuthenticationProps {
+  const AuthenticationProps._();
+
+  const factory AuthenticationProps({
+    @Default(false) bool enable,
+    @Default('') String username,
+    @Default('') String password,
+  }) = _AuthenticationProps;
+
+  factory AuthenticationProps.fromJson(Map<String, Object?>? json) =>
+      json == null
+      ? defaultAuthenticationProps
+      : _$AuthenticationPropsFromJson(json);
+
+  List<String> get credentials =>
+      enable && username.isNotEmpty ? ['$username:$password'] : [];
+}
+
+@freezed
 abstract class NetworkProps with _$NetworkProps {
   const factory NetworkProps({
     @Default(true) bool systemProxy,
@@ -209,6 +230,7 @@ abstract class NetworkProps with _$NetworkProps {
     @Default(RouteMode.config) RouteMode routeMode,
     @Default(true) bool autoSetSystemDns,
     @Default(false) bool appendSystemDns,
+    @Default(defaultAuthenticationProps) AuthenticationProps authentication,
   }) = _NetworkProps;
 
   factory NetworkProps.fromJson(Map<String, Object?>? json) =>

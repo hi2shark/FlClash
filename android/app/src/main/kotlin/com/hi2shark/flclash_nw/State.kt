@@ -165,6 +165,7 @@ object State {
                 stopText = sharedState.stopText,
                 onlyStatisticsProxy = sharedState.onlyStatisticsProxy,
                 suspendedText = sharedState.suspendedText,
+                showStopAction = sharedState.showNotificationStopAction,
             )
         )
         Service.updateSuspendOnWifiSsids(sharedState.suspendOnWifiSsids)

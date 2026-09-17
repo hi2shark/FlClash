@@ -114,6 +114,8 @@ class _GeoResourceListItem extends ConsumerStatefulWidget {
 }
 
 class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
+  late Future<FileInfo> _fileInfoFuture;
+
   String get fileName {
     return switch (widget.type) {
       GeoResource.MMDB => MMDB,
@@ -121,6 +123,20 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
       GeoResource.GEOIP => GEOIP,
       GeoResource.GEOSITE => GEOSITE,
     };
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fileInfoFuture = _getGeoFileLastModified(fileName);
+  }
+
+  @override
+  void didUpdateWidget(covariant _GeoResourceListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.type != widget.type) {
+      _fileInfoFuture = _getGeoFileLastModified(fileName);
+    }
   }
 
   Future<void> _updateUrl(String url) async {
@@ -161,10 +177,22 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
     }, silence: false);
   }
 
+  void _refreshFileInfo() {
+    setState(() {
+      _fileInfoFuture = _getGeoFileLastModified(fileName);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    final isUpdating = ref.watch(isUpdatingProvider(widget.type.updatingKey));
+    final updatingKey = widget.type.updatingKey;
+    ref.listen(isUpdatingProvider(updatingKey), (previous, next) {
+      if (previous == true && !next) {
+        _refreshFileInfo();
+      }
+    });
+    final isUpdating = ref.watch(isUpdatingProvider(updatingKey));
     final url = ref.watch(
       patchClashConfigProvider.select((state) => state.geoXUrl[widget.type]),
     );
@@ -178,7 +206,7 @@ class _GeoResourceListItemState extends ConsumerState<_GeoResourceListItem> {
               children: [
                 const SizedBox(height: 6),
                 FutureBuilder<FileInfo>(
-                  future: _getGeoFileLastModified(fileName),
+                  future: _fileInfoFuture,
                   builder: (_, snapshot) {
                     final height = globalState.measure.bodyMediumHeight;
                     return SizedBox(

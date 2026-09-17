@@ -110,6 +110,7 @@ void main() {
       expect(restored.restoreStrategy, RestoreStrategy.compatible);
       expect(restored.customUserAgent, '');
       expect(restored.testUrl, defaultTestUrl);
+      expect(restored.showNotificationStopAction, true);
     });
 
     test('custom values survive round-trip', () {
@@ -215,6 +216,39 @@ void main() {
     });
   });
 
+  group('AuthenticationProps', () {
+    test('credentials stay empty until enabled with a username', () {
+      expect(const AuthenticationProps().credentials, isEmpty);
+      expect(
+        const AuthenticationProps(enable: true, username: '').credentials,
+        isEmpty,
+      );
+      expect(
+        const AuthenticationProps(
+          enable: true,
+          username: 'alice',
+          password: 'pw',
+        ).credentials,
+        ['alice:pw'],
+      );
+    });
+
+    test('round-trip preserves fields', () {
+      const props = AuthenticationProps(
+        enable: true,
+        username: 'bob',
+        password: 'p@ss',
+      );
+      final restored = roundTrip(
+        () => props.toJson(),
+        AuthenticationProps.fromJson,
+      );
+      expect(restored.enable, true);
+      expect(restored.username, 'bob');
+      expect(restored.password, 'p@ss');
+    });
+  });
+
   group('NetworkProps JSON round-trip', () {
     test('default values', () {
       const props = NetworkProps();
@@ -223,6 +257,23 @@ void main() {
       expect(props.routeMode, RouteMode.config);
       expect(props.autoSetSystemDns, true);
       expect(props.appendSystemDns, false);
+      expect(props.authentication.enable, false);
+      expect(props.authentication.credentials, isEmpty);
+    });
+
+    test('round-trips authentication credentials', () {
+      const props = NetworkProps(
+        authentication: AuthenticationProps(
+          enable: true,
+          username: 'user',
+          password: 'secret',
+        ),
+      );
+      final restored = roundTrip(() => props.toJson(), NetworkProps.fromJson);
+      expect(restored.authentication.enable, true);
+      expect(restored.authentication.username, 'user');
+      expect(restored.authentication.password, 'secret');
+      expect(restored.authentication.credentials, ['user:secret']);
     });
 
     test('round-trip with custom values', () {
@@ -459,10 +510,7 @@ void main() {
     });
 
     test('round-trip preserves respect-rules and enhanced-mode', () {
-      const dns = Dns(
-        respectRules: false,
-        enhancedMode: DnsMode.fakeIp,
-      );
+      const dns = Dns(respectRules: false, enhancedMode: DnsMode.fakeIp);
       final restored = roundTrip(() => dns.toJson(), Dns.fromJson);
       expect(restored.respectRules, false);
       expect(restored.enhancedMode, DnsMode.fakeIp);

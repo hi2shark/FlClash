@@ -754,6 +754,46 @@ class AppLocalizations {
     );
   }
 
+  /// `Proxy authentication`
+  String get proxyAuthentication {
+    return Intl.message(
+      'Proxy authentication',
+      name: 'proxyAuthentication',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Require credentials for the local mixed/SOCKS inbound`
+  String get proxyAuthenticationDesc {
+    return Intl.message(
+      'Require credentials for the local mixed/SOCKS inbound',
+      name: 'proxyAuthenticationDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Notification stop button`
+  String get notificationStopAction {
+    return Intl.message(
+      'Notification stop button',
+      name: 'notificationStopAction',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show a stop action on the VPN notification`
+  String get notificationStopActionDesc {
+    return Intl.message(
+      'Show a stop action on the VPN notification',
+      name: 'notificationStopActionDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Project`
   String get project {
     return Intl.message('Project', name: 'project', desc: '', args: []);
@@ -3814,6 +3854,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Match using domain wildcard`
+  String get ruleActionDomainWildcardDesc {
+    return Intl.message(
+      'Match using domain wildcard',
+      name: 'ruleActionDomainWildcardDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Match domains within Geosite`
   String get ruleActionGeositeDesc {
     return Intl.message(
@@ -3974,6 +4024,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Match and remap using a name`
+  String get ruleActionRematchNameDesc {
+    return Intl.message(
+      'Match and remap using a name',
+      name: 'ruleActionRematchNameDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Match using full process path`
   String get ruleActionProcessPathDesc {
     return Intl.message(
@@ -3994,6 +4054,16 @@ class AppLocalizations {
     );
   }
 
+  /// `Match using process path wildcard`
+  String get ruleActionProcessPathWildcardDesc {
+    return Intl.message(
+      'Match using process path wildcard',
+      name: 'ruleActionProcessPathWildcardDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Match using process name, matches package name on Android`
   String get ruleActionProcessNameDesc {
     return Intl.message(
@@ -4009,6 +4079,16 @@ class AppLocalizations {
     return Intl.message(
       'Match using process name regex, matches package name on Android',
       name: 'ruleActionProcessNameRegexDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Match using process name wildcard`
+  String get ruleActionProcessNameWildcardDesc {
+    return Intl.message(
+      'Match using process name wildcard',
+      name: 'ruleActionProcessNameWildcardDesc',
       desc: '',
       args: [],
     );
@@ -5744,6 +5824,131 @@ class AppLocalizations {
     return Intl.message(
       'Failed to reload local proxies. Changes were rolled back',
       name: 'localProxyReloadFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local Rules`
+  String get localRules {
+    return Intl.message('Local Rules', name: 'localRules', desc: '', args: []);
+  }
+
+  /// `Mix locally edited split rules into the current subscription without affecting updates.`
+  String get localRulesDesc {
+    return Intl.message(
+      'Mix locally edited split rules into the current subscription without affecting updates.',
+      name: 'localRulesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local rule mix-in`
+  String get localRuleMixin {
+    return Intl.message(
+      'Local rule mix-in',
+      name: 'localRuleMixin',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable local rule mix-in`
+  String get enableLocalRuleMixin {
+    return Intl.message(
+      'Enable local rule mix-in',
+      name: 'enableLocalRuleMixin',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Manage local rules`
+  String get manageLocalRules {
+    return Intl.message(
+      'Manage local rules',
+      name: 'manageLocalRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{total} rules · {enabled} enabled`
+  String localRuleCount(int total, int enabled) {
+    return Intl.message(
+      '$total rules · $enabled enabled',
+      name: 'localRuleCount',
+      desc: '',
+      args: [total, enabled],
+    );
+  }
+
+  /// `{total} rules · {enabled} enabled · {skipped} skipped for this subscription`
+  String localRuleMixinStatus(int total, int enabled, int skipped) {
+    return Intl.message(
+      '$total rules · $enabled enabled · $skipped skipped for this subscription',
+      name: 'localRuleMixinStatus',
+      desc: '',
+      args: [total, enabled, skipped],
+    );
+  }
+
+  /// `No local rules`
+  String get noLocalRule {
+    return Intl.message(
+      'No local rules',
+      name: 'noLocalRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add local rule`
+  String get addLocalRule {
+    return Intl.message(
+      'Add local rule',
+      name: 'addLocalRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Edit local rule`
+  String get editLocalRule {
+    return Intl.message(
+      'Edit local rule',
+      name: 'editLocalRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed to reload local rules. Changes were rolled back`
+  String get localRuleReloadFailed {
+    return Intl.message(
+      'Failed to reload local rules. Changes were rolled back',
+      name: 'localRuleReloadFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rules can target local nodes only after local proxy mix-in is enabled.`
+  String get localRuleNodesNeedMixin {
+    return Intl.message(
+      'Rules can target local nodes only after local proxy mix-in is enabled.',
+      name: 'localRuleNodesNeedMixin',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No proxy groups in the current subscription`
+  String get noLocalRuleGroups {
+    return Intl.message(
+      'No proxy groups in the current subscription',
+      name: 'noLocalRuleGroups',
       desc: '',
       args: [],
     );

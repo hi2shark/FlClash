@@ -33,6 +33,7 @@ abstract class UpdateParams with _$UpdateParams {
     @JsonKey(name: 'unified-delay') required bool unifiedDelay,
     @Default(false) @JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,
     @Default(24) @JsonKey(name: 'geo-update-interval') int geoUpdateInterval,
+    @Default([]) List<String> authentication,
   }) = _UpdateParams;
 
   factory UpdateParams.fromJson(Map<String, dynamic> json) =>

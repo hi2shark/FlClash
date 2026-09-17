@@ -10,6 +10,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_config_injector.dart';
+import 'package:fl_clash/local_rules/services/local_rule_config_injector.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -92,12 +93,14 @@ Future<VM2<String, String>> makeRealProfileTask(
   MakeRealProfileState data,
 ) async {
   // Build the real profile map in a background isolate, then apply local-proxy
-  // mixin on the main isolate (store / path_provider are not isolate-safe).
+  // and local-rule mixins on the main isolate (store / path_provider are not
+  // isolate-safe).
   final rawConfig = await compute<MakeRealProfileState, Map<String, dynamic>>(
     _makeRealProfileTask,
     data,
   );
   await localProxyConfigInjector.inject(rawConfig);
+  await localRuleConfigInjector.inject(rawConfig);
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
   return VM2(yaml, yaml.toMd5());
 }
@@ -142,6 +145,10 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
   rawConfig['find-process-mode'] = realPatchConfig.findProcessMode.name;
   rawConfig['allow-lan'] = realPatchConfig.allowLan;
   rawConfig['mode'] = realPatchConfig.mode.name;
+  // The app owns local inbound authentication; a profile-provided
+  // skip-auth-prefixes could silently exempt loopback and defeat it.
+  rawConfig['authentication'] = data.authentication;
+  rawConfig['skip-auth-prefixes'] = [];
   if (rawConfig['tun'] is! Map) {
     rawConfig['tun'] = {};
   }

@@ -217,6 +217,9 @@ func handleAction(action *Action, result ActionResult) {
 		path := action.Data.(string)
 		handleDelFile(path, result)
 		return
+	case clearEffectMethod:
+		handleClearEffect(fmt.Sprint(action.Data), result)
+		return
 	default:
 		nextHandle(action, result)
 	}

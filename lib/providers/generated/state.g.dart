@@ -187,7 +187,7 @@ final class UpdateParamsProvider
   }
 }
 
-String _$updateParamsHash() => r'a14229e79c6f36ca0a8a0f341b053357e26fbd83';
+String _$updateParamsHash() => r'748a4b7718a0b8d43007bdbf08a6d56168b3cbf0';
 
 @ProviderFor(proxyState)
 final proxyStateProvider = ProxyStateProvider._();
@@ -2131,7 +2131,7 @@ final class SharedStateProvider
   }
 }
 
-String _$sharedStateHash() => r'cb4a16c2a2387259194668652ad2308bee1af340';
+String _$sharedStateHash() => r'a50e8f85831240160e6f3739b2919e93a32d1f20';
 
 @ProviderFor(overlayTopOffset)
 final overlayTopOffsetProvider = OverlayTopOffsetProvider._();

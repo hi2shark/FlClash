@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -10,6 +11,8 @@ class App {
   static App? _instance;
   late MethodChannel methodChannel;
   Function()? onExit;
+  final Map<String, ImageProvider?> _packageIcons = {};
+  final Map<String, Future<ImageProvider?>> _packageIconTasks = {};
 
   App._internal() {
     methodChannel = const MethodChannel('$packageName/app');
@@ -28,6 +31,16 @@ class App {
   factory App() {
     _instance ??= App._internal();
     return _instance!;
+  }
+
+  @visibleForTesting
+  App.forTest([MethodChannel? channel]) {
+    methodChannel = channel ?? const MethodChannel('$packageName/app');
+  }
+
+  @visibleForTesting
+  static void resetInstance() {
+    _instance = null;
   }
 
   Future<bool?> moveTaskToBack() async {
@@ -61,14 +74,43 @@ class App {
         false;
   }
 
-  Future<ImageProvider?> getPackageIcon(String packageName) async {
-    final path = await methodChannel.invokeMethod<String>('getPackageIcon', {
-      'packageName': packageName,
-    });
-    if (path == null) {
-      return null;
+  bool hasPackageIcon(String packageName) {
+    return _packageIcons.containsKey(packageName);
+  }
+
+  ImageProvider? getCachedPackageIcon(String packageName) {
+    return _packageIcons[packageName];
+  }
+
+  Future<ImageProvider?> getPackageIcon(String packageName) {
+    if (packageName.isEmpty) {
+      return Future.value(null);
     }
-    return FileImage(File(path));
+    if (_packageIcons.containsKey(packageName)) {
+      return Future.value(_packageIcons[packageName]);
+    }
+    return _packageIconTasks[packageName] ??= _loadPackageIcon(packageName);
+  }
+
+  Future<ImageProvider?> _loadPackageIcon(String packageName) async {
+    ImageProvider? icon;
+    try {
+      final path = await methodChannel.invokeMethod<String>('getPackageIcon', {
+        'packageName': packageName,
+      });
+      icon = path == null ? null : FileImage(File(path));
+    } catch (error) {
+      commonPrint.log('getPackageIcon error: $error');
+    }
+    _packageIcons[packageName] = icon;
+    _packageIconTasks.remove(packageName);
+    return icon;
+  }
+
+  @visibleForTesting
+  void clearPackageIconCache() {
+    _packageIcons.clear();
+    _packageIconTasks.clear();
   }
 
   Future<bool?> tip(String? message) async {

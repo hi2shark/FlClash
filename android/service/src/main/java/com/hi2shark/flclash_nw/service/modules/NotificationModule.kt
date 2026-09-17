@@ -38,6 +38,7 @@ data class ExtendedNotificationParams(
     val onlyStatisticsProxy: Boolean,
     val contentText: String,
     val suspendedText: String,
+    val showStopAction: Boolean,
 )
 
 /**
@@ -60,6 +61,7 @@ val NotificationParams.extended: ExtendedNotificationParams
             contentText = if (suspended) suspendedText
                 else Core.getSpeedTrafficText(onlyStatisticsProxy),
             suspendedText = suspendedText,
+            showStopAction = showStopAction,
         )
     }
 
@@ -93,9 +95,11 @@ private fun Service.buildServiceNotification(
 //                setRequestPromotedOngoing(true)
 //            }
         clearActions()
-        addAction(
-            0, params.stopText, QuickAction.STOP.quickIntent.toPendingIntent
-        )
+        if (params.showStopAction) {
+            addAction(
+                0, params.stopText, QuickAction.STOP.quickIntent.toPendingIntent
+            )
+        }
         setContentTitle(params.title)
         setContentText(params.contentText)
     }.build()

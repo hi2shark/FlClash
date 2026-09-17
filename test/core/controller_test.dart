@@ -306,6 +306,13 @@ void main() {
       final result = await controller.deleteFile('/tmp/x');
       expect(result, 'ok');
     });
+
+    test('clearEffect delegates', () async {
+      when(() => mock.clearEffect(12)).thenAnswer((_) async => '');
+      final result = await controller.clearEffect(12);
+      expect(result, '');
+      verify(() => mock.clearEffect(12)).called(1);
+    });
   });
 
   group('network test methods', () {

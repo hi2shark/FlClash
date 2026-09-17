@@ -28,6 +28,32 @@ class CloseConnectionsItem extends ConsumerWidget {
   }
 }
 
+class NotificationStopActionItem extends ConsumerWidget {
+  const NotificationStopActionItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final appLocalizations = context.appLocalizations;
+    final showStopAction = ref.watch(
+      appSettingProvider.select((state) => state.showNotificationStopAction),
+    );
+    return ListItem.switchItem(
+      title: Text(appLocalizations.notificationStopAction),
+      subtitle: Text(appLocalizations.notificationStopActionDesc),
+      delegate: SwitchDelegate(
+        value: showStopAction,
+        onChanged: (value) async {
+          ref
+              .read(appSettingProvider.notifier)
+              .update(
+                (state) => state.copyWith(showNotificationStopAction: value),
+              );
+        },
+      ),
+    );
+  }
+}
+
 class UsageItem extends ConsumerWidget {
   const UsageItem({super.key});
 
@@ -284,6 +310,7 @@ class ApplicationSettingView extends StatelessWidget {
       const AnimateTabItem(),
       const OpenLogsItem(),
       const CloseConnectionsItem(),
+      if (system.isAndroid) const NotificationStopActionItem(),
       const UsageItem(),
       if (system.isAndroid) const CrashlyticsItem(),
       const AutoCheckUpdateItem(),

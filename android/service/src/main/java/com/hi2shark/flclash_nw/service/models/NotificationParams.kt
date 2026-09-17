@@ -8,12 +8,14 @@ data class NotificationParams(
     val stopText: String = "STOP",
     val onlyStatisticsProxy: Boolean = false,
     val suspendedText: String = "Suspended...",
+    val showStopAction: Boolean = true,
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         title = parcel.readString() ?: "FlClash",
         stopText = parcel.readString() ?: "STOP",
         onlyStatisticsProxy = parcel.readByte() != 0.toByte(),
         suspendedText = parcel.readString() ?: "Suspended...",
+        showStopAction = if (parcel.dataAvail() > 0) parcel.readByte() != 0.toByte() else true,
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -21,6 +23,7 @@ data class NotificationParams(
         parcel.writeString(stopText)
         parcel.writeByte(if (onlyStatisticsProxy) 1.toByte() else 0.toByte())
         parcel.writeString(suspendedText)
+        parcel.writeByte(if (showStopAction) 1.toByte() else 0.toByte())
     }
 
     override fun describeContents(): Int {

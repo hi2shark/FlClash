@@ -538,12 +538,17 @@ func handleUpdateConfig(bytes []byte) string {
 
 func handleDelFile(path string, result ActionResult) {
 	go func() {
+		if !isPathInsideHomeDir(path) {
+			result.success("path is outside home dir")
+			return
+		}
 		fileInfo, err := os.Stat(path)
 		if err != nil {
-			if !os.IsNotExist(err) {
-				result.success(err.Error())
+			if os.IsNotExist(err) {
+				result.success("")
+				return
 			}
-			result.success("")
+			result.success(err.Error())
 			return
 		}
 		if fileInfo.IsDir() {
@@ -558,6 +563,22 @@ func handleDelFile(path string, result ActionResult) {
 				result.success(err.Error())
 				return
 			}
+		}
+		result.success("")
+	}()
+}
+
+func handleClearEffect(profileId string, result ActionResult) {
+	go func() {
+		dir, err := providersDirForProfile(profileId)
+		if err != nil {
+			result.success(err.Error())
+			return
+		}
+		err = os.RemoveAll(dir)
+		if err != nil && !os.IsNotExist(err) {
+			result.success(err.Error())
+			return
 		}
 		result.success("")
 	}()

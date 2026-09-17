@@ -81,6 +81,8 @@ mixin CoreInterface {
 
   FutureOr<String> deleteFile(String path);
 
+  FutureOr<String> clearEffect(int profileId);
+
   FutureOr<bool> closeConnections();
 
   FutureOr<bool> resetConnections();
@@ -304,6 +306,15 @@ abstract class CoreHandlerInterface with CoreInterface {
   @override
   Future<String> deleteFile(String path) async {
     return await _invoke<String>(method: ActionMethod.deleteFile, data: path) ??
+        '';
+  }
+
+  @override
+  Future<String> clearEffect(int profileId) async {
+    return await _invoke<String>(
+          method: ActionMethod.clearEffect,
+          data: profileId.toString(),
+        ) ??
         '';
   }
 

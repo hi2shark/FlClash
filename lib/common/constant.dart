@@ -37,6 +37,11 @@ const watchExecution = false;
 final defaultTextScaleFactor =
     WidgetsBinding.instance.platformDispatcher.textScaleFactor;
 const httpTimeoutDuration = Duration(milliseconds: 5000);
+
+/// Keep at or below the Core's delay-test concurrency (`mBatch` in
+/// core/common.go). Surplus requests queue inside the Core behind a full wave
+/// of 5s timeouts.
+const maxConcurrentDelayTests = 50;
 const moreDuration = Duration(milliseconds: 100);
 const animateDuration = Duration(milliseconds: 100);
 const midDuration = Duration(milliseconds: 200);

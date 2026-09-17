@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:fl_clash/common/task.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
+import 'package:fl_clash/local_rules/services/local_rule_store.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
@@ -42,8 +44,9 @@ class _FakePathProvider extends PathProviderPlatform {
 
 MakeRealProfileState _buildState(
   Map<String, dynamic> rawConfig,
-  String profilesPath,
-) {
+  String profilesPath, {
+  List<String> authentication = const [],
+}) {
   return MakeRealProfileState(
     profilesPath: profilesPath,
     profileId: 1,
@@ -55,6 +58,7 @@ MakeRealProfileState _buildState(
     rules: const [],
     addedRules: const [],
     defaultUA: 'clash.meta',
+    authentication: authentication,
   );
 }
 
@@ -69,10 +73,12 @@ void main() {
 
   setUp(() {
     localProxyStore.resetForTest();
+    localRuleStore.resetForTest();
   });
 
   tearDownAll(() async {
     localProxyStore.resetForTest();
+    localRuleStore.resetForTest();
     await tmpDir.delete(recursive: true);
   });
 
@@ -85,7 +91,9 @@ void main() {
         'dns': 'invalid',
         'sniffer': {
           'sniff': {
-            'HTTP': <String, dynamic>{'ports': [443, 8080]},
+            'HTTP': <String, dynamic>{
+              'ports': [443, 8080],
+            },
             'TLS': 'invalid',
           },
         },
@@ -144,7 +152,10 @@ void main() {
         'tun': {'enable': true, 'custom-key': 'keep'},
         'profile': {'store-fake-ip': true},
         'hosts': {'example.com': '1.2.3.4'},
-        'dns': {'enable': true, 'nameserver': ['223.5.5.5']},
+        'dns': {
+          'enable': true,
+          'nameserver': ['223.5.5.5'],
+        },
         'sniffer': {
           'enable': true,
           'sniff': {
@@ -186,6 +197,82 @@ void main() {
       final providers = doc['proxy-providers'] as yaml.YamlMap;
       expect(providers['remote']['url'], 'https://example.com/sub');
       expect(providers['remote']['path'], isNotNull);
+    });
+
+    test('prepends local rules after profile assembly', () async {
+      await localRuleStore.init();
+      await localRuleStore.saveConfig(
+        const LocalRuleMixinConfig(enabled: true),
+      );
+      await localRuleStore.add(
+        const LocalRule(
+          id: 1,
+          ruleAction: RuleAction.DOMAIN,
+          content: 'example.com',
+          ruleTarget: 'DIRECT',
+        ),
+      );
+
+      final result = await makeRealProfileTask(
+        _buildState({
+          'rules': ['MATCH,DIRECT'],
+        }, tmpDir.path),
+      );
+      final doc = yaml.loadYaml(result.a) as yaml.YamlMap;
+      expect(
+        (doc['rules'] as yaml.YamlList).map((item) => item.toString()).toList(),
+        ['DOMAIN,example.com,DIRECT', 'MATCH,DIRECT'],
+      );
+    });
+
+    test('writes authentication and clears skip-auth-prefixes', () async {
+      final result = await makeRealProfileTask(
+        _buildState(
+          {
+            'rules': ['MATCH,DIRECT'],
+            'skip-auth-prefixes': ['127.0.0.1/8', '::1/128'],
+            'authentication': ['stale:from-profile'],
+          },
+          tmpDir.path,
+          authentication: ['user:pass'],
+        ),
+      );
+      final doc = yaml.loadYaml(result.a) as yaml.YamlMap;
+      expect(doc['authentication'], ['user:pass']);
+      expect(doc['skip-auth-prefixes'], isEmpty);
+    });
+
+    test('keeps authentication after local rule injection', () async {
+      await localRuleStore.init();
+      await localRuleStore.saveConfig(
+        const LocalRuleMixinConfig(enabled: true),
+      );
+      await localRuleStore.add(
+        const LocalRule(
+          id: 1,
+          ruleAction: RuleAction.DOMAIN,
+          content: 'example.com',
+          ruleTarget: 'DIRECT',
+        ),
+      );
+
+      final result = await makeRealProfileTask(
+        _buildState(
+          {
+            'rules': ['MATCH,DIRECT'],
+          },
+          tmpDir.path,
+          authentication: ['alice:secret'],
+        ),
+      );
+      final doc = yaml.loadYaml(result.a) as yaml.YamlMap;
+      expect(doc['authentication'], ['alice:secret']);
+      expect(doc['skip-auth-prefixes'], isEmpty);
+      final rules = (doc['rules'] as yaml.YamlList)
+          .map((item) => item.toString())
+          .toList();
+      expect(rules, contains('DOMAIN,example.com,DIRECT'));
+      expect(rules.last, 'MATCH,DIRECT');
     });
   });
 }

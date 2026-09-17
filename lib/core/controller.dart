@@ -341,6 +341,10 @@ class CoreController {
   Future<String> deleteFile(String path) async {
     return _interface.deleteFile(path);
   }
+
+  Future<String> clearEffect(int profileId) async {
+    return _interface.clearEffect(profileId);
+  }
 }
 
 final coreController = CoreController();

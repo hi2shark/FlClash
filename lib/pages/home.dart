@@ -22,85 +22,87 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HomeBackScopeContainer(
-      child: AppSidebarContainer(
-        child: Material(
-          color: context.colorScheme.surface,
-          child: Consumer(
-            builder: (context, ref, child) {
-              final state = ref.watch(navigationStateProvider);
-              final isMobile = state.viewMode == ViewMode.mobile;
-              final navigationItems = state.navigationItems;
-              final currentIndex = state.currentIndex;
-              final bottomNavigationBar = NavigationBarTheme(
-                data: _NavigationBarDefaultsM3(context),
-                child: NavigationBar(
-                  destinations: navigationItems
-                      .map(
-                        (e) => NavigationDestination(
-                          icon: e.icon,
-                          label: Intl.message(e.label.name),
+    return BackLayerScope(
+      child: HomeBackScopeContainer(
+        child: AppSidebarContainer(
+          child: Material(
+            color: context.colorScheme.surface,
+            child: Consumer(
+              builder: (context, ref, child) {
+                final state = ref.watch(navigationStateProvider);
+                final isMobile = state.viewMode == ViewMode.mobile;
+                final navigationItems = state.navigationItems;
+                final currentIndex = state.currentIndex;
+                final bottomNavigationBar = NavigationBarTheme(
+                  data: _NavigationBarDefaultsM3(context),
+                  child: NavigationBar(
+                    destinations: navigationItems
+                        .map(
+                          (e) => NavigationDestination(
+                            icon: e.icon,
+                            label: Intl.message(e.label.name),
+                          ),
+                        )
+                        .toList(),
+                    onDestinationSelected: (index) {
+                      _handleToPage(navigationItems[index].label);
+                    },
+                    selectedIndex: currentIndex,
+                  ),
+                );
+                if (isMobile) {
+                  return Column(
+                    children: [
+                      Flexible(
+                        flex: 1,
+                        child: MediaQuery.removePadding(
+                          removeTop: false,
+                          removeBottom: true,
+                          removeLeft: true,
+                          removeRight: true,
+                          context: context,
+                          child: child!,
                         ),
-                      )
-                      .toList(),
-                  onDestinationSelected: (index) {
-                    _handleToPage(navigationItems[index].label);
-                  },
-                  selectedIndex: currentIndex,
-                ),
-              );
-              if (isMobile) {
-                return Column(
-                  children: [
-                    Flexible(
-                      flex: 1,
-                      child: MediaQuery.removePadding(
-                        removeTop: false,
-                        removeBottom: true,
+                      ),
+                      MediaQuery.removePadding(
+                        removeTop: true,
+                        removeBottom: false,
                         removeLeft: true,
                         removeRight: true,
                         context: context,
-                        child: child!,
+                        child: bottomNavigationBar,
                       ),
-                    ),
-                    MediaQuery.removePadding(
-                      removeTop: true,
-                      removeBottom: false,
-                      removeLeft: true,
-                      removeRight: true,
-                      context: context,
-                      child: bottomNavigationBar,
-                    ),
-                  ],
-                );
-              } else {
-                return child!;
-              }
-            },
-            child: Consumer(
-              builder: (_, ref, _) {
-                final navigationItems = ref
-                    .watch(currentNavigationItemsStateProvider)
-                    .value;
-                final isMobile = ref.watch(isMobileViewProvider);
-                return _HomePageView(
-                  navigationItems: navigationItems,
-                  pageBuilder: (_, index) {
-                    final navigationItem = navigationItems[index];
-                    final navigationView = navigationItem.builder(context);
-                    final view = KeepScope(
-                      keep: navigationItem.keep,
-                      child: isMobile
-                          ? navigationView
-                          : Navigator(
-                              pages: [MaterialPage(child: navigationView)],
-                              onDidRemovePage: (_) {},
-                            ),
-                    );
-                    return view;
-                  },
-                );
+                    ],
+                  );
+                } else {
+                  return child!;
+                }
               },
+              child: Consumer(
+                builder: (_, ref, _) {
+                  final navigationItems = ref
+                      .watch(currentNavigationItemsStateProvider)
+                      .value;
+                  final isMobile = ref.watch(isMobileViewProvider);
+                  return _HomePageView(
+                    navigationItems: navigationItems,
+                    pageBuilder: (_, index) {
+                      final navigationItem = navigationItems[index];
+                      final navigationView = navigationItem.builder(context);
+                      final view = KeepScope(
+                        keep: navigationItem.keep,
+                        child: isMobile
+                            ? navigationView
+                            : Navigator(
+                                pages: [MaterialPage(child: navigationView)],
+                                onDidRemovePage: (_) {},
+                              ),
+                      );
+                      return view;
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -191,12 +193,17 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
     final itemCount = ref.watch(
       currentNavigationItemsStateProvider.select((state) => state.value.length),
     );
+    ref.watch(currentPageLabelProvider);
+    final currentIndex = _pageIndex;
     return PageView.builder(
       controller: _pageController,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: itemCount,
       itemBuilder: (context, index) {
-        return widget.pageBuilder(context, index);
+        return PageActivityScope(
+          isActive: index == currentIndex,
+          child: widget.pageBuilder(context, index),
+        );
       },
     );
   }
@@ -268,6 +275,10 @@ class HomeBackScopeContainer extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     return CommonPopScope(
       onPop: (context) async {
+        final backLayer = BackLayerScope.maybeOf(context);
+        if (backLayer != null && backLayer.handleBack()) {
+          return false;
+        }
         final pageLabel = ref.read(currentPageLabelProvider);
         final realContext =
             GlobalObjectKey(pageLabel).currentContext ?? context;

@@ -37,6 +37,11 @@ _UpdateParams _$UpdateParamsFromJson(Map<String, dynamic> json) =>
       unifiedDelay: json['unified-delay'] as bool,
       geoAutoUpdate: json['geo-auto-update'] as bool? ?? false,
       geoUpdateInterval: (json['geo-update-interval'] as num?)?.toInt() ?? 24,
+      authentication:
+          (json['authentication'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$UpdateParamsToJson(_UpdateParams instance) =>
@@ -54,6 +59,7 @@ Map<String, dynamic> _$UpdateParamsToJson(_UpdateParams instance) =>
       'unified-delay': instance.unifiedDelay,
       'geo-auto-update': instance.geoAutoUpdate,
       'geo-update-interval': instance.geoUpdateInterval,
+      'authentication': instance.authentication,
     };
 
 const _$FindProcessModeEnumMap = {
@@ -300,6 +306,7 @@ const _$ActionMethodEnumMap = {
   ActionMethod.crash: 'crash',
   ActionMethod.setupConfig: 'setupConfig',
   ActionMethod.deleteFile: 'deleteFile',
+  ActionMethod.clearEffect: 'clearEffect',
   ActionMethod.speedTest: 'speedTest',
   ActionMethod.quicTest: 'quicTest',
   ActionMethod.unlockTest: 'unlockTest',

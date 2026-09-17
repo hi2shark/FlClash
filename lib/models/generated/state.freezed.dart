@@ -8710,7 +8710,7 @@ $VpnPropsCopyWith<$Res> get vpnProps {
 /// @nodoc
 mixin _$SharedState {
 
- SetupParams? get setupParams; VpnOptions? get vpnOptions; String get stopTip; String get startTip; String get currentProfileName; String get stopText; String get suspendedText; bool get onlyStatisticsProxy; bool get crashlytics;@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> get suspendOnWifiSsids;
+ SetupParams? get setupParams; VpnOptions? get vpnOptions; String get stopTip; String get startTip; String get currentProfileName; String get stopText; String get suspendedText; bool get onlyStatisticsProxy; bool get crashlytics; bool get showNotificationStopAction;@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> get suspendOnWifiSsids;
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -8723,16 +8723,16 @@ $SharedStateCopyWith<SharedState> get copyWith => _$SharedStateCopyWithImpl<Shar
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.suspendedText, suspendedText) || other.suspendedText == suspendedText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.crashlytics, crashlytics) || other.crashlytics == crashlytics)&&const DeepCollectionEquality().equals(other.suspendOnWifiSsids, suspendOnWifiSsids));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.suspendedText, suspendedText) || other.suspendedText == suspendedText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.crashlytics, crashlytics) || other.crashlytics == crashlytics)&&(identical(other.showNotificationStopAction, showNotificationStopAction) || other.showNotificationStopAction == showNotificationStopAction)&&const DeepCollectionEquality().equals(other.suspendOnWifiSsids, suspendOnWifiSsids));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,currentProfileName,stopText,suspendedText,onlyStatisticsProxy,crashlytics,const DeepCollectionEquality().hash(suspendOnWifiSsids));
+int get hashCode => Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,currentProfileName,stopText,suspendedText,onlyStatisticsProxy,crashlytics,showNotificationStopAction,const DeepCollectionEquality().hash(suspendOnWifiSsids));
 
 @override
 String toString() {
-  return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, currentProfileName: $currentProfileName, stopText: $stopText, suspendedText: $suspendedText, onlyStatisticsProxy: $onlyStatisticsProxy, crashlytics: $crashlytics, suspendOnWifiSsids: $suspendOnWifiSsids)';
+  return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, currentProfileName: $currentProfileName, stopText: $stopText, suspendedText: $suspendedText, onlyStatisticsProxy: $onlyStatisticsProxy, crashlytics: $crashlytics, showNotificationStopAction: $showNotificationStopAction, suspendOnWifiSsids: $suspendOnWifiSsids)';
 }
 
 
@@ -8743,7 +8743,7 @@ abstract mixin class $SharedStateCopyWith<$Res>  {
   factory $SharedStateCopyWith(SharedState value, $Res Function(SharedState) _then) = _$SharedStateCopyWithImpl;
 @useResult
 $Res call({
- SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, String suspendedText, bool onlyStatisticsProxy, bool crashlytics,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
+ SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, String suspendedText, bool onlyStatisticsProxy, bool crashlytics, bool showNotificationStopAction,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
 });
 
 
@@ -8760,7 +8760,7 @@ class _$SharedStateCopyWithImpl<$Res>
 
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? currentProfileName = null,Object? stopText = null,Object? suspendedText = null,Object? onlyStatisticsProxy = null,Object? crashlytics = null,Object? suspendOnWifiSsids = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? currentProfileName = null,Object? stopText = null,Object? suspendedText = null,Object? onlyStatisticsProxy = null,Object? crashlytics = null,Object? showNotificationStopAction = null,Object? suspendOnWifiSsids = null,}) {
   return _then(_self.copyWith(
 setupParams: freezed == setupParams ? _self.setupParams : setupParams // ignore: cast_nullable_to_non_nullable
 as SetupParams?,vpnOptions: freezed == vpnOptions ? _self.vpnOptions : vpnOptions // ignore: cast_nullable_to_non_nullable
@@ -8771,6 +8771,7 @@ as String,stopText: null == stopText ? _self.stopText : stopText // ignore: cast
 as String,suspendedText: null == suspendedText ? _self.suspendedText : suspendedText // ignore: cast_nullable_to_non_nullable
 as String,onlyStatisticsProxy: null == onlyStatisticsProxy ? _self.onlyStatisticsProxy : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
 as bool,crashlytics: null == crashlytics ? _self.crashlytics : crashlytics // ignore: cast_nullable_to_non_nullable
+as bool,showNotificationStopAction: null == showNotificationStopAction ? _self.showNotificationStopAction : showNotificationStopAction // ignore: cast_nullable_to_non_nullable
 as bool,suspendOnWifiSsids: null == suspendOnWifiSsids ? _self.suspendOnWifiSsids : suspendOnWifiSsids // ignore: cast_nullable_to_non_nullable
 as List<String>,
   ));
@@ -8881,10 +8882,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool crashlytics,  bool showNotificationStopAction, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SharedState() when $default != null:
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.crashlytics,_that.showNotificationStopAction,_that.suspendOnWifiSsids);case _:
   return orElse();
 
 }
@@ -8902,10 +8903,10 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool crashlytics,  bool showNotificationStopAction, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)  $default,) {final _that = this;
 switch (_that) {
 case _SharedState():
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.crashlytics,_that.showNotificationStopAction,_that.suspendOnWifiSsids);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -8922,10 +8923,10 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool crashlytics,  bool showNotificationStopAction, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,) {final _that = this;
 switch (_that) {
 case _SharedState() when $default != null:
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.crashlytics,_that.suspendOnWifiSsids);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.crashlytics,_that.showNotificationStopAction,_that.suspendOnWifiSsids);case _:
   return null;
 
 }
@@ -8937,7 +8938,7 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 @JsonSerializable()
 
 class _SharedState implements SharedState {
-  const _SharedState({this.setupParams, this.vpnOptions, required this.stopTip, required this.startTip, required this.currentProfileName, required this.stopText, this.suspendedText = 'Suspended...', required this.onlyStatisticsProxy, required this.crashlytics, @JsonKey(readValue: _readSuspendOnWifiSsids) final  List<String> suspendOnWifiSsids = const []}): _suspendOnWifiSsids = suspendOnWifiSsids;
+  const _SharedState({this.setupParams, this.vpnOptions, required this.stopTip, required this.startTip, required this.currentProfileName, required this.stopText, this.suspendedText = 'Suspended...', required this.onlyStatisticsProxy, required this.crashlytics, this.showNotificationStopAction = true, @JsonKey(readValue: _readSuspendOnWifiSsids) final  List<String> suspendOnWifiSsids = const []}): _suspendOnWifiSsids = suspendOnWifiSsids;
   factory _SharedState.fromJson(Map<String, dynamic> json) => _$SharedStateFromJson(json);
 
 @override final  SetupParams? setupParams;
@@ -8949,6 +8950,7 @@ class _SharedState implements SharedState {
 @override@JsonKey() final  String suspendedText;
 @override final  bool onlyStatisticsProxy;
 @override final  bool crashlytics;
+@override@JsonKey() final  bool showNotificationStopAction;
  final  List<String> _suspendOnWifiSsids;
 @override@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> get suspendOnWifiSsids {
   if (_suspendOnWifiSsids is EqualUnmodifiableListView) return _suspendOnWifiSsids;
@@ -8970,16 +8972,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.suspendedText, suspendedText) || other.suspendedText == suspendedText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.crashlytics, crashlytics) || other.crashlytics == crashlytics)&&const DeepCollectionEquality().equals(other._suspendOnWifiSsids, _suspendOnWifiSsids));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.suspendedText, suspendedText) || other.suspendedText == suspendedText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.crashlytics, crashlytics) || other.crashlytics == crashlytics)&&(identical(other.showNotificationStopAction, showNotificationStopAction) || other.showNotificationStopAction == showNotificationStopAction)&&const DeepCollectionEquality().equals(other._suspendOnWifiSsids, _suspendOnWifiSsids));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,currentProfileName,stopText,suspendedText,onlyStatisticsProxy,crashlytics,const DeepCollectionEquality().hash(_suspendOnWifiSsids));
+int get hashCode => Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,currentProfileName,stopText,suspendedText,onlyStatisticsProxy,crashlytics,showNotificationStopAction,const DeepCollectionEquality().hash(_suspendOnWifiSsids));
 
 @override
 String toString() {
-  return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, currentProfileName: $currentProfileName, stopText: $stopText, suspendedText: $suspendedText, onlyStatisticsProxy: $onlyStatisticsProxy, crashlytics: $crashlytics, suspendOnWifiSsids: $suspendOnWifiSsids)';
+  return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, currentProfileName: $currentProfileName, stopText: $stopText, suspendedText: $suspendedText, onlyStatisticsProxy: $onlyStatisticsProxy, crashlytics: $crashlytics, showNotificationStopAction: $showNotificationStopAction, suspendOnWifiSsids: $suspendOnWifiSsids)';
 }
 
 
@@ -8990,7 +8992,7 @@ abstract mixin class _$SharedStateCopyWith<$Res> implements $SharedStateCopyWith
   factory _$SharedStateCopyWith(_SharedState value, $Res Function(_SharedState) _then) = __$SharedStateCopyWithImpl;
 @override @useResult
 $Res call({
- SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, String suspendedText, bool onlyStatisticsProxy, bool crashlytics,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
+ SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String currentProfileName, String stopText, String suspendedText, bool onlyStatisticsProxy, bool crashlytics, bool showNotificationStopAction,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
 });
 
 
@@ -9007,7 +9009,7 @@ class __$SharedStateCopyWithImpl<$Res>
 
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? currentProfileName = null,Object? stopText = null,Object? suspendedText = null,Object? onlyStatisticsProxy = null,Object? crashlytics = null,Object? suspendOnWifiSsids = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? currentProfileName = null,Object? stopText = null,Object? suspendedText = null,Object? onlyStatisticsProxy = null,Object? crashlytics = null,Object? showNotificationStopAction = null,Object? suspendOnWifiSsids = null,}) {
   return _then(_SharedState(
 setupParams: freezed == setupParams ? _self.setupParams : setupParams // ignore: cast_nullable_to_non_nullable
 as SetupParams?,vpnOptions: freezed == vpnOptions ? _self.vpnOptions : vpnOptions // ignore: cast_nullable_to_non_nullable
@@ -9018,6 +9020,7 @@ as String,stopText: null == stopText ? _self.stopText : stopText // ignore: cast
 as String,suspendedText: null == suspendedText ? _self.suspendedText : suspendedText // ignore: cast_nullable_to_non_nullable
 as String,onlyStatisticsProxy: null == onlyStatisticsProxy ? _self.onlyStatisticsProxy : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
 as bool,crashlytics: null == crashlytics ? _self.crashlytics : crashlytics // ignore: cast_nullable_to_non_nullable
+as bool,showNotificationStopAction: null == showNotificationStopAction ? _self.showNotificationStopAction : showNotificationStopAction // ignore: cast_nullable_to_non_nullable
 as bool,suspendOnWifiSsids: null == suspendOnWifiSsids ? _self._suspendOnWifiSsids : suspendOnWifiSsids // ignore: cast_nullable_to_non_nullable
 as List<String>,
   ));
@@ -9352,7 +9355,7 @@ $ProxiesDataCopyWith<$Res> get proxiesData {
 /// @nodoc
 mixin _$MakeRealProfileState {
 
- String get profilesPath; int get profileId; Map<String, dynamic> get rawConfig; PatchClashConfig get realPatchConfig; bool get overrideDns; bool get appendSystemDns; List<ProxyGroup> get proxyGroups; List<Rule> get rules; List<Rule> get addedRules; String get defaultUA;
+ String get profilesPath; int get profileId; Map<String, dynamic> get rawConfig; PatchClashConfig get realPatchConfig; bool get overrideDns; bool get appendSystemDns; List<ProxyGroup> get proxyGroups; List<Rule> get rules; List<Rule> get addedRules; String get defaultUA; List<String> get authentication;
 /// Create a copy of MakeRealProfileState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -9363,16 +9366,16 @@ $MakeRealProfileStateCopyWith<MakeRealProfileState> get copyWith => _$MakeRealPr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MakeRealProfileState&&(identical(other.profilesPath, profilesPath) || other.profilesPath == profilesPath)&&(identical(other.profileId, profileId) || other.profileId == profileId)&&const DeepCollectionEquality().equals(other.rawConfig, rawConfig)&&(identical(other.realPatchConfig, realPatchConfig) || other.realPatchConfig == realPatchConfig)&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.appendSystemDns, appendSystemDns) || other.appendSystemDns == appendSystemDns)&&const DeepCollectionEquality().equals(other.proxyGroups, proxyGroups)&&const DeepCollectionEquality().equals(other.rules, rules)&&const DeepCollectionEquality().equals(other.addedRules, addedRules)&&(identical(other.defaultUA, defaultUA) || other.defaultUA == defaultUA));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MakeRealProfileState&&(identical(other.profilesPath, profilesPath) || other.profilesPath == profilesPath)&&(identical(other.profileId, profileId) || other.profileId == profileId)&&const DeepCollectionEquality().equals(other.rawConfig, rawConfig)&&(identical(other.realPatchConfig, realPatchConfig) || other.realPatchConfig == realPatchConfig)&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.appendSystemDns, appendSystemDns) || other.appendSystemDns == appendSystemDns)&&const DeepCollectionEquality().equals(other.proxyGroups, proxyGroups)&&const DeepCollectionEquality().equals(other.rules, rules)&&const DeepCollectionEquality().equals(other.addedRules, addedRules)&&(identical(other.defaultUA, defaultUA) || other.defaultUA == defaultUA)&&const DeepCollectionEquality().equals(other.authentication, authentication));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,profilesPath,profileId,const DeepCollectionEquality().hash(rawConfig),realPatchConfig,overrideDns,appendSystemDns,const DeepCollectionEquality().hash(proxyGroups),const DeepCollectionEquality().hash(rules),const DeepCollectionEquality().hash(addedRules),defaultUA);
+int get hashCode => Object.hash(runtimeType,profilesPath,profileId,const DeepCollectionEquality().hash(rawConfig),realPatchConfig,overrideDns,appendSystemDns,const DeepCollectionEquality().hash(proxyGroups),const DeepCollectionEquality().hash(rules),const DeepCollectionEquality().hash(addedRules),defaultUA,const DeepCollectionEquality().hash(authentication));
 
 @override
 String toString() {
-  return 'MakeRealProfileState(profilesPath: $profilesPath, profileId: $profileId, rawConfig: $rawConfig, realPatchConfig: $realPatchConfig, overrideDns: $overrideDns, appendSystemDns: $appendSystemDns, proxyGroups: $proxyGroups, rules: $rules, addedRules: $addedRules, defaultUA: $defaultUA)';
+  return 'MakeRealProfileState(profilesPath: $profilesPath, profileId: $profileId, rawConfig: $rawConfig, realPatchConfig: $realPatchConfig, overrideDns: $overrideDns, appendSystemDns: $appendSystemDns, proxyGroups: $proxyGroups, rules: $rules, addedRules: $addedRules, defaultUA: $defaultUA, authentication: $authentication)';
 }
 
 
@@ -9383,7 +9386,7 @@ abstract mixin class $MakeRealProfileStateCopyWith<$Res>  {
   factory $MakeRealProfileStateCopyWith(MakeRealProfileState value, $Res Function(MakeRealProfileState) _then) = _$MakeRealProfileStateCopyWithImpl;
 @useResult
 $Res call({
- String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, bool overrideDns, bool appendSystemDns, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, String defaultUA
+ String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, bool overrideDns, bool appendSystemDns, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, String defaultUA, List<String> authentication
 });
 
 
@@ -9400,7 +9403,7 @@ class _$MakeRealProfileStateCopyWithImpl<$Res>
 
 /// Create a copy of MakeRealProfileState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrideDns = null,Object? appendSystemDns = null,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? defaultUA = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrideDns = null,Object? appendSystemDns = null,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? defaultUA = null,Object? authentication = null,}) {
   return _then(_self.copyWith(
 profilesPath: null == profilesPath ? _self.profilesPath : profilesPath // ignore: cast_nullable_to_non_nullable
 as String,profileId: null == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
@@ -9412,7 +9415,8 @@ as bool,proxyGroups: null == proxyGroups ? _self.proxyGroups : proxyGroups // ig
 as List<ProxyGroup>,rules: null == rules ? _self.rules : rules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,addedRules: null == addedRules ? _self.addedRules : addedRules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,defaultUA: null == defaultUA ? _self.defaultUA : defaultUA // ignore: cast_nullable_to_non_nullable
-as String,
+as String,authentication: null == authentication ? _self.authentication : authentication // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 /// Create a copy of MakeRealProfileState
@@ -9506,10 +9510,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  bool overrideDns,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  bool overrideDns,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MakeRealProfileState() when $default != null:
-return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrideDns,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA);case _:
+return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrideDns,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication);case _:
   return orElse();
 
 }
@@ -9527,10 +9531,10 @@ return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPat
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  bool overrideDns,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  bool overrideDns,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication)  $default,) {final _that = this;
 switch (_that) {
 case _MakeRealProfileState():
-return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrideDns,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA);case _:
+return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrideDns,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -9547,10 +9551,10 @@ return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPat
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  bool overrideDns,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String profilesPath,  int profileId,  Map<String, dynamic> rawConfig,  PatchClashConfig realPatchConfig,  bool overrideDns,  bool appendSystemDns,  List<ProxyGroup> proxyGroups,  List<Rule> rules,  List<Rule> addedRules,  String defaultUA,  List<String> authentication)?  $default,) {final _that = this;
 switch (_that) {
 case _MakeRealProfileState() when $default != null:
-return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrideDns,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA);case _:
+return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPatchConfig,_that.overrideDns,_that.appendSystemDns,_that.proxyGroups,_that.rules,_that.addedRules,_that.defaultUA,_that.authentication);case _:
   return null;
 
 }
@@ -9562,7 +9566,7 @@ return $default(_that.profilesPath,_that.profileId,_that.rawConfig,_that.realPat
 
 
 class _MakeRealProfileState implements MakeRealProfileState {
-  const _MakeRealProfileState({required this.profilesPath, required this.profileId, required final  Map<String, dynamic> rawConfig, required this.realPatchConfig, required this.overrideDns, required this.appendSystemDns, required final  List<ProxyGroup> proxyGroups, required final  List<Rule> rules, required final  List<Rule> addedRules, required this.defaultUA}): _rawConfig = rawConfig,_proxyGroups = proxyGroups,_rules = rules,_addedRules = addedRules;
+  const _MakeRealProfileState({required this.profilesPath, required this.profileId, required final  Map<String, dynamic> rawConfig, required this.realPatchConfig, required this.overrideDns, required this.appendSystemDns, required final  List<ProxyGroup> proxyGroups, required final  List<Rule> rules, required final  List<Rule> addedRules, required this.defaultUA, final  List<String> authentication = const []}): _rawConfig = rawConfig,_proxyGroups = proxyGroups,_rules = rules,_addedRules = addedRules,_authentication = authentication;
   
 
 @override final  String profilesPath;
@@ -9599,6 +9603,13 @@ class _MakeRealProfileState implements MakeRealProfileState {
 }
 
 @override final  String defaultUA;
+ final  List<String> _authentication;
+@override@JsonKey() List<String> get authentication {
+  if (_authentication is EqualUnmodifiableListView) return _authentication;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_authentication);
+}
+
 
 /// Create a copy of MakeRealProfileState
 /// with the given fields replaced by the non-null parameter values.
@@ -9610,16 +9621,16 @@ _$MakeRealProfileStateCopyWith<_MakeRealProfileState> get copyWith => __$MakeRea
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MakeRealProfileState&&(identical(other.profilesPath, profilesPath) || other.profilesPath == profilesPath)&&(identical(other.profileId, profileId) || other.profileId == profileId)&&const DeepCollectionEquality().equals(other._rawConfig, _rawConfig)&&(identical(other.realPatchConfig, realPatchConfig) || other.realPatchConfig == realPatchConfig)&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.appendSystemDns, appendSystemDns) || other.appendSystemDns == appendSystemDns)&&const DeepCollectionEquality().equals(other._proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other._rules, _rules)&&const DeepCollectionEquality().equals(other._addedRules, _addedRules)&&(identical(other.defaultUA, defaultUA) || other.defaultUA == defaultUA));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MakeRealProfileState&&(identical(other.profilesPath, profilesPath) || other.profilesPath == profilesPath)&&(identical(other.profileId, profileId) || other.profileId == profileId)&&const DeepCollectionEquality().equals(other._rawConfig, _rawConfig)&&(identical(other.realPatchConfig, realPatchConfig) || other.realPatchConfig == realPatchConfig)&&(identical(other.overrideDns, overrideDns) || other.overrideDns == overrideDns)&&(identical(other.appendSystemDns, appendSystemDns) || other.appendSystemDns == appendSystemDns)&&const DeepCollectionEquality().equals(other._proxyGroups, _proxyGroups)&&const DeepCollectionEquality().equals(other._rules, _rules)&&const DeepCollectionEquality().equals(other._addedRules, _addedRules)&&(identical(other.defaultUA, defaultUA) || other.defaultUA == defaultUA)&&const DeepCollectionEquality().equals(other._authentication, _authentication));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,profilesPath,profileId,const DeepCollectionEquality().hash(_rawConfig),realPatchConfig,overrideDns,appendSystemDns,const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_rules),const DeepCollectionEquality().hash(_addedRules),defaultUA);
+int get hashCode => Object.hash(runtimeType,profilesPath,profileId,const DeepCollectionEquality().hash(_rawConfig),realPatchConfig,overrideDns,appendSystemDns,const DeepCollectionEquality().hash(_proxyGroups),const DeepCollectionEquality().hash(_rules),const DeepCollectionEquality().hash(_addedRules),defaultUA,const DeepCollectionEquality().hash(_authentication));
 
 @override
 String toString() {
-  return 'MakeRealProfileState(profilesPath: $profilesPath, profileId: $profileId, rawConfig: $rawConfig, realPatchConfig: $realPatchConfig, overrideDns: $overrideDns, appendSystemDns: $appendSystemDns, proxyGroups: $proxyGroups, rules: $rules, addedRules: $addedRules, defaultUA: $defaultUA)';
+  return 'MakeRealProfileState(profilesPath: $profilesPath, profileId: $profileId, rawConfig: $rawConfig, realPatchConfig: $realPatchConfig, overrideDns: $overrideDns, appendSystemDns: $appendSystemDns, proxyGroups: $proxyGroups, rules: $rules, addedRules: $addedRules, defaultUA: $defaultUA, authentication: $authentication)';
 }
 
 
@@ -9630,7 +9641,7 @@ abstract mixin class _$MakeRealProfileStateCopyWith<$Res> implements $MakeRealPr
   factory _$MakeRealProfileStateCopyWith(_MakeRealProfileState value, $Res Function(_MakeRealProfileState) _then) = __$MakeRealProfileStateCopyWithImpl;
 @override @useResult
 $Res call({
- String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, bool overrideDns, bool appendSystemDns, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, String defaultUA
+ String profilesPath, int profileId, Map<String, dynamic> rawConfig, PatchClashConfig realPatchConfig, bool overrideDns, bool appendSystemDns, List<ProxyGroup> proxyGroups, List<Rule> rules, List<Rule> addedRules, String defaultUA, List<String> authentication
 });
 
 
@@ -9647,7 +9658,7 @@ class __$MakeRealProfileStateCopyWithImpl<$Res>
 
 /// Create a copy of MakeRealProfileState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrideDns = null,Object? appendSystemDns = null,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? defaultUA = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? profilesPath = null,Object? profileId = null,Object? rawConfig = null,Object? realPatchConfig = null,Object? overrideDns = null,Object? appendSystemDns = null,Object? proxyGroups = null,Object? rules = null,Object? addedRules = null,Object? defaultUA = null,Object? authentication = null,}) {
   return _then(_MakeRealProfileState(
 profilesPath: null == profilesPath ? _self.profilesPath : profilesPath // ignore: cast_nullable_to_non_nullable
 as String,profileId: null == profileId ? _self.profileId : profileId // ignore: cast_nullable_to_non_nullable
@@ -9659,7 +9670,8 @@ as bool,proxyGroups: null == proxyGroups ? _self._proxyGroups : proxyGroups // i
 as List<ProxyGroup>,rules: null == rules ? _self._rules : rules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,addedRules: null == addedRules ? _self._addedRules : addedRules // ignore: cast_nullable_to_non_nullable
 as List<Rule>,defaultUA: null == defaultUA ? _self.defaultUA : defaultUA // ignore: cast_nullable_to_non_nullable
-as String,
+as String,authentication: null == authentication ? _self._authentication : authentication // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 

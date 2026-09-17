@@ -46,6 +46,29 @@ void main() {
       expect(params.allowLan, true);
       expect(params.mode, Mode.rule);
       expect(params.logLevel, LogLevel.info);
+      expect(params.authentication, isEmpty);
+    });
+
+    test('fromJson and toJson keep authentication', () {
+      final json = {
+        'tun': {'enable': false},
+        'mixed-port': 7890,
+        'allow-lan': false,
+        'find-process-mode': 'off',
+        'mode': 'rule',
+        'log-level': 'info',
+        'ipv6': false,
+        'tcp-concurrent': false,
+        'external-controller': '',
+        'unified-delay': false,
+        'authentication': ['user:pass'],
+      };
+      final params = UpdateParams.fromJson(json);
+      expect(params.authentication, ['user:pass']);
+      expect(
+        jsonDecode(jsonEncode(params.toJson()))['authentication'],
+        ['user:pass'],
+      );
     });
   });
 
