@@ -21,17 +21,31 @@ import (
 
 type fakePacketConn struct {
 	readData []byte
+	readAddr net.Addr
 	readErr  error
 	writeN   int
 	writeErr error
 }
 
 func (c *fakePacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
+	addr := c.readAddr
+	if addr == nil {
+		addr = &net.UDPAddr{IP: net.IPv4(203, 0, 113, 1), Port: 443}
+	}
 	if len(c.readData) > 0 {
 		n := copy(p, c.readData)
-		return n, &net.UDPAddr{IP: net.IPv4(192, 0, 2, 1), Port: 443}, c.readErr
+		return n, addr, c.readErr
 	}
 	return 0, nil, c.readErr
+}
+
+type unresolvedUDPAdapter struct {
+	*outbound.Base
+	pc net.PacketConn
+}
+
+func (a *unresolvedUDPAdapter) ListenPacketContext(_ context.Context, _ *C.Metadata) (C.PacketConn, error) {
+	return outbound.NewPacketConn(a.pc, a), nil
 }
 
 func (c *fakePacketConn) WriteTo(p []byte, _ net.Addr) (int, error) {
@@ -415,14 +429,89 @@ func TestResolvedQuicUDPAddrUsesMetadataAddress(t *testing.T) {
 	}
 }
 
-func TestResolvedQuicUDPAddrRequiresProxyResolution(t *testing.T) {
+func TestResolvedQuicUDPAddrPlaceholderWhenUnresolved(t *testing.T) {
 	metadata := &C.Metadata{NetWork: C.UDP}
 	if err := metadata.SetRemoteAddress("dns.invalid:443"); err != nil {
 		t.Fatalf("SetRemoteAddress() error = %v", err)
 	}
 
-	if _, _, err := resolvedQuicUDPAddr(metadata); err == nil {
-		t.Fatal("expected unresolved metadata error")
+	addr, network, err := resolvedQuicUDPAddr(metadata)
+	if err != nil {
+		t.Fatalf("resolvedQuicUDPAddr() error = %v", err)
+	}
+	if got := addr.String(); got != "192.0.2.1:443" {
+		t.Fatalf("resolved address = %q, want placeholder 192.0.2.1:443", got)
+	}
+	if network != "udp4" {
+		t.Fatalf("network = %q, want udp4", network)
+	}
+	if metadata.Resolved() {
+		t.Fatal("placeholder must not mark metadata as resolved")
+	}
+}
+
+func TestHandleQuicTestUnresolvedUDPRelayContinuesPastResolve(t *testing.T) {
+	t.Cleanup(func() {
+		tunnel.UpdateProxies(map[string]C.Proxy{}, map[string]P.ProxyProvider{})
+	})
+	unresolved := &unresolvedUDPAdapter{
+		Base: outbound.NewBase(outbound.BaseOption{
+			Name: "UNRESOLVED_UDP",
+			Type: C.Direct,
+			UDP:  true,
+		}),
+		pc: &fakePacketConn{
+			writeN:  -1,
+			readErr: errors.New("no datagram"),
+		},
+	}
+	tunnel.UpdateProxies(
+		map[string]C.Proxy{"UNRESOLVED_UDP": adapter.NewProxy(unresolved)},
+		map[string]P.ProxyProvider{},
+	)
+
+	ch := make(chan string, 1)
+	handleQuicTest(
+		`{"proxy-name":"UNRESOLVED_UDP","host":"dns.invalid:443","timeout":100}`,
+		func(value string) { ch <- value },
+	)
+
+	var result QuicTestResult
+	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
+		t.Fatalf("result is not valid json: %v", err)
+	}
+	if result.Stage == "target_resolve" {
+		t.Fatalf("unresolved UDP relay should continue past target_resolve, got %+v", result)
+	}
+	if strings.Contains(result.Error, "target was not resolved by proxy") {
+		t.Fatalf("unexpected local-resolve error: %q", result.Error)
+	}
+	if result.ResolvedIP != "" {
+		t.Fatalf("placeholder path must leave resolved-ip empty, got %q", result.ResolvedIP)
+	}
+	if result.Network != "udp4" {
+		t.Fatalf("network = %q, want udp4", result.Network)
+	}
+}
+
+func TestQuicPacketConnReadFromPinsPeer(t *testing.T) {
+	fake := &fakePacketConn{
+		readData: []byte("response"),
+		readAddr: &net.UDPAddr{IP: net.IPv4(203, 0, 113, 9), Port: 443},
+		writeN:   -1,
+	}
+	peer := &net.UDPAddr{IP: net.IPv4(192, 0, 2, 1), Port: 443}
+	packetConn := outbound.NewPacketConn(fake, outbound.NewDirect())
+	conn := &quicPacketConn{PacketConn: packetConn, peer: peer}
+	t.Cleanup(func() { _ = conn.Close() })
+
+	buffer := make([]byte, 32)
+	n, addr, err := conn.ReadFrom(buffer)
+	if err != nil || n != len(fake.readData) {
+		t.Fatalf("ReadFrom() = (%d, %v), want (%d, nil)", n, err, len(fake.readData))
+	}
+	if addr == nil || addr.String() != peer.String() {
+		t.Fatalf("ReadFrom addr = %v, want pinned peer %s", addr, peer)
 	}
 }
 

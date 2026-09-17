@@ -32,6 +32,10 @@ const (
 	defaultQuicTestTimeout  = 8 * time.Second
 )
 
+// quicPlaceholderIP is TEST-NET-1. It is only a DialEarly peer label for
+// domain-passthrough UDP relays that leave metadata unresolved.
+var quicPlaceholderIP = net.IPv4(192, 0, 2, 1)
+
 type SpeedTestResult struct {
 	Name    string  `json:"name"`
 	Latency int64   `json:"latency"` // time to first byte, ms
@@ -59,6 +63,7 @@ type QuicTestResult struct {
 // quicPacketConn adapts a mihomo constant.PacketConn to net.PacketConn for quic-go.
 type quicPacketConn struct {
 	C.PacketConn
+	peer net.Addr
 
 	sentPackets     atomic.Int64
 	sentBytes       atomic.Int64
@@ -76,12 +81,12 @@ func (c *quicPacketConn) WriteTo(p []byte, addr net.Addr) (int, error) {
 }
 
 func (c *quicPacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
-	n, addr, err := c.PacketConn.ReadFrom(p)
+	n, _, err := c.PacketConn.ReadFrom(p)
 	if n > 0 {
 		c.receivedPackets.Add(1)
 		c.receivedBytes.Add(int64(n))
 	}
-	return n, addr, err
+	return n, c.peer, err
 }
 
 func (c *quicPacketConn) updateResult(result *QuicTestResult) {
@@ -129,23 +134,35 @@ func normalizeQuicTarget(input string) (target string, serverName string, err er
 	return net.JoinHostPort(host, strconv.FormatUint(portNumber, 10)), host, nil
 }
 
-func resolvedQuicUDPAddr(metadata *C.Metadata) (*net.UDPAddr, string, error) {
-	if !metadata.Resolved() {
-		return nil, "", fmt.Errorf("target was not resolved by proxy")
-	}
-	udpAddr := metadata.UDPAddr()
+func quicUDPNetwork(udpAddr *net.UDPAddr) string {
 	if udpAddr == nil {
-		return nil, "", fmt.Errorf("resolved target is not a valid UDP address")
+		return "udp"
 	}
-
-	network := "udp"
 	switch {
 	case udpAddr.IP.To4() != nil:
-		network = "udp4"
+		return "udp4"
 	case udpAddr.IP.To16() != nil:
-		network = "udp6"
+		return "udp6"
+	default:
+		return "udp"
 	}
-	return udpAddr, network, nil
+}
+
+func resolvedQuicUDPAddr(metadata *C.Metadata) (*net.UDPAddr, string, error) {
+	if metadata.Resolved() {
+		udpAddr := metadata.UDPAddr()
+		if udpAddr == nil {
+			return nil, "", fmt.Errorf("resolved target is not a valid UDP address")
+		}
+		return udpAddr, quicUDPNetwork(udpAddr), nil
+	}
+
+	port := int(metadata.DstPort)
+	if port == 0 {
+		port = 443
+	}
+	udpAddr := &net.UDPAddr{IP: quicPlaceholderIP, Port: port}
+	return udpAddr, quicUDPNetwork(udpAddr), nil
 }
 
 // rejectLikeProxy reports whether the proxy is a nop adapter (REJECT & co.)
@@ -359,7 +376,9 @@ func handleQuicTest(paramsString string, fn func(string)) {
 			sendTestResult(fn, result)
 			return
 		}
-		result.ResolvedIP = udpAddr.String()
+		if metadata.Resolved() {
+			result.ResolvedIP = udpAddr.String()
+		}
 		result.Network = network
 
 		tlsConfig := &tls.Config{
@@ -370,7 +389,7 @@ func handleQuicTest(paramsString string, fn func(string)) {
 
 		start := time.Now()
 		result.Stage = "quic_dial"
-		quicConn := &quicPacketConn{PacketConn: packetConn}
+		quicConn := &quicPacketConn{PacketConn: packetConn, peer: udpAddr}
 		conn, err := quic.DialEarly(ctx, quicConn, udpAddr, tlsConfig, nil)
 		if err != nil {
 			quicConn.updateResult(result)
