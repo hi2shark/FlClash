@@ -93,6 +93,8 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     super.dispose();
   }
 
+  DateTime? _lastResumeHandledAt;
+
   bool _isBackgroundLifecycle(AppLifecycleState state) {
     return state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden ||
@@ -108,6 +110,16 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     }
     if (state == AppLifecycleState.resumed) {
       backgroundResourceManager.leaveBackground();
+      // A system dialog (VPN consent, permission request) shown by the resume
+      // work below flips the app to inactive and back. Without a throttle each
+      // such pair re-triggers the work and the dialog, looping at full speed.
+      final now = DateTime.now();
+      final lastHandled = _lastResumeHandledAt;
+      if (lastHandled != null &&
+          now.difference(lastHandled) < const Duration(seconds: 1)) {
+        return;
+      }
+      _lastResumeHandledAt = now;
       permissions.check();
       render?.resume();
       WidgetsBinding.instance.addPostFrameCallback((_) {

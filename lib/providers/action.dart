@@ -543,6 +543,8 @@ class BackupAction extends _$BackupAction {
 
 @Riverpod(keepAlive: true)
 class CoreAction extends _$CoreAction {
+  bool _startingCore = false;
+
   @override
   void build() {}
 
@@ -617,9 +619,14 @@ class CoreAction extends _$CoreAction {
   }
 
   Future<bool> tryStartCore([bool start = false]) async {
-    if (coreController.isCompleted) return false;
-    await restartCore(start);
-    return true;
+    if (coreController.isCompleted || _startingCore) return false;
+    _startingCore = true;
+    try {
+      await restartCore(start);
+      return true;
+    } finally {
+      _startingCore = false;
+    }
   }
 
   void handleCoreDisconnected() {

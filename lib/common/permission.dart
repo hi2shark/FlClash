@@ -19,6 +19,7 @@ class Permissions {
   }
 
   bool _isRequestingLocation = false;
+  bool _locationAutoRequestAttempted = false;
   bool needWaitingBatteryOptimizationSettings = false;
 
   void check() {
@@ -58,6 +59,9 @@ class Permissions {
       return;
     }
     final res = await WifiSsidManager.instance.checkPermission();
+    if (res == WifiSsidPermission.granted) {
+      _locationAutoRequestAttempted = false;
+    }
     final current = globalState.container.read(locationPermissionsProvider);
     if (res == WifiSsidPermission.granted ||
         current != WifiSsidPermission.permanentlyDenied) {
@@ -67,11 +71,18 @@ class Permissions {
     final needRequestPermission = globalState.container.read(
       excludeSSIDsProvider.select((state) => state.isNotEmpty),
     );
+    // checkPermission on Android never reports permanentlyDenied, so a denied
+    // state would otherwise re-prompt on every resume: the dialog flips the
+    // app inactive/resumed and each resume requests again, looping at full
+    // speed. Auto-request at most once per session; the on-demand settings
+    // page still offers an explicit request button.
     if (res == WifiSsidPermission.denied &&
         needRequestPermission &&
-        !_isRequestingLocation) {
+        !_isRequestingLocation &&
+        !_locationAutoRequestAttempted) {
       try {
         _isRequestingLocation = true;
+        _locationAutoRequestAttempted = true;
         final res = await WifiSsidManager.instance.requestPermission();
         globalState.container.read(locationPermissionsProvider.notifier).value =
             res;
