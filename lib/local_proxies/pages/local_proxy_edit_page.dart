@@ -80,7 +80,6 @@ const _nowhereControlledFields = {
   'mux',
   'morph',
   'pool',
-  'mix-fallback-timeout',
   'prewarm-on-start',
   'max-concurrent-dials',
   'warm-backoff-initial',
@@ -102,7 +101,7 @@ const _nowhereControlledFields = {
   'max-udp-relay-packet-size',
 };
 
-const _nowhereDefaultAlpn = 'nw2';
+const _nowhereVersions = ['nw3', 'nw2'];
 
 const _commonControlledFields = {'name', 'type', 'server', 'port', 'udp'};
 
@@ -290,7 +289,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late final TextEditingController _idleSessionTimeoutController;
   late final TextEditingController _minIdleSessionController;
   late final TextEditingController _poolController;
-  late final TextEditingController _mixFallbackTimeoutController;
   late final TextEditingController _pinController;
   late final TextEditingController _maxConcurrentDialsController;
   late final TextEditingController _warmBackoffInitialController;
@@ -366,6 +364,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late bool _xhttpAdvancedExpanded;
   late String _up;
   late String _down;
+  late String _nowhereVersion;
+  late String _nowhereNet;
+
+  bool get _isNowhere3 => _nowhereVersion == 'nw3';
 
   bool get _dedicatedTcpTcp => _up == 'tcp' && _down == 'tcp' && !_muxEnabled;
   late String _network;
@@ -464,9 +466,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     );
     _poolController = TextEditingController(
       text: config['pool']?.toString() ?? '',
-    );
-    _mixFallbackTimeoutController = TextEditingController(
-      text: config['mix-fallback-timeout']?.toString() ?? '',
     );
     _pinController = TextEditingController(
       text: config['pin']?.toString() ?? '',
@@ -661,13 +660,15 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         : _type != 'socks5' && _type != 'easytier';
     _skipCertVerify = config['skip-cert-verify'] == true;
     _prewarmOnStart = config['prewarm-on-start'] == true;
+    _nowhereVersion = _nowhereVersionFromConfig(config);
+    _nowhereNet = _nowhereNetFromConfig(config);
     final legacyCarrier = (config['network'] ?? config['net'])?.toString();
     _up = config['up']?.toString() ?? legacyCarrier ?? 'udp';
     _down = config['down']?.toString() ?? legacyCarrier ?? 'udp';
-    if (!const {'tcp', 'udp', 'mix'}.contains(_up)) {
+    if (!const {'tcp', 'udp'}.contains(_up)) {
       _up = 'udp';
     }
-    if (!const {'tcp', 'udp', 'mix'}.contains(_down)) {
+    if (!const {'tcp', 'udp'}.contains(_down)) {
       _down = 'udp';
     }
     final muxValue = config['mux'];
@@ -675,7 +676,11 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     if (_up == 'udp' && _down == 'udp') {
       _muxEnabled = false;
     }
-    _morph = _isNowhereEnabledFlag(config['morph']);
+    // Morph is off by default on Nowhere 2 and on by default on Nowhere 3;
+    // an explicit value in the config always wins.
+    _morph = config.containsKey('morph')
+        ? _isNowhereEnabledFlag(config['morph'])
+        : _isNowhere3;
     _network = config['network']?.toString() ?? 'tcp';
     if (!_networks.contains(_network)) {
       _network = 'tcp';
@@ -730,7 +735,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _idleSessionTimeoutController.dispose();
     _minIdleSessionController.dispose();
     _poolController.dispose();
-    _mixFallbackTimeoutController.dispose();
     _pinController.dispose();
     _maxConcurrentDialsController.dispose();
     _warmBackoffInitialController.dispose();
@@ -851,16 +855,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   int? _intOrNull(String text) {
     if (text.trim().isEmpty) return null;
     return int.tryParse(text.trim());
-  }
-
-  String? get _nowhereAlpn {
-    final alpn = _alpnController.text.trim();
-    if (alpn.isEmpty) return null;
-    return alpn;
-  }
-
-  bool _nowhereAlpnHasMultipleValues(String alpn) {
-    return alpn.contains(',') || alpn.contains('，');
   }
 
   bool _isNowhereEnabledFlag(dynamic value) {
@@ -1045,60 +1039,49 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         }
       case 'nowhere':
         base['password'] = _keyController.text;
+        base['alpn'] = [_nowhereVersion];
         _applySni(base);
-        _applyNowhereAlpn(base);
-        _applyTlsOptions(base);
-        _applyEch(base);
-        base['up'] = _up;
-        base['down'] = _down;
-        if (_muxEnabled) {
-          base['mux'] = 1;
-        }
-        if (_morph) {
-          base['morph'] = true;
-        }
-        if (_dedicatedTcpTcp) {
-          final pool = _intOrNull(_poolController.text);
-          if (pool != null) {
-            base['pool'] = pool;
-          }
-        }
-        final mixFallbackTimeout = _intOrNull(
-          _mixFallbackTimeoutController.text,
-        );
-        if (mixFallbackTimeout != null) {
-          base['mix-fallback-timeout'] = mixFallbackTimeout;
-        }
+        base['skip-cert-verify'] = _skipCertVerify;
         if (_pinController.text.trim().isNotEmpty) {
           base['pin'] = _pinController.text.trim();
         }
-        base['prewarm-on-start'] = _prewarmOnStart;
-        final maxConcurrentDials = _intOrNull(
-          _maxConcurrentDialsController.text,
-        );
-        if (maxConcurrentDials != null) {
-          base['max-concurrent-dials'] = maxConcurrentDials;
-        }
-        final warmBackoffInitial = _intOrNull(
-          _warmBackoffInitialController.text,
-        );
-        if (warmBackoffInitial != null) {
-          base['warm-backoff-initial'] = warmBackoffInitial;
-        }
-        final warmBackoffMax = _intOrNull(_warmBackoffMaxController.text);
-        if (warmBackoffMax != null) {
-          base['warm-backoff-max'] = warmBackoffMax;
-        }
-        if (_dialerProxyController.text.trim().isNotEmpty) {
-          base['dialer-proxy'] = _dialerProxyController.text.trim();
-        }
-        if (_congestionControllerController.text.trim().isNotEmpty) {
-          base['congestion-controller'] = _congestionControllerController.text
-              .trim();
-        }
-        final cwnd = _intOrNull(_cwndController.text);
-        if (cwnd != null) {
-          base['cwnd'] = cwnd;
+        if (_isNowhere3) {
+          base['net'] = _nowhereNet;
+          base['morph'] = _morph;
+          _applyNowhereDialerAndCongestion(base);
+        } else {
+          _applyNowhereTlsOptions(base);
+          _applyEch(base);
+          base['up'] = _up;
+          base['down'] = _down;
+          if (_muxEnabled) {
+            base['mux'] = 1;
+          }
+          base['morph'] = _morph;
+          if (_dedicatedTcpTcp) {
+            final pool = _intOrNull(_poolController.text);
+            if (pool != null) {
+              base['pool'] = pool;
+            }
+          }
+          base['prewarm-on-start'] = _prewarmOnStart;
+          final maxConcurrentDials = _intOrNull(
+            _maxConcurrentDialsController.text,
+          );
+          if (maxConcurrentDials != null) {
+            base['max-concurrent-dials'] = maxConcurrentDials;
+          }
+          final warmBackoffInitial = _intOrNull(
+            _warmBackoffInitialController.text,
+          );
+          if (warmBackoffInitial != null) {
+            base['warm-backoff-initial'] = warmBackoffInitial;
+          }
+          final warmBackoffMax = _intOrNull(_warmBackoffMaxController.text);
+          if (warmBackoffMax != null) {
+            base['warm-backoff-max'] = warmBackoffMax;
+          }
+          _applyNowhereDialerAndCongestion(base);
         }
       case 'hysteria2':
         base['password'] = _passwordController.text;
@@ -1357,8 +1340,58 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     }
   }
 
-  void _applyNowhereAlpn(Map<String, dynamic> base) {
-    base['alpn'] = [_nowhereAlpn ?? _nowhereDefaultAlpn];
+  static final _nowhereServiceKeyPattern = RegExp(r'^[0-9a-f]{32}$');
+
+  /// Nowhere 3 requires the shared key to be exactly 32 lowercase hexadecimal
+  /// characters; Nowhere 2 accepts 32-64 bytes of raw UTF-8.
+  bool _isNowhere3ServiceKey(String value) {
+    return _nowhereServiceKeyPattern.hasMatch(value);
+  }
+
+  String _nowhereVersionFromConfig(Map<String, dynamic> config) {
+    final alpn = config['alpn'];
+    final values = alpn is List
+        ? alpn
+        : alpn is String
+        ? [alpn]
+        : const [];
+    return values.length == 1 && values.first == 'nw2' ? 'nw2' : 'nw3';
+  }
+
+  String _nowhereNetFromConfig(Map<String, dynamic> config) {
+    final net = config['net'];
+    final value = net is String ? net : '';
+    if (value == 'tcp' || value == 'udp') return value;
+    return 'tcp';
+  }
+
+  void _applyNowhereTlsOptions(Map<String, dynamic> base) {
+    if (_clientFingerprintController.text.trim().isNotEmpty) {
+      base['client-fingerprint'] = _clientFingerprintController.text.trim();
+    }
+    if (_fingerprintController.text.trim().isNotEmpty) {
+      base['fingerprint'] = _fingerprintController.text.trim();
+    }
+    if (_certificateController.text.trim().isNotEmpty) {
+      base['certificate'] = _certificateController.text.trim();
+    }
+    if (_privateKeyController.text.trim().isNotEmpty) {
+      base['private-key'] = _privateKeyController.text.trim();
+    }
+  }
+
+  void _applyNowhereDialerAndCongestion(Map<String, dynamic> base) {
+    if (_dialerProxyController.text.trim().isNotEmpty) {
+      base['dialer-proxy'] = _dialerProxyController.text.trim();
+    }
+    if (_congestionControllerController.text.trim().isNotEmpty) {
+      base['congestion-controller'] = _congestionControllerController.text
+          .trim();
+    }
+    final cwnd = _intOrNull(_cwndController.text);
+    if (cwnd != null) {
+      base['cwnd'] = cwnd;
+    }
   }
 
   void _applyTlsOptions(Map<String, dynamic> base) {
@@ -1448,44 +1481,49 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         if (sharedKey.isEmpty) {
           return appLocalizations.localProxyNowhereKeyEmpty;
         }
-        final alpn = _nowhereAlpn;
-        if (alpn != null && _nowhereAlpnHasMultipleValues(alpn)) {
-          return appLocalizations.localProxyNowhereAlpnInvalid;
-        }
-        if (!_fitsNowhereField(sharedKey) ||
-            (alpn != null && !_fitsNowhereField(alpn))) {
-          return appLocalizations.localProxyNowhereInputTooLong;
-        }
-        if (!['tcp', 'udp', 'mix'].contains(_up) ||
-            !['tcp', 'udp', 'mix'].contains(_down)) {
-          return appLocalizations.localProxyCarrierInvalid;
-        }
-        if (_dedicatedTcpTcp) {
-          final pool = _intOrNull(_poolController.text);
-          if (_poolController.text.trim().isNotEmpty &&
-              (pool == null || pool < 0 || pool > 256)) {
-            return appLocalizations.localProxyPoolInvalid;
+        if (_isNowhere3) {
+          if (!_isNowhere3ServiceKey(sharedKey)) {
+            return appLocalizations.localProxyNowhereKeyInvalidNw3;
           }
-        }
-        if (!_isValidNonNegativeInteger(_mixFallbackTimeoutController) ||
-            !_isValidNonNegativeInteger(_maxConcurrentDialsController) ||
-            !_isValidNonNegativeInteger(_warmBackoffInitialController) ||
-            !_isValidNonNegativeInteger(_warmBackoffMaxController) ||
-            !_isValidNonNegativeInteger(_cwndController)) {
-          return appLocalizations.localProxyNowhereAdvancedInvalid;
-        }
-        final warmBackoffInitial = _intOrNull(
-          _warmBackoffInitialController.text,
-        );
-        final warmBackoffMax = _intOrNull(_warmBackoffMaxController.text);
-        final effectiveWarmBackoffInitial =
-            warmBackoffInitial == null || warmBackoffInitial == 0
-            ? 1
-            : warmBackoffInitial;
-        final effectiveWarmBackoffMax =
-            warmBackoffMax == null || warmBackoffMax == 0 ? 30 : warmBackoffMax;
-        if (effectiveWarmBackoffInitial > effectiveWarmBackoffMax) {
-          return appLocalizations.localProxyNowhereAdvancedInvalid;
+          if (!_isValidNonNegativeInteger(_cwndController)) {
+            return appLocalizations.localProxyNowhereAdvancedInvalid;
+          }
+        } else {
+          if (!_fitsNowhereField(sharedKey)) {
+            return appLocalizations.localProxyNowhereInputTooLong;
+          }
+          if (!['tcp', 'udp'].contains(_up) ||
+              !['tcp', 'udp'].contains(_down)) {
+            return appLocalizations.localProxyCarrierInvalid;
+          }
+          if (_dedicatedTcpTcp) {
+            final pool = _intOrNull(_poolController.text);
+            if (_poolController.text.trim().isNotEmpty &&
+                (pool == null || pool < 0 || pool > 256)) {
+              return appLocalizations.localProxyPoolInvalid;
+            }
+          }
+          if (!_isValidNonNegativeInteger(_maxConcurrentDialsController) ||
+              !_isValidNonNegativeInteger(_warmBackoffInitialController) ||
+              !_isValidNonNegativeInteger(_warmBackoffMaxController) ||
+              !_isValidNonNegativeInteger(_cwndController)) {
+            return appLocalizations.localProxyNowhereAdvancedInvalid;
+          }
+          final warmBackoffInitial = _intOrNull(
+            _warmBackoffInitialController.text,
+          );
+          final warmBackoffMax = _intOrNull(_warmBackoffMaxController.text);
+          final effectiveWarmBackoffInitial =
+              warmBackoffInitial == null || warmBackoffInitial == 0
+              ? 1
+              : warmBackoffInitial;
+          final effectiveWarmBackoffMax =
+              warmBackoffMax == null || warmBackoffMax == 0
+              ? 30
+              : warmBackoffMax;
+          if (effectiveWarmBackoffInitial > effectiveWarmBackoffMax) {
+            return appLocalizations.localProxyNowhereAdvancedInvalid;
+          }
         }
       case 'hysteria2':
         if (_passwordController.text.isEmpty) {
@@ -1560,7 +1598,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       'vless' => l10n.vless,
       'trojan' => l10n.trojan,
       'anytls' => l10n.anytls,
-      'nowhere' => l10n.nowhere,
+      'nowhere' => _isNowhere3 ? '${l10n.nowhere} 3' : '${l10n.nowhere} 2',
       'hysteria2' => l10n.hysteria2,
       'easytier' => l10n.easytier,
       _ => _type.toUpperCase(),
@@ -2219,36 +2257,70 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         if (_type == 'anytls')
           _buildTextField(_sniController, appLocalizations.sni),
         if (_type == 'nowhere') ...[
-          Row(
-            children: [
-              Expanded(
-                child: _buildCarrierDropdown(
-                  label: appLocalizations.up,
-                  value: _up,
-                  onChanged: (value) => setState(() {
-                    _up = value ?? 'udp';
-                    if (_up == 'udp' && _down == 'udp') {
-                      _muxEnabled = false;
-                    }
-                  }),
+          _buildDropdown(
+            label: appLocalizations.nowhereVersion,
+            value: _nowhereVersion,
+            items: [
+              for (final version in _nowhereVersions)
+                DropdownMenuItem(
+                  value: version,
+                  child: Text('Nowhere ${version.substring(2)}'),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildCarrierDropdown(
-                  label: appLocalizations.down,
-                  value: _down,
-                  onChanged: (value) => setState(() {
-                    _down = value ?? 'udp';
-                    if (_up == 'udp' && _down == 'udp') {
-                      _muxEnabled = false;
-                    }
-                  }),
-                ),
-              ),
             ],
+            onChanged: (value) => setState(() {
+              final version = value ?? 'nw3';
+              if (version == _nowhereVersion) return;
+              _nowhereVersion = version;
+              // Morph follows the stack default until the user toggles it.
+              _morph = _isNowhere3;
+              if (_isNowhere3 && _up == 'udp' && _down == 'udp') {
+                _muxEnabled = false;
+              }
+            }),
           ),
-          if (_up != 'udp' || _down != 'udp') ...[
+          const SizedBox(height: 16),
+          if (_isNowhere3)
+            _buildDropdown(
+              label: appLocalizations.network,
+              value: _nowhereNet,
+              items: const [
+                DropdownMenuItem(value: 'tcp', child: Text('TCP')),
+                DropdownMenuItem(value: 'udp', child: Text('UDP')),
+              ],
+              onChanged: (value) =>
+                  setState(() => _nowhereNet = value ?? 'tcp'),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCarrierDropdown(
+                    label: appLocalizations.up,
+                    value: _up,
+                    onChanged: (value) => setState(() {
+                      _up = value ?? 'udp';
+                      if (_up == 'udp' && _down == 'udp') {
+                        _muxEnabled = false;
+                      }
+                    }),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildCarrierDropdown(
+                    label: appLocalizations.down,
+                    value: _down,
+                    onChanged: (value) => setState(() {
+                      _down = value ?? 'udp';
+                      if (_up == 'udp' && _down == 'udp') {
+                        _muxEnabled = false;
+                      }
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          if (!_isNowhere3 && (_up != 'udp' || _down != 'udp')) ...[
             const SizedBox(height: 8),
             ListItem.switchItem(
               title: Text(appLocalizations.mux),
@@ -2266,7 +2338,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               onChanged: (value) => setState(() => _morph = value),
             ),
           ),
-          if (_dedicatedTcpTcp) ...[
+          if (!_isNowhere3 && _dedicatedTcpTcp) ...[
             const SizedBox(height: 16),
             _buildTextField(
               _poolController,
@@ -2334,7 +2406,6 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       items: const [
         DropdownMenuItem(value: 'tcp', child: Text('TCP')),
         DropdownMenuItem(value: 'udp', child: Text('UDP')),
-        DropdownMenuItem(value: 'mix', child: Text('Mix')),
       ],
       onChanged: onChanged,
     );
@@ -2345,13 +2416,15 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       return const SizedBox.shrink();
     }
     final appLocalizations = context.appLocalizations;
+    if (_type == 'nowhere' && _isNowhere3) {
+      // Nowhere 3 pins TLS 1.3 with ALPN nw3 and has no uTLS/ECH/mTLS knobs;
+      // only the leaf-certificate pin remains configurable.
+      return _buildTextField(_pinController, appLocalizations.pin);
+    }
     return Column(
       children: [
-        _buildTextField(
-          _alpnController,
-          appLocalizations.alpn,
-          hintText: _type == 'nowhere' ? _nowhereDefaultAlpn : null,
-        ),
+        if (_type != 'nowhere')
+          _buildTextField(_alpnController, appLocalizations.alpn),
         const SizedBox(height: 16),
         _buildDropdown(
           label: appLocalizations.clientFingerprint,
@@ -2400,7 +2473,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   }
 
   Widget _buildEchFields() {
-    if (_type != 'anytls' && _type != 'nowhere') {
+    if (_type != 'anytls' && (_type != 'nowhere' || _isNowhere3)) {
       return const SizedBox.shrink();
     }
     final appLocalizations = context.appLocalizations;
@@ -2508,39 +2581,38 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       ),
       'nowhere' => Column(
         children: [
-          ListItem.switchItem(
-            title: Text(appLocalizations.prewarmOnStart),
-            delegate: SwitchDelegate<bool>(
-              value: _prewarmOnStart,
-              onChanged: (value) => setState(() => _prewarmOnStart = value),
+          if (!_isNowhere3) ...[
+            ListItem.switchItem(
+              title: Text(appLocalizations.prewarmOnStart),
+              delegate: SwitchDelegate<bool>(
+                value: _prewarmOnStart,
+                onChanged: (value) => setState(() => _prewarmOnStart = value),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
+            _buildTextField(
+              _maxConcurrentDialsController,
+              appLocalizations.maxConcurrentDials,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              _warmBackoffInitialController,
+              appLocalizations.warmBackoffInitial,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              _warmBackoffMaxController,
+              appLocalizations.warmBackoffMax,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+          ],
           _buildTextField(
-            _mixFallbackTimeoutController,
-            appLocalizations.mixFallbackTimeout,
-            keyboardType: TextInputType.number,
+            _dialerProxyController,
+            appLocalizations.dialerProxy,
           ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            _maxConcurrentDialsController,
-            appLocalizations.maxConcurrentDials,
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            _warmBackoffInitialController,
-            appLocalizations.warmBackoffInitial,
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            _warmBackoffMaxController,
-            appLocalizations.warmBackoffMax,
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(_dialerProxyController, appLocalizations.dialerProxy),
           const SizedBox(height: 16),
           _buildTextField(
             _congestionControllerController,
@@ -2656,16 +2728,21 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                   children: [
                     const SizedBox(height: 12),
                     _buildTlsFields(),
-                    const SizedBox(height: 8),
-                    ExpansionTile(
-                      initiallyExpanded: false,
-                      tilePadding: EdgeInsets.zero,
-                      title: Text(
-                        appLocalizations.ech,
-                        style: context.textTheme.titleSmall,
+                    if (!_isNowhere3) ...[
+                      const SizedBox(height: 8),
+                      ExpansionTile(
+                        initiallyExpanded: false,
+                        tilePadding: EdgeInsets.zero,
+                        title: Text(
+                          appLocalizations.ech,
+                          style: context.textTheme.titleSmall,
+                        ),
+                        children: [
+                          _buildEchFields(),
+                          const SizedBox(height: 8),
+                        ],
                       ),
-                      children: [_buildEchFields(), const SizedBox(height: 8)],
-                    ),
+                    ],
                   ],
                 ),
               ],

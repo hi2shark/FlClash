@@ -189,7 +189,7 @@ void main() {
   group('nowhere:// URI parsing', () {
     test('parses nowhere into canonical password config', () {
       const uri =
-          'nowhere://secretkey@example.com:2077?up=tcp&down=tcp&sni=cdn.example.com&alpn=h2&pool=3&insecure=1&fp=chrome#Nowhere';
+          'nowhere://secretkey@example.com:2077?up=tcp&down=tcp&sni=cdn.example.com&alpn=nw2&pool=3&insecure=1&fp=chrome#Nowhere';
       final results = parser.parseMany(uri);
       expect(results.length, 1);
       expect(results.first.error, isNull);
@@ -204,7 +204,7 @@ void main() {
       expect(proxy.config['down'], 'tcp');
       expect(proxy.config['network'], 'tcp');
       expect(proxy.config['sni'], 'cdn.example.com');
-      expect(proxy.config['alpn'], ['h2']);
+      expect(proxy.config['alpn'], ['nw2']);
       expect(proxy.config['pool'], 3);
       expect(proxy.config['skip-cert-verify'], true);
       expect(proxy.config['fingerprint'], 'chrome');
@@ -213,7 +213,7 @@ void main() {
 
     test('rejects duplicate ALPN query parameters', () {
       const uri =
-          'nowhere://sec+ret%3Akey@example.com:443?up=tcp&up=udp&down=tcp&down=udp&alpn=h2%2Bdraft&alpn=ignored&sni=cdn%2Bedge.example&pool=2&pool=8#NW';
+          'nowhere://sec+ret%3Akey@example.com:443?up=tcp&up=udp&down=tcp&down=udp&alpn=nw2&alpn=ignored&sni=cdn%2Bedge.example&pool=2&pool=8#NW';
       final result = parser.parseMany(uri).single;
 
       expect(result.proxy, isNull);
@@ -315,18 +315,34 @@ void main() {
       expect(explicitZero.warnings, isEmpty);
     });
 
-    test('parses mix carriers, mux, and pin', () {
+    test('rejects mix carriers', () {
       final mix = parser
           .parseMany(
             'nowhere://key@example.com:2077?up=mix&down=mix&mux=1&pin=abcd#NW',
           )
           .single;
-      expect(mix.error, isNull);
-      expect(mix.proxy!.config['up'], 'mix');
-      expect(mix.proxy!.config['down'], 'mix');
-      expect(mix.proxy!.config['mux'], 1);
-      expect(mix.proxy!.config['pin'], 'abcd');
-      expect(mix.proxy!.config.containsKey('pool'), isFalse);
+      expect(mix.proxy, isNull);
+      expect(mix.error, contains('carrier'));
+
+      final invalidMux = parser
+          .parseMany('nowhere://key@example.com?up=tcp&down=tcp&mux=2')
+          .single;
+      expect(invalidMux.proxy, isNull);
+      expect(invalidMux.error, contains('mux'));
+    });
+
+    test('parses tcp carriers with mux and pin', () {
+      final muxPin = parser
+          .parseMany(
+            'nowhere://key@example.com:2077?up=tcp&down=tcp&mux=1&pin=abcd#NW',
+          )
+          .single;
+      expect(muxPin.error, isNull);
+      expect(muxPin.proxy!.config['up'], 'tcp');
+      expect(muxPin.proxy!.config['down'], 'tcp');
+      expect(muxPin.proxy!.config['mux'], 1);
+      expect(muxPin.proxy!.config['pin'], 'abcd');
+      expect(muxPin.proxy!.config.containsKey('pool'), isFalse);
 
       final canonicalized = parser
           .parseMany('nowhere://key@example.com?up=udp&down=udp&mux=1')
@@ -342,33 +358,36 @@ void main() {
       expect(muxPoolIgnored.proxy!.config['mux'], 1);
       expect(muxPoolIgnored.proxy!.config.containsKey('pool'), isFalse);
       expect(muxPoolIgnored.warnings.single, contains('dedicated tcp/tcp'));
-
-      final invalidMux = parser
-          .parseMany('nowhere://key@example.com?up=tcp&down=tcp&mux=2')
-          .single;
-      expect(invalidMux.proxy, isNull);
-      expect(invalidMux.error, contains('mux'));
     });
 
-    test('enforces decoded UTF-8 byte limits for key and ALPN', () {
+    test('forces the share-link ALPN to nw2', () {
+      for (final alpn in ['nw3', 'h2', 'h2+draft']) {
+        final result = parser
+            .parseMany('nowhere://key@example.com?alpn=$alpn')
+            .single;
+        expect(result.proxy, isNull, reason: alpn);
+        expect(result.error, contains('nw2'), reason: alpn);
+      }
+
+      final explicit = parser
+          .parseMany('nowhere://key@example.com?alpn=nw2')
+          .single;
+      expect(explicit.error, isNull);
+      expect(explicit.proxy!.config['alpn'], ['nw2']);
+    });
+
+    test('enforces decoded UTF-8 byte limits for the key', () {
       final key255 = List.filled(255, 'k').join();
-      final alpn255 = List.filled(255, 'a').join();
       final accepted = parser
-          .parseMany('nowhere://$key255@example.com?alpn=$alpn255')
+          .parseMany('nowhere://$key255@example.com')
           .single;
       expect(accepted.error, isNull);
-      expect(accepted.proxy!.config['alpn'], [alpn255]);
+      expect(accepted.proxy!.config['password'], key255);
 
       final tooLongKey = List.filled(256, 'k').join();
-      final tooLongAlpn = List.filled(256, 'a').join();
-      for (final uri in [
-        'nowhere://$tooLongKey@example.com',
-        'nowhere://key@example.com?alpn=$tooLongAlpn',
-      ]) {
-        final result = parser.parseMany(uri).single;
-        expect(result.proxy, isNull, reason: uri);
-        expect(result.error, contains('255 UTF-8 bytes'), reason: uri);
-      }
+      final result = parser.parseMany('nowhere://$tooLongKey@example.com').single;
+      expect(result.proxy, isNull);
+      expect(result.error, contains('255 UTF-8 bytes'));
 
       final legacy = parser
           .parseMany(
@@ -417,12 +436,12 @@ void main() {
 
       final plusAlpn = parser
           .parseMany(
-            'nowhere://sec+ret%3Akey@example.com:443?up=tcp&down=tcp&alpn=h2%2Bdraft&sni=cdn%2Bedge.example&pool=2#NW',
+            'nowhere://sec+ret%3Akey@example.com:443?up=tcp&down=tcp&alpn=nw2&sni=cdn%2Bedge.example&pool=2#NW',
           )
           .single;
       expect(plusAlpn.error, isNull);
       expect(plusAlpn.proxy!.config['password'], 'sec+ret:key');
-      expect(plusAlpn.proxy!.config['alpn'], ['h2+draft']);
+      expect(plusAlpn.proxy!.config['alpn'], ['nw2']);
       expect(plusAlpn.proxy!.config['sni'], 'cdn+edge.example');
       expect(plusAlpn.proxy!.config['pool'], 2);
     });

@@ -708,6 +708,7 @@ void main() {
         'udp': true,
         'up': 'udp',
         'down': 'udp',
+        'alpn': ['nw2'],
         'morph': true,
       },
     );
@@ -725,9 +726,7 @@ void main() {
     expect(localProxyStore.proxies.single.config['alpn'], ['nw2']);
   });
 
-  testWidgets('clears Nowhere morph when the switch is turned off', (
-    tester,
-  ) async {
+  testWidgets('keeps an explicit Nowhere morph false on save', (tester) async {
     final original = _proxy(
       id: 22,
       name: 'Nowhere Morph Off',
@@ -741,6 +740,7 @@ void main() {
         'udp': true,
         'up': 'udp',
         'down': 'udp',
+        'alpn': ['nw2'],
         'morph': true,
       },
     );
@@ -759,24 +759,64 @@ void main() {
     morphSwitch.onChanged!(false);
     await _pumpFrames(tester);
     await _tapSave(tester);
-    expect(localProxyStore.proxies.single.config.containsKey('morph'), isFalse);
+    expect(localProxyStore.proxies.single.config['morph'], isFalse);
   });
 
-  testWidgets('rejects Nowhere ALPN with multiple values', (tester) async {
+  testWidgets('round-trips Nowhere 3 transport and morph', (tester) async {
     final original = _proxy(
       id: 23,
-      name: 'Nowhere ALPN',
+      name: 'Nowhere 3 Node',
       type: 'nowhere',
       config: {
-        'name': 'Nowhere ALPN',
+        'name': 'Nowhere 3 Node',
+        'type': 'nowhere',
+        'server': 'example.com',
+        'port': 2077,
+        'password': '0123456789abcdef0123456789abcdef',
+        'udp': true,
+        'alpn': ['nw3'],
+        'net': 'udp',
+        'morph': false,
+      },
+    );
+    await tester.runAsync(() => localProxyStore.add(original));
+    final storedBeforeEdit = localProxyStore.proxies.single;
+
+    await tester.pumpWidget(_wrap(LocalProxyEditPage(proxy: storedBeforeEdit)));
+    await _pumpFrames(tester);
+
+    expect(_fieldController(tester, 'Share key (shared key)').text,
+        '0123456789abcdef0123456789abcdef');
+    expect(find.text('Morph'), findsOneWidget);
+    expect(find.text('Up'), findsNothing);
+    expect(find.text('Down'), findsNothing);
+
+    await _tapSave(tester);
+    final saved = localProxyStore.proxies.single.config;
+    expect(saved['alpn'], ['nw3']);
+    expect(saved['net'], 'udp');
+    expect(saved['morph'], isFalse);
+    expect(saved.containsKey('up'), isFalse);
+    expect(saved.containsKey('down'), isFalse);
+    expect(saved.containsKey('mux'), isFalse);
+  });
+
+  testWidgets('rejects Nowhere 3 keys that are not 32 hex characters', (
+    tester,
+  ) async {
+    final original = _proxy(
+      id: 24,
+      name: 'Nowhere 3 Bad Key',
+      type: 'nowhere',
+      config: {
+        'name': 'Nowhere 3 Bad Key',
         'type': 'nowhere',
         'server': 'example.com',
         'port': 2077,
         'password': 'secret',
         'udp': true,
-        'up': 'udp',
-        'down': 'udp',
-        'alpn': ['nw2', 'h3'],
+        'alpn': ['nw3'],
+        'net': 'tcp',
       },
     );
     await tester.runAsync(() => localProxyStore.add(original));
@@ -786,7 +826,7 @@ void main() {
     await _pumpFrames(tester);
 
     await _tapSave(tester, expectStoreChange: false);
-    expect(localProxyStore.proxies.single.config['alpn'], ['nw2', 'h3']);
+    expect(localProxyStore.proxies.single.config['password'], 'secret');
   });
 
   testWidgets('disposes all added controllers without an exception', (

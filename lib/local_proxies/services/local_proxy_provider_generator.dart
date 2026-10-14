@@ -68,19 +68,71 @@ class LocalProxyProviderGenerator {
     }
 
     final password = _resolveNowherePassword(proxy, map);
-    _validateUtf8Length(proxy, 'password/key', password);
+    final stack = _resolveNowhereStack(proxy, map);
+    if (stack == _nowhereStack3) {
+      _validateNowhereServiceKey(proxy, password);
+    } else {
+      _validateUtf8Length(proxy, 'password/key', password);
+    }
     map['password'] = password;
     map.remove('key');
+    map.remove('spec');
 
+    if (stack == _nowhereStack3) {
+      _normalizeNowhere3(proxy, map);
+    } else {
+      _normalizeNowhere2(proxy, map);
+    }
+  }
+
+  /// The core dispatches `type: nowhere` by ALPN: an omitted ALPN or nw3
+  /// selects the Nowhere 3 stack, exactly nw2 selects the Nowhere 2 stack.
+  String _resolveNowhereStack(LocalProxy proxy, Map<String, dynamic> map) {
+    final value = map['alpn'];
+    if (value == null) {
+      return _nowhereStack3;
+    }
+
+    late final List<String> entries;
+    if (value is String) {
+      if (value.contains(',')) {
+        _invalidNowhere(proxy, 'ALPN must contain exactly one value');
+      }
+      entries = [value];
+    } else if (value is List) {
+      entries = [];
+      for (final item in value) {
+        if (item is! String) {
+          _invalidNowhere(proxy, 'ALPN entries must be strings');
+        }
+        entries.add(item);
+      }
+    } else {
+      _invalidNowhere(proxy, 'ALPN must be a string or list of strings');
+    }
+
+    if (entries.length != 1 || entries.first.isEmpty) {
+      _invalidNowhere(proxy, 'ALPN must contain exactly one value');
+    }
+    switch (entries.first) {
+      case 'nw2':
+        return _nowhereStack2;
+      case 'nw3':
+        return _nowhereStack3;
+      default:
+        _invalidNowhere(proxy, 'ALPN must be nw2 or nw3');
+    }
+  }
+
+  void _normalizeNowhere2(LocalProxy proxy, Map<String, dynamic> map) {
     final carriers = _resolveNowhereCarriers(proxy, map);
     map['up'] = carriers.$1;
     map['down'] = carriers.$2;
     map['network'] = carriers.$1;
+    map['alpn'] = ['nw2'];
     map.remove('net');
-    map.remove('spec');
 
-    _normalizeNowhereAlpn(proxy, map);
-    _normalizeNowhereMorph(map);
+    _normalizeNowhereMorph(proxy, map);
 
     final muxEnabled = _normalizeNowhereMux(proxy, map, carriers);
     final dedicatedTcpTcp =
@@ -98,7 +150,6 @@ class LocalProxyProviderGenerator {
       map.remove('pool');
     }
 
-    _normalizeNonNegativeInteger(proxy, map, 'mix-fallback-timeout');
     _normalizeNonNegativeInteger(proxy, map, 'max-concurrent-dials');
     final backoffInitial = _normalizeNonNegativeInteger(
       proxy,
@@ -115,9 +166,7 @@ class LocalProxyProviderGenerator {
     final effectiveInitial = backoffInitial == null || backoffInitial == 0
         ? 1
         : backoffInitial;
-    final effectiveMax = backoffMax == null || backoffMax == 0
-        ? 30
-        : backoffMax;
+    final effectiveMax = backoffMax == null || backoffMax == 0 ? 30 : backoffMax;
     if (effectiveInitial > effectiveMax) {
       _invalidNowhere(
         proxy,
@@ -125,10 +174,70 @@ class LocalProxyProviderGenerator {
       );
     }
 
+    map.remove('mix-fallback-timeout');
     map.remove('bbr-profile');
     map.remove('reduce-rtt');
     map.remove('max-udp-relay-packet-size');
     _normalizeEchOpts(map);
+  }
+
+  void _normalizeNowhere3(LocalProxy proxy, Map<String, dynamic> map) {
+    final net = _resolveNowhereNet(proxy, map);
+    map['net'] = net;
+    map.remove('up');
+    map.remove('down');
+    map.remove('network');
+    // The ALPN is left as-is: an explicit nw3 and an omitted value both
+    // select the Nowhere 3 stack in the core.
+
+    _normalizeNowhereMorph(proxy, map);
+
+    _normalizeNonNegativeInteger(proxy, map, 'cwnd');
+
+    // Nowhere 3 speaks one transport with fixed pooling, so the Nowhere 2
+    // knobs are rejected by the core and must not reach the generated YAML.
+    for (final key in const [
+      'mux',
+      'pool',
+      'prewarm-on-start',
+      'max-concurrent-dials',
+      'warm-backoff-initial',
+      'warm-backoff-max',
+      'mix-fallback-timeout',
+      'fingerprint',
+      'client-fingerprint',
+      'ech-opts',
+      'bbr-profile',
+      'reduce-rtt',
+      'max-udp-relay-packet-size',
+    ]) {
+      map.remove(key);
+    }
+  }
+
+  String _resolveNowhereNet(LocalProxy proxy, Map<String, dynamic> map) {
+    final value = map['net'];
+    if (value == null) {
+      return 'tcp';
+    }
+    if (value is! String) {
+      _invalidNowhere(proxy, 'net must be a string');
+    }
+    if (value != 'tcp' && value != 'udp') {
+      _invalidNowhere(proxy, 'net must be "tcp" or "udp"');
+    }
+    return value;
+  }
+
+  static final _nowhereServiceKeyPattern = RegExp(r'^[0-9a-f]{32}$');
+
+  void _validateNowhereServiceKey(LocalProxy proxy, String password) {
+    if (!_nowhereServiceKeyPattern.hasMatch(password)) {
+      _invalidNowhere(
+        proxy,
+        'Nowhere 3 password/key must be exactly 32 lowercase hexadecimal characters',
+      );
+    }
   }
 
   String _resolveNowherePassword(LocalProxy proxy, Map<String, dynamic> map) {
@@ -175,16 +284,16 @@ class LocalProxyProviderGenerator {
     }
 
     if (!_isNowhereCarrier(resolvedUp) || !_isNowhereCarrier(resolvedDown)) {
-      _invalidNowhere(proxy, 'carriers must be "tcp", "udp", or "mix"');
+      _invalidNowhere(proxy, 'carriers must be "tcp" or "udp"');
     }
     return (resolvedUp, resolvedDown);
   }
 
   static const _nowhereMaxPoolSize = 256;
-  static const _nowhereDefaultAlpn = 'nw2';
+  static const _nowhereStack2 = 'nw2';
+  static const _nowhereStack3 = 'nw3';
 
-  bool _isNowhereCarrier(String value) =>
-      value == 'tcp' || value == 'udp' || value == 'mix';
+  bool _isNowhereCarrier(String value) => value == 'tcp' || value == 'udp';
 
   bool _normalizeNowhereMux(
     LocalProxy proxy,
@@ -233,50 +342,28 @@ class LocalProxyProviderGenerator {
     return value.isEmpty ? null : value;
   }
 
-  void _normalizeNowhereAlpn(LocalProxy proxy, Map<String, dynamic> map) {
-    final value = map['alpn'];
+  void _normalizeNowhereMorph(LocalProxy proxy, Map<String, dynamic> map) {
+    final value = map['morph'];
     if (value == null) {
-      map['alpn'] = [_nowhereDefaultAlpn];
+      map.remove('morph');
       return;
     }
-
-    late final List<String> entries;
-    if (value is String) {
-      if (value.contains(',')) {
-        _invalidNowhere(proxy, 'ALPN must contain exactly one value');
-      }
-      entries = [value];
-    } else if (value is List) {
-      entries = [];
-      for (final item in value) {
-        if (item is! String) {
-          _invalidNowhere(proxy, 'ALPN entries must be strings');
-        }
-        entries.add(item);
-      }
-    } else {
-      _invalidNowhere(proxy, 'ALPN must be a string or list of strings');
-    }
-
-    if (entries.length != 1 || entries.first.isEmpty) {
-      _invalidNowhere(proxy, 'ALPN must contain exactly one value');
-    }
-    _validateUtf8Length(proxy, 'ALPN', entries.first);
-    map['alpn'] = [entries.first];
-  }
-
-  void _normalizeNowhereMorph(Map<String, dynamic> map) {
-    final value = map['morph'];
     final enabled =
         value == true ||
         value == 1 ||
         value == '1' ||
         value?.toString().toLowerCase() == 'true';
-    if (enabled) {
-      map['morph'] = true;
-      return;
+    final disabled =
+        value == false ||
+        value == 0 ||
+        value == '0' ||
+        value?.toString().toLowerCase() == 'false';
+    if (!enabled && !disabled) {
+      _invalidNowhere(proxy, 'morph must be a boolean');
     }
-    map.remove('morph');
+    // An explicit false is kept: Nowhere 3 turns Morph on by default, so
+    // dropping it would silently re-enable the transform.
+    map['morph'] = enabled;
   }
 
   int? _normalizeNonNegativeInteger(

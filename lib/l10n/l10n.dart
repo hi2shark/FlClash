@@ -5209,6 +5209,11 @@ class AppLocalizations {
     return Intl.message('Nowhere', name: 'nowhere', desc: '', args: []);
   }
 
+  /// `Version`
+  String get nowhereVersion {
+    return Intl.message('Version', name: 'nowhereVersion', desc: '', args: []);
+  }
+
   /// `Hysteria2`
   String get hysteria2 {
     return Intl.message('Hysteria2', name: 'hysteria2', desc: '', args: []);
@@ -5774,10 +5779,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Carrier must be tcp, udp, or mix`
+  /// `Nowhere 3 share key must be exactly 32 lowercase hexadecimal characters`
+  String get localProxyNowhereKeyInvalidNw3 {
+    return Intl.message(
+      'Nowhere 3 share key must be exactly 32 lowercase hexadecimal characters',
+      name: 'localProxyNowhereKeyInvalidNw3',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Carrier must be tcp or udp`
   String get localProxyCarrierInvalid {
     return Intl.message(
-      'Carrier must be tcp, udp, or mix',
+      'Carrier must be tcp or udp',
       name: 'localProxyCarrierInvalid',
       desc: '',
       args: [],

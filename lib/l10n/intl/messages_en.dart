@@ -696,7 +696,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "AnyTLS password is required",
     ),
     "localProxyCarrierInvalid": MessageLookupByLibrary.simpleMessage(
-      "Carrier must be tcp, udp, or mix",
+      "Carrier must be tcp or udp",
     ),
     "localProxyCount": m18,
     "localProxyEasyTierAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
@@ -731,6 +731,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Nowhere share key is required",
+    ),
+    "localProxyNowhereKeyInvalidNw3": MessageLookupByLibrary.simpleMessage(
+      "Nowhere 3 share key must be exactly 32 lowercase hexadecimal characters",
     ),
     "localProxyPasswordEmpty": MessageLookupByLibrary.simpleMessage(
       "Password is required",
@@ -923,6 +926,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "nowhereShareKey": MessageLookupByLibrary.simpleMessage(
       "Share key (shared key)",
     ),
+    "nowhereVersion": MessageLookupByLibrary.simpleMessage("Version"),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "No profile, Please add a profile",
     ),

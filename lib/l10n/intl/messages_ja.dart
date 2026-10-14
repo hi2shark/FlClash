@@ -546,7 +546,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "AnyTLS パスワードを入力してください",
     ),
     "localProxyCarrierInvalid": MessageLookupByLibrary.simpleMessage(
-      "キャリアは tcp、udp、または mix です",
+      "キャリアは tcp または udp です",
     ),
     "localProxyCount": m18,
     "localProxyEasyTierAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
@@ -579,6 +579,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Nowhere 共有キーを入力してください",
+    ),
+    "localProxyNowhereKeyInvalidNw3": MessageLookupByLibrary.simpleMessage(
+      "Nowhere 3 の共有キーは小文字の16進数32文字である必要があります",
     ),
     "localProxyPasswordEmpty": MessageLookupByLibrary.simpleMessage(
       "パスワードを入力してください",
@@ -745,6 +748,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "nowhereShareKey": MessageLookupByLibrary.simpleMessage(
       "共有キー (shared key)",
     ),
+    "nowhereVersion": MessageLookupByLibrary.simpleMessage("バージョン"),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "プロファイルがありません。追加してください",
     ),

@@ -488,7 +488,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "AnyTLS 密码不能为空",
     ),
     "localProxyCarrierInvalid": MessageLookupByLibrary.simpleMessage(
-      "传输层必须是 tcp、udp 或 mix",
+      "传输层必须是 tcp 或 udp",
     ),
     "localProxyCount": m18,
     "localProxyEasyTierAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
@@ -519,6 +519,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Nowhere 密钥不能为空",
+    ),
+    "localProxyNowhereKeyInvalidNw3": MessageLookupByLibrary.simpleMessage(
+      "Nowhere 3 密钥必须恰好为 32 个小写十六进制字符",
     ),
     "localProxyPasswordEmpty": MessageLookupByLibrary.simpleMessage("密码不能为空"),
     "localProxyPeersRequired": MessageLookupByLibrary.simpleMessage(
@@ -661,6 +664,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "nowhereShareKey": MessageLookupByLibrary.simpleMessage(
       "分享密钥 (shared key)",
     ),
+    "nowhereVersion": MessageLookupByLibrary.simpleMessage("版本"),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage("没有配置文件,请先添加配置文件"),
     "nullTip": m24,
     "numberTip": m25,

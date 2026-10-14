@@ -524,8 +524,7 @@ class LocalProxyParser {
   static const _nowhereMaxPoolSize = 256;
   static const _nowhereDefaultAlpn = 'nw2';
 
-  bool _isNowhereCarrier(String value) =>
-      value == 'tcp' || value == 'udp' || value == 'mix';
+  bool _isNowhereCarrier(String value) => value == 'tcp' || value == 'udp';
 
   String? _validateNowhereUtf8Value(
     String field,
@@ -600,7 +599,7 @@ class LocalProxyParser {
     if (!_isNowhereCarrier(up) || !_isNowhereCarrier(down)) {
       return LocalProxyParseResult(
         raw: raw,
-        error: 'Nowhere carrier must be tcp, udp, or mix',
+        error: 'Nowhere carrier must be tcp or udp',
       );
     }
 
@@ -623,7 +622,6 @@ class LocalProxyParser {
     final dedicatedTcpTcp = up == 'tcp' && down == 'tcp' && mux == 0;
 
     final alpnValues = _queryValuesPreservingPlus(uri.query, 'alpn');
-    List<String>? alpn;
     if (alpnValues.isNotEmpty) {
       if (alpnValues.length != 1 ||
           alpnValues.first.isEmpty ||
@@ -637,7 +635,15 @@ class LocalProxyParser {
       if (alpnError != null) {
         return LocalProxyParseResult(raw: raw, error: alpnError);
       }
-      alpn = [alpnValues.first];
+      // The nowhere:// share link is the Nowhere 2 matrix. An omitted ALPN
+      // would otherwise select Nowhere 3, which rejects up/down, so any
+      // explicit value must be nw2.
+      if (alpnValues.first != _nowhereDefaultAlpn) {
+        return LocalProxyParseResult(
+          raw: raw,
+          error: 'Nowhere share-link ALPN must be $_nowhereDefaultAlpn',
+        );
+      }
     }
 
     final name = _buildName(fragment, 'nowhere', server);
@@ -657,7 +663,7 @@ class LocalProxyParser {
     if (sni != null && sni.isNotEmpty) {
       config['sni'] = sni;
     }
-    config['alpn'] = alpn ?? [_nowhereDefaultAlpn];
+    config['alpn'] = [_nowhereDefaultAlpn];
     if (mux == 1) {
       config['mux'] = 1;
     }

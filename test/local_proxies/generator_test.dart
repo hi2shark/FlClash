@@ -63,6 +63,18 @@ Map<String, dynamic> _validNowhereConfig() {
     'server': 'example.com',
     'port': 2077,
     'password': 'secret',
+    'alpn': ['nw2'],
+    'udp': true,
+  };
+}
+
+Map<String, dynamic> _validNowhere3Config() {
+  return {
+    'name': 'Nowhere 3',
+    'type': 'nowhere',
+    'server': 'example.com',
+    'port': 2077,
+    'password': '0123456789abcdef0123456789abcdef',
     'udp': true,
   };
 }
@@ -384,6 +396,7 @@ void main() {
           'server': 'example.com',
           'port': 2077,
           'key': 'secret',
+          'alpn': ['nw2'],
           'up': 'udp',
           'down': 'udp',
           'spec': 'auto',
@@ -413,6 +426,7 @@ void main() {
           'server': 'example.com',
           'port': 2077,
           'key': 'secret',
+          'alpn': ['nw2'],
           'up': 'tcp',
           'down': 'tcp',
           'pool': 7,
@@ -441,6 +455,7 @@ void main() {
             'server': 'example.com',
             'port': 2077,
             'password': 'do-not-log-secret',
+            'alpn': ['nw2'],
             'up': 'tcp',
             'down': 'tcp',
             'pool': 300,
@@ -472,6 +487,7 @@ void main() {
           'server': 'example.com',
           'port': 2077,
           'key': 'secret',
+          'alpn': ['nw2'],
           'up': 'tcp',
           'down': 'tcp',
           'pool': 0,
@@ -573,7 +589,6 @@ void main() {
           'network': 'tcp',
           'net': 'udp',
           'pool': '0',
-          'alpn': ['h2'],
           'morph': true,
           'prewarm-on-start': true,
           'max-concurrent-dials': '16',
@@ -608,7 +623,7 @@ void main() {
       expect(map['network'], 'tcp');
       expect(map.containsKey('net'), isFalse);
       expect(map['pool'], 0);
-      expect(map['alpn'], ['h2']);
+      expect(map['alpn'], ['nw2']);
       expect(map['morph'], isTrue);
       expect(map['prewarm-on-start'], isTrue);
       expect(map['max-concurrent-dials'], 16);
@@ -633,6 +648,110 @@ void main() {
       expect(map.containsKey('bbr-profile'), isFalse);
       expect(map.containsKey('reduce-rtt'), isFalse);
       expect(map.containsKey('max-udp-relay-packet-size'), isFalse);
+    });
+
+    test('normalizes Nowhere 3 config and drops Nowhere 2 options', () {
+      final config = _validNowhere3Config()
+        ..addAll({
+          'up': 'tcp',
+          'down': 'tcp',
+          'network': 'tcp',
+          'mux': 1,
+          'pool': 5,
+          'prewarm-on-start': true,
+          'max-concurrent-dials': 16,
+          'warm-backoff-initial': 2,
+          'warm-backoff-max': 20,
+          'mix-fallback-timeout': 3,
+          'morph': false,
+          'fingerprint': 'chrome',
+          'client-fingerprint': 'chrome',
+          'ech-opts': {'enable': true},
+          'congestion-controller': 'bbr',
+          'cwnd': 32,
+          'sni': 'cdn.example.com',
+          'pin': 'abcd',
+        });
+
+      final map = _firstProxy(
+        generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+      );
+
+      expect(map['password'], '0123456789abcdef0123456789abcdef');
+      expect(map['net'], 'tcp');
+      expect(map['morph'], isFalse);
+      expect(map.containsKey('alpn'), isFalse);
+      for (final key in const [
+        'up',
+        'down',
+        'network',
+        'mux',
+        'pool',
+        'prewarm-on-start',
+        'max-concurrent-dials',
+        'warm-backoff-initial',
+        'warm-backoff-max',
+        'mix-fallback-timeout',
+        'fingerprint',
+        'client-fingerprint',
+        'ech-opts',
+      ]) {
+        expect(map.containsKey(key), isFalse, reason: key);
+      }
+      expect(map['congestion-controller'], 'bbr');
+      expect(map['cwnd'], 32);
+      expect(map['sni'], 'cdn.example.com');
+      expect(map['pin'], 'abcd');
+    });
+
+    test('treats an omitted ALPN as Nowhere 3 with udp transport', () {
+      final config = _validNowhere3Config()..addAll({'net': 'udp'});
+      final map = _firstProxy(
+        generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+      );
+      expect(map['net'], 'udp');
+      expect(map.containsKey('alpn'), isFalse);
+    });
+
+    test('rejects ALPN values other than nw2 or nw3', () {
+      for (final alpn in ['h2', 'nw2,h3', ['nw2', 'nw3'], 'nw3,nw2']) {
+        final config = _validNowhereConfig()..['alpn'] = alpn;
+        expect(
+          () =>
+              generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.toString(),
+              'message',
+              contains('ALPN'),
+            ),
+          ),
+          reason: '$alpn',
+        );
+      }
+    });
+
+    test('requires exactly 32 lowercase hex characters for Nowhere 3 keys', () {
+      for (final password in [
+        'secret',
+        '0123456789ABCDEF0123456789ABCDEF',
+        '0123456789abcdef0123456789abcde',
+        '0123456789abcdef0123456789abcdeff',
+      ]) {
+        final config = _validNowhere3Config()..['password'] = password;
+        expect(
+          () =>
+              generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.toString(),
+              'message',
+              contains('32 lowercase hexadecimal'),
+            ),
+          ),
+          reason: password,
+        );
+      }
     });
 
     test('resolves carriers in strict priority order', () {
@@ -665,28 +784,22 @@ void main() {
     });
 
     test('keeps a single ALPN value and rejects multiple values', () {
-      final omittedMap = _firstProxy(
-        generator.generateYaml([
-          _proxy(type: 'nowhere', config: _validNowhereConfig()),
-        ]),
-      );
-      expect(omittedMap['alpn'], ['nw2']);
-      final listConfig = _validNowhereConfig()..['alpn'] = ['h2'];
+      final listConfig = _validNowhereConfig()..['alpn'] = ['nw2'];
       final listMap = _firstProxy(
         generator.generateYaml([_proxy(type: 'nowhere', config: listConfig)]),
       );
-      expect(listMap['alpn'], ['h2']);
+      expect(listMap['alpn'], ['nw2']);
 
-      final stringConfig = _validNowhereConfig()..['alpn'] = 'h3';
+      final stringConfig = _validNowhereConfig()..['alpn'] = 'nw2';
       final stringMap = _firstProxy(
         generator.generateYaml([_proxy(type: 'nowhere', config: stringConfig)]),
       );
-      expect(stringMap['alpn'], ['h3']);
+      expect(stringMap['alpn'], ['nw2']);
 
       for (final config in [
-        _validNowhereConfig()..['alpn'] = ['h2', 'h3'],
-        _validNowhereConfig()..['alpn'] = 'h3,h2',
-        _validNowhereConfig()..['alpn'] = ['', List.filled(256, 'x').join()],
+        _validNowhereConfig()..['alpn'] = ['nw2', 'nw3'],
+        _validNowhereConfig()..['alpn'] = 'nw2,nw3',
+        _validNowhereConfig()..['alpn'] = ['', 'nw2'],
       ]) {
         expect(
           () =>
@@ -702,7 +815,7 @@ void main() {
       }
     });
 
-    test('emits morph only when enabled', () {
+    test('emits an explicit morph flag for both stacks', () {
       final enabled = _firstProxy(
         generator.generateYaml([
           _proxy(
@@ -728,7 +841,17 @@ void main() {
           ),
         ]),
       );
-      expect(disabled.containsKey('morph'), isFalse);
+      expect(disabled['morph'], isFalse);
+
+      final nw3Disabled = _firstProxy(
+        generator.generateYaml([
+          _proxy(
+            type: 'nowhere',
+            config: _validNowhere3Config()..['morph'] = false,
+          ),
+        ]),
+      );
+      expect(nw3Disabled['morph'], isFalse);
     });
 
     test('drops pool for every matrix containing UDP', () {
@@ -742,29 +865,23 @@ void main() {
       }
     });
 
-    test('keeps mix carriers and mux, and drops pool when mux is enabled', () {
-      final mixMap = _firstProxy(
-        generator.generateYaml([
-          _proxy(
-            type: 'nowhere',
-            config: _validNowhereConfig()
-              ..addAll({
-                'up': 'mix',
-                'down': 'udp',
-                'mux': 1,
-                'mix-fallback-timeout': 2,
-                'pin': 'abcd',
-                'pool': 5,
-              }),
+    test('rejects mix carriers and keeps mux on tcp matrices', () {
+      for (final carriers in [('mix', 'mix'), ('mix', 'udp'), ('tcp', 'mix')]) {
+        final config = _validNowhereConfig()
+          ..addAll({'up': carriers.$1, 'down': carriers.$2});
+        expect(
+          () =>
+              generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.toString(),
+              'message',
+              contains('carriers'),
+            ),
           ),
-        ]),
-      );
-      expect(mixMap['up'], 'mix');
-      expect(mixMap['down'], 'udp');
-      expect(mixMap['mux'], 1);
-      expect(mixMap['mix-fallback-timeout'], 2);
-      expect(mixMap['pin'], 'abcd');
-      expect(mixMap.containsKey('pool'), isFalse);
+          reason: '$carriers',
+        );
+      }
 
       final muxTcp = _firstProxy(
         generator.generateYaml([
@@ -804,44 +921,31 @@ void main() {
       );
     });
 
-    test('enforces decoded UTF-8 byte limits', () {
+    test('enforces decoded UTF-8 byte limits for Nowhere 2 keys', () {
       final key255 = List.filled(255, 'k').join();
-      final alpn255 = List.filled(255, 'a').join();
-      final validConfig = _validNowhereConfig()
-        ..addAll({
-          'password': key255,
-          'alpn': [alpn255],
-        });
+      final validConfig = _validNowhereConfig()..addAll({'password': key255});
       final map = _firstProxy(
         generator.generateYaml([_proxy(type: 'nowhere', config: validConfig)]),
       );
       expect(map['password'], key255);
       expect(map.containsKey('spec'), isFalse);
-      expect(map['alpn'], [alpn255]);
 
-      final tooLongValues = <(String, Map<String, dynamic>)>[
-        (
-          'password/key',
-          _validNowhereConfig()..['password'] = List.filled(256, 'k').join(),
-        ),
-        (
-          'ALPN',
-          _validNowhereConfig()..['alpn'] = [List.filled(256, 'a').join()],
-        ),
-      ];
-      for (final (field, config) in tooLongValues) {
-        expect(
-          () =>
-              generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
-          throwsA(
-            isA<ArgumentError>().having(
-              (error) => error.toString(),
-              'message',
-              allOf(contains(field), contains('255 UTF-8 bytes')),
-            ),
+      expect(
+        () => generator.generateYaml([
+          _proxy(
+            type: 'nowhere',
+            config: _validNowhereConfig()
+              ..['password'] = List.filled(256, 'k').join(),
           ),
-        );
-      }
+        ]),
+        throwsA(
+          isA<ArgumentError>().having(
+            (error) => error.toString(),
+            'message',
+            allOf(contains('password/key'), contains('255 UTF-8 bytes')),
+          ),
+        ),
+      );
     });
 
     test('rejects invalid required and numeric fields clearly', () {
@@ -870,10 +974,6 @@ void main() {
         ('warm-backoff-max', _validNowhereConfig()..['warm-backoff-max'] = -1),
         ('cwnd', _validNowhereConfig()..['cwnd'] = -1),
         ('mux', _validNowhereConfig()..['mux'] = 2),
-        (
-          'mix-fallback-timeout',
-          _validNowhereConfig()..['mix-fallback-timeout'] = -1,
-        ),
         (
           'warm-backoff-initial',
           _validNowhereConfig()..['warm-backoff-initial'] = 31,

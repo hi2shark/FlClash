@@ -724,7 +724,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Введите пароль AnyTLS",
     ),
     "localProxyCarrierInvalid": MessageLookupByLibrary.simpleMessage(
-      "Канал должен быть tcp, udp или mix",
+      "Канал должен быть tcp или udp",
     ),
     "localProxyCount": m18,
     "localProxyEasyTierAdvancedInvalid": MessageLookupByLibrary.simpleMessage(
@@ -757,6 +757,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localProxyNowhereKeyEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите ключ обмена Nowhere",
+    ),
+    "localProxyNowhereKeyInvalidNw3": MessageLookupByLibrary.simpleMessage(
+      "Ключ обмена Nowhere 3 должен состоять ровно из 32 строчных шестнадцатеричных символов",
     ),
     "localProxyPasswordEmpty": MessageLookupByLibrary.simpleMessage(
       "Введите пароль",
@@ -969,6 +972,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "nowhereShareKey": MessageLookupByLibrary.simpleMessage(
       "Ключ обмена (shared key)",
     ),
+    "nowhereVersion": MessageLookupByLibrary.simpleMessage("Версия"),
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "Нет профиля, пожалуйста, добавьте профиль",
     ),
