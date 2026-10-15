@@ -41,6 +41,14 @@ void main() {
     registerFallbackValue(
       const UpdateGeoDataParams(geoType: 't', geoName: 'n'),
     );
+    registerFallbackValue(const SpeedTestParams(proxyName: 'P'));
+    registerFallbackValue(const QuicTestParams(proxyName: 'P'));
+    registerFallbackValue(
+      const UnlockTestRunParams(
+        runId: 'fallback',
+        routeMode: UnlockTestRouteMode.appRoute,
+      ),
+    );
   });
 
   setUp(() {
@@ -51,6 +59,42 @@ void main() {
 
   tearDown(() {
     CoreController.resetInstance();
+  });
+
+  group('isNetworkTestCandidate', () {
+    test('filters normalized non-testable and group types', () {
+      const excludedTypes = [
+        'Reject',
+        ' rejectDROP ',
+        'pAsS',
+        'PASSRULE',
+        'Selector',
+        ' UrL-tEsT ',
+        'FALLBACK',
+        'loadbalance',
+        'relay',
+      ];
+
+      for (final type in excludedTypes) {
+        expect(
+          isNetworkTestCandidate({'name': 'node', 'type': type}),
+          isFalse,
+          reason: 'type=$type',
+        );
+      }
+    });
+
+    test('keeps local and ordinary proxies based on actual type', () {
+      const candidates = [
+        {'name': 'REJECT', 'type': 'Shadowsocks'},
+        {'name': 'DIRECT', 'type': 'Direct'},
+        {'name': 'COMPATIBLE', 'type': 'Compatible'},
+      ];
+
+      for (final proxy in candidates) {
+        expect(isNetworkTestCandidate(proxy), isTrue, reason: 'proxy=$proxy');
+      }
+    });
   });
 
   group('CoreController singleton', () {
@@ -347,6 +391,238 @@ void main() {
       when(() => mock.clearEffect(42)).thenAnswer((_) async => 'ok');
       final result = await controller.clearEffect(42);
       expect(result, 'ok');
+    });
+
+    test('clearEffect delegates', () async {
+      when(() => mock.clearEffect(12)).thenAnswer((_) async => '');
+      final result = await controller.clearEffect(12);
+      expect(result, '');
+      verify(() => mock.clearEffect(12)).called(1);
+    });
+  });
+
+  group('network test methods', () {
+    test('getSpeedTest forwards the core result', () async {
+      const params = SpeedTestParams(proxyName: 'P1');
+      when(() => mock.speedTest(params)).thenAnswer(
+        (_) async => const SpeedTestResult(
+          name: 'P1',
+          latency: 120,
+          speed: 1024.5,
+          bytes: 204800,
+        ),
+      );
+      final result = await controller.getSpeedTest(params);
+      expect(result.name, 'P1');
+      expect(result.latency, 120);
+      expect(result.speed, 1024.5);
+      expect(result.bytes, 204800);
+      expect(result.error, '');
+    });
+
+    test('getSpeedTest applies defaults for missing fields', () async {
+      const params = SpeedTestParams(proxyName: 'P1');
+      when(
+        () => mock.speedTest(any()),
+      ).thenAnswer((_) async => const SpeedTestResult(name: 'P1'));
+      final result = await controller.getSpeedTest(params);
+      expect(result.name, 'P1');
+      expect(result.latency, 0);
+      expect(result.speed, 0);
+      expect(result.bytes, 0);
+      expect(result.error, '');
+    });
+
+    test('getQuicTest forwards the core result', () async {
+      const params = QuicTestParams(proxyName: 'P1');
+      when(() => mock.quicTest(params)).thenAnswer(
+        (_) async => const QuicTestResult(
+          name: 'P1',
+          rtt: 80,
+          alpn: 'h3',
+          version: 1,
+          stage: 'completed',
+          target: 'cloudflare-quic.com:443',
+          resolvedIp: '203.0.113.7:443',
+          network: 'udp4',
+          sentPackets: 2,
+          sentBytes: 2400,
+          receivedPackets: 1,
+          receivedBytes: 1200,
+        ),
+      );
+      final result = await controller.getQuicTest(params);
+      expect(result.name, 'P1');
+      expect(result.rtt, 80);
+      expect(result.alpn, 'h3');
+      expect(result.version, 1);
+      expect(result.error, '');
+      expect(result.stage, 'completed');
+      expect(result.target, 'cloudflare-quic.com:443');
+      expect(result.resolvedIp, '203.0.113.7:443');
+      expect(result.network, 'udp4');
+      expect(result.sentPackets, 2);
+      expect(result.sentBytes, 2400);
+      expect(result.receivedPackets, 1);
+      expect(result.receivedBytes, 1200);
+    });
+
+    test('getQuicTest applies defaults for missing fields', () async {
+      const params = QuicTestParams(proxyName: 'P1');
+      when(
+        () => mock.quicTest(any()),
+      ).thenAnswer((_) async => const QuicTestResult(name: 'P1', error: 'x'));
+      final result = await controller.getQuicTest(params);
+      expect(result.name, 'P1');
+      expect(result.rtt, 0);
+      expect(result.alpn, '');
+      expect(result.version, 0);
+      expect(result.error, 'x');
+      expect(result.stage, '');
+      expect(result.target, '');
+      expect(result.resolvedIp, '');
+      expect(result.network, '');
+      expect(result.sentPackets, 0);
+      expect(result.sentBytes, 0);
+      expect(result.receivedPackets, 0);
+      expect(result.receivedBytes, 0);
+    });
+
+    test('getAllProxies filters group types case-insensitively', () async {
+      when(() => mock.getProxies()).thenAnswer(
+        (_) async => const ProxiesData(
+          proxies: {
+            'ProxyA': {'name': 'ProxyA', 'type': 'Shadowsocks'},
+            'Group1': {'name': 'Group1', 'type': 'Selector'},
+            'ProxyB': {'name': 'ProxyB', 'type': 'Vmess'},
+            'Group2': {'name': 'Group2', 'type': 'URLTest'},
+            'Group3': {'name': 'Group3', 'type': 'sElEcT'},
+            'Group4': {'name': 'Group4', 'type': ' url-test '},
+            'Group5': {'name': 'Group5', 'type': 'LOAD-BALANCE'},
+            'Group6': {'name': 'Group6', 'type': 'relay'},
+            'Group7': {'name': 'Group7', 'type': 'FaLlBaCk'},
+          },
+          all: [
+            'ProxyA',
+            'Group1',
+            'ProxyB',
+            'Group2',
+            'Group3',
+            'Group4',
+            'Group5',
+            'Group6',
+            'Group7',
+          ],
+        ),
+      );
+      final result = await controller.getAllProxies();
+      expect(result.map((proxy) => proxy.name), ['ProxyA', 'ProxyB']);
+      expect(result.every((proxy) => proxy.type != 'Selector'), true);
+    });
+
+    test(
+      'getAllProxies filters non-testable adapter types case-insensitively',
+      () async {
+        when(() => mock.getProxies()).thenAnswer(
+          (_) async => const ProxiesData(
+            proxies: {
+              'RejectAdapter': {'name': 'RejectAdapter', 'type': '  rEjEcT '},
+              'RejectDropAdapter': {
+                'name': 'RejectDropAdapter',
+                'type': 'REJECTDROP',
+              },
+              'PassAdapter': {'name': 'PassAdapter', 'type': 'Pass'},
+              'PassRuleAdapter': {
+                'name': 'PassRuleAdapter',
+                'type': 'pAsSrUlE',
+              },
+              'REJECT': {'name': 'REJECT', 'type': 'Shadowsocks'},
+              'DIRECT': {'name': 'DIRECT', 'type': 'Direct'},
+              'COMPATIBLE': {'name': 'COMPATIBLE', 'type': 'Compatible'},
+            },
+            all: [
+              'RejectAdapter',
+              'RejectDropAdapter',
+              'PassAdapter',
+              'PassRuleAdapter',
+              'REJECT',
+              'DIRECT',
+              'COMPATIBLE',
+            ],
+          ),
+        );
+        final result = await controller.getAllProxies();
+
+        expect(result.map((proxy) => proxy.name).toSet(), {
+          'REJECT',
+          'DIRECT',
+          'COMPATIBLE',
+        });
+      },
+    );
+
+    test('getAllProxies returns empty list when no proxies', () async {
+      when(
+        () => mock.getProxies(),
+      ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
+      final result = await controller.getAllProxies();
+      expect(result, isEmpty);
+    });
+
+    test('getUnlockTest forwards the core result', () async {
+      const params = UnlockTestRunParams(
+        runId: 'run-1',
+        routeMode: UnlockTestRouteMode.proxy,
+        proxyName: 'P1',
+        targetIds: ['chatgpt', 'netflix'],
+      );
+      when(() => mock.unlockTest(params)).thenAnswer(
+        (_) async => const UnlockTestRunResult(
+          runId: 'run-1',
+          routeMode: UnlockTestRouteMode.proxy,
+          proxyName: 'P1',
+          results: [
+            UnlockTestRunItem(
+              id: 'chatgpt',
+              status: UnlockTestStatus.unlocked,
+              latency: 321,
+              region: 'US',
+              outboundChains: ['P1', 'DIRECT'],
+            ),
+            UnlockTestRunItem(
+              id: 'netflix',
+              status: UnlockTestStatus.locked,
+              reason: UnlockTestReason.geoBlocked,
+              latency: 120,
+            ),
+          ],
+        ),
+      );
+      final result = await controller.getUnlockTest(params);
+      expect(result.runId, 'run-1');
+      expect(result.proxyName, 'P1');
+      expect(result.results, hasLength(2));
+      expect(result.results[0].id, 'chatgpt');
+      expect(result.results[0].status, UnlockTestStatus.unlocked);
+      expect(result.results[0].region, 'US');
+      expect(result.results[0].latency, 321);
+      expect(result.results[1].status, UnlockTestStatus.locked);
+      expect(result.results[1].reason, UnlockTestReason.geoBlocked);
+      expect(result.error, '');
+    });
+
+    test('getUnlockTest applies defaults for missing fields', () async {
+      const params = UnlockTestRunParams(
+        runId: 'run-1',
+        routeMode: UnlockTestRouteMode.appRoute,
+      );
+      when(() => mock.unlockTest(any())).thenAnswer(
+        (_) async => const UnlockTestRunResult(runId: 'run-1', error: 'x'),
+      );
+      final result = await controller.getUnlockTest(params);
+      expect(result.runId, 'run-1');
+      expect(result.results, isEmpty);
+      expect(result.error, 'x');
     });
   });
 }

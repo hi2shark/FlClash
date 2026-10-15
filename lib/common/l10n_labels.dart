@@ -16,6 +16,11 @@ extension PageLabelL10n on PageLabel {
       PageLabel.resources => appLocalizations.resources,
       PageLabel.connections => appLocalizations.liveConnections,
       PageLabel.dns => appLocalizations.dnsQueries,
+      PageLabel.localProxies => appLocalizations.localNodes,
+      PageLabel.localRules => appLocalizations.localRules,
+      PageLabel.networkTest => appLocalizations.networkTest,
+      PageLabel.unlockTest => appLocalizations.unlockTest,
+      PageLabel.effectiveConfig => appLocalizations.effectiveConfig,
     };
   }
 }

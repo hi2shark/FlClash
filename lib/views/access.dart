@@ -26,11 +26,14 @@ class _AccessViewState extends ConsumerState<AccessView>
   bool _isInit = false;
   bool _installedAppsPermissionGranted = true;
 
+  late final Packages _packagesNotifier;
+
   final _completer = Completer();
 
   @override
   void initState() {
     super.initState();
+    _packagesNotifier = ref.read(packagesProvider.notifier);
     _controller = sheetScrollController(context);
     final accessControl = ref
         .read(vpnSettingProvider.select((state) => state.accessControlProps))
@@ -100,6 +103,8 @@ class _AccessViewState extends ConsumerState<AccessView>
   @override
   void dispose() {
     _controller.dispose();
+    // Release full package list when leaving Access page.
+    _packagesNotifier.value = [];
     super.dispose();
   }
 

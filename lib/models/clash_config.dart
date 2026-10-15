@@ -253,6 +253,7 @@ const customProxyTypes = [
   'tailscale',
   'zerotier',
   'easytier',
+  'nowhere',
 ];
 
 /// The standard methods of sing-shadowsocks2, which mihomo's ss adapter
@@ -402,7 +403,8 @@ extension CustomProxyExt on CustomProxy {
     'tuic' ||
     'shadowquic' ||
     'gost-relay' ||
-    'trusttunnel' => const {'server', 'port'},
+    'trusttunnel' ||
+    'nowhere' => const {'server', 'port'},
     _ => const {},
   };
 
@@ -429,6 +431,7 @@ extension CustomProxyExt on CustomProxy {
       ProxyField.username,
       ProxyField.password,
     ],
+    'nowhere' => const [ProxyField.password],
     'socks5' ||
     'http' ||
     'ssh' ||
@@ -474,11 +477,13 @@ extension CustomProxyExt on CustomProxy {
       ProxyField.cipher ||
       ProxyField.alterId ||
       ProxyField.transport => false,
-      ProxyField.privateKey || ProxyField.privateKeyPassphrase => type == 'ssh',
+      ProxyField.privateKey => type == 'ssh' || type == 'nowhere',
+      ProxyField.privateKeyPassphrase => type == 'ssh',
       ProxyField.preSharedKey || ProxyField.allowedIps => type == 'wireguard',
       ProxyField.obfs ||
       ProxyField.up ||
       ProxyField.down => type == 'hysteria2',
+      ProxyField.upCarrier || ProxyField.downCarrier => type == 'nowhere',
       ProxyField.obfsPassword =>
         type == 'hysteria2' && valueOf(ProxyField.obfs) != null,
       ProxyField.protocol || ProxyField.obfsSecret => type == 'hysteria',
@@ -505,6 +510,7 @@ extension CustomProxyExt on CustomProxy {
         'anytls',
         'masque',
         'trusttunnel',
+        'nowhere',
       }.contains(type),
       ProxyField.servername => type == 'vmess' || type == 'vless',
       ProxyField.alpn => const {
@@ -517,6 +523,7 @@ extension CustomProxyExt on CustomProxy {
         'shadowquic',
         'anytls',
         'trusttunnel',
+        'nowhere',
       }.contains(type),
       ProxyField.skipCertVerify => const {
         'socks5',
@@ -531,6 +538,7 @@ extension CustomProxyExt on CustomProxy {
         'anytls',
         'masque',
         'trusttunnel',
+        'nowhere',
       }.contains(type),
       ProxyField.clientFingerprint => const {
         'ss',
@@ -541,6 +549,7 @@ extension CustomProxyExt on CustomProxy {
         'gost-relay',
         'anytls',
         'trusttunnel',
+        'nowhere',
       }.contains(type),
       ProxyField.realityPublicKey || ProxyField.realityShortId => const {
         'vmess',
@@ -561,8 +570,26 @@ extension CustomProxyExt on CustomProxy {
         'shadowquic',
         'masque',
         'trusttunnel',
+        'nowhere',
       }.contains(type),
       ProxyField.udpRelayMode || ProxyField.reduceRtt => type == 'tuic',
+      ProxyField.net ||
+      ProxyField.mux ||
+      ProxyField.pool ||
+      ProxyField.prewarmOnStart ||
+      ProxyField.maxConcurrentDials ||
+      ProxyField.warmBackoffInitial ||
+      ProxyField.warmBackoffMax ||
+      ProxyField.cwnd ||
+      ProxyField.morph ||
+      ProxyField.dial4 ||
+      ProxyField.dial6 => type == 'nowhere',
+      ProxyField.fingerprint ||
+      ProxyField.pin ||
+      ProxyField.certificate ||
+      ProxyField.echEnable ||
+      ProxyField.echConfig ||
+      ProxyField.echQueryServerName => type == 'nowhere',
       ProxyField.ip ||
       ProxyField.ipv6 ||
       ProxyField.dns ||
@@ -675,6 +702,12 @@ extension CustomProxyExt on CustomProxy {
       'kcptun',
     ],
     ProxyField.obfsMode => const ['http', 'tls', 'shadow-tls', 'restls', 'jls'],
+    ProxyField.net ||
+    ProxyField.upCarrier ||
+    ProxyField.downCarrier => switch (type) {
+      'nowhere' => const ['tcp', 'udp'],
+      _ => const [],
+    },
     ProxyField.congestionController => const [
       'cubic',
       'new_reno',
@@ -1049,10 +1082,14 @@ extension TunExt on Tun {
     return subtractCidrsTask(routeAddress, excluded, wholeWhenEmpty: true);
   }
 
-  Tun getRealTun({required bool bypassPrivateRoute}) => copyWith(
-    autoRoute: true,
-    routeExcludeAddress: excludedRoutes(bypassPrivateRoute: bypassPrivateRoute),
-  );
+  Tun getRealTun({required bool bypassPrivateRoute, bool dnsEnable = true}) =>
+      copyWith(
+        autoRoute: true,
+        routeExcludeAddress: excludedRoutes(
+          bypassPrivateRoute: bypassPrivateRoute,
+        ),
+        dnsHijack: dnsEnable ? dnsHijack : const <String>[],
+      );
 }
 
 @freezed
@@ -1078,7 +1115,7 @@ abstract class Dns with _$Dns {
     @Default(false) @JsonKey(name: 'prefer-h3') bool preferH3,
     @Default(true) @JsonKey(name: 'use-hosts') bool useHosts,
     @Default(true) @JsonKey(name: 'use-system-hosts') bool useSystemHosts,
-    @Default(false) @JsonKey(name: 'respect-rules') bool respectRules,
+    @Default(true) @JsonKey(name: 'respect-rules') bool respectRules,
     @Default(false) bool ipv6,
     @Default(100) @JsonKey(name: 'ipv6-timeout') int ipv6Timeout,
     @Default(DnsCacheAlgorithm.lru)

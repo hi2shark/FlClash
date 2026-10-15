@@ -188,13 +188,15 @@ SharedState sharedState(Ref ref) {
     appSettingProvider.select(
       (state) => (
         onlyStatisticsProxy: state.onlyStatisticsProxy,
-        showStopAction: state.showNotificationStopAction,
+        showNotificationStopAction: state.showNotificationStopAction,
         crashlytics: state.crashlytics,
         testUrl: state.testUrl,
         checkCertificate: state.checkCertificate,
       ),
     ),
   );
+  final onDemandEnabled = ref.watch(onDemandEnabledProvider);
+  final excludeSSIDs = ref.watch(excludeSSIDsProvider);
   final currentProfileName = currentProfile.label;
   final selectedMap = currentProfile.selectedMap;
   final onlyStatisticsProxy = appSetting.onlyStatisticsProxy;
@@ -203,8 +205,10 @@ SharedState sharedState(Ref ref) {
   return SharedState(
     currentProfileName: currentProfileName,
     onlyStatisticsProxy: onlyStatisticsProxy,
-    showStopAction: appSetting.showStopAction,
+    showStopAction: appSetting.showNotificationStopAction,
+    showNotificationStopAction: appSetting.showNotificationStopAction,
     stopText: currentAppLocalizations.stop,
+    suspendedText: currentAppLocalizations.suspended,
     crashlytics: crashlytics,
     stopTip: currentAppLocalizations.stopVpn,
     startTip: currentAppLocalizations.startVpn,
@@ -215,7 +219,18 @@ SharedState sharedState(Ref ref) {
       skipCertVerify: !appSetting.checkCertificate,
     ),
     vpnOptions: ref.watch(vpnOptionsProvider).value,
+    suspendOnWifiSsids: effectiveSuspendOnWifiSsids(
+      onDemandEnabled,
+      excludeSSIDs,
+    ),
   );
+}
+
+List<String> effectiveSuspendOnWifiSsids(
+  bool onDemandEnabled,
+  List<String> configuredSsids,
+) {
+  return onDemandEnabled ? configuredSsids : const [];
 }
 
 @Riverpod(keepAlive: true)
@@ -246,7 +261,11 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
   );
   final clashConfig = ref.watch(
     patchClashConfigProvider.select(
-      (state) => (tun: state.tun, mixedPort: state.mixedPort),
+      (state) => (
+        tun: state.tun,
+        mixedPort: state.mixedPort,
+        dnsEnable: state.dns.enable,
+      ),
     ),
   );
   final vpnSetting = ref.watch(vpnSettingProvider);
@@ -263,6 +282,7 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
     port: clashConfig.mixedPort,
     ipv6: vpnSetting.ipv6,
     dnsHijacking: vpnSetting.dnsHijacking,
+    dnsEnable: clashConfig.dnsEnable,
     accessControlProps: vpnSetting.accessControlProps,
     allowBypass: vpnSetting.allowBypass,
     bypassDomain: networkSetting.bypassDomain,
@@ -281,7 +301,8 @@ class AccessControlState extends _$AccessControlState
 
 @riverpod
 bool suspend(Ref ref) {
+  final onDemandEnabled = ref.watch(onDemandEnabledProvider);
   final currentSSID = ref.watch(currentSSIDProvider);
   final excludeSSIDs = ref.watch(excludeSSIDsProvider);
-  return excludeSSIDs.contains(currentSSID);
+  return onDemandEnabled && excludeSSIDs.contains(currentSSID);
 }

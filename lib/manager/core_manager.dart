@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -40,7 +41,10 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     // the previous one hides the error and looks like the switch was lost.
     ref.listenManual(currentProfileIdProvider, (prev, next) {
       if (prev == next) return;
-      runAfterFrame(() {
+      runAfterFrame(() async {
+        if (prev != null) {
+          await localProxyStore.resetMixinOnProfileSwitch();
+        }
         unawaited(ref.read(setupActionProvider.notifier).fullSetup());
       });
     });

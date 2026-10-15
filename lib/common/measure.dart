@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 typedef _TextMeasureKey = (
   String?,
+  InlineSpan?,
   TextStyle?,
   TextStyle?,
   int?,
@@ -25,9 +26,18 @@ class Measure {
     : _measureMap = {},
       _textScaler = TextScaler.linear(textScaleFactor);
 
+  InlineSpan _textSpanFor(Text text, {TextStyle? style}) {
+    final defaultStyle = text.style ?? style;
+    final textSpan = text.textSpan;
+    if (textSpan != null) {
+      return TextSpan(style: defaultStyle, children: [textSpan]);
+    }
+    return TextSpan(text: text.data, style: defaultStyle);
+  }
+
   TextPainter _computeText(Text text, {TextStyle? style, double? maxWidth}) {
     return TextPainter(
-      text: TextSpan(text: text.data, style: text.style ?? style),
+      text: _textSpanFor(text, style: style),
       maxLines: text.maxLines,
       textScaler: _textScaler,
       ellipsis: '...',
@@ -53,6 +63,7 @@ class Measure {
   _TextMeasureKey _measureKey(Text text, TextStyle? style, double? maxWidth) {
     return (
       text.data,
+      text.textSpan,
       text.style,
       style,
       text.maxLines,

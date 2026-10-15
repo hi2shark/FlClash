@@ -19,6 +19,8 @@ void main(List<String> args) {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      PaintingBinding.instance.imageCache.maximumSize = 100;
+      PaintingBinding.instance.imageCache.maximumSizeBytes = 50 << 20;
       if (Platform.isWindows || Platform.isLinux) {
         SharedPreferencesStorePlatform.instance = AtomicFilePreferencesStore(
           appPath.sharedPreferencesPath,

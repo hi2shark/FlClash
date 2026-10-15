@@ -3,8 +3,10 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/launch.dart';
+import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/manager/background_resource_manager.dart';
 import 'package:fl_clash/models/config.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
@@ -61,6 +63,8 @@ class _WindowContainerState extends ConsumerState<WindowManager>
     _terminateSubscription = widget.terminateSignals?.listen(
       (_) => unawaited(onWindowShouldTerminate()),
     );
+    window?.onHide = backgroundResourceManager.enterBackground;
+    window?.onShow = backgroundResourceManager.leaveBackground;
   }
 
   Future<void> _applyWindowBlur(WindowBlurRequest request) async {
@@ -87,6 +91,16 @@ class _WindowContainerState extends ConsumerState<WindowManager>
       return;
     }
     ref.read(windowBlurProvider.notifier).value = active;
+  }
+
+  @override
+  void dispose() {
+    window?.onHide = null;
+    window?.onShow = null;
+    _invalidateWindowGeometryCapture();
+    unawaited(_terminateSubscription?.cancel());
+    desktopWindow.removeListener(this);
+    super.dispose();
   }
 
   @override
@@ -185,21 +199,15 @@ class _WindowContainerState extends ConsumerState<WindowManager>
   void onWindowMinimize() async {
     _invalidateWindowGeometryCapture();
     ref.read(storeActionProvider.notifier).savePreferencesDebounce();
+    backgroundResourceManager.enterBackground();
     super.onWindowMinimize();
   }
 
   @override
   void onWindowRestore() {
+    backgroundResourceManager.leaveBackground();
     super.onWindowRestore();
     _scheduleWindowGeometryCapture();
-  }
-
-  @override
-  void dispose() {
-    _invalidateWindowGeometryCapture();
-    unawaited(_terminateSubscription?.cancel());
-    desktopWindow.removeListener(this);
-    super.dispose();
   }
 }
 

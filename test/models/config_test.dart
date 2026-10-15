@@ -142,6 +142,7 @@ void main() {
       expect(restored.userAgents, defaultUserAgents);
       expect(restored.filters, defaultFilters);
       expect(restored.testUrl, defaultTestUrl);
+      expect(restored.showNotificationStopAction, true);
     });
 
     test('a saved outboundModeV2 card folds into outboundMode', () {
@@ -331,6 +332,39 @@ void main() {
     });
   });
 
+  group('AuthenticationProps', () {
+    test('credentials stay empty until enabled with a username', () {
+      expect(const AuthenticationProps().credentials, isEmpty);
+      expect(
+        const AuthenticationProps(enable: true, username: '').credentials,
+        isEmpty,
+      );
+      expect(
+        const AuthenticationProps(
+          enable: true,
+          username: 'alice',
+          password: 'pw',
+        ).credentials,
+        ['alice:pw'],
+      );
+    });
+
+    test('round-trip preserves fields', () {
+      const props = AuthenticationProps(
+        enable: true,
+        username: 'bob',
+        password: 'p@ss',
+      );
+      final restored = roundTrip(
+        () => props.toJson(),
+        AuthenticationProps.fromJson,
+      );
+      expect(restored.enable, true);
+      expect(restored.username, 'bob');
+      expect(restored.password, 'p@ss');
+    });
+  });
+
   group('NetworkProps JSON round-trip', () {
     test('default values', () {
       const props = NetworkProps();
@@ -339,6 +373,23 @@ void main() {
       expect(props.bypassPrivateRoute, true);
       expect(props.autoSetSystemDns, true);
       expect(props.appendSystemDns, false);
+      expect(props.authentication.enable, false);
+      expect(props.authentication.credentials, isEmpty);
+    });
+
+    test('round-trips authentication credentials', () {
+      const props = NetworkProps(
+        authentication: AuthenticationProps(
+          enable: true,
+          username: 'user',
+          password: 'secret',
+        ),
+      );
+      final restored = roundTrip(() => props.toJson(), NetworkProps.fromJson);
+      expect(restored.authentication.enable, true);
+      expect(restored.authentication.username, 'user');
+      expect(restored.authentication.password, 'secret');
+      expect(restored.authentication.credentials, ['user:secret']);
     });
 
     test('round-trip with custom values', () {
@@ -691,6 +742,7 @@ void main() {
       expect(restored.networkProps.systemProxy, true);
       expect(restored.vpnProps.enable, true);
       expect(restored.hotKeyActions, isEmpty);
+      expect(restored.onDemandEnabled, true);
     });
 
     test('a legacy bypass-private route mode drops the routes it ignored', () {
@@ -863,6 +915,8 @@ void main() {
           themeMode: ThemeMode.system,
         ),
         windowProps: WindowProps(width: 1280, height: 720),
+        onDemandEnabled: false,
+        excludeSSIDs: ['Home'],
       );
       final restored = roundTrip(() => config.toJson(), Config.fromJson);
       expect(restored.currentProfileId, 42);
@@ -872,6 +926,94 @@ void main() {
       expect(restored.vpnProps.enable, false);
       expect(restored.windowProps.width, 1280);
       expect(restored.windowProps.height, 720);
+      expect(restored.onDemandEnabled, false);
+      expect(restored.excludeSSIDs, ['Home']);
+    });
+
+    test('missing on-demand flag defaults to enabled', () {
+      final restored = Config.fromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'excludeSSIDs': ['Home'],
+      });
+
+      expect(restored.onDemandEnabled, true);
+      expect(restored.excludeSSIDs, ['Home']);
+    });
+  });
+
+  group('UnlockTestProps migration', () {
+    test('new installs are disabled with the 21 default services selected', () {
+      final props = UnlockTestProps.safeFromJson(null);
+
+      expect(props.enable, false);
+      expect(props.selectedTargets, defaultUnlockTestTargetIds);
+      expect(props.selectedTargets, hasLength(21));
+    });
+
+    test('legacy default expands while preserving the feature switch', () {
+      final props = UnlockTestProps.safeFromJson({
+        'enable': true,
+        'selectedTargets': legacyUnlockTestTargetIds,
+      });
+
+      expect(props.enable, true);
+      expect(props.selectedTargets, defaultUnlockTestTargetIds);
+    });
+
+    test('custom selection only maps known legacy aliases', () {
+      final props = UnlockTestProps.safeFromJson({
+        'enable': true,
+        'selectedTargets': ['chatgpt', 'youtube', 'unknown'],
+      });
+
+      expect(props.enable, true);
+      expect(props.selectedTargets, ['chatgpt', 'youtube-premium']);
+    });
+
+    test('malformed legacy values fall back without breaking config load', () {
+      final props = UnlockTestProps.safeFromJson({
+        'enable': 'yes',
+        'selectedTargets': 'chatgpt',
+      });
+
+      expect(props, defaultUnlockTestProps);
+    });
+  });
+
+  group('Dns defaults', () {
+    test('respect-rules and redir-host are the new defaults', () {
+      const dns = Dns();
+      expect(dns.enable, false);
+      expect(dns.respectRules, true);
+      expect(dns.enhancedMode, DnsMode.redirHost);
+      expect(dns.proxyServerNameserver, isEmpty);
+    });
+
+    test('fromJson falls back to new defaults when fields are missing', () {
+      final dns = Dns.fromJson({});
+      expect(dns.respectRules, true);
+      expect(dns.enhancedMode, DnsMode.redirHost);
+    });
+
+    test('round-trip preserves respect-rules and enhanced-mode', () {
+      const dns = Dns(respectRules: false, enhancedMode: DnsMode.fakeIp);
+      final restored = roundTrip(() => dns.toJson(), Dns.fromJson);
+      expect(restored.respectRules, false);
+      expect(restored.enhancedMode, DnsMode.fakeIp);
+    });
+  });
+
+  group('Tun.getRealTun dnsEnable', () {
+    test('clears dns-hijack when dns is disabled', () {
+      const tun = Tun(dnsHijack: ['any:53']);
+      final real = tun.getRealTun(bypassPrivateRoute: false, dnsEnable: false);
+      expect(real.dnsHijack, isEmpty);
+    });
+
+    test('keeps dns-hijack when dns is enabled', () {
+      const tun = Tun(dnsHijack: ['any:53']);
+      final real = tun.getRealTun(bypassPrivateRoute: false, dnsEnable: true);
+      expect(real.dnsHijack, ['any:53']);
     });
   });
 

@@ -12,6 +12,9 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// UI render cap for connections list (core snapshot remains full).
+const int connectionsDisplayLimit = 500;
+
 class ConnectionsView extends ConsumerStatefulWidget {
   final ScrollController? scrollController;
   final Future<List<TrackerInfo>> Function()? connectionsReader;
@@ -33,6 +36,8 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
         RouteMotionHoldMixin<ConnectionsView> {
   CoreController get _core => ref.read(coreHandlerProvider);
 
+  bool _showAll = false;
+
   final _listController = TrackerInfoListController();
   final _speedRanker = TrackerSpeedRanker();
   late final ScrollController _scrollController;
@@ -48,10 +53,23 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   Duration get pollInterval => const Duration(seconds: 1);
 
   List<IconButtonData> _buildActions() {
+    final appLocalizations = context.appLocalizations;
     return [
       IconButtonData(
+        glyph: _showAll ? AppGlyphs.filter : AppGlyphs.arrowDown,
+        tooltip: _showAll
+            ? appLocalizations.connectionsLimitDisplay
+            : appLocalizations.connectionsShowAll,
+        isSelected: _showAll,
+        onPressed: () {
+          setState(() {
+            _showAll = !_showAll;
+          });
+        },
+      ),
+      IconButtonData(
         glyph: AppGlyphs.clearAll,
-        tooltip: context.appLocalizations.closeConnections,
+        tooltip: appLocalizations.closeConnections,
         onPressed: () async {
           unawaited(_core.closeConnections());
           await _refreshConnections();
@@ -106,6 +124,13 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
     await _refreshConnections();
   }
 
+  List<TrackerInfo> _visibleConnections(List<TrackerInfo> connections) {
+    if (_showAll || connections.length <= connectionsDisplayLimit) {
+      return connections;
+    }
+    return connections.sublist(0, connectionsDisplayLimit);
+  }
+
   @override
   void dispose() {
     _listController.dispose();
@@ -141,7 +166,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
                 top: context.contentTopPadding,
                 bottom: 16 + BottomInsetScope.of(context),
               ),
-              trackerInfos: connections,
+              trackerInfos: _visibleConnections(connections),
               detailTitle: appLocalizations.details(
                 appLocalizations.connection,
               ),

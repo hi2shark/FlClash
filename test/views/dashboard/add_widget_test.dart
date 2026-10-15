@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
@@ -71,8 +72,14 @@ void main() {
 
     final grid = tester.state<SuperGridState>(find.byType(SuperGrid));
     expect(grid.items.last, DashboardWidget.outboundMode.widget);
+    // The dashboard persists only what it renders, so the kill-switched
+    // unlock detection card drops out of the saved list.
     expect(container.read(appSettingProvider).dashboardWidgets, [
-      ...shown,
+      ...shown.where(
+        (item) =>
+            kUnlockTestFeatureEnabled ||
+            item != DashboardWidget.unlockDetection,
+      ),
       DashboardWidget.outboundMode,
     ]);
 

@@ -37,6 +37,16 @@ class App {
     return _instance!;
   }
 
+  @visibleForTesting
+  App.forTest([MethodChannel? channel]) {
+    methodChannel = channel ?? const MethodChannel('$packageName/app');
+  }
+
+  @visibleForTesting
+  static void resetInstance() {
+    _instance = null;
+  }
+
   Future<bool?> moveTaskToBack() async {
     return methodChannel.invokeMethod<bool>('moveTaskToBack');
   }
@@ -98,17 +108,28 @@ class App {
     if (_packageIcons.containsKey(packageName)) {
       return Future.value(_packageIcons[packageName]);
     }
+    // Only _defaultActivityIcon resolves an empty name.
+    if (packageName.isEmpty) {
+      return Future.value(null);
+    }
     return _packageIconTasks[packageName] ??= _loadPackageIcon(packageName);
   }
 
   Future<ImageProvider?> _loadPackageIcon(String packageName) async {
     var icon = await _requestPackageIcon(packageName);
     if (icon == null && packageName.isNotEmpty) {
-      icon = await getPackageIcon('');
+      icon = await _defaultActivityIcon();
     }
     _packageIcons[packageName] = icon;
     unawaited(_packageIconTasks.remove(packageName));
     return icon;
+  }
+
+  Future<ImageProvider?> _defaultActivityIcon() {
+    if (_packageIcons.containsKey('')) {
+      return Future.value(_packageIcons['']);
+    }
+    return _packageIconTasks[''] ??= _loadPackageIcon('');
   }
 
   Future<ImageProvider?> _requestPackageIcon(String packageName) async {

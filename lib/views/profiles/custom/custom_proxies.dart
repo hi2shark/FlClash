@@ -34,6 +34,9 @@ extension on ProxyField {
     ProxyField.network => l.network,
     ProxyField.up => l.uploadBandwidth,
     ProxyField.down => l.downloadBandwidth,
+    ProxyField.upCarrier => l.uploadCarrier,
+    ProxyField.downCarrier => l.downloadCarrier,
+    ProxyField.net => l.transport,
     ProxyField.flow => 'Flow',
     ProxyField.wsPath => 'WebSocket Path',
     ProxyField.wsHost => 'WebSocket Host',
@@ -73,6 +76,22 @@ extension on ProxyField {
     ProxyField.interfaceName => l.interfaceName,
     ProxyField.routingMark => l.routingMark,
     ProxyField.ipVersion => l.ipVersion,
+    ProxyField.mux => l.mux,
+    ProxyField.pool => l.pool,
+    ProxyField.prewarmOnStart => l.prewarmOnStart,
+    ProxyField.maxConcurrentDials => l.maxConcurrentDials,
+    ProxyField.dial4 => l.dial4,
+    ProxyField.dial6 => l.dial6,
+    ProxyField.warmBackoffInitial => l.warmBackoffInitial,
+    ProxyField.warmBackoffMax => l.warmBackoffMax,
+    ProxyField.fingerprint => l.fingerprint,
+    ProxyField.pin => l.certificatePin,
+    ProxyField.certificate => l.certificate,
+    ProxyField.echEnable => l.ech,
+    ProxyField.echConfig => l.echConfig,
+    ProxyField.echQueryServerName => l.echQueryServerName,
+    ProxyField.cwnd => l.congestionWindow,
+    ProxyField.morph => l.morph,
   };
 
   bool get isCredential => switch (this) {
@@ -97,7 +116,18 @@ extension on ProxyField {
     ProxyField.wsHost ||
     ProxyField.grpcServiceName ||
     ProxyField.xhttpPath ||
-    ProxyField.xhttpHost => _OptionSection.transport,
+    ProxyField.xhttpHost ||
+    ProxyField.net ||
+    ProxyField.upCarrier ||
+    ProxyField.downCarrier ||
+    ProxyField.mux ||
+    ProxyField.pool ||
+    ProxyField.prewarmOnStart ||
+    ProxyField.maxConcurrentDials ||
+    ProxyField.warmBackoffInitial ||
+    ProxyField.warmBackoffMax ||
+    ProxyField.cwnd ||
+    ProxyField.morph => _OptionSection.transport,
     ProxyField.tls ||
     ProxyField.sni ||
     ProxyField.servername ||
@@ -105,12 +135,20 @@ extension on ProxyField {
     ProxyField.skipCertVerify ||
     ProxyField.clientFingerprint ||
     ProxyField.realityPublicKey ||
-    ProxyField.realityShortId => _OptionSection.tls,
+    ProxyField.realityShortId ||
+    ProxyField.fingerprint ||
+    ProxyField.pin ||
+    ProxyField.certificate ||
+    ProxyField.echEnable ||
+    ProxyField.echConfig ||
+    ProxyField.echQueryServerName => _OptionSection.tls,
     ProxyField.tfo ||
     ProxyField.mptcp ||
     ProxyField.interfaceName ||
     ProxyField.routingMark ||
-    ProxyField.ipVersion => _OptionSection.connection,
+    ProxyField.ipVersion ||
+    ProxyField.dial4 ||
+    ProxyField.dial6 => _OptionSection.connection,
     _ => _OptionSection.other,
   };
 
@@ -119,7 +157,9 @@ extension on ProxyField {
     ProxyField.interfaceName || ProxyField.alpn => TextInputLimits.name,
     ProxyField.ip ||
     ProxyField.ipv6 ||
-    ProxyField.allowedIps => TextInputLimits.cidr,
+    ProxyField.allowedIps ||
+    ProxyField.dial4 ||
+    ProxyField.dial6 => TextInputLimits.cidr,
     ProxyField.dns => TextInputLimits.dnsServer,
     ProxyField.wsPath || ProxyField.xhttpPath => TextInputLimits.url,
     _ when kind == ProxyFieldKind.number => TextInputLimits.number,
@@ -1457,7 +1497,11 @@ class _EditCustomProxyViewState extends ConsumerState<_EditCustomProxyView> {
                       if (!field.isCredential) _buildField(proxy, field),
                     _buildSwitchItem(
                       title: 'UDP',
-                      value: proxy.definition['udp'] == true,
+                      // The nowhere parser enables UDP when the key is absent.
+                      value:
+                          proxy.definition['udp'] == true ||
+                          (proxy.type == 'nowhere' &&
+                              !proxy.definition.containsKey('udp')),
                       onChanged: (value) => _update('udp', value),
                     ),
                   ],

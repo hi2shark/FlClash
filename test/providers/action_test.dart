@@ -12,6 +12,7 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -877,6 +878,45 @@ void main() {
         isTrue,
       );
       expect(setupAction.authorizationRequestCount, 1);
+    });
+  });
+
+  group('SetupAction polling', () {
+    test('pausePolling preserves startTime and only toggles pause flag', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      globalState.container = container;
+      // Hidden, the runtime ticker never starts, so resuming leaves no periodic
+      // timer reading the container the tearDown disposes.
+      container.read(appVisibleProvider.notifier).value = false;
+
+      final setup = container.read(setupActionProvider.notifier);
+      final startTime = DateTime.now().subtract(const Duration(seconds: 5));
+      setup.startTime = startTime;
+
+      expect(setup.isStart, isTrue);
+      expect(setup.isPollingPaused, isFalse);
+
+      setup.pausePolling();
+      expect(setup.isPollingPaused, isTrue);
+      expect(setup.startTime, startTime);
+      expect(setup.isStart, isTrue);
+
+      setup.resumePolling();
+      expect(setup.isPollingPaused, isFalse);
+      expect(setup.startTime, startTime);
+      expect(setup.isStart, isTrue);
+    });
+
+    test('pausePolling is a no-op when proxy is not started', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      globalState.container = container;
+
+      final setup = container.read(setupActionProvider.notifier);
+      setup.startTime = null;
+      setup.pausePolling();
+      expect(setup.isPollingPaused, isFalse);
     });
   });
 }

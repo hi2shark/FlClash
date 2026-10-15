@@ -95,6 +95,28 @@ void main() {
     },
   );
 
+  test('answers an empty package name from the cache without a call', () async {
+    var iconCallCount = 0;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          iconCallCount++;
+          return call.arguments['packageName'] == ''
+              ? '/icons/default_icon.webp'
+              : null;
+        });
+
+    final app = App.forTest(channel);
+
+    expect(await app.getPackageIcon(''), isNull);
+    expect(iconCallCount, 0);
+
+    await app.getPackageIcon('com.a');
+    expect(iconCallCount, 2);
+
+    expect(await app.getPackageIcon(''), isNotNull);
+    expect(iconCallCount, 2);
+  });
+
   test(
     'asks Android for a bounded number of package icons at a time',
     () async {

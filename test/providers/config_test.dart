@@ -183,6 +183,16 @@ void main() {
     });
   });
 
+  group('OnDemandEnabled provider', () {
+    test('defaults to enabled and can be disabled', () {
+      expect(container.read(onDemandEnabledProvider), true);
+
+      container.read(onDemandEnabledProvider.notifier).update((_) => false);
+
+      expect(container.read(onDemandEnabledProvider), false);
+    });
+  });
+
   group('configProvider (composite)', () {
     test('composes all sub-providers with defaults', () {
       final config = container.read(configProvider);
@@ -192,12 +202,14 @@ void main() {
       expect(config.networkProps.systemProxy, true);
       expect(config.currentProfileId, null);
       expect(config.hotKeyActions, isEmpty);
+      expect(config.onDemandEnabled, true);
       expect(config.patchClashConfig, const PatchClashConfig());
       expect(config.excludeSSIDs, isEmpty);
     });
 
     test('reflects updated sub-provider values', () {
       container.read(currentProfileIdProvider.notifier).update((_) => 99);
+      container.read(onDemandEnabledProvider.notifier).update((_) => false);
       container
           .read(patchClashConfigProvider.notifier)
           .update((_) => const PatchClashConfig(mixedPort: 7890));
@@ -207,6 +219,7 @@ void main() {
 
       final config = container.read(configProvider);
       expect(config.currentProfileId, 99);
+      expect(config.onDemandEnabled, false);
       expect(config.patchClashConfig.mixedPort, 7890);
       expect(config.excludeSSIDs, ['Office Wi-Fi']);
     });
@@ -234,12 +247,14 @@ void main() {
     test('produces correct overrides', () {
       const config = Config(themeProps: ThemeProps(), currentProfileId: 7);
       final overrides = buildConfigOverrides(config);
-      expect(overrides.length, 11);
+      expect(overrides.length, 13);
 
       final overrideContainer = ProviderContainer(overrides: overrides);
       addTearDown(overrideContainer.dispose);
 
       expect(overrideContainer.read(currentProfileIdProvider), 7);
+      expect(overrideContainer.read(onDemandEnabledProvider), true);
+      expect(overrideContainer.read(unlockTestSettingProvider).enable, false);
       expect(
         overrideContainer.read(patchClashConfigProvider),
         config.patchClashConfig,

@@ -12,3 +12,6 @@ export 'run_time.dart';
 export 'traffic_usage.dart';
 export 'memory_info.dart';
 export 'service_status.dart';
+export 'core_memory_info.dart';
+export 'unlock_detection.dart';
+export 'wifi_watch.dart';

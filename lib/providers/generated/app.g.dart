@@ -102,6 +102,107 @@ abstract class _$AuthorizedTunEnable extends $Notifier<TunAuthorizationState> {
   }
 }
 
+@ProviderFor(unlockTestHistoryWriter)
+final unlockTestHistoryWriterProvider = UnlockTestHistoryWriterProvider._();
+
+final class UnlockTestHistoryWriterProvider
+    extends
+        $FunctionalProvider<
+          UnlockTestHistoryWriter,
+          UnlockTestHistoryWriter,
+          UnlockTestHistoryWriter
+        >
+    with $Provider<UnlockTestHistoryWriter> {
+  UnlockTestHistoryWriterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'unlockTestHistoryWriterProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$unlockTestHistoryWriterHash();
+
+  @$internal
+  @override
+  $ProviderElement<UnlockTestHistoryWriter> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  UnlockTestHistoryWriter create(Ref ref) {
+    return unlockTestHistoryWriter(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(UnlockTestHistoryWriter value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<UnlockTestHistoryWriter>(value),
+    );
+  }
+}
+
+String _$unlockTestHistoryWriterHash() =>
+    r'a66a8f97eaacb2896715a94a84eef765b3ec9851';
+
+@ProviderFor(AndroidServiceSuspended)
+final androidServiceSuspendedProvider = AndroidServiceSuspendedProvider._();
+
+final class AndroidServiceSuspendedProvider
+    extends $NotifierProvider<AndroidServiceSuspended, bool> {
+  AndroidServiceSuspendedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'androidServiceSuspendedProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$androidServiceSuspendedHash();
+
+  @$internal
+  @override
+  AndroidServiceSuspended create() => AndroidServiceSuspended();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$androidServiceSuspendedHash() =>
+    r'2b8cbeccf6b8fb0ab49fda3f6d5a76c09d4ded79';
+
+abstract class _$AndroidServiceSuspended extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(Logs)
 final logsProvider = LogsProvider._();
 
@@ -1334,6 +1435,57 @@ abstract class _$SortNum extends $Notifier<int> {
   }
 }
 
+@ProviderFor(CheckIpNum)
+final checkIpNumProvider = CheckIpNumProvider._();
+
+final class CheckIpNumProvider extends $NotifierProvider<CheckIpNum, int> {
+  CheckIpNumProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'checkIpNumProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$checkIpNumHash();
+
+  @$internal
+  @override
+  CheckIpNum create() => CheckIpNum();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$checkIpNumHash() => r'e66b46fae31f3683698dc55533fbdd240aff44fe';
+
+abstract class _$CheckIpNum extends $Notifier<int> {
+  int build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(Version)
 final versionProvider = VersionProvider._();
 
@@ -1468,7 +1620,7 @@ final class DelayDataSourceProvider
   }
 }
 
-String _$delayDataSourceHash() => r'0d0fb2faccb3ce4539ce683b1a2bc4dcb8c8f3c0';
+String _$delayDataSourceHash() => r'fdf5b512ab2557762daf3712dde212b6fda22eef';
 
 abstract class _$DelayDataSource extends $Notifier<DelayMap> {
   DelayMap build();
@@ -2297,6 +2449,291 @@ final class IsUpdatingFamily extends $Family
 
   @override
   String toString() => r'isUpdatingProvider';
+}
+
+@ProviderFor(UnlockDetection)
+final unlockDetectionProvider = UnlockDetectionProvider._();
+
+final class UnlockDetectionProvider
+    extends $NotifierProvider<UnlockDetection, UnlockDetectionState> {
+  UnlockDetectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'unlockDetectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$unlockDetectionHash();
+
+  @$internal
+  @override
+  UnlockDetection create() => UnlockDetection();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(UnlockDetectionState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<UnlockDetectionState>(value),
+    );
+  }
+}
+
+String _$unlockDetectionHash() => r'ab57e32a57a94794deb157b210671530c958dd4d';
+
+abstract class _$UnlockDetection extends $Notifier<UnlockDetectionState> {
+  UnlockDetectionState build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<UnlockDetectionState, UnlockDetectionState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<UnlockDetectionState, UnlockDetectionState>,
+              UnlockDetectionState,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// Raw WiFi-watch state JSON pushed by the native side via
+/// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
+/// Empty until the first push/poll lands. [WifiWatch] watches this so it can
+/// refresh on native events without a high-frequency poll.
+
+@ProviderFor(WifiWatchStateJson)
+final wifiWatchStateJsonProvider = WifiWatchStateJsonProvider._();
+
+/// Raw WiFi-watch state JSON pushed by the native side via
+/// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
+/// Empty until the first push/poll lands. [WifiWatch] watches this so it can
+/// refresh on native events without a high-frequency poll.
+final class WifiWatchStateJsonProvider
+    extends $NotifierProvider<WifiWatchStateJson, String> {
+  /// Raw WiFi-watch state JSON pushed by the native side via
+  /// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
+  /// Empty until the first push/poll lands. [WifiWatch] watches this so it can
+  /// refresh on native events without a high-frequency poll.
+  WifiWatchStateJsonProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'wifiWatchStateJsonProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$wifiWatchStateJsonHash();
+
+  @$internal
+  @override
+  WifiWatchStateJson create() => WifiWatchStateJson();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$wifiWatchStateJsonHash() =>
+    r'cbc42dc367a053f128bbcf0fb1efcb0f26e91f4e';
+
+/// Raw WiFi-watch state JSON pushed by the native side via
+/// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
+/// Empty until the first push/poll lands. [WifiWatch] watches this so it can
+/// refresh on native events without a high-frequency poll.
+
+abstract class _$WifiWatchStateJson extends $Notifier<String> {
+  String build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(WifiWatch)
+final wifiWatchProvider = WifiWatchProvider._();
+
+final class WifiWatchProvider
+    extends $NotifierProvider<WifiWatch, WifiWatchState> {
+  WifiWatchProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'wifiWatchProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$wifiWatchHash();
+
+  @$internal
+  @override
+  WifiWatch create() => WifiWatch();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WifiWatchState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WifiWatchState>(value),
+    );
+  }
+}
+
+String _$wifiWatchHash() => r'6cd48613cfdf8e8146f8c7ea3b2f409516886cf8';
+
+abstract class _$WifiWatch extends $Notifier<WifiWatchState> {
+  WifiWatchState build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<WifiWatchState, WifiWatchState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<WifiWatchState, WifiWatchState>,
+              WifiWatchState,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(BatteryOptimizationDisable)
+final batteryOptimizationDisableProvider =
+    BatteryOptimizationDisableProvider._();
+
+final class BatteryOptimizationDisableProvider
+    extends $NotifierProvider<BatteryOptimizationDisable, bool> {
+  BatteryOptimizationDisableProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'batteryOptimizationDisableProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$batteryOptimizationDisableHash();
+
+  @$internal
+  @override
+  BatteryOptimizationDisable create() => BatteryOptimizationDisable();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$batteryOptimizationDisableHash() =>
+    r'a95e3e5500f685d44f61804ea280a6a73d639ac1';
+
+abstract class _$BatteryOptimizationDisable extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(BackgroundLocationPermissions)
+final backgroundLocationPermissionsProvider =
+    BackgroundLocationPermissionsProvider._();
+
+final class BackgroundLocationPermissionsProvider
+    extends
+        $NotifierProvider<BackgroundLocationPermissions, WifiSsidPermission> {
+  BackgroundLocationPermissionsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'backgroundLocationPermissionsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$backgroundLocationPermissionsHash();
+
+  @$internal
+  @override
+  BackgroundLocationPermissions create() => BackgroundLocationPermissions();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(WifiSsidPermission value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WifiSsidPermission>(value),
+    );
+  }
+}
+
+String _$backgroundLocationPermissionsHash() =>
+    r'e55d0ea9d762e0ee1f9bff45eed76cab6c1cfbd7';
+
+abstract class _$BackgroundLocationPermissions
+    extends $Notifier<WifiSsidPermission> {
+  WifiSsidPermission build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<WifiSsidPermission, WifiSsidPermission>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<WifiSsidPermission, WifiSsidPermission>,
+              WifiSsidPermission,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
 }
 
 @ProviderFor(CurrentSSID)

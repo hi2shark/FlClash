@@ -1,14 +1,21 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' show Locale;
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/event.dart';
+import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/plugins/service.dart';
+import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:wifi_ssid/wifi_ssid.dart';
 
 part 'generated/app.g.dart';
 
@@ -21,6 +28,23 @@ class AuthorizedTunEnable extends _$AuthorizedTunEnable
   @override
   TunAuthorizationState build() {
     return TunAuthorizationState.none;
+  }
+}
+
+typedef UnlockTestHistoryWriter =
+    Future<void> Function(UnlockTestRunRecord record);
+
+@Riverpod(keepAlive: true)
+UnlockTestHistoryWriter unlockTestHistoryWriter(Ref ref) {
+  return database.unlockTestRunsDao.insertAndPrune;
+}
+
+@Riverpod(keepAlive: true)
+class AndroidServiceSuspended extends _$AndroidServiceSuspended
+    with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return false;
   }
 }
 
@@ -280,6 +304,16 @@ class SortNum extends _$SortNum with AutoDisposeNotifierMixin {
 }
 
 @Riverpod(keepAlive: true)
+class CheckIpNum extends _$CheckIpNum with AutoDisposeNotifierMixin {
+  @override
+  int build() {
+    return 0;
+  }
+
+  int add() => state++;
+}
+
+@Riverpod(keepAlive: true)
 class Version extends _$Version with AutoDisposeNotifierMixin {
   @override
   int build() {
@@ -299,6 +333,8 @@ class Groups extends _$Groups with AutoDisposeNotifierMixin {
 class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
   DelayMap? _owned;
   DelayMap? _published;
+
+  static const _maxUrlBuckets = 3;
 
   @override
   DelayMap build() {
@@ -321,7 +357,27 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
       changed = true;
     }
     if (changed) {
+      _boundUrlBuckets(delayMap, delays.map((delay) => delay.url));
       value = _published = UnmodifiableMapView(delayMap);
+    }
+  }
+
+  void _boundUrlBuckets(DelayMap delayMap, Iterable<String> activeUrls) {
+    if (delayMap.length <= _maxUrlBuckets) {
+      return;
+    }
+    final protected = activeUrls.toSet();
+    final defaultTestUrl = ref.read(appSettingProvider).testUrl;
+    if (defaultTestUrl.isNotEmpty) {
+      protected.add(defaultTestUrl);
+    }
+    for (final url in delayMap.keys.toList()) {
+      if (delayMap.length <= _maxUrlBuckets) {
+        break;
+      }
+      if (!protected.contains(url)) {
+        delayMap.remove(url);
+      }
     }
   }
 
@@ -616,6 +672,335 @@ class UpdatingKeys extends _$UpdatingKeys {
 @riverpod
 bool isUpdating(Ref ref, String name) {
   return ref.watch(updatingKeysProvider).contains(name);
+}
+
+@Riverpod(keepAlive: true)
+class UnlockDetection extends _$UnlockDetection
+    with AutoDisposeNotifierMixin, CoreEventListener {
+  int _checkVersion = 0;
+  String? _activeRunId;
+  DateTime? _startedAt;
+
+  @override
+  UnlockDetectionState build() {
+    coreEventManager.addListener(this);
+    ref.onDispose(() => coreEventManager.removeListener(this));
+    return const UnlockDetectionState(
+      isLoading: false,
+      proxyName: '',
+      results: {},
+    );
+  }
+
+  Future<void> startCheck({
+    UnlockTestRouteMode routeMode = UnlockTestRouteMode.appRoute,
+    String? proxyName,
+    CoreController? controller,
+  }) async {
+    final unlockTestProps = ref.read(unlockTestSettingProvider);
+    if (!unlockTestProps.enable) {
+      return;
+    }
+    final targets = resolveUnlockTestTargets(unlockTestProps.selectedTargets);
+    if (targets.isEmpty) {
+      return;
+    }
+    if (routeMode == UnlockTestRouteMode.proxy &&
+        (proxyName == null || proxyName.isEmpty)) {
+      state = state.copyWith(error: 'A proxy must be selected');
+      return;
+    }
+    final effectiveController =
+        controller ?? ref.read<CoreController>(coreHandlerProvider);
+    final version = ++_checkVersion;
+    final runId = 'unlock-${DateTime.now().microsecondsSinceEpoch}-${utils.id}';
+    _activeRunId = runId;
+    _startedAt = DateTime.now();
+    state = state.copyWith(
+      isLoading: true,
+      proxyName: routeMode == UnlockTestRouteMode.proxy ? proxyName! : '',
+      error: '',
+      testedAt: null,
+      results: {
+        for (final target in targets)
+          target.id: UnlockTestRunItem.untested(target.id),
+      },
+    );
+    try {
+      final result = await effectiveController.getUnlockTest(
+        UnlockTestRunParams(
+          runId: runId,
+          routeMode: routeMode,
+          proxyName: routeMode == UnlockTestRouteMode.proxy ? proxyName : null,
+          timeout: unlockTestTimeout,
+          targetIds: targets.map((target) => target.id).toList(growable: false),
+        ),
+      );
+      if (!ref.mounted || version != _checkVersion || _activeRunId != runId) {
+        return;
+      }
+      final merged = Map<String, UnlockTestRunItem>.from(state.results);
+      for (final item in result.results) {
+        merged[item.id] = item;
+      }
+      _activeRunId = null;
+      final completedAt = DateTime.now();
+      state = state.copyWith(
+        isLoading: false,
+        error: result.error,
+        results: merged,
+        testedAt: result.cancelled || result.error.isNotEmpty
+            ? null
+            : completedAt,
+      );
+      if (!result.cancelled && result.error.isEmpty) {
+        await _saveCompletedRun(
+          result.runId.isEmpty
+              ? UnlockTestRunResult(
+                  runId: runId,
+                  routeMode: routeMode,
+                  proxyName: proxyName,
+                  results: merged.values.toList(growable: false),
+                )
+              : UnlockTestRunResult(
+                  runId: result.runId,
+                  routeMode: result.routeMode,
+                  proxyName: result.proxyName,
+                  results: merged.values.toList(growable: false),
+                ),
+          completedAt: completedAt,
+        );
+      }
+    } catch (e) {
+      commonPrint.log('unlockDetection startCheck error: $e');
+      if (!ref.mounted || version != _checkVersion || _activeRunId != runId) {
+        return;
+      }
+      _activeRunId = null;
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> stopCheck({CoreController? controller}) async {
+    final runId = _activeRunId;
+    if (runId == null) {
+      return;
+    }
+    _activeRunId = null;
+    _checkVersion++;
+    state = state.copyWith(isLoading: false);
+    await (controller ?? ref.read<CoreController>(coreHandlerProvider))
+        .cancelUnlockTest(runId);
+  }
+
+  @override
+  void onUnlockTestProgress(UnlockTestProgress progress) {
+    if (!ref.mounted || progress.runId != _activeRunId) {
+      return;
+    }
+    state = state.copyWith(
+      results: {...state.results, progress.item.id: progress.item},
+    );
+  }
+
+  Future<void> _saveCompletedRun(
+    UnlockTestRunResult result, {
+    required DateTime completedAt,
+  }) async {
+    try {
+      final startedAt = _startedAt ?? DateTime.now();
+      await ref.read(unlockTestHistoryWriterProvider)(
+        UnlockTestRunRecord(
+          runId: result.runId,
+          createdAt: completedAt,
+          durationMs: completedAt.difference(startedAt).inMilliseconds,
+          routeMode: result.routeMode.name,
+          proxyName: result.proxyName,
+          catalogVersion: unlockTestCatalogVersion,
+          resultsJson: jsonEncode(result.toJson()),
+        ),
+      );
+    } catch (error) {
+      commonPrint.log(
+        'unlockDetection save history error: $error',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
+}
+
+Future<List<UnlockTestHistoryEntry>> loadUnlockTestHistory() async {
+  final records = await database.unlockTestRunsDao.latest();
+  return records
+      .map(_historyEntryFromRecord)
+      .whereType<UnlockTestHistoryEntry>()
+      .toList();
+}
+
+Future<UnlockTestHistoryEntry?> loadLatestAppRouteUnlockTest() async {
+  final record = await database.unlockTestRunsDao.latestAppRoute();
+  return record == null ? null : _historyEntryFromRecord(record);
+}
+
+UnlockTestHistoryEntry? _historyEntryFromRecord(UnlockTestRunRecord record) {
+  try {
+    final result = UnlockTestRunResult.fromJson(
+      Map<String, dynamic>.from(jsonDecode(record.resultsJson) as Map),
+    );
+    return UnlockTestHistoryEntry(
+      createdAt: record.createdAt,
+      durationMs: record.durationMs,
+      catalogVersion: record.catalogVersion,
+      result: result,
+    );
+  } catch (error) {
+    commonPrint.log(
+      'unlockDetection decode history error: $error',
+      logLevel: LogLevel.warning,
+    );
+    return null;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class WifiWatchStateJson extends _$WifiWatchStateJson
+    with AutoDisposeNotifierMixin {
+  @override
+  String build() {
+    return '';
+  }
+}
+
+@Riverpod(keepAlive: true)
+class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
+  Timer? _fallbackTimer;
+  bool _initialized = false;
+
+  @override
+  WifiWatchState build() {
+    if (!system.isAndroid) {
+      return const WifiWatchState();
+    }
+
+    final androidSuspended = ref.watch(androidServiceSuspendedProvider);
+    final stateJson = ref.watch(wifiWatchStateJsonProvider);
+
+    if (!_initialized) {
+      _initialized = true;
+      _fetch();
+      _fallbackTimer = Timer.periodic(
+        const Duration(seconds: 10),
+        (_) => _fetch(),
+      );
+      ref.onDispose(() {
+        _fallbackTimer?.cancel();
+        _fallbackTimer = null;
+        _initialized = false;
+      });
+    }
+
+    return buildWifiWatchState(stateJson, androidSuspended);
+  }
+
+  Future<void> _fetch() async {
+    try {
+      final data = await service?.getWifiWatchState();
+      final currentWifiInfo = await _getCurrentWifiInfo();
+      final merged = mergeServiceAndDeviceWifi(data, currentWifiInfo);
+      final notifier = ref.read(wifiWatchStateJsonProvider.notifier);
+      if (ref.read(wifiWatchStateJsonProvider) != merged) {
+        notifier.value = merged;
+      }
+    } catch (e, stack) {
+      commonPrint.log('WifiWatch fetch failed: $e\n$stack');
+    }
+  }
+
+  Future<WifiConnectionInfo> _getCurrentWifiInfo() async {
+    try {
+      return await WifiSsidManager.instance.getCurrentWifiInfo();
+    } catch (_) {
+      try {
+        return WifiConnectionInfo(
+          ssid: await WifiSsidManager.instance.getSsid(),
+        );
+      } catch (_) {
+        return const WifiConnectionInfo();
+      }
+    }
+  }
+}
+
+WifiWatchState buildWifiWatchState(String stateJson, bool androidSuspended) {
+  if (stateJson.isEmpty) {
+    return WifiWatchState(suspended: androidSuspended);
+  }
+  try {
+    final json = jsonDecode(stateJson) as Map<String, dynamic>;
+    if (json.isEmpty) {
+      return WifiWatchState(suspended: androidSuspended);
+    }
+    final serviceState = WifiWatchState.fromJson(json);
+    return serviceState.withAndroidServiceSuspended(androidSuspended);
+  } catch (e, stack) {
+    commonPrint.log('WifiWatch parse failed: $e\n$stack');
+    return WifiWatchState(suspended: androidSuspended);
+  }
+}
+
+String mergeServiceAndDeviceWifi(
+  String? data,
+  WifiConnectionInfo currentWifiInfo,
+) {
+  final hasDeviceInfo =
+      currentWifiInfo.ssid != null || currentWifiInfo.rssi != null;
+  final fallback = wifiWatchStateFromDeviceInfo(currentWifiInfo);
+  if (data == null || data.isEmpty) {
+    return jsonEncode(fallback.toJson());
+  }
+  try {
+    final json = jsonDecode(data) as Map<String, dynamic>;
+    if (json.isEmpty) {
+      return jsonEncode(fallback.toJson());
+    }
+    final serviceState = WifiWatchState.fromJson(json);
+    final merged = serviceState.copyWith(
+      rawSsid: serviceState.ssid ?? currentWifiInfo.ssid,
+      rssi: serviceState.rssi ?? currentWifiInfo.rssi,
+      wifiPresent: serviceState.wifiPresent || hasDeviceInfo,
+    );
+    return jsonEncode(merged.toJson());
+  } catch (e) {
+    return data;
+  }
+}
+
+WifiWatchState wifiWatchStateFromDeviceInfo(WifiConnectionInfo info) {
+  final hasDeviceInfo = info.ssid != null || info.rssi != null;
+  return WifiWatchState(
+    ssid: info.ssid,
+    rawSsid: info.ssid,
+    rssi: info.rssi,
+    wifiPresent: hasDeviceInfo,
+  );
+}
+
+@Riverpod(keepAlive: true)
+class BatteryOptimizationDisable extends _$BatteryOptimizationDisable
+    with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return false;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class BackgroundLocationPermissions extends _$BackgroundLocationPermissions
+    with AutoDisposeNotifierMixin {
+  @override
+  WifiSsidPermission build() {
+    return WifiSsidPermission.denied;
+  }
 }
 
 @Riverpod(keepAlive: true)

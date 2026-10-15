@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/manager/background_resource_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -85,11 +86,33 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
     };
   }
 
+  DateTime? _lastResumeHandledAt;
+
+  bool _isBackgroundLifecycle(AppLifecycleState state) {
+    return state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        (state == AppLifecycleState.inactive && !system.isDesktop);
+  }
+
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     _updateVisible(state);
+    if (_isBackgroundLifecycle(state)) {
+      backgroundResourceManager.enterBackground();
+      return;
+    }
     if (state == AppLifecycleState.resumed) {
+      backgroundResourceManager.leaveBackground();
+      // A system dialog flips the app inactive and back, so throttle this.
+      final now = DateTime.now();
+      final lastHandled = _lastResumeHandledAt;
+      if (lastHandled != null &&
+          now.difference(lastHandled) < const Duration(seconds: 1)) {
+        return;
+      }
+      _lastResumeHandledAt = now;
       unawaited(ref.read(locationPermissionsProvider.notifier).refresh());
+      permissions.check();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
           return;

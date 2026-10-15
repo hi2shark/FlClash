@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -121,6 +122,79 @@ class SystemProxyItem extends ConsumerWidget {
       title: (l) => l.systemProxy,
       select: (state) => state.systemProxy,
       update: (state, value) => state.copyWith(systemProxy: value),
+    );
+  }
+}
+
+class ProxyAuthenticationItem extends ConsumerWidget {
+  const ProxyAuthenticationItem({super.key});
+
+  void _applyProfile(WidgetRef ref) {
+    ref.read(setupActionProvider.notifier).applyProfileDebounce();
+  }
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final appLocalizations = context.appLocalizations;
+    final authentication = ref.watch(
+      networkSettingProvider.select((state) => state.authentication),
+    );
+    return Column(
+      children: [
+        ListItem.toggle(
+          title: Text(appLocalizations.proxyAuthentication),
+          subtitle: Text(appLocalizations.proxyAuthenticationDesc),
+          value: authentication.enable,
+          onChanged: (bool value) async {
+            ref
+                .read(networkSettingProvider.notifier)
+                .update(
+                  (state) => state.copyWith.authentication(enable: value),
+                );
+            _applyProfile(ref);
+          },
+        ),
+        if (authentication.enable) ...[
+          ListItem.input(
+            title: Text(appLocalizations.username),
+            subtitle: Text(
+              authentication.username.isEmpty
+                  ? appLocalizations.defaultText
+                  : authentication.username,
+            ),
+            dialogTitle: appLocalizations.username,
+            value: authentication.username,
+            onChanged: (value) {
+              ref
+                  .read(networkSettingProvider.notifier)
+                  .update(
+                    (state) =>
+                        state.copyWith.authentication(username: value ?? ''),
+                  );
+              _applyProfile(ref);
+            },
+          ),
+          ListItem.input(
+            title: Text(appLocalizations.password),
+            subtitle: Text(
+              authentication.password.isEmpty
+                  ? appLocalizations.defaultText
+                  : '••••••',
+            ),
+            dialogTitle: appLocalizations.password,
+            value: authentication.password,
+            onChanged: (value) {
+              ref
+                  .read(networkSettingProvider.notifier)
+                  .update(
+                    (state) =>
+                        state.copyWith.authentication(password: value ?? ''),
+                  );
+              _applyProfile(ref);
+            },
+          ),
+        ],
+      ],
     );
   }
 }
@@ -500,6 +574,7 @@ class VpnSections extends ConsumerWidget {
           title: 'VPN',
           items: const [
             VpnSystemProxyItem(),
+            ProxyAuthenticationItem(),
             BypassDomainItem(),
             AllowBypassItem(),
             Ipv6Item(),
@@ -527,6 +602,7 @@ class SystemProxySection extends StatelessWidget {
       title: appLocalizations.system,
       items: [
         const SystemProxyItem(),
+        const ProxyAuthenticationItem(),
         const BypassDomainItem(),
         if (system.isWindows) const LoopbackItem(),
       ],

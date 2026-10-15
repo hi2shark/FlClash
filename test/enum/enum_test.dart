@@ -9,6 +9,7 @@ void main() {
       expect(GroupType.parse('URLTEST'), GroupType.URLTest);
       expect(GroupType.parse('selector'), GroupType.Selector);
       expect(GroupType.parse('loadbalance'), GroupType.LoadBalance);
+      expect(GroupType.parse('relay'), GroupType.Relay);
     });
 
     test('throws for unsupported group type', () {
@@ -21,6 +22,15 @@ void main() {
       expect(GroupTypeExtension.getGroupType('Selector'), GroupType.Selector);
       expect(GroupTypeExtension.getGroupType('URLTest'), GroupType.URLTest);
       expect(GroupTypeExtension.getGroupType('missing'), isNull);
+    });
+
+    test('excludes relay removed by the core from supported values', () {
+      expect(
+        GroupTypeExtension.supportedValues,
+        isNot(contains(GroupType.Relay)),
+      );
+      expect(GroupTypeExtension.valueList, isNot(contains('Relay')));
+      expect(GroupTypeExtension.getGroupType('Relay'), isNull);
     });
 
     test('marks only computed selection types', () {
@@ -55,6 +65,27 @@ void main() {
       expect(RuleAction.GEOIP.hasParams, isTrue);
       expect(RuleAction.IP_CIDR.hasParams, isTrue);
       expect(RuleAction.DOMAIN.hasParams, isFalse);
+    });
+
+    test('identifies comma payloads used by mihomo logical/regex rules', () {
+      expect(RuleAction.AND.hasCommaPayload, isTrue);
+      expect(RuleAction.OR.hasCommaPayload, isTrue);
+      expect(RuleAction.NOT.hasCommaPayload, isTrue);
+      expect(RuleAction.DOMAIN_REGEX.hasCommaPayload, isTrue);
+      expect(RuleAction.DOMAIN.hasCommaPayload, isFalse);
+      expect(RuleAction.DOMAIN_WILDCARD.hasCommaPayload, isFalse);
+    });
+
+    test('includes new wildcard and rematch actions in added rules', () {
+      expect(
+        RuleAction.addedRuleActions,
+        containsAll([
+          RuleAction.DOMAIN_WILDCARD,
+          RuleAction.REMATCH_NAME,
+          RuleAction.PROCESS_PATH_WILDCARD,
+          RuleAction.PROCESS_NAME_WILDCARD,
+        ]),
+      );
     });
   });
 

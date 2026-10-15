@@ -4332,6 +4332,487 @@ class ProxyDialersCompanion extends UpdateCompanion<RawProxyDialer> {
   }
 }
 
+class $UnlockTestRunsTable extends UnlockTestRuns
+    with TableInfo<$UnlockTestRunsTable, RawUnlockTestRun> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UnlockTestRunsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _runIdMeta = const VerificationMeta('runId');
+  @override
+  late final GeneratedColumn<String> runId = GeneratedColumn<String>(
+    'run_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _durationMsMeta = const VerificationMeta(
+    'durationMs',
+  );
+  @override
+  late final GeneratedColumn<int> durationMs = GeneratedColumn<int>(
+    'duration_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _routeModeMeta = const VerificationMeta(
+    'routeMode',
+  );
+  @override
+  late final GeneratedColumn<String> routeMode = GeneratedColumn<String>(
+    'route_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _proxyNameMeta = const VerificationMeta(
+    'proxyName',
+  );
+  @override
+  late final GeneratedColumn<String> proxyName = GeneratedColumn<String>(
+    'proxy_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _catalogVersionMeta = const VerificationMeta(
+    'catalogVersion',
+  );
+  @override
+  late final GeneratedColumn<int> catalogVersion = GeneratedColumn<int>(
+    'catalog_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _resultsJsonMeta = const VerificationMeta(
+    'resultsJson',
+  );
+  @override
+  late final GeneratedColumn<String> resultsJson = GeneratedColumn<String>(
+    'results_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    runId,
+    createdAt,
+    durationMs,
+    routeMode,
+    proxyName,
+    catalogVersion,
+    resultsJson,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'unlock_test_runs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RawUnlockTestRun> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('run_id')) {
+      context.handle(
+        _runIdMeta,
+        runId.isAcceptableOrUnknown(data['run_id']!, _runIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_runIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('duration_ms')) {
+      context.handle(
+        _durationMsMeta,
+        durationMs.isAcceptableOrUnknown(data['duration_ms']!, _durationMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_durationMsMeta);
+    }
+    if (data.containsKey('route_mode')) {
+      context.handle(
+        _routeModeMeta,
+        routeMode.isAcceptableOrUnknown(data['route_mode']!, _routeModeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_routeModeMeta);
+    }
+    if (data.containsKey('proxy_name')) {
+      context.handle(
+        _proxyNameMeta,
+        proxyName.isAcceptableOrUnknown(data['proxy_name']!, _proxyNameMeta),
+      );
+    }
+    if (data.containsKey('catalog_version')) {
+      context.handle(
+        _catalogVersionMeta,
+        catalogVersion.isAcceptableOrUnknown(
+          data['catalog_version']!,
+          _catalogVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_catalogVersionMeta);
+    }
+    if (data.containsKey('results_json')) {
+      context.handle(
+        _resultsJsonMeta,
+        resultsJson.isAcceptableOrUnknown(
+          data['results_json']!,
+          _resultsJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_resultsJsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {runId};
+  @override
+  RawUnlockTestRun map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RawUnlockTestRun(
+      runId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}run_id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      durationMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_ms'],
+      )!,
+      routeMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}route_mode'],
+      )!,
+      proxyName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}proxy_name'],
+      ),
+      catalogVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}catalog_version'],
+      )!,
+      resultsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}results_json'],
+      )!,
+    );
+  }
+
+  @override
+  $UnlockTestRunsTable createAlias(String alias) {
+    return $UnlockTestRunsTable(attachedDatabase, alias);
+  }
+}
+
+class RawUnlockTestRun extends DataClass
+    implements Insertable<RawUnlockTestRun> {
+  final String runId;
+  final int createdAt;
+  final int durationMs;
+  final String routeMode;
+  final String? proxyName;
+  final int catalogVersion;
+  final String resultsJson;
+  const RawUnlockTestRun({
+    required this.runId,
+    required this.createdAt,
+    required this.durationMs,
+    required this.routeMode,
+    this.proxyName,
+    required this.catalogVersion,
+    required this.resultsJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['run_id'] = Variable<String>(runId);
+    map['created_at'] = Variable<int>(createdAt);
+    map['duration_ms'] = Variable<int>(durationMs);
+    map['route_mode'] = Variable<String>(routeMode);
+    if (!nullToAbsent || proxyName != null) {
+      map['proxy_name'] = Variable<String>(proxyName);
+    }
+    map['catalog_version'] = Variable<int>(catalogVersion);
+    map['results_json'] = Variable<String>(resultsJson);
+    return map;
+  }
+
+  UnlockTestRunsCompanion toCompanion(bool nullToAbsent) {
+    return UnlockTestRunsCompanion(
+      runId: Value(runId),
+      createdAt: Value(createdAt),
+      durationMs: Value(durationMs),
+      routeMode: Value(routeMode),
+      proxyName: proxyName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(proxyName),
+      catalogVersion: Value(catalogVersion),
+      resultsJson: Value(resultsJson),
+    );
+  }
+
+  factory RawUnlockTestRun.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RawUnlockTestRun(
+      runId: serializer.fromJson<String>(json['runId']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      durationMs: serializer.fromJson<int>(json['durationMs']),
+      routeMode: serializer.fromJson<String>(json['routeMode']),
+      proxyName: serializer.fromJson<String?>(json['proxyName']),
+      catalogVersion: serializer.fromJson<int>(json['catalogVersion']),
+      resultsJson: serializer.fromJson<String>(json['resultsJson']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'runId': serializer.toJson<String>(runId),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'durationMs': serializer.toJson<int>(durationMs),
+      'routeMode': serializer.toJson<String>(routeMode),
+      'proxyName': serializer.toJson<String?>(proxyName),
+      'catalogVersion': serializer.toJson<int>(catalogVersion),
+      'resultsJson': serializer.toJson<String>(resultsJson),
+    };
+  }
+
+  RawUnlockTestRun copyWith({
+    String? runId,
+    int? createdAt,
+    int? durationMs,
+    String? routeMode,
+    Value<String?> proxyName = const Value.absent(),
+    int? catalogVersion,
+    String? resultsJson,
+  }) => RawUnlockTestRun(
+    runId: runId ?? this.runId,
+    createdAt: createdAt ?? this.createdAt,
+    durationMs: durationMs ?? this.durationMs,
+    routeMode: routeMode ?? this.routeMode,
+    proxyName: proxyName.present ? proxyName.value : this.proxyName,
+    catalogVersion: catalogVersion ?? this.catalogVersion,
+    resultsJson: resultsJson ?? this.resultsJson,
+  );
+  RawUnlockTestRun copyWithCompanion(UnlockTestRunsCompanion data) {
+    return RawUnlockTestRun(
+      runId: data.runId.present ? data.runId.value : this.runId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      durationMs: data.durationMs.present
+          ? data.durationMs.value
+          : this.durationMs,
+      routeMode: data.routeMode.present ? data.routeMode.value : this.routeMode,
+      proxyName: data.proxyName.present ? data.proxyName.value : this.proxyName,
+      catalogVersion: data.catalogVersion.present
+          ? data.catalogVersion.value
+          : this.catalogVersion,
+      resultsJson: data.resultsJson.present
+          ? data.resultsJson.value
+          : this.resultsJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RawUnlockTestRun(')
+          ..write('runId: $runId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('routeMode: $routeMode, ')
+          ..write('proxyName: $proxyName, ')
+          ..write('catalogVersion: $catalogVersion, ')
+          ..write('resultsJson: $resultsJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    runId,
+    createdAt,
+    durationMs,
+    routeMode,
+    proxyName,
+    catalogVersion,
+    resultsJson,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RawUnlockTestRun &&
+          other.runId == this.runId &&
+          other.createdAt == this.createdAt &&
+          other.durationMs == this.durationMs &&
+          other.routeMode == this.routeMode &&
+          other.proxyName == this.proxyName &&
+          other.catalogVersion == this.catalogVersion &&
+          other.resultsJson == this.resultsJson);
+}
+
+class UnlockTestRunsCompanion extends UpdateCompanion<RawUnlockTestRun> {
+  final Value<String> runId;
+  final Value<int> createdAt;
+  final Value<int> durationMs;
+  final Value<String> routeMode;
+  final Value<String?> proxyName;
+  final Value<int> catalogVersion;
+  final Value<String> resultsJson;
+  final Value<int> rowid;
+  const UnlockTestRunsCompanion({
+    this.runId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.durationMs = const Value.absent(),
+    this.routeMode = const Value.absent(),
+    this.proxyName = const Value.absent(),
+    this.catalogVersion = const Value.absent(),
+    this.resultsJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  UnlockTestRunsCompanion.insert({
+    required String runId,
+    required int createdAt,
+    required int durationMs,
+    required String routeMode,
+    this.proxyName = const Value.absent(),
+    required int catalogVersion,
+    required String resultsJson,
+    this.rowid = const Value.absent(),
+  }) : runId = Value(runId),
+       createdAt = Value(createdAt),
+       durationMs = Value(durationMs),
+       routeMode = Value(routeMode),
+       catalogVersion = Value(catalogVersion),
+       resultsJson = Value(resultsJson);
+  static Insertable<RawUnlockTestRun> custom({
+    Expression<String>? runId,
+    Expression<int>? createdAt,
+    Expression<int>? durationMs,
+    Expression<String>? routeMode,
+    Expression<String>? proxyName,
+    Expression<int>? catalogVersion,
+    Expression<String>? resultsJson,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (runId != null) 'run_id': runId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (durationMs != null) 'duration_ms': durationMs,
+      if (routeMode != null) 'route_mode': routeMode,
+      if (proxyName != null) 'proxy_name': proxyName,
+      if (catalogVersion != null) 'catalog_version': catalogVersion,
+      if (resultsJson != null) 'results_json': resultsJson,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  UnlockTestRunsCompanion copyWith({
+    Value<String>? runId,
+    Value<int>? createdAt,
+    Value<int>? durationMs,
+    Value<String>? routeMode,
+    Value<String?>? proxyName,
+    Value<int>? catalogVersion,
+    Value<String>? resultsJson,
+    Value<int>? rowid,
+  }) {
+    return UnlockTestRunsCompanion(
+      runId: runId ?? this.runId,
+      createdAt: createdAt ?? this.createdAt,
+      durationMs: durationMs ?? this.durationMs,
+      routeMode: routeMode ?? this.routeMode,
+      proxyName: proxyName ?? this.proxyName,
+      catalogVersion: catalogVersion ?? this.catalogVersion,
+      resultsJson: resultsJson ?? this.resultsJson,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (runId.present) {
+      map['run_id'] = Variable<String>(runId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (durationMs.present) {
+      map['duration_ms'] = Variable<int>(durationMs.value);
+    }
+    if (routeMode.present) {
+      map['route_mode'] = Variable<String>(routeMode.value);
+    }
+    if (proxyName.present) {
+      map['proxy_name'] = Variable<String>(proxyName.value);
+    }
+    if (catalogVersion.present) {
+      map['catalog_version'] = Variable<int>(catalogVersion.value);
+    }
+    if (resultsJson.present) {
+      map['results_json'] = Variable<String>(resultsJson.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UnlockTestRunsCompanion(')
+          ..write('runId: $runId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('routeMode: $routeMode, ')
+          ..write('proxyName: $proxyName, ')
+          ..write('catalogVersion: $catalogVersion, ')
+          ..write('resultsJson: $resultsJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$Database extends GeneratedDatabase {
   _$Database(QueryExecutor e) : super(e);
   $DatabaseManager get managers => $DatabaseManager(this);
@@ -4345,6 +4826,7 @@ abstract class _$Database extends GeneratedDatabase {
   late final $ClashProvidersTable clashProviders = $ClashProvidersTable(this);
   late final $CustomProxiesTable customProxies = $CustomProxiesTable(this);
   late final $ProxyDialersTable proxyDialers = $ProxyDialersTable(this);
+  late final $UnlockTestRunsTable unlockTestRuns = $UnlockTestRunsTable(this);
   late final Index idxRuleTarget = Index(
     'idx_rule_target',
     'CREATE INDEX idx_rule_target ON rules (rule_target)',
@@ -4360,6 +4842,10 @@ abstract class _$Database extends GeneratedDatabase {
   late final Index lastAccessedUrl = Index(
     'last_accessed_url',
     'CREATE INDEX last_accessed_url ON icon_records (last_accessed, url)',
+  );
+  late final Index unlockTestRunsCreatedAt = Index(
+    'unlock_test_runs_created_at',
+    'CREATE INDEX unlock_test_runs_created_at ON unlock_test_runs (created_at DESC)',
   );
   late final ProfilesDao profilesDao = ProfilesDao(this as Database);
   late final ScriptsDao scriptsDao = ScriptsDao(this as Database);
@@ -4391,10 +4877,12 @@ abstract class _$Database extends GeneratedDatabase {
     clashProviders,
     customProxies,
     proxyDialers,
+    unlockTestRuns,
     idxRuleTarget,
     idxRulesProfileOrder,
     idxProxyGroupsProfileOrder,
     lastAccessedUrl,
+    unlockTestRunsCreatedAt,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -7994,6 +8482,259 @@ typedef $$ProxyDialersTableProcessedTableManager =
       RawProxyDialer,
       PrefetchHooks Function({bool profileId, bool proxyId})
     >;
+typedef $$UnlockTestRunsTableCreateCompanionBuilder =
+    UnlockTestRunsCompanion Function({
+      required String runId,
+      required int createdAt,
+      required int durationMs,
+      required String routeMode,
+      Value<String?> proxyName,
+      required int catalogVersion,
+      required String resultsJson,
+      Value<int> rowid,
+    });
+typedef $$UnlockTestRunsTableUpdateCompanionBuilder =
+    UnlockTestRunsCompanion Function({
+      Value<String> runId,
+      Value<int> createdAt,
+      Value<int> durationMs,
+      Value<String> routeMode,
+      Value<String?> proxyName,
+      Value<int> catalogVersion,
+      Value<String> resultsJson,
+      Value<int> rowid,
+    });
+
+class $$UnlockTestRunsTableFilterComposer
+    extends Composer<_$Database, $UnlockTestRunsTable> {
+  $$UnlockTestRunsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get runId => $composableBuilder(
+    column: $table.runId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get routeMode => $composableBuilder(
+    column: $table.routeMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get proxyName => $composableBuilder(
+    column: $table.proxyName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get catalogVersion => $composableBuilder(
+    column: $table.catalogVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get resultsJson => $composableBuilder(
+    column: $table.resultsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UnlockTestRunsTableOrderingComposer
+    extends Composer<_$Database, $UnlockTestRunsTable> {
+  $$UnlockTestRunsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get runId => $composableBuilder(
+    column: $table.runId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get routeMode => $composableBuilder(
+    column: $table.routeMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get proxyName => $composableBuilder(
+    column: $table.proxyName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get catalogVersion => $composableBuilder(
+    column: $table.catalogVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get resultsJson => $composableBuilder(
+    column: $table.resultsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UnlockTestRunsTableAnnotationComposer
+    extends Composer<_$Database, $UnlockTestRunsTable> {
+  $$UnlockTestRunsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get runId =>
+      $composableBuilder(column: $table.runId, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get routeMode =>
+      $composableBuilder(column: $table.routeMode, builder: (column) => column);
+
+  GeneratedColumn<String> get proxyName =>
+      $composableBuilder(column: $table.proxyName, builder: (column) => column);
+
+  GeneratedColumn<int> get catalogVersion => $composableBuilder(
+    column: $table.catalogVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get resultsJson => $composableBuilder(
+    column: $table.resultsJson,
+    builder: (column) => column,
+  );
+}
+
+class $$UnlockTestRunsTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $UnlockTestRunsTable,
+          RawUnlockTestRun,
+          $$UnlockTestRunsTableFilterComposer,
+          $$UnlockTestRunsTableOrderingComposer,
+          $$UnlockTestRunsTableAnnotationComposer,
+          $$UnlockTestRunsTableCreateCompanionBuilder,
+          $$UnlockTestRunsTableUpdateCompanionBuilder,
+          (
+            RawUnlockTestRun,
+            BaseReferences<_$Database, $UnlockTestRunsTable, RawUnlockTestRun>,
+          ),
+          RawUnlockTestRun,
+          PrefetchHooks Function()
+        > {
+  $$UnlockTestRunsTableTableManager(_$Database db, $UnlockTestRunsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UnlockTestRunsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UnlockTestRunsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UnlockTestRunsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> runId = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> durationMs = const Value.absent(),
+                Value<String> routeMode = const Value.absent(),
+                Value<String?> proxyName = const Value.absent(),
+                Value<int> catalogVersion = const Value.absent(),
+                Value<String> resultsJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => UnlockTestRunsCompanion(
+                runId: runId,
+                createdAt: createdAt,
+                durationMs: durationMs,
+                routeMode: routeMode,
+                proxyName: proxyName,
+                catalogVersion: catalogVersion,
+                resultsJson: resultsJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String runId,
+                required int createdAt,
+                required int durationMs,
+                required String routeMode,
+                Value<String?> proxyName = const Value.absent(),
+                required int catalogVersion,
+                required String resultsJson,
+                Value<int> rowid = const Value.absent(),
+              }) => UnlockTestRunsCompanion.insert(
+                runId: runId,
+                createdAt: createdAt,
+                durationMs: durationMs,
+                routeMode: routeMode,
+                proxyName: proxyName,
+                catalogVersion: catalogVersion,
+                resultsJson: resultsJson,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$UnlockTestRunsTable, RawUnlockTestRun>(table),
+                  BaseReferences<
+                    _$Database,
+                    $UnlockTestRunsTable,
+                    RawUnlockTestRun
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UnlockTestRunsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $UnlockTestRunsTable,
+      RawUnlockTestRun,
+      $$UnlockTestRunsTableFilterComposer,
+      $$UnlockTestRunsTableOrderingComposer,
+      $$UnlockTestRunsTableAnnotationComposer,
+      $$UnlockTestRunsTableCreateCompanionBuilder,
+      $$UnlockTestRunsTableUpdateCompanionBuilder,
+      (
+        RawUnlockTestRun,
+        BaseReferences<_$Database, $UnlockTestRunsTable, RawUnlockTestRun>,
+      ),
+      RawUnlockTestRun,
+      PrefetchHooks Function()
+    >;
 
 class $DatabaseManager {
   final _$Database _db;
@@ -8018,6 +8759,8 @@ class $DatabaseManager {
       $$CustomProxiesTableTableManager(_db, _db.customProxies);
   $$ProxyDialersTableTableManager get proxyDialers =>
       $$ProxyDialersTableTableManager(_db, _db.proxyDialers);
+  $$UnlockTestRunsTableTableManager get unlockTestRuns =>
+      $$UnlockTestRunsTableTableManager(_db, _db.unlockTestRuns);
 }
 
 mixin _$ProfilesDaoMixin on DatabaseAccessor<Database> {

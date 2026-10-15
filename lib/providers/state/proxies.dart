@@ -28,7 +28,9 @@ bool _hasSelection(Proxy proxy) => proxy.now?.isNotEmpty ?? false;
 
 @riverpod
 ProxyState proxyState(Ref ref) {
-  final suspend = ref.watch(suspendProvider);
+  final suspend = system.isAndroid
+      ? ref.watch(androidServiceSuspendedProvider)
+      : ref.watch(suspendProvider);
   final isStart = ref.watch(runTimeProvider.select((state) => state != null));
   final systemProxySelector = ref.watch(
     networkSettingProvider.select(
@@ -286,9 +288,12 @@ String proxyDesc(Ref ref, Proxy proxy) {
   if (!groupTypeNamesList.contains(proxy.type)) {
     return proxy.type;
   } else {
-    final groups = ref.watch(groupsProvider);
-    final index = groups.indexWhere((element) => element.name == proxy.name);
-    if (index == -1) return proxy.type;
+    final isGroup = ref.watch(
+      groupsProvider.select(
+        (state) => state.any((element) => element.name == proxy.name),
+      ),
+    );
+    if (!isGroup) return proxy.type;
     final state = ref.watch(realSelectedProxyStateProvider(proxy.name));
     return "${proxy.type}(${state.proxyName.isNotEmpty ? state.proxyName : '*'})";
   }

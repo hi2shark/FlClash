@@ -50,6 +50,14 @@ mixin CoreInterface {
 
   Future<List<ServiceCheckItem>> serviceCheck(ServiceCheckParams params);
 
+  Future<SpeedTestResult?> speedTest(SpeedTestParams params);
+
+  Future<QuicTestResult?> quicTest(QuicTestParams params);
+
+  Future<UnlockTestRunResult?> unlockTest(UnlockTestRunParams params);
+
+  Future<bool> cancelUnlockTest(String runId);
+
   Future<String> updateConfig(UpdateParams updateParams);
 
   Future<String> setupConfig(SetupParams setupParams);
@@ -566,6 +574,59 @@ abstract class CoreHandlerInterface with CoreInterface {
                     ServiceCheckItem.fromJson(item as Map<String, dynamic>),
               )
               .toList();
+  }
+
+  @override
+  Future<SpeedTestResult?> speedTest(SpeedTestParams params) async {
+    final timeout = params.timeout != null && params.timeout! > 0
+        ? params.timeout!
+        : speedTestTimeoutDuration.inMilliseconds;
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.speedTest,
+      arguments: params.toJson(),
+      timeout: coreGuardFor(timeout),
+    );
+    return data == null ? null : SpeedTestResult.fromJson(data);
+  }
+
+  @override
+  Future<QuicTestResult?> quicTest(QuicTestParams params) async {
+    final timeout = params.timeout != null && params.timeout! > 0
+        ? params.timeout!
+        : quicTestTimeoutDuration.inMilliseconds;
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.quicTest,
+      arguments: params.toJson(),
+      timeout: coreGuardFor(timeout),
+    );
+    return data == null ? null : QuicTestResult.fromJson(data);
+  }
+
+  @override
+  Future<UnlockTestRunResult?> unlockTest(UnlockTestRunParams params) async {
+    final perTestTimeout = params.timeout > 0
+        ? params.timeout
+        : unlockTestTimeout;
+    final batches = params.targetIds.isEmpty
+        ? 1
+        : (params.targetIds.length + unlockTestConcurrency - 1) ~/
+              unlockTestConcurrency;
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.unlockTest,
+      arguments: params.toJson(),
+      timeout: coreGuardFor(perTestTimeout * batches),
+    );
+    return data == null ? null : UnlockTestRunResult.fromJson(data);
+  }
+
+  @override
+  Future<bool> cancelUnlockTest(String runId) async {
+    return await _invokeMethod<bool>(
+          method: CoreMethod.cancelUnlockTest,
+          arguments: runId,
+          timeout: coreGuardFor(2000),
+        ) ??
+        false;
   }
 
   @override

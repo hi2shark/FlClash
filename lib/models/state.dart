@@ -9,6 +9,7 @@ import 'common.dart';
 import 'config.dart';
 import 'core.dart';
 import 'profile.dart';
+import 'unlock_test.dart';
 
 part 'generated/state.freezed.dart';
 part 'generated/state.g.dart';
@@ -88,6 +89,25 @@ abstract class ProfilesState with _$ProfilesState {
     required List<Profile> profiles,
     required int? currentProfileId,
   }) = _ProfilesState;
+}
+
+@freezed
+abstract class NetworkDetectionState with _$NetworkDetectionState {
+  const factory NetworkDetectionState({
+    required bool isLoading,
+    required IpInfo? ipInfo,
+  }) = _NetworkDetectionState;
+}
+
+@freezed
+abstract class UnlockDetectionState with _$UnlockDetectionState {
+  const factory UnlockDetectionState({
+    required bool isLoading,
+    required String proxyName,
+    required Map<String, UnlockTestRunItem> results,
+    @Default('') String error,
+    DateTime? testedAt,
+  }) = _UnlockDetectionState;
 }
 
 @freezed
@@ -293,6 +313,19 @@ abstract class SelectedProxyState with _$SelectedProxyState {
 }
 
 @freezed
+abstract class VpnState with _$VpnState {
+  const factory VpnState({
+    required TunStack stack,
+    required VpnProps vpnProps,
+    required bool dnsEnable,
+  }) = _VpnState;
+}
+
+Object? _readSuspendOnWifiSsids(Map json, String key) {
+  return json[key] ?? json['excludeSSIDs'];
+}
+
+@freezed
 abstract class SharedState with _$SharedState {
   const factory SharedState({
     SetupParams? setupParams,
@@ -302,9 +335,14 @@ abstract class SharedState with _$SharedState {
     required String localNetworkTip,
     required String currentProfileName,
     required String stopText,
+    @Default('Suspended...') String suspendedText,
     required bool onlyStatisticsProxy,
     @Default(true) bool showStopAction,
     required bool crashlytics,
+    @Default(true) bool showNotificationStopAction,
+    @JsonKey(readValue: _readSuspendOnWifiSsids)
+    @Default([])
+    List<String> suspendOnWifiSsids,
   }) = _SharedState;
 
   factory SharedState.fromJson(Map<String, Object?> json) =>

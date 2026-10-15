@@ -1,0 +1,1135 @@
+import 'dart:io';
+
+import 'package:fl_clash/local_proxies/services/local_proxy_provider_generator.dart';
+import 'package:fl_clash/models/local_proxy.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:yaml/yaml.dart' as yaml;
+
+class _FakePathProvider extends PathProviderPlatform {
+  final String root;
+
+  _FakePathProvider(this.root);
+
+  @override
+  Future<String?> getApplicationSupportPath() async => root;
+
+  @override
+  Future<String?> getTemporaryPath() async => path.join(root, 'temp');
+
+  @override
+  Future<String?> getApplicationCachePath() async => path.join(root, 'cache');
+
+  @override
+  Future<String?> getDownloadsPath() async => path.join(root, 'downloads');
+
+  @override
+  Future<String?> getLibraryPath() async => root;
+
+  @override
+  Future<String?> getExternalStoragePath() async => null;
+
+  @override
+  Future<List<String>?> getExternalCachePaths() async => null;
+
+  @override
+  Future<List<String>?> getExternalStoragePaths({
+    StorageDirectory? type,
+  }) async => null;
+}
+
+LocalProxy _proxy({
+  required String type,
+  required Map<String, dynamic> config,
+  String name = 'Test',
+}) {
+  return LocalProxy(
+    id: 1,
+    name: name,
+    type: type,
+    enabled: true,
+    config: config,
+    createdAt: DateTime.utc(2026),
+    updatedAt: DateTime.utc(2026),
+  );
+}
+
+Map<String, dynamic> _validNowhereConfig() {
+  return {
+    'name': 'Nowhere',
+    'type': 'nowhere',
+    'server': 'example.com',
+    'port': 2077,
+    'password': 'secret',
+    'alpn': ['nw2'],
+    'udp': true,
+  };
+}
+
+Map<String, dynamic> _validNowhere3Config() {
+  return {
+    'name': 'Nowhere 3',
+    'type': 'nowhere',
+    'server': 'example.com',
+    'port': 2077,
+    'password': '0123456789abcdef0123456789abcdef',
+    'udp': true,
+  };
+}
+
+Map _firstProxy(String yamlString) {
+  final document = yaml.loadYaml(yamlString) as Map;
+  return (document['proxies'] as List).first as Map;
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  const generator = LocalProxyProviderGenerator();
+  late Directory sandbox;
+  late Directory homeDirectory;
+  late Directory outsideDirectory;
+
+  setUpAll(() async {
+    sandbox = await Directory.systemTemp.createTemp('flclash_generator_test_');
+    homeDirectory = Directory(path.join(sandbox.path, 'home'));
+    outsideDirectory = Directory(path.join(sandbox.path, 'outside'));
+    await homeDirectory.create(recursive: true);
+    await outsideDirectory.create(recursive: true);
+    PathProviderPlatform.instance = _FakePathProvider(homeDirectory.path);
+  });
+
+  setUp(() async {
+    if (await homeDirectory.exists()) {
+      await homeDirectory.delete(recursive: true);
+    }
+    if (await outsideDirectory.exists()) {
+      await outsideDirectory.delete(recursive: true);
+    }
+    await homeDirectory.create(recursive: true);
+    await outsideDirectory.create(recursive: true);
+  });
+
+  tearDownAll(() async {
+    if (await sandbox.exists()) {
+      await sandbox.delete(recursive: true);
+    }
+  });
+
+  group('LocalProxyProviderGenerator', () {
+    test('cleans empty values and converts string port', () {
+      final proxy = _proxy(
+        type: 'ss',
+        config: {
+          'name': 'Test',
+          'type': 'ss',
+          'server': '127.0.0.1',
+          'port': '8388',
+          'cipher': 'aes-256-gcm',
+          'password': 'pwd',
+          'udp': true,
+          'unused': '',
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final doc = yaml.loadYaml(yamlString) as Map;
+      final proxies = doc['proxies'] as List;
+      expect(proxies.length, 1);
+      final map = proxies.first as Map;
+      expect(map['port'], 8388);
+      expect(map.containsKey('unused'), false);
+    });
+
+    test('emits valid anytls config', () {
+      final proxy = _proxy(
+        type: 'anytls',
+        config: {
+          'name': 'AnyTLS',
+          'type': 'anytls',
+          'server': 'example.com',
+          'port': 443,
+          'password': 'secret',
+          'sni': 'cdn.example.com',
+          'alpn': 'h2,h3',
+          'client-fingerprint': 'chrome',
+          'skip-cert-verify': true,
+          'ech-opts': {'enable': true, 'config': 'echconfig'},
+          'idle-session-timeout': 300,
+          'udp': true,
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final doc = yaml.loadYaml(yamlString) as Map;
+      final map = (doc['proxies'] as List).first as Map;
+      expect(map['type'], 'anytls');
+      expect(map['alpn'], ['h2', 'h3']);
+      expect(map['ech-opts'], {'enable': true, 'config': 'echconfig'});
+      expect(map['idle-session-timeout'], 300);
+    });
+
+    test('drops disabled ech-opts for anytls', () {
+      final proxy = _proxy(
+        type: 'anytls',
+        config: {
+          'name': 'AnyTLS',
+          'type': 'anytls',
+          'server': 'example.com',
+          'port': 443,
+          'password': 'secret',
+          'ech-opts': {'enable': false, 'config': ''},
+          'udp': true,
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final doc = yaml.loadYaml(yamlString) as Map;
+      final map = (doc['proxies'] as List).first as Map;
+      expect(map.containsKey('ech-opts'), false);
+    });
+
+    test('emits SOCKS5 provider fields and removes empty values', () {
+      final proxy = _proxy(
+        type: 'socks5',
+        config: {
+          'name': 'SOCKS5',
+          'type': 'socks5',
+          'server': 'socks.example.com',
+          'port': 1080,
+          'username': 'alice',
+          'password': 'secret',
+          'tls': true,
+          'udp': true,
+          'skip-cert-verify': true,
+          'certificate': 'CERTIFICATE',
+          'private-key': 'PRIVATE KEY',
+          'fingerprint': '',
+          'unused': '',
+          'null-value': null,
+          'empty-list': <String>[],
+          'empty-map': <String, dynamic>{},
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final map = _firstProxy(yamlString);
+
+      expect(map['name'], 'SOCKS5');
+      expect(map['type'], 'socks5');
+      expect(map['server'], 'socks.example.com');
+      expect(map['port'], 1080);
+      expect(map['username'], 'alice');
+      expect(map['password'], 'secret');
+      expect(map['tls'], isTrue);
+      expect(map['udp'], isTrue);
+      expect(map['skip-cert-verify'], isTrue);
+      expect(map['certificate'], 'CERTIFICATE');
+      expect(map['private-key'], 'PRIVATE KEY');
+      expect(map.containsKey('fingerprint'), isFalse);
+      expect(map.containsKey('unused'), isFalse);
+      expect(map.containsKey('null-value'), isFalse);
+      expect(map.containsKey('empty-list'), isFalse);
+      expect(map.containsKey('empty-map'), isFalse);
+    });
+
+    test('emits SSH kebab-case fields without UDP', () {
+      final proxy = _proxy(
+        type: 'ssh',
+        config: {
+          'name': 'SSH',
+          'type': 'ssh',
+          'server': 'ssh.example.com',
+          'port': 22,
+          'username': 'root',
+          'password': 'secret',
+          'private-key': 'PRIVATE KEY\nBODY',
+          'private-key-passphrase': 'phrase',
+          'host-key': [
+            'ssh-ed25519 AAAAfirst comment',
+            'ssh-rsa AAAAsecond comment',
+          ],
+          'host-key-algorithms': ['ssh-ed25519', 'rsa-sha2-512'],
+          'udp': true,
+          'unused': '',
+          'null-value': null,
+          'empty-list': <String>[],
+          'empty-map': <String, dynamic>{},
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final map = _firstProxy(yamlString);
+
+      expect(map['name'], 'SSH');
+      expect(map['type'], 'ssh');
+      expect(map['server'], 'ssh.example.com');
+      expect(map['port'], 22);
+      expect(map['username'], 'root');
+      expect(map['password'], 'secret');
+      expect(map['private-key'], 'PRIVATE KEY\nBODY');
+      expect(map['private-key-passphrase'], 'phrase');
+      expect(map['host-key'], [
+        'ssh-ed25519 AAAAfirst comment',
+        'ssh-rsa AAAAsecond comment',
+      ]);
+      expect(map['host-key-algorithms'], ['ssh-ed25519', 'rsa-sha2-512']);
+      expect(map.containsKey('udp'), isFalse);
+      expect(map.containsKey('privateKey'), isFalse);
+      expect(map.containsKey('privateKeyPassphrase'), isFalse);
+      expect(map.containsKey('hostKey'), isFalse);
+      expect(map.containsKey('hostKeyAlgorithms'), isFalse);
+      expect(map.containsKey('unused'), isFalse);
+      expect(map.containsKey('null-value'), isFalse);
+      expect(map.containsKey('empty-list'), isFalse);
+      expect(map.containsKey('empty-map'), isFalse);
+    });
+
+    test('omits explicit false UDP from SSH output', () {
+      final proxy = _proxy(
+        type: 'ssh',
+        config: {
+          'name': 'SSH',
+          'type': 'ssh',
+          'server': 'ssh.example.com',
+          'port': 22,
+          'username': 'root',
+          'password': 'secret',
+          'udp': false,
+        },
+      );
+
+      final map = _firstProxy(generator.generateYaml([proxy]));
+      expect(map.containsKey('udp'), isFalse);
+    });
+
+    test('canonicalizes SSH camelCase-only fields', () {
+      final proxy = _proxy(
+        type: 'ssh',
+        config: {
+          'name': 'Legacy SSH',
+          'type': 'ssh',
+          'server': 'ssh.example.com',
+          'port': 22,
+          'username': 'root',
+          'password': 'secret',
+          'privateKey': 'LEGACY PRIVATE KEY',
+          'privateKeyPassphrase': 'legacy phrase',
+          'hostKey': ['ssh-ed25519 LEGACY'],
+          'hostKeyAlgorithms': ['ssh-ed25519'],
+          'udp': false,
+          'tfo': true,
+          'mptcp': true,
+          'interface-name': 'eth0',
+          'routing-mark': 123,
+          'ip-version': 'ipv4',
+          'dialer-proxy': 'CHAIN',
+        },
+      );
+
+      final map = _firstProxy(generator.generateYaml([proxy]));
+      expect(map['private-key'], 'LEGACY PRIVATE KEY');
+      expect(map['private-key-passphrase'], 'legacy phrase');
+      expect(map['host-key'], ['ssh-ed25519 LEGACY']);
+      expect(map['host-key-algorithms'], ['ssh-ed25519']);
+      expect(map['tfo'], isTrue);
+      expect(map['mptcp'], isTrue);
+      expect(map['interface-name'], 'eth0');
+      expect(map['routing-mark'], 123);
+      expect(map['ip-version'], 'ipv4');
+      expect(map['dialer-proxy'], 'CHAIN');
+      expect(map.containsKey('udp'), isFalse);
+      for (final key in [
+        'privateKey',
+        'privateKeyPassphrase',
+        'hostKey',
+        'hostKeyAlgorithms',
+      ]) {
+        expect(map.containsKey(key), isFalse, reason: key);
+      }
+    });
+
+    test('prefers SSH kebab-case fields over camelCase aliases', () {
+      final proxy = _proxy(
+        type: 'ssh',
+        config: {
+          'name': 'Mixed SSH',
+          'type': 'ssh',
+          'server': 'ssh.example.com',
+          'port': 22,
+          'username': 'root',
+          'password': 'secret',
+          'private-key': 'CANONICAL PRIVATE KEY',
+          'privateKey': 'LEGACY PRIVATE KEY',
+          'private-key-passphrase': 'canonical phrase',
+          'privateKeyPassphrase': 'legacy phrase',
+          'host-key': ['ssh-ed25519 CANONICAL'],
+          'hostKey': ['ssh-ed25519 LEGACY'],
+          'host-key-algorithms': ['canonical-algorithm'],
+          'hostKeyAlgorithms': ['legacy-algorithm'],
+          'tfo': false,
+          'dialer-proxy': 'CHAIN',
+          'udp': true,
+        },
+      );
+
+      final map = _firstProxy(generator.generateYaml([proxy]));
+      expect(map['private-key'], 'CANONICAL PRIVATE KEY');
+      expect(map['private-key-passphrase'], 'canonical phrase');
+      expect(map['host-key'], ['ssh-ed25519 CANONICAL']);
+      expect(map['host-key-algorithms'], ['canonical-algorithm']);
+      expect(map['tfo'], isFalse);
+      expect(map['dialer-proxy'], 'CHAIN');
+      expect(map.containsKey('udp'), isFalse);
+      for (final key in [
+        'privateKey',
+        'privateKeyPassphrase',
+        'hostKey',
+        'hostKeyAlgorithms',
+      ]) {
+        expect(map.containsKey(key), isFalse, reason: key);
+      }
+    });
+
+    test('migrates nowhere key and strips pool for udp carriers', () {
+      final proxy = _proxy(
+        type: 'nowhere',
+        config: {
+          'name': 'Nowhere',
+          'type': 'nowhere',
+          'server': 'example.com',
+          'port': 2077,
+          'key': 'secret',
+          'alpn': ['nw2'],
+          'up': 'udp',
+          'down': 'udp',
+          'spec': 'auto',
+          'pool': 5,
+          'reduce-rtt': true,
+          'udp': true,
+        },
+      );
+      final map = _firstProxy(generator.generateYaml([proxy]));
+      expect(map['type'], 'nowhere');
+      expect(map['password'], 'secret');
+      expect(map.containsKey('key'), isFalse);
+      expect(map['up'], 'udp');
+      expect(map['down'], 'udp');
+      expect(map['network'], 'udp');
+      expect(map.containsKey('pool'), isFalse);
+      expect(map.containsKey('reduce-rtt'), isFalse);
+      expect(map.containsKey('spec'), isFalse);
+    });
+
+    test('keeps pool for nowhere tcp/tcp carriers', () {
+      final proxy = _proxy(
+        type: 'nowhere',
+        config: {
+          'name': 'Nowhere',
+          'type': 'nowhere',
+          'server': 'example.com',
+          'port': 2077,
+          'key': 'secret',
+          'alpn': ['nw2'],
+          'up': 'tcp',
+          'down': 'tcp',
+          'pool': 7,
+          'udp': true,
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final doc = yaml.loadYaml(yamlString) as Map;
+      final map = (doc['proxies'] as List).first as Map;
+      expect(map['pool'], 7);
+    });
+
+    test('clamps tcp/tcp pool above 256 and logs a safe warning', () {
+      final messages = <String>[];
+      final originalDebugPrint = debugPrint;
+      debugPrint = (message, {wrapWidth}) {
+        if (message != null) messages.add(message);
+      };
+      late final Map map;
+      try {
+        final proxy = _proxy(
+          type: 'nowhere',
+          config: {
+            'name': 'Nowhere',
+            'type': 'nowhere',
+            'server': 'example.com',
+            'port': 2077,
+            'password': 'do-not-log-secret',
+            'alpn': ['nw2'],
+            'up': 'tcp',
+            'down': 'tcp',
+            'pool': 300,
+            'udp': true,
+          },
+        );
+        map = _firstProxy(generator.generateYaml([proxy]));
+      } finally {
+        debugPrint = originalDebugPrint;
+      }
+
+      expect(map['pool'], 256);
+      expect(
+        messages.any(
+          (message) =>
+              message.contains('pool 300') && message.contains('using 256'),
+        ),
+        isTrue,
+      );
+      expect(messages.join('\n'), isNot(contains('do-not-log-secret')));
+    });
+
+    test('preserves explicit pool 0 for nowhere tcp/tcp carriers', () {
+      final proxy = _proxy(
+        type: 'nowhere',
+        config: {
+          'name': 'Nowhere',
+          'type': 'nowhere',
+          'server': 'example.com',
+          'port': 2077,
+          'key': 'secret',
+          'alpn': ['nw2'],
+          'up': 'tcp',
+          'down': 'tcp',
+          'pool': 0,
+          'udp': true,
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final doc = yaml.loadYaml(yamlString) as Map;
+      final map = (doc['proxies'] as List).first as Map;
+      expect(map['pool'], 0);
+    });
+
+    test('emits valid hysteria2 config and normalizes alpn', () {
+      final proxy = _proxy(
+        type: 'hysteria2',
+        config: {
+          'name': 'HY2',
+          'type': 'hysteria2',
+          'server': 'example.com',
+          'port': 443,
+          'password': 'secret',
+          'sni': 'cdn.example.com',
+          'obfs': 'salamander',
+          'obfs-password': 'obfspass',
+          'alpn': 'h3',
+          'fingerprint': 'sha256',
+          'up': '100 Mbps',
+          'down': '200 Mbps',
+          'skip-cert-verify': true,
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final doc = yaml.loadYaml(yamlString) as Map;
+      final map = (doc['proxies'] as List).first as Map;
+      expect(map['type'], 'hysteria2');
+      expect(map['port'], 443);
+      expect(map['alpn'], ['h3']);
+      expect(map['obfs'], 'salamander');
+      expect(map['up'], '100 Mbps');
+      expect(map['down'], '200 Mbps');
+      expect(map.containsKey('unused'), false);
+    });
+
+    test('emits easytier overlay config without server or port', () {
+      final proxy = _proxy(
+        type: 'easytier',
+        config: {
+          'name': 'EasyTier',
+          'type': 'easytier',
+          'network-name': 'example',
+          'network-secret': 'secret',
+          'peers': 'tcp://192.0.2.10:11010\n\nudp://192.0.2.11:11010',
+          'udp': true,
+          'server': '',
+          'port': 0,
+        },
+      );
+      final yamlString = generator.generateYaml([proxy]);
+      final doc = yaml.loadYaml(yamlString) as Map;
+      final map = (doc['proxies'] as List).first as Map;
+      expect(map['type'], 'easytier');
+      expect(map['network-name'], 'example');
+      expect(map['network-secret'], 'secret');
+      expect(map['peers'], [
+        'tcp://192.0.2.10:11010',
+        'udp://192.0.2.11:11010',
+      ]);
+      expect(map['udp'], isTrue);
+      expect(map.containsKey('server'), isFalse);
+      expect(map.containsKey('port'), isFalse);
+    });
+
+    test('filters disabled proxies', () {
+      final enabled = _proxy(
+        type: 'ss',
+        config: {
+          'name': 'Enabled',
+          'type': 'ss',
+          'server': '1.1.1.1',
+          'port': 443,
+          'cipher': 'aes-256-gcm',
+          'password': 'pwd',
+          'udp': true,
+        },
+      );
+      final disabled = enabled.copyWith(enabled: false);
+      final yamlString = generator.generateYaml([enabled, disabled]);
+      final doc = yaml.loadYaml(yamlString) as Map;
+      expect((doc['proxies'] as List).length, 1);
+    });
+  });
+
+  group('Nowhere normalization and validation', () {
+    test('preserves supported fields and removes obsolete fields', () {
+      final config = _validNowhereConfig()
+        ..addAll({
+          'password': 'canonical',
+          'key': 'legacy',
+          'network': 'tcp',
+          'net': 'udp',
+          'pool': '0',
+          'morph': true,
+          'prewarm-on-start': true,
+          'max-concurrent-dials': '16',
+          'warm-backoff-initial': '2',
+          'warm-backoff-max': '20',
+          'congestion-controller': 'bbr',
+          'cwnd': 0,
+          'certificate': 'certificate',
+          'private-key': 'private-key',
+          'client-fingerprint': 'chrome',
+          'ech-opts': {'enable': true, 'query-server-name': 'ech.example.com'},
+          'dialer-proxy': 'CHAIN',
+          'tfo': true,
+          'mptcp': true,
+          'interface-name': 'eth0',
+          'routing-mark': 123,
+          'ip-version': 'ipv4',
+          'smux': {'enabled': true},
+          'bbr-profile': 'legacy',
+          'reduce-rtt': true,
+          'max-udp-relay-packet-size': 1200,
+        });
+
+      final map = _firstProxy(
+        generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+      );
+
+      expect(map['password'], 'canonical');
+      expect(map.containsKey('key'), isFalse);
+      expect(map['up'], 'tcp');
+      expect(map['down'], 'tcp');
+      expect(map['network'], 'tcp');
+      expect(map.containsKey('net'), isFalse);
+      expect(map['pool'], 0);
+      expect(map['alpn'], ['nw2']);
+      expect(map['morph'], isTrue);
+      expect(map['prewarm-on-start'], isTrue);
+      expect(map['max-concurrent-dials'], 16);
+      expect(map['warm-backoff-initial'], 2);
+      expect(map['warm-backoff-max'], 20);
+      expect(map['congestion-controller'], 'bbr');
+      expect(map['cwnd'], 0);
+      expect(map['certificate'], 'certificate');
+      expect(map['private-key'], 'private-key');
+      expect(map['client-fingerprint'], 'chrome');
+      expect(map['ech-opts'], {
+        'enable': true,
+        'query-server-name': 'ech.example.com',
+      });
+      expect(map['dialer-proxy'], 'CHAIN');
+      expect(map['tfo'], isTrue);
+      expect(map['mptcp'], isTrue);
+      expect(map['interface-name'], 'eth0');
+      expect(map['routing-mark'], 123);
+      expect(map['ip-version'], 'ipv4');
+      expect(map['smux'], {'enabled': true});
+      expect(map.containsKey('bbr-profile'), isFalse);
+      expect(map.containsKey('reduce-rtt'), isFalse);
+      expect(map.containsKey('max-udp-relay-packet-size'), isFalse);
+    });
+
+    test('normalizes Nowhere 3 config and drops Nowhere 2 options', () {
+      final config = _validNowhere3Config()
+        ..addAll({
+          'up': 'tcp',
+          'down': 'tcp',
+          'network': 'tcp',
+          'mux': 1,
+          'pool': 5,
+          'prewarm-on-start': true,
+          'max-concurrent-dials': 16,
+          'warm-backoff-initial': 2,
+          'warm-backoff-max': 20,
+          'mix-fallback-timeout': 3,
+          'morph': false,
+          'fingerprint': 'chrome',
+          'client-fingerprint': 'chrome',
+          'ech-opts': {'enable': true},
+          'congestion-controller': 'bbr',
+          'cwnd': 32,
+          'sni': 'cdn.example.com',
+          'pin': 'abcd',
+        });
+
+      final map = _firstProxy(
+        generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+      );
+
+      expect(map['password'], '0123456789abcdef0123456789abcdef');
+      expect(map['net'], 'tcp');
+      expect(map['morph'], isFalse);
+      expect(map.containsKey('alpn'), isFalse);
+      for (final key in const [
+        'up',
+        'down',
+        'network',
+        'mux',
+        'pool',
+        'prewarm-on-start',
+        'max-concurrent-dials',
+        'warm-backoff-initial',
+        'warm-backoff-max',
+        'mix-fallback-timeout',
+        'fingerprint',
+        'client-fingerprint',
+        'ech-opts',
+      ]) {
+        expect(map.containsKey(key), isFalse, reason: key);
+      }
+      expect(map['congestion-controller'], 'bbr');
+      expect(map['cwnd'], 32);
+      expect(map['sni'], 'cdn.example.com');
+      expect(map['pin'], 'abcd');
+    });
+
+    test('treats an omitted ALPN as Nowhere 3 with udp transport', () {
+      final config = _validNowhere3Config()..addAll({'net': 'udp'});
+      final map = _firstProxy(
+        generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+      );
+      expect(map['net'], 'udp');
+      expect(map.containsKey('alpn'), isFalse);
+    });
+
+    test('rejects ALPN values other than nw2 or nw3', () {
+      for (final alpn in [
+        'h2',
+        'nw2,h3',
+        ['nw2', 'nw3'],
+        'nw3,nw2',
+      ]) {
+        final config = _validNowhereConfig()..['alpn'] = alpn;
+        expect(
+          () =>
+              generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.toString(),
+              'message',
+              contains('ALPN'),
+            ),
+          ),
+          reason: '$alpn',
+        );
+      }
+    });
+
+    test('requires exactly 32 lowercase hex characters for Nowhere 3 keys', () {
+      for (final password in [
+        'secret',
+        '0123456789ABCDEF0123456789ABCDEF',
+        '0123456789abcdef0123456789abcde',
+        '0123456789abcdef0123456789abcdeff',
+      ]) {
+        final config = _validNowhere3Config()..['password'] = password;
+        expect(
+          () =>
+              generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.toString(),
+              'message',
+              contains('32 lowercase hexadecimal'),
+            ),
+          ),
+          reason: password,
+        );
+      }
+    });
+
+    test('resolves carriers in strict priority order', () {
+      final networkConfig = _validNowhereConfig()
+        ..addAll({'network': 'tcp', 'net': 'udp'});
+      final networkMap = _firstProxy(
+        generator.generateYaml([
+          _proxy(type: 'nowhere', config: networkConfig),
+        ]),
+      );
+      expect(networkMap['up'], 'tcp');
+      expect(networkMap['down'], 'tcp');
+
+      final netConfig = _validNowhereConfig()..['net'] = 'tcp';
+      final netMap = _firstProxy(
+        generator.generateYaml([_proxy(type: 'nowhere', config: netConfig)]),
+      );
+      expect(netMap['up'], 'tcp');
+      expect(netMap['down'], 'tcp');
+
+      final defaultMap = _firstProxy(
+        generator.generateYaml([
+          _proxy(type: 'nowhere', config: _validNowhereConfig()),
+        ]),
+      );
+      expect(defaultMap['up'], 'udp');
+      expect(defaultMap['down'], 'udp');
+      expect(defaultMap['network'], 'udp');
+      expect(defaultMap['alpn'], ['nw2']);
+    });
+
+    test('keeps a single ALPN value and rejects multiple values', () {
+      final listConfig = _validNowhereConfig()..['alpn'] = ['nw2'];
+      final listMap = _firstProxy(
+        generator.generateYaml([_proxy(type: 'nowhere', config: listConfig)]),
+      );
+      expect(listMap['alpn'], ['nw2']);
+
+      final stringConfig = _validNowhereConfig()..['alpn'] = 'nw2';
+      final stringMap = _firstProxy(
+        generator.generateYaml([_proxy(type: 'nowhere', config: stringConfig)]),
+      );
+      expect(stringMap['alpn'], ['nw2']);
+
+      for (final config in [
+        _validNowhereConfig()..['alpn'] = ['nw2', 'nw3'],
+        _validNowhereConfig()..['alpn'] = 'nw2,nw3',
+        _validNowhereConfig()..['alpn'] = ['', 'nw2'],
+      ]) {
+        expect(
+          () =>
+              generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.toString(),
+              'message',
+              contains('ALPN'),
+            ),
+          ),
+        );
+      }
+    });
+
+    test('emits an explicit morph flag for both stacks', () {
+      final enabled = _firstProxy(
+        generator.generateYaml([
+          _proxy(
+            type: 'nowhere',
+            config: _validNowhereConfig()..['morph'] = true,
+          ),
+        ]),
+      );
+      expect(enabled['morph'], isTrue);
+
+      final fromOne = _firstProxy(
+        generator.generateYaml([
+          _proxy(type: 'nowhere', config: _validNowhereConfig()..['morph'] = 1),
+        ]),
+      );
+      expect(fromOne['morph'], isTrue);
+
+      final disabled = _firstProxy(
+        generator.generateYaml([
+          _proxy(
+            type: 'nowhere',
+            config: _validNowhereConfig()..['morph'] = false,
+          ),
+        ]),
+      );
+      expect(disabled['morph'], isFalse);
+
+      final nw3Disabled = _firstProxy(
+        generator.generateYaml([
+          _proxy(
+            type: 'nowhere',
+            config: _validNowhere3Config()..['morph'] = false,
+          ),
+        ]),
+      );
+      expect(nw3Disabled['morph'], isFalse);
+    });
+
+    test('drops pool for every matrix containing UDP', () {
+      for (final carriers in [('udp', 'udp'), ('tcp', 'udp'), ('udp', 'tcp')]) {
+        final config = _validNowhereConfig()
+          ..addAll({'up': carriers.$1, 'down': carriers.$2, 'pool': 5});
+        final map = _firstProxy(
+          generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+        );
+        expect(map.containsKey('pool'), isFalse, reason: '$carriers');
+      }
+    });
+
+    test('rejects mix carriers and keeps mux on tcp matrices', () {
+      for (final carriers in [('mix', 'mix'), ('mix', 'udp'), ('tcp', 'mix')]) {
+        final config = _validNowhereConfig()
+          ..addAll({'up': carriers.$1, 'down': carriers.$2});
+        expect(
+          () =>
+              generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.toString(),
+              'message',
+              contains('carriers'),
+            ),
+          ),
+          reason: '$carriers',
+        );
+      }
+
+      final muxTcp = _firstProxy(
+        generator.generateYaml([
+          _proxy(
+            type: 'nowhere',
+            config: _validNowhereConfig()
+              ..addAll({'up': 'tcp', 'down': 'tcp', 'mux': 1, 'pool': 5}),
+          ),
+        ]),
+      );
+      expect(muxTcp['mux'], 1);
+      expect(muxTcp.containsKey('pool'), isFalse);
+
+      final messages = <String>[];
+      final originalDebugPrint = debugPrint;
+      debugPrint = (message, {wrapWidth}) {
+        if (message != null) messages.add(message);
+      };
+      late final Map canonicalized;
+      try {
+        canonicalized = _firstProxy(
+          generator.generateYaml([
+            _proxy(
+              type: 'nowhere',
+              config: _validNowhereConfig()
+                ..addAll({'up': 'udp', 'down': 'udp', 'mux': 1}),
+            ),
+          ]),
+        );
+      } finally {
+        debugPrint = originalDebugPrint;
+      }
+      expect(canonicalized.containsKey('mux'), isFalse);
+      expect(
+        messages.any((message) => message.contains('canonicalized')),
+        isTrue,
+      );
+    });
+
+    test('enforces decoded UTF-8 byte limits for Nowhere 2 keys', () {
+      final key255 = List.filled(255, 'k').join();
+      final validConfig = _validNowhereConfig()..addAll({'password': key255});
+      final map = _firstProxy(
+        generator.generateYaml([_proxy(type: 'nowhere', config: validConfig)]),
+      );
+      expect(map['password'], key255);
+      expect(map.containsKey('spec'), isFalse);
+
+      expect(
+        () => generator.generateYaml([
+          _proxy(
+            type: 'nowhere',
+            config: _validNowhereConfig()
+              ..['password'] = List.filled(256, 'k').join(),
+          ),
+        ]),
+        throwsA(
+          isA<ArgumentError>().having(
+            (error) => error.toString(),
+            'message',
+            allOf(contains('password/key'), contains('255 UTF-8 bytes')),
+          ),
+        ),
+      );
+    });
+
+    test('rejects invalid required and numeric fields clearly', () {
+      final missingCredential = _validNowhereConfig()..remove('password');
+      final invalidCases = <(String, Map<String, dynamic>)>[
+        ('server', _validNowhereConfig()..['server'] = ''),
+        ('port', _validNowhereConfig()..['port'] = 0),
+        ('port', _validNowhereConfig()..['port'] = 65536),
+        ('port', _validNowhereConfig()..['port'] = 'invalid'),
+        ('password/key', missingCredential),
+        ('up and down', _validNowhereConfig()..['up'] = 'tcp'),
+        (
+          'carriers',
+          _validNowhereConfig()..addAll({'network': 'TCP', 'net': 'tcp'}),
+        ),
+        ('pool', _validNowhereConfig()..['pool'] = -1),
+        ('pool', _validNowhereConfig()..['pool'] = 'invalid'),
+        (
+          'max-concurrent-dials',
+          _validNowhereConfig()..['max-concurrent-dials'] = -1,
+        ),
+        (
+          'warm-backoff-initial',
+          _validNowhereConfig()..['warm-backoff-initial'] = -1,
+        ),
+        ('warm-backoff-max', _validNowhereConfig()..['warm-backoff-max'] = -1),
+        ('cwnd', _validNowhereConfig()..['cwnd'] = -1),
+        ('mux', _validNowhereConfig()..['mux'] = 2),
+        (
+          'warm-backoff-initial',
+          _validNowhereConfig()..['warm-backoff-initial'] = 31,
+        ),
+        (
+          'warm-backoff-initial',
+          _validNowhereConfig()
+            ..addAll({'warm-backoff-initial': 2, 'warm-backoff-max': 1}),
+        ),
+      ];
+
+      for (final (field, config) in invalidCases) {
+        expect(
+          () =>
+              generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.toString(),
+              'message',
+              contains(field),
+            ),
+          ),
+          reason: field,
+        );
+      }
+    });
+  });
+
+  group('provider file writing', () {
+    LocalProxy providerProxy(String name) {
+      return _proxy(
+        type: 'ss',
+        name: name,
+        config: {
+          'name': name,
+          'type': 'ss',
+          'server': '127.0.0.1',
+          'port': 8388,
+          'cipher': 'aes-256-gcm',
+          'password': 'pwd',
+          'udp': true,
+        },
+      );
+    }
+
+    test(
+      'resolves relative paths, replaces existing target and cleans temp data',
+      () async {
+        const providerPath = './custom/providers/local.yaml';
+        final expectedPath = path.canonicalize(
+          path.join(homeDirectory.path, providerPath),
+        );
+
+        final firstPath = await generator.writeProviderFile([
+          providerProxy('First'),
+        ], providerPath: providerPath);
+        expect(firstPath, expectedPath);
+        final firstContent = await File(firstPath).readAsString();
+        final firstDocument = yaml.loadYaml(firstContent) as Map;
+        expect(
+          ((firstDocument['proxies'] as List).single as Map)['name'],
+          'First',
+        );
+
+        final secondPath = await generator.writeProviderFile([
+          providerProxy('Second'),
+        ], providerPath: providerPath);
+        expect(secondPath, expectedPath);
+        final secondContent = await File(secondPath).readAsString();
+        expect(secondContent, isNot(firstContent));
+        final secondDocument = yaml.loadYaml(secondContent) as Map;
+        expect(
+          ((secondDocument['proxies'] as List).single as Map)['name'],
+          'Second',
+        );
+
+        final leftovers = await File(secondPath).parent
+            .list()
+            .where(
+              (entity) =>
+                  path.basename(entity.path).startsWith('.flclash-provider-'),
+            )
+            .toList();
+        expect(leftovers, isEmpty);
+      },
+    );
+
+    test('accepts absolute paths inside the application home', () async {
+      final targetPath = path.join(homeDirectory.path, 'absolute.yaml');
+      final result = await generator.writeProviderFile([
+        providerProxy('Absolute'),
+      ], providerPath: targetPath);
+      expect(result, path.canonicalize(targetPath));
+      expect(await File(targetPath).exists(), isTrue);
+    });
+
+    test('rejects paths that escape or do not identify a home file', () async {
+      final unsafePaths = [
+        '',
+        '.',
+        '../outside.yaml',
+        path.join(outsideDirectory.path, 'outside.yaml'),
+      ];
+      for (final providerPath in unsafePaths) {
+        await expectLater(
+          generator.writeProviderFile([
+            providerProxy('Unsafe'),
+          ], providerPath: providerPath),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.toString(),
+              'message',
+              contains('providerPath'),
+            ),
+          ),
+          reason: providerPath,
+        );
+      }
+      expect(
+        await File(path.join(outsideDirectory.path, 'outside.yaml')).exists(),
+        isFalse,
+      );
+    });
+
+    test('rejects parent and target symbolic links', () async {
+      if (Platform.isWindows) return;
+
+      final linkedDirectory = Link(path.join(homeDirectory.path, 'linked'));
+      await linkedDirectory.create(outsideDirectory.path);
+      await expectLater(
+        generator.writeProviderFile([
+          providerProxy('Linked parent'),
+        ], providerPath: 'linked/provider.yaml'),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        await File(path.join(outsideDirectory.path, 'provider.yaml')).exists(),
+        isFalse,
+      );
+
+      final outsideFile = File(path.join(outsideDirectory.path, 'target.yaml'));
+      await outsideFile.writeAsString('outside');
+      final targetLink = Link(path.join(homeDirectory.path, 'target.yaml'));
+      await targetLink.create(outsideFile.path);
+      await expectLater(
+        generator.writeProviderFile([
+          providerProxy('Linked target'),
+        ], providerPath: 'target.yaml'),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(await outsideFile.readAsString(), 'outside');
+    });
+  });
+}

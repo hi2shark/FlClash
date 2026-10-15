@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/app_ports.dart';
+import 'package:fl_clash/common/unlock_test.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/app_glyphs.dart';
 import 'package:fl_clash/models/models.dart';
@@ -63,6 +64,44 @@ class Navigation implements NavigationPort {
         builder: (_) =>
             const ResourcesView(key: GlobalObjectKey(PageLabel.resources)),
         modes: [NavigationItemMode.more],
+      ),
+      NavigationItem(
+        glyph: AppGlyphs.file,
+        label: PageLabel.effectiveConfig,
+        builder: (_) => const EffectiveConfigView(
+          key: GlobalObjectKey(PageLabel.effectiveConfig),
+        ),
+        modes: [NavigationItemMode.more],
+      ),
+      NavigationItem(
+        glyph: AppGlyphs.speed,
+        label: PageLabel.networkTest,
+        builder: (_) =>
+            const NetworkTestView(key: GlobalObjectKey(PageLabel.networkTest)),
+        modes: [NavigationItemMode.more],
+      ),
+      if (kUnlockTestFeatureEnabled)
+        NavigationItem(
+          glyph: AppGlyphs.vpn,
+          label: PageLabel.unlockTest,
+          builder: (_) =>
+              const UnlockTestView(key: GlobalObjectKey(PageLabel.unlockTest)),
+          modes: [NavigationItemMode.more],
+        ),
+      NavigationItem(
+        glyph: AppGlyphs.layers,
+        label: PageLabel.localProxies,
+        builder: (_) => const LocalProxiesView(
+          key: GlobalObjectKey(PageLabel.localProxies),
+        ),
+        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
+      ),
+      NavigationItem(
+        glyph: AppGlyphs.rules,
+        label: PageLabel.localRules,
+        builder: (_) =>
+            const LocalRulesView(key: GlobalObjectKey(PageLabel.localRules)),
+        modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       NavigationItem(
         glyph: AppGlyphs.logs,

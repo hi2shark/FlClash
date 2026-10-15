@@ -1,3 +1,4 @@
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -51,6 +52,7 @@ abstract class VpnOptions with _$VpnOptions {
     required int port,
     required bool ipv6,
     required bool dnsHijacking,
+    @Default(false) bool dnsEnable,
     required AccessControlProps accessControlProps,
     required bool allowBypass,
     required bool systemProxy,
@@ -74,6 +76,7 @@ extension VpnOptionsExt on VpnOptions {
         port: 0,
         ipv6: false,
         dnsHijacking: false,
+        dnsEnable: false,
         accessControlProps: AccessControlProps(),
         allowBypass: false,
         systemProxy: false,
@@ -338,4 +341,87 @@ abstract class ProxiesData with _$ProxiesData {
 
   factory ProxiesData.fromJson(Map<String, Object?> json) =>
       _$ProxiesDataFromJson(json);
+}
+
+@freezed
+abstract class ActionResult with _$ActionResult {
+  const factory ActionResult({
+    required CoreMethod method,
+    required dynamic data,
+    String? id,
+    @Default(ResultType.success) ResultType code,
+  }) = _ActionResult;
+
+  factory ActionResult.fromJson(Map<String, Object?> json) =>
+      _$ActionResultFromJson(json);
+}
+
+extension ActionResultExt on ActionResult {
+  Result get toResult {
+    if (code == ResultType.success) {
+      return Result.success(data);
+    } else {
+      return Result.error('$data');
+    }
+  }
+}
+
+@freezed
+abstract class SpeedTestParams with _$SpeedTestParams {
+  const factory SpeedTestParams({
+    @JsonKey(name: 'proxy-name') required String proxyName,
+    @JsonKey(name: 'test-url') String? testUrl,
+    int? timeout,
+  }) = _SpeedTestParams;
+
+  factory SpeedTestParams.fromJson(Map<String, Object?> json) =>
+      _$SpeedTestParamsFromJson(json);
+}
+
+@freezed
+abstract class SpeedTestResult with _$SpeedTestResult {
+  const factory SpeedTestResult({
+    @Default('') String name,
+    @Default(0) int latency,
+    @Default(0) double speed,
+    @Default(0) int bytes,
+    @Default('') String error,
+  }) = _SpeedTestResult;
+
+  factory SpeedTestResult.fromJson(Map<String, Object?> json) =>
+      _$SpeedTestResultFromJson(json);
+}
+
+@freezed
+abstract class QuicTestParams with _$QuicTestParams {
+  const factory QuicTestParams({
+    @JsonKey(name: 'proxy-name') required String proxyName,
+    String? host,
+    int? timeout,
+  }) = _QuicTestParams;
+
+  factory QuicTestParams.fromJson(Map<String, Object?> json) =>
+      _$QuicTestParamsFromJson(json);
+}
+
+@freezed
+abstract class QuicTestResult with _$QuicTestResult {
+  const factory QuicTestResult({
+    @Default('') String name,
+    @Default(0) int rtt,
+    @Default('') String alpn,
+    @Default(0) int version,
+    @Default('') String error,
+    @Default('') String stage,
+    @Default('') String target,
+    @JsonKey(name: 'resolved-ip') @Default('') String resolvedIp,
+    @Default('') String network,
+    @JsonKey(name: 'sent-packets') @Default(0) int sentPackets,
+    @JsonKey(name: 'sent-bytes') @Default(0) int sentBytes,
+    @JsonKey(name: 'received-packets') @Default(0) int receivedPackets,
+    @JsonKey(name: 'received-bytes') @Default(0) int receivedBytes,
+  }) = _QuicTestResult;
+
+  factory QuicTestResult.fromJson(Map<String, Object?> json) =>
+      _$QuicTestResultFromJson(json);
 }

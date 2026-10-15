@@ -140,9 +140,12 @@ const _$DashboardWidgetEnumMap = {
   DashboardWidget.networkDetection: 'networkDetection',
   DashboardWidget.tunButton: 'tunButton',
   DashboardWidget.vpnButton: 'vpnButton',
+  DashboardWidget.wifiWatchCard: 'wifiWatchCard',
   DashboardWidget.systemProxyButton: 'systemProxyButton',
   DashboardWidget.intranetIp: 'intranetIp',
   DashboardWidget.memoryInfo: 'memoryInfo',
+  DashboardWidget.coreMemoryInfo: 'coreMemoryInfo',
+  DashboardWidget.unlockDetection: 'unlockDetection',
   DashboardWidget.serviceStatus: 'serviceStatus',
   DashboardWidget.dnsQueries: 'dnsQueries',
   DashboardWidget.requests: 'requests',
@@ -196,6 +199,22 @@ const _$AccessSortTypeEnumMap = {
   AccessSortType.name: 'name',
   AccessSortType.time: 'time',
 };
+
+_UnlockTestProps _$UnlockTestPropsFromJson(Map<String, dynamic> json) =>
+    _UnlockTestProps(
+      enable: json['enable'] as bool? ?? false,
+      selectedTargets:
+          (json['selectedTargets'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          defaultUnlockTestTargetIds,
+    );
+
+Map<String, dynamic> _$UnlockTestPropsToJson(_UnlockTestProps instance) =>
+    <String, dynamic>{
+      'enable': instance.enable,
+      'selectedTargets': instance.selectedTargets,
+    };
 
 _WindowProps _$WindowPropsFromJson(Map<String, dynamic> json) => _WindowProps(
   width: (json['width'] as num?)?.toDouble() ?? 0,
@@ -434,11 +453,17 @@ _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
       : PatchClashConfig.fromJson(
           json['patchClashConfig'] as Map<String, dynamic>,
         ),
+  onDemandEnabled: json['onDemandEnabled'] as bool? ?? true,
   excludeSSIDs:
       (json['excludeSSIDs'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList() ??
       const [],
+  unlockTestProps: json['unlockTestProps'] == null
+      ? defaultUnlockTestProps
+      : UnlockTestProps.safeFromJson(
+          json['unlockTestProps'] as Map<String, Object?>?,
+        ),
 );
 
 Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
@@ -452,5 +477,7 @@ Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
   'proxiesStyleProps': instance.proxiesStyleProps,
   'windowProps': instance.windowProps,
   'patchClashConfig': instance.patchClashConfig,
+  'onDemandEnabled': instance.onDemandEnabled,
   'excludeSSIDs': instance.excludeSSIDs,
+  'unlockTestProps': instance.unlockTestProps,
 };

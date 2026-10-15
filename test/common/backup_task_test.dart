@@ -696,7 +696,13 @@ void main() {
         'PRAGMA user_version = ${raw.schemaVersion + 1}',
       );
       await raw.close();
-      final archivePath = await backup();
+      // `backup()` opens the snapshot through drift to strip the unlock-test
+      // history, and drift stamps the app's own schema version onto it, so the
+      // archive is assembled here instead.
+      final archivePath = await zipOf({
+        configJsonName: utf8.encode(json.encode({'version': 1})),
+        backupDatabaseName: File(databasePath).readAsBytesSync(),
+      });
 
       await expectLater(
         restore(archivePath),

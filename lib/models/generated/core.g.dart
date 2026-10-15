@@ -103,6 +103,7 @@ _VpnOptions _$VpnOptionsFromJson(Map<String, dynamic> json) => _VpnOptions(
   port: (json['port'] as num).toInt(),
   ipv6: json['ipv6'] as bool,
   dnsHijacking: json['dnsHijacking'] as bool,
+  dnsEnable: json['dnsEnable'] as bool? ?? false,
   accessControlProps: AccessControlProps.fromJson(
     json['accessControlProps'] as Map<String, dynamic>,
   ),
@@ -127,6 +128,7 @@ Map<String, dynamic> _$VpnOptionsToJson(_VpnOptions instance) =>
       'port': instance.port,
       'ipv6': instance.ipv6,
       'dnsHijacking': instance.dnsHijacking,
+      'dnsEnable': instance.dnsEnable,
       'accessControlProps': instance.accessControlProps,
       'allowBypass': instance.allowBypass,
       'systemProxy': instance.systemProxy,
@@ -217,6 +219,7 @@ const _$CoreEventTypeEnumMap = {
   CoreEventType.request: 'request',
   CoreEventType.dns: 'dns',
   CoreEventType.loaded: 'loaded',
+  CoreEventType.unlockTestProgress: 'unlockTestProgress',
   CoreEventType.crash: 'crash',
   CoreEventType.geoUpdate: 'geoUpdate',
   CoreEventType.routeChanged: 'routeChanged',
@@ -444,3 +447,155 @@ _ProxiesData _$ProxiesDataFromJson(Map<String, dynamic> json) => _ProxiesData(
 
 Map<String, dynamic> _$ProxiesDataToJson(_ProxiesData instance) =>
     <String, dynamic>{'proxies': instance.proxies, 'all': instance.all};
+
+_ActionResult _$ActionResultFromJson(Map<String, dynamic> json) =>
+    _ActionResult(
+      method: $enumDecode(_$CoreMethodEnumMap, json['method']),
+      data: json['data'],
+      id: json['id'] as String?,
+      code:
+          $enumDecodeNullable(_$ResultTypeEnumMap, json['code']) ??
+          ResultType.success,
+    );
+
+Map<String, dynamic> _$ActionResultToJson(_ActionResult instance) =>
+    <String, dynamic>{
+      'method': _$CoreMethodEnumMap[instance.method]!,
+      'data': instance.data,
+      'id': instance.id,
+      'code': _$ResultTypeEnumMap[instance.code]!,
+    };
+
+const _$CoreMethodEnumMap = {
+  CoreMethod.message: 'message',
+  CoreMethod.initClash: 'initClash',
+  CoreMethod.getIsInit: 'getIsInit',
+  CoreMethod.forceGc: 'forceGc',
+  CoreMethod.shutdown: 'shutdown',
+  CoreMethod.validateConfig: 'validateConfig',
+  CoreMethod.decryptConfig: 'decryptConfig',
+  CoreMethod.validateProxies: 'validateProxies',
+  CoreMethod.validateFilters: 'validateFilters',
+  CoreMethod.convertProxies: 'convertProxies',
+  CoreMethod.encodeShareLinks: 'encodeShareLinks',
+  CoreMethod.decodeShareLinks: 'decodeShareLinks',
+  CoreMethod.updateConfig: 'updateConfig',
+  CoreMethod.getConfig: 'getConfig',
+  CoreMethod.dumpRuleSet: 'dumpRuleSet',
+  CoreMethod.compileRuleSet: 'compileRuleSet',
+  CoreMethod.getProxies: 'getProxies',
+  CoreMethod.changeProxy: 'changeProxy',
+  CoreMethod.getTraffic: 'getTraffic',
+  CoreMethod.getTotalTraffic: 'getTotalTraffic',
+  CoreMethod.resetTraffic: 'resetTraffic',
+  CoreMethod.asyncTestDelay: 'asyncTestDelay',
+  CoreMethod.speedTest: 'speedTest',
+  CoreMethod.quicTest: 'quicTest',
+  CoreMethod.unlockTest: 'unlockTest',
+  CoreMethod.cancelUnlockTest: 'cancelUnlockTest',
+  CoreMethod.probe: 'probe',
+  CoreMethod.outboundIp: 'outboundIp',
+  CoreMethod.serviceCheck: 'serviceCheck',
+  CoreMethod.getConnections: 'getConnections',
+  CoreMethod.getConnectionCount: 'getConnectionCount',
+  CoreMethod.closeConnections: 'closeConnections',
+  CoreMethod.resetConnections: 'resetConnections',
+  CoreMethod.closeConnection: 'closeConnection',
+  CoreMethod.getExternalProviders: 'getExternalProviders',
+  CoreMethod.getExternalProvider: 'getExternalProvider',
+  CoreMethod.updateGeoData: 'updateGeoData',
+  CoreMethod.updateExternalProvider: 'updateExternalProvider',
+  CoreMethod.sideLoadExternalProvider: 'sideLoadExternalProvider',
+  CoreMethod.startLog: 'startLog',
+  CoreMethod.stopLog: 'stopLog',
+  CoreMethod.startListener: 'startListener',
+  CoreMethod.stopListener: 'stopListener',
+  CoreMethod.getMemoryStats: 'getMemoryStats',
+  CoreMethod.crash: 'crash',
+  CoreMethod.setupConfig: 'setupConfig',
+  CoreMethod.clearEffect: 'clearEffect',
+  CoreMethod.updateDns: 'updateDns',
+  CoreMethod.watchRoute: 'watchRoute',
+};
+
+const _$ResultTypeEnumMap = {ResultType.success: 0, ResultType.error: -1};
+
+_SpeedTestParams _$SpeedTestParamsFromJson(Map<String, dynamic> json) =>
+    _SpeedTestParams(
+      proxyName: json['proxy-name'] as String,
+      testUrl: json['test-url'] as String?,
+      timeout: (json['timeout'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$SpeedTestParamsToJson(_SpeedTestParams instance) =>
+    <String, dynamic>{
+      'proxy-name': instance.proxyName,
+      'test-url': instance.testUrl,
+      'timeout': instance.timeout,
+    };
+
+_SpeedTestResult _$SpeedTestResultFromJson(Map<String, dynamic> json) =>
+    _SpeedTestResult(
+      name: json['name'] as String? ?? '',
+      latency: (json['latency'] as num?)?.toInt() ?? 0,
+      speed: (json['speed'] as num?)?.toDouble() ?? 0,
+      bytes: (json['bytes'] as num?)?.toInt() ?? 0,
+      error: json['error'] as String? ?? '',
+    );
+
+Map<String, dynamic> _$SpeedTestResultToJson(_SpeedTestResult instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'latency': instance.latency,
+      'speed': instance.speed,
+      'bytes': instance.bytes,
+      'error': instance.error,
+    };
+
+_QuicTestParams _$QuicTestParamsFromJson(Map<String, dynamic> json) =>
+    _QuicTestParams(
+      proxyName: json['proxy-name'] as String,
+      host: json['host'] as String?,
+      timeout: (json['timeout'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$QuicTestParamsToJson(_QuicTestParams instance) =>
+    <String, dynamic>{
+      'proxy-name': instance.proxyName,
+      'host': instance.host,
+      'timeout': instance.timeout,
+    };
+
+_QuicTestResult _$QuicTestResultFromJson(Map<String, dynamic> json) =>
+    _QuicTestResult(
+      name: json['name'] as String? ?? '',
+      rtt: (json['rtt'] as num?)?.toInt() ?? 0,
+      alpn: json['alpn'] as String? ?? '',
+      version: (json['version'] as num?)?.toInt() ?? 0,
+      error: json['error'] as String? ?? '',
+      stage: json['stage'] as String? ?? '',
+      target: json['target'] as String? ?? '',
+      resolvedIp: json['resolved-ip'] as String? ?? '',
+      network: json['network'] as String? ?? '',
+      sentPackets: (json['sent-packets'] as num?)?.toInt() ?? 0,
+      sentBytes: (json['sent-bytes'] as num?)?.toInt() ?? 0,
+      receivedPackets: (json['received-packets'] as num?)?.toInt() ?? 0,
+      receivedBytes: (json['received-bytes'] as num?)?.toInt() ?? 0,
+    );
+
+Map<String, dynamic> _$QuicTestResultToJson(_QuicTestResult instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'rtt': instance.rtt,
+      'alpn': instance.alpn,
+      'version': instance.version,
+      'error': instance.error,
+      'stage': instance.stage,
+      'target': instance.target,
+      'resolved-ip': instance.resolvedIp,
+      'network': instance.network,
+      'sent-packets': instance.sentPackets,
+      'sent-bytes': instance.sentBytes,
+      'received-packets': instance.receivedPackets,
+      'received-bytes': instance.receivedBytes,
+    };

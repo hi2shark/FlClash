@@ -643,7 +643,7 @@ $TunCopyWith<$Res> get tun {
 /// @nodoc
 mixin _$VpnOptions {
 
- bool get enable; int get port; bool get ipv6; bool get dnsHijacking; AccessControlProps get accessControlProps; bool get allowBypass; bool get systemProxy; List<String> get bypassDomain; String get stack; List<String> get routeAddress; int get mtu; String get congestionController;
+ bool get enable; int get port; bool get ipv6; bool get dnsHijacking; bool get dnsEnable; AccessControlProps get accessControlProps; bool get allowBypass; bool get systemProxy; List<String> get bypassDomain; String get stack; List<String> get routeAddress; int get mtu; String get congestionController;
 /// Create a copy of VpnOptions
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -657,20 +657,20 @@ $VpnOptionsCopyWith<VpnOptions> get copyWith => _$VpnOptionsCopyWithImpl<VpnOpti
 @override
 bool operator ==(Object other) {
   final _this = this as VpnOptions;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VpnOptions&&(identical(other.enable, _this.enable) || other.enable == _this.enable)&&(identical(other.port, _this.port) || other.port == _this.port)&&(identical(other.ipv6, _this.ipv6) || other.ipv6 == _this.ipv6)&&(identical(other.dnsHijacking, _this.dnsHijacking) || other.dnsHijacking == _this.dnsHijacking)&&(identical(other.accessControlProps, _this.accessControlProps) || other.accessControlProps == _this.accessControlProps)&&(identical(other.allowBypass, _this.allowBypass) || other.allowBypass == _this.allowBypass)&&(identical(other.systemProxy, _this.systemProxy) || other.systemProxy == _this.systemProxy)&&const DeepCollectionEquality().equals(other.bypassDomain, _this.bypassDomain)&&(identical(other.stack, _this.stack) || other.stack == _this.stack)&&const DeepCollectionEquality().equals(other.routeAddress, _this.routeAddress)&&(identical(other.mtu, _this.mtu) || other.mtu == _this.mtu)&&(identical(other.congestionController, _this.congestionController) || other.congestionController == _this.congestionController));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VpnOptions&&(identical(other.enable, _this.enable) || other.enable == _this.enable)&&(identical(other.port, _this.port) || other.port == _this.port)&&(identical(other.ipv6, _this.ipv6) || other.ipv6 == _this.ipv6)&&(identical(other.dnsHijacking, _this.dnsHijacking) || other.dnsHijacking == _this.dnsHijacking)&&(identical(other.dnsEnable, _this.dnsEnable) || other.dnsEnable == _this.dnsEnable)&&(identical(other.accessControlProps, _this.accessControlProps) || other.accessControlProps == _this.accessControlProps)&&(identical(other.allowBypass, _this.allowBypass) || other.allowBypass == _this.allowBypass)&&(identical(other.systemProxy, _this.systemProxy) || other.systemProxy == _this.systemProxy)&&const DeepCollectionEquality().equals(other.bypassDomain, _this.bypassDomain)&&(identical(other.stack, _this.stack) || other.stack == _this.stack)&&const DeepCollectionEquality().equals(other.routeAddress, _this.routeAddress)&&(identical(other.mtu, _this.mtu) || other.mtu == _this.mtu)&&(identical(other.congestionController, _this.congestionController) || other.congestionController == _this.congestionController));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as VpnOptions;
-  return Object.hash(runtimeType,_this.enable,_this.port,_this.ipv6,_this.dnsHijacking,_this.accessControlProps,_this.allowBypass,_this.systemProxy,const DeepCollectionEquality().hash(_this.bypassDomain),_this.stack,const DeepCollectionEquality().hash(_this.routeAddress),_this.mtu,_this.congestionController);
+  return Object.hash(runtimeType,_this.enable,_this.port,_this.ipv6,_this.dnsHijacking,_this.dnsEnable,_this.accessControlProps,_this.allowBypass,_this.systemProxy,const DeepCollectionEquality().hash(_this.bypassDomain),_this.stack,const DeepCollectionEquality().hash(_this.routeAddress),_this.mtu,_this.congestionController);
 }
 
 @override
 String toString() {
   final _this = this as VpnOptions;
-  return 'VpnOptions(enable: ${_this.enable}, port: ${_this.port}, ipv6: ${_this.ipv6}, dnsHijacking: ${_this.dnsHijacking}, accessControlProps: ${_this.accessControlProps}, allowBypass: ${_this.allowBypass}, systemProxy: ${_this.systemProxy}, bypassDomain: ${_this.bypassDomain}, stack: ${_this.stack}, routeAddress: ${_this.routeAddress}, mtu: ${_this.mtu}, congestionController: ${_this.congestionController})';
+  return 'VpnOptions(enable: ${_this.enable}, port: ${_this.port}, ipv6: ${_this.ipv6}, dnsHijacking: ${_this.dnsHijacking}, dnsEnable: ${_this.dnsEnable}, accessControlProps: ${_this.accessControlProps}, allowBypass: ${_this.allowBypass}, systemProxy: ${_this.systemProxy}, bypassDomain: ${_this.bypassDomain}, stack: ${_this.stack}, routeAddress: ${_this.routeAddress}, mtu: ${_this.mtu}, congestionController: ${_this.congestionController})';
 }
 
 
@@ -681,7 +681,7 @@ abstract mixin class $VpnOptionsCopyWith<$Res>  {
   factory $VpnOptionsCopyWith(VpnOptions value, $Res Function(VpnOptions) _then) = _$VpnOptionsCopyWithImpl;
 @useResult
 $Res call({
- bool enable, int port, bool ipv6, bool dnsHijacking, AccessControlProps accessControlProps, bool allowBypass, bool systemProxy, List<String> bypassDomain, String stack, List<String> routeAddress, int mtu, String congestionController
+ bool enable, int port, bool ipv6, bool dnsHijacking, bool dnsEnable, AccessControlProps accessControlProps, bool allowBypass, bool systemProxy, List<String> bypassDomain, String stack, List<String> routeAddress, int mtu, String congestionController
 });
 
 
@@ -698,12 +698,13 @@ class _$VpnOptionsCopyWithImpl<$Res>
 
 /// Create a copy of VpnOptions
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? enable = null,Object? port = null,Object? ipv6 = null,Object? dnsHijacking = null,Object? accessControlProps = null,Object? allowBypass = null,Object? systemProxy = null,Object? bypassDomain = null,Object? stack = null,Object? routeAddress = null,Object? mtu = null,Object? congestionController = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? enable = null,Object? port = null,Object? ipv6 = null,Object? dnsHijacking = null,Object? dnsEnable = null,Object? accessControlProps = null,Object? allowBypass = null,Object? systemProxy = null,Object? bypassDomain = null,Object? stack = null,Object? routeAddress = null,Object? mtu = null,Object? congestionController = null,}) {
   return _then(VpnOptions(
 enable: null == enable ? _self.enable : enable // ignore: cast_nullable_to_non_nullable
 as bool,port: null == port ? _self.port : port // ignore: cast_nullable_to_non_nullable
 as int,ipv6: null == ipv6 ? _self.ipv6 : ipv6 // ignore: cast_nullable_to_non_nullable
 as bool,dnsHijacking: null == dnsHijacking ? _self.dnsHijacking : dnsHijacking // ignore: cast_nullable_to_non_nullable
+as bool,dnsEnable: null == dnsEnable ? _self.dnsEnable : dnsEnable // ignore: cast_nullable_to_non_nullable
 as bool,accessControlProps: null == accessControlProps ? _self.accessControlProps : accessControlProps // ignore: cast_nullable_to_non_nullable
 as AccessControlProps,allowBypass: null == allowBypass ? _self.allowBypass : allowBypass // ignore: cast_nullable_to_non_nullable
 as bool,systemProxy: null == systemProxy ? _self.systemProxy : systemProxy // ignore: cast_nullable_to_non_nullable
@@ -806,10 +807,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool enable,  int port,  bool ipv6,  bool dnsHijacking,  AccessControlProps accessControlProps,  bool allowBypass,  bool systemProxy,  List<String> bypassDomain,  String stack,  List<String> routeAddress,  int mtu,  String congestionController)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool enable,  int port,  bool ipv6,  bool dnsHijacking,  bool dnsEnable,  AccessControlProps accessControlProps,  bool allowBypass,  bool systemProxy,  List<String> bypassDomain,  String stack,  List<String> routeAddress,  int mtu,  String congestionController)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VpnOptions() when $default != null:
-return $default(_that.enable,_that.port,_that.ipv6,_that.dnsHijacking,_that.accessControlProps,_that.allowBypass,_that.systemProxy,_that.bypassDomain,_that.stack,_that.routeAddress,_that.mtu,_that.congestionController);case _:
+return $default(_that.enable,_that.port,_that.ipv6,_that.dnsHijacking,_that.dnsEnable,_that.accessControlProps,_that.allowBypass,_that.systemProxy,_that.bypassDomain,_that.stack,_that.routeAddress,_that.mtu,_that.congestionController);case _:
   return orElse();
 
 }
@@ -827,10 +828,10 @@ return $default(_that.enable,_that.port,_that.ipv6,_that.dnsHijacking,_that.acce
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool enable,  int port,  bool ipv6,  bool dnsHijacking,  AccessControlProps accessControlProps,  bool allowBypass,  bool systemProxy,  List<String> bypassDomain,  String stack,  List<String> routeAddress,  int mtu,  String congestionController)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool enable,  int port,  bool ipv6,  bool dnsHijacking,  bool dnsEnable,  AccessControlProps accessControlProps,  bool allowBypass,  bool systemProxy,  List<String> bypassDomain,  String stack,  List<String> routeAddress,  int mtu,  String congestionController)  $default,) {final _that = this;
 switch (_that) {
 case _VpnOptions():
-return $default(_that.enable,_that.port,_that.ipv6,_that.dnsHijacking,_that.accessControlProps,_that.allowBypass,_that.systemProxy,_that.bypassDomain,_that.stack,_that.routeAddress,_that.mtu,_that.congestionController);case _:
+return $default(_that.enable,_that.port,_that.ipv6,_that.dnsHijacking,_that.dnsEnable,_that.accessControlProps,_that.allowBypass,_that.systemProxy,_that.bypassDomain,_that.stack,_that.routeAddress,_that.mtu,_that.congestionController);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -847,10 +848,10 @@ return $default(_that.enable,_that.port,_that.ipv6,_that.dnsHijacking,_that.acce
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool enable,  int port,  bool ipv6,  bool dnsHijacking,  AccessControlProps accessControlProps,  bool allowBypass,  bool systemProxy,  List<String> bypassDomain,  String stack,  List<String> routeAddress,  int mtu,  String congestionController)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool enable,  int port,  bool ipv6,  bool dnsHijacking,  bool dnsEnable,  AccessControlProps accessControlProps,  bool allowBypass,  bool systemProxy,  List<String> bypassDomain,  String stack,  List<String> routeAddress,  int mtu,  String congestionController)?  $default,) {final _that = this;
 switch (_that) {
 case _VpnOptions() when $default != null:
-return $default(_that.enable,_that.port,_that.ipv6,_that.dnsHijacking,_that.accessControlProps,_that.allowBypass,_that.systemProxy,_that.bypassDomain,_that.stack,_that.routeAddress,_that.mtu,_that.congestionController);case _:
+return $default(_that.enable,_that.port,_that.ipv6,_that.dnsHijacking,_that.dnsEnable,_that.accessControlProps,_that.allowBypass,_that.systemProxy,_that.bypassDomain,_that.stack,_that.routeAddress,_that.mtu,_that.congestionController);case _:
   return null;
 
 }
@@ -862,13 +863,14 @@ return $default(_that.enable,_that.port,_that.ipv6,_that.dnsHijacking,_that.acce
 @JsonSerializable()
 
 class _VpnOptions implements VpnOptions {
-  const _VpnOptions({required this.enable, required this.port, required this.ipv6, required this.dnsHijacking, required this.accessControlProps, required this.allowBypass, required this.systemProxy, required  List<String> bypassDomain, required this.stack,  List<String> routeAddress = const [], this.mtu = 0, this.congestionController = ''}): _bypassDomain = bypassDomain,_routeAddress = routeAddress;
+  const _VpnOptions({required this.enable, required this.port, required this.ipv6, required this.dnsHijacking, this.dnsEnable = false, required this.accessControlProps, required this.allowBypass, required this.systemProxy, required  List<String> bypassDomain, required this.stack,  List<String> routeAddress = const [], this.mtu = 0, this.congestionController = ''}): _bypassDomain = bypassDomain,_routeAddress = routeAddress;
   factory _VpnOptions.fromJson(Map<String, dynamic> json) => _$VpnOptionsFromJson(json);
 
 @override final  bool enable;
 @override final  int port;
 @override final  bool ipv6;
 @override final  bool dnsHijacking;
+@override@JsonKey() final  bool dnsEnable;
 @override final  AccessControlProps accessControlProps;
 @override final  bool allowBypass;
 @override final  bool systemProxy;
@@ -903,18 +905,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VpnOptions&&(identical(other.enable, enable) || other.enable == enable)&&(identical(other.port, port) || other.port == port)&&(identical(other.ipv6, ipv6) || other.ipv6 == ipv6)&&(identical(other.dnsHijacking, dnsHijacking) || other.dnsHijacking == dnsHijacking)&&(identical(other.accessControlProps, accessControlProps) || other.accessControlProps == accessControlProps)&&(identical(other.allowBypass, allowBypass) || other.allowBypass == allowBypass)&&(identical(other.systemProxy, systemProxy) || other.systemProxy == systemProxy)&&const DeepCollectionEquality().equals(other.bypassDomain, _bypassDomain)&&(identical(other.stack, stack) || other.stack == stack)&&const DeepCollectionEquality().equals(other.routeAddress, _routeAddress)&&(identical(other.mtu, mtu) || other.mtu == mtu)&&(identical(other.congestionController, congestionController) || other.congestionController == congestionController));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VpnOptions&&(identical(other.enable, enable) || other.enable == enable)&&(identical(other.port, port) || other.port == port)&&(identical(other.ipv6, ipv6) || other.ipv6 == ipv6)&&(identical(other.dnsHijacking, dnsHijacking) || other.dnsHijacking == dnsHijacking)&&(identical(other.dnsEnable, dnsEnable) || other.dnsEnable == dnsEnable)&&(identical(other.accessControlProps, accessControlProps) || other.accessControlProps == accessControlProps)&&(identical(other.allowBypass, allowBypass) || other.allowBypass == allowBypass)&&(identical(other.systemProxy, systemProxy) || other.systemProxy == systemProxy)&&const DeepCollectionEquality().equals(other.bypassDomain, _bypassDomain)&&(identical(other.stack, stack) || other.stack == stack)&&const DeepCollectionEquality().equals(other.routeAddress, _routeAddress)&&(identical(other.mtu, mtu) || other.mtu == mtu)&&(identical(other.congestionController, congestionController) || other.congestionController == congestionController));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,enable,port,ipv6,dnsHijacking,accessControlProps,allowBypass,systemProxy,const DeepCollectionEquality().hash(_bypassDomain),stack,const DeepCollectionEquality().hash(_routeAddress),mtu,congestionController);
+    return Object.hash(runtimeType,enable,port,ipv6,dnsHijacking,dnsEnable,accessControlProps,allowBypass,systemProxy,const DeepCollectionEquality().hash(_bypassDomain),stack,const DeepCollectionEquality().hash(_routeAddress),mtu,congestionController);
 }
 
 @override
 String toString() {
-    return 'VpnOptions(enable: $enable, port: $port, ipv6: $ipv6, dnsHijacking: $dnsHijacking, accessControlProps: $accessControlProps, allowBypass: $allowBypass, systemProxy: $systemProxy, bypassDomain: $bypassDomain, stack: $stack, routeAddress: $routeAddress, mtu: $mtu, congestionController: $congestionController)';
+    return 'VpnOptions(enable: $enable, port: $port, ipv6: $ipv6, dnsHijacking: $dnsHijacking, dnsEnable: $dnsEnable, accessControlProps: $accessControlProps, allowBypass: $allowBypass, systemProxy: $systemProxy, bypassDomain: $bypassDomain, stack: $stack, routeAddress: $routeAddress, mtu: $mtu, congestionController: $congestionController)';
 }
 
 
@@ -925,7 +927,7 @@ abstract mixin class _$VpnOptionsCopyWith<$Res> implements $VpnOptionsCopyWith<$
   factory _$VpnOptionsCopyWith(_VpnOptions value, $Res Function(_VpnOptions) _then) = __$VpnOptionsCopyWithImpl;
 @override @useResult
 $Res call({
- bool enable, int port, bool ipv6, bool dnsHijacking, AccessControlProps accessControlProps, bool allowBypass, bool systemProxy, List<String> bypassDomain, String stack, List<String> routeAddress, int mtu, String congestionController
+ bool enable, int port, bool ipv6, bool dnsHijacking, bool dnsEnable, AccessControlProps accessControlProps, bool allowBypass, bool systemProxy, List<String> bypassDomain, String stack, List<String> routeAddress, int mtu, String congestionController
 });
 
 
@@ -942,12 +944,13 @@ class __$VpnOptionsCopyWithImpl<$Res>
 
 /// Create a copy of VpnOptions
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? enable = null,Object? port = null,Object? ipv6 = null,Object? dnsHijacking = null,Object? accessControlProps = null,Object? allowBypass = null,Object? systemProxy = null,Object? bypassDomain = null,Object? stack = null,Object? routeAddress = null,Object? mtu = null,Object? congestionController = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? enable = null,Object? port = null,Object? ipv6 = null,Object? dnsHijacking = null,Object? dnsEnable = null,Object? accessControlProps = null,Object? allowBypass = null,Object? systemProxy = null,Object? bypassDomain = null,Object? stack = null,Object? routeAddress = null,Object? mtu = null,Object? congestionController = null,}) {
   return _then(_VpnOptions(
 enable: null == enable ? _self.enable : enable // ignore: cast_nullable_to_non_nullable
 as bool,port: null == port ? _self.port : port // ignore: cast_nullable_to_non_nullable
 as int,ipv6: null == ipv6 ? _self.ipv6 : ipv6 // ignore: cast_nullable_to_non_nullable
 as bool,dnsHijacking: null == dnsHijacking ? _self.dnsHijacking : dnsHijacking // ignore: cast_nullable_to_non_nullable
+as bool,dnsEnable: null == dnsEnable ? _self.dnsEnable : dnsEnable // ignore: cast_nullable_to_non_nullable
 as bool,accessControlProps: null == accessControlProps ? _self.accessControlProps : accessControlProps // ignore: cast_nullable_to_non_nullable
 as AccessControlProps,allowBypass: null == allowBypass ? _self.allowBypass : allowBypass // ignore: cast_nullable_to_non_nullable
 as bool,systemProxy: null == systemProxy ? _self.systemProxy : systemProxy // ignore: cast_nullable_to_non_nullable
@@ -6063,6 +6066,1425 @@ class __$ProxiesDataCopyWithImpl<$Res>
 proxies: null == proxies ? _self._proxies : proxies // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,all: null == all ? _self._all : all // ignore: cast_nullable_to_non_nullable
 as List<String>,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$ActionResult {
+
+ CoreMethod get method; dynamic get data; String? get id; ResultType get code;
+/// Create a copy of ActionResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ActionResultCopyWith<ActionResult> get copyWith => _$ActionResultCopyWithImpl<ActionResult>(this as ActionResult, _$identity);
+
+  /// Serializes this ActionResult to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as ActionResult;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ActionResult&&(identical(other.method, _this.method) || other.method == _this.method)&&const DeepCollectionEquality().equals(other.data, _this.data)&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.code, _this.code) || other.code == _this.code));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as ActionResult;
+  return Object.hash(runtimeType,_this.method,const DeepCollectionEquality().hash(_this.data),_this.id,_this.code);
+}
+
+@override
+String toString() {
+  final _this = this as ActionResult;
+  return 'ActionResult(method: ${_this.method}, data: ${_this.data}, id: ${_this.id}, code: ${_this.code})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ActionResultCopyWith<$Res>  {
+  factory $ActionResultCopyWith(ActionResult value, $Res Function(ActionResult) _then) = _$ActionResultCopyWithImpl;
+@useResult
+$Res call({
+ CoreMethod method, dynamic data, String? id, ResultType code
+});
+
+
+
+
+}
+/// @nodoc
+class _$ActionResultCopyWithImpl<$Res>
+    implements $ActionResultCopyWith<$Res> {
+  _$ActionResultCopyWithImpl(this._self, this._then);
+
+  final ActionResult _self;
+  final $Res Function(ActionResult) _then;
+
+/// Create a copy of ActionResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? method = null,Object? data = freezed,Object? id = freezed,Object? code = null,}) {
+  return _then(ActionResult(
+method: null == method ? _self.method : method // ignore: cast_nullable_to_non_nullable
+as CoreMethod,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as dynamic,id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String?,code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
+as ResultType,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ActionResult].
+extension ActionResultPatterns on ActionResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ActionResult value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ActionResult() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ActionResult value)  $default,){
+final _that = this;
+switch (_that) {
+case _ActionResult():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ActionResult value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ActionResult() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( CoreMethod method,  dynamic data,  String? id,  ResultType code)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ActionResult() when $default != null:
+return $default(_that.method,_that.data,_that.id,_that.code);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( CoreMethod method,  dynamic data,  String? id,  ResultType code)  $default,) {final _that = this;
+switch (_that) {
+case _ActionResult():
+return $default(_that.method,_that.data,_that.id,_that.code);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( CoreMethod method,  dynamic data,  String? id,  ResultType code)?  $default,) {final _that = this;
+switch (_that) {
+case _ActionResult() when $default != null:
+return $default(_that.method,_that.data,_that.id,_that.code);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _ActionResult implements ActionResult {
+  const _ActionResult({required this.method, required this.data, this.id, this.code = ResultType.success});
+  factory _ActionResult.fromJson(Map<String, dynamic> json) => _$ActionResultFromJson(json);
+
+@override final  CoreMethod method;
+@override final  dynamic data;
+@override final  String? id;
+@override@JsonKey() final  ResultType code;
+
+/// Create a copy of ActionResult
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ActionResultCopyWith<_ActionResult> get copyWith => __$ActionResultCopyWithImpl<_ActionResult>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$ActionResultToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ActionResult&&(identical(other.method, method) || other.method == method)&&const DeepCollectionEquality().equals(other.data, data)&&(identical(other.id, id) || other.id == id)&&(identical(other.code, code) || other.code == code));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,method,const DeepCollectionEquality().hash(data),id,code);
+}
+
+@override
+String toString() {
+    return 'ActionResult(method: $method, data: $data, id: $id, code: $code)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ActionResultCopyWith<$Res> implements $ActionResultCopyWith<$Res> {
+  factory _$ActionResultCopyWith(_ActionResult value, $Res Function(_ActionResult) _then) = __$ActionResultCopyWithImpl;
+@override @useResult
+$Res call({
+ CoreMethod method, dynamic data, String? id, ResultType code
+});
+
+
+
+
+}
+/// @nodoc
+class __$ActionResultCopyWithImpl<$Res>
+    implements _$ActionResultCopyWith<$Res> {
+  __$ActionResultCopyWithImpl(this._self, this._then);
+
+  final _ActionResult _self;
+  final $Res Function(_ActionResult) _then;
+
+/// Create a copy of ActionResult
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? method = null,Object? data = freezed,Object? id = freezed,Object? code = null,}) {
+  return _then(_ActionResult(
+method: null == method ? _self.method : method // ignore: cast_nullable_to_non_nullable
+as CoreMethod,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as dynamic,id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String?,code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
+as ResultType,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$SpeedTestParams {
+
+@JsonKey(name: 'proxy-name') String get proxyName;@JsonKey(name: 'test-url') String? get testUrl; int? get timeout;
+/// Create a copy of SpeedTestParams
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SpeedTestParamsCopyWith<SpeedTestParams> get copyWith => _$SpeedTestParamsCopyWithImpl<SpeedTestParams>(this as SpeedTestParams, _$identity);
+
+  /// Serializes this SpeedTestParams to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as SpeedTestParams;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SpeedTestParams&&(identical(other.proxyName, _this.proxyName) || other.proxyName == _this.proxyName)&&(identical(other.testUrl, _this.testUrl) || other.testUrl == _this.testUrl)&&(identical(other.timeout, _this.timeout) || other.timeout == _this.timeout));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as SpeedTestParams;
+  return Object.hash(runtimeType,_this.proxyName,_this.testUrl,_this.timeout);
+}
+
+@override
+String toString() {
+  final _this = this as SpeedTestParams;
+  return 'SpeedTestParams(proxyName: ${_this.proxyName}, testUrl: ${_this.testUrl}, timeout: ${_this.timeout})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SpeedTestParamsCopyWith<$Res>  {
+  factory $SpeedTestParamsCopyWith(SpeedTestParams value, $Res Function(SpeedTestParams) _then) = _$SpeedTestParamsCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(name: 'proxy-name') String proxyName,@JsonKey(name: 'test-url') String? testUrl, int? timeout
+});
+
+
+
+
+}
+/// @nodoc
+class _$SpeedTestParamsCopyWithImpl<$Res>
+    implements $SpeedTestParamsCopyWith<$Res> {
+  _$SpeedTestParamsCopyWithImpl(this._self, this._then);
+
+  final SpeedTestParams _self;
+  final $Res Function(SpeedTestParams) _then;
+
+/// Create a copy of SpeedTestParams
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? proxyName = null,Object? testUrl = freezed,Object? timeout = freezed,}) {
+  return _then(SpeedTestParams(
+proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,testUrl: freezed == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
+as String?,timeout: freezed == timeout ? _self.timeout : timeout // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [SpeedTestParams].
+extension SpeedTestParamsPatterns on SpeedTestParams {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _SpeedTestParams value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _SpeedTestParams() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _SpeedTestParams value)  $default,){
+final _that = this;
+switch (_that) {
+case _SpeedTestParams():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _SpeedTestParams value)?  $default,){
+final _that = this;
+switch (_that) {
+case _SpeedTestParams() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-name')  String proxyName, @JsonKey(name: 'test-url')  String? testUrl,  int? timeout)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _SpeedTestParams() when $default != null:
+return $default(_that.proxyName,_that.testUrl,_that.timeout);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-name')  String proxyName, @JsonKey(name: 'test-url')  String? testUrl,  int? timeout)  $default,) {final _that = this;
+switch (_that) {
+case _SpeedTestParams():
+return $default(_that.proxyName,_that.testUrl,_that.timeout);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'proxy-name')  String proxyName, @JsonKey(name: 'test-url')  String? testUrl,  int? timeout)?  $default,) {final _that = this;
+switch (_that) {
+case _SpeedTestParams() when $default != null:
+return $default(_that.proxyName,_that.testUrl,_that.timeout);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _SpeedTestParams implements SpeedTestParams {
+  const _SpeedTestParams({@JsonKey(name: 'proxy-name') required this.proxyName, @JsonKey(name: 'test-url') this.testUrl, this.timeout});
+  factory _SpeedTestParams.fromJson(Map<String, dynamic> json) => _$SpeedTestParamsFromJson(json);
+
+@override@JsonKey(name: 'proxy-name') final  String proxyName;
+@override@JsonKey(name: 'test-url') final  String? testUrl;
+@override final  int? timeout;
+
+/// Create a copy of SpeedTestParams
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SpeedTestParamsCopyWith<_SpeedTestParams> get copyWith => __$SpeedTestParamsCopyWithImpl<_SpeedTestParams>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$SpeedTestParamsToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SpeedTestParams&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&(identical(other.testUrl, testUrl) || other.testUrl == testUrl)&&(identical(other.timeout, timeout) || other.timeout == timeout));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,proxyName,testUrl,timeout);
+}
+
+@override
+String toString() {
+    return 'SpeedTestParams(proxyName: $proxyName, testUrl: $testUrl, timeout: $timeout)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$SpeedTestParamsCopyWith<$Res> implements $SpeedTestParamsCopyWith<$Res> {
+  factory _$SpeedTestParamsCopyWith(_SpeedTestParams value, $Res Function(_SpeedTestParams) _then) = __$SpeedTestParamsCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(name: 'proxy-name') String proxyName,@JsonKey(name: 'test-url') String? testUrl, int? timeout
+});
+
+
+
+
+}
+/// @nodoc
+class __$SpeedTestParamsCopyWithImpl<$Res>
+    implements _$SpeedTestParamsCopyWith<$Res> {
+  __$SpeedTestParamsCopyWithImpl(this._self, this._then);
+
+  final _SpeedTestParams _self;
+  final $Res Function(_SpeedTestParams) _then;
+
+/// Create a copy of SpeedTestParams
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? proxyName = null,Object? testUrl = freezed,Object? timeout = freezed,}) {
+  return _then(_SpeedTestParams(
+proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,testUrl: freezed == testUrl ? _self.testUrl : testUrl // ignore: cast_nullable_to_non_nullable
+as String?,timeout: freezed == timeout ? _self.timeout : timeout // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$SpeedTestResult {
+
+ String get name; int get latency; double get speed; int get bytes; String get error;
+/// Create a copy of SpeedTestResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SpeedTestResultCopyWith<SpeedTestResult> get copyWith => _$SpeedTestResultCopyWithImpl<SpeedTestResult>(this as SpeedTestResult, _$identity);
+
+  /// Serializes this SpeedTestResult to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as SpeedTestResult;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SpeedTestResult&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.latency, _this.latency) || other.latency == _this.latency)&&(identical(other.speed, _this.speed) || other.speed == _this.speed)&&(identical(other.bytes, _this.bytes) || other.bytes == _this.bytes)&&(identical(other.error, _this.error) || other.error == _this.error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as SpeedTestResult;
+  return Object.hash(runtimeType,_this.name,_this.latency,_this.speed,_this.bytes,_this.error);
+}
+
+@override
+String toString() {
+  final _this = this as SpeedTestResult;
+  return 'SpeedTestResult(name: ${_this.name}, latency: ${_this.latency}, speed: ${_this.speed}, bytes: ${_this.bytes}, error: ${_this.error})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SpeedTestResultCopyWith<$Res>  {
+  factory $SpeedTestResultCopyWith(SpeedTestResult value, $Res Function(SpeedTestResult) _then) = _$SpeedTestResultCopyWithImpl;
+@useResult
+$Res call({
+ String name, int latency, double speed, int bytes, String error
+});
+
+
+
+
+}
+/// @nodoc
+class _$SpeedTestResultCopyWithImpl<$Res>
+    implements $SpeedTestResultCopyWith<$Res> {
+  _$SpeedTestResultCopyWithImpl(this._self, this._then);
+
+  final SpeedTestResult _self;
+  final $Res Function(SpeedTestResult) _then;
+
+/// Create a copy of SpeedTestResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? latency = null,Object? speed = null,Object? bytes = null,Object? error = null,}) {
+  return _then(SpeedTestResult(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,latency: null == latency ? _self.latency : latency // ignore: cast_nullable_to_non_nullable
+as int,speed: null == speed ? _self.speed : speed // ignore: cast_nullable_to_non_nullable
+as double,bytes: null == bytes ? _self.bytes : bytes // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [SpeedTestResult].
+extension SpeedTestResultPatterns on SpeedTestResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _SpeedTestResult value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _SpeedTestResult() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _SpeedTestResult value)  $default,){
+final _that = this;
+switch (_that) {
+case _SpeedTestResult():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _SpeedTestResult value)?  $default,){
+final _that = this;
+switch (_that) {
+case _SpeedTestResult() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  int latency,  double speed,  int bytes,  String error)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _SpeedTestResult() when $default != null:
+return $default(_that.name,_that.latency,_that.speed,_that.bytes,_that.error);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  int latency,  double speed,  int bytes,  String error)  $default,) {final _that = this;
+switch (_that) {
+case _SpeedTestResult():
+return $default(_that.name,_that.latency,_that.speed,_that.bytes,_that.error);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  int latency,  double speed,  int bytes,  String error)?  $default,) {final _that = this;
+switch (_that) {
+case _SpeedTestResult() when $default != null:
+return $default(_that.name,_that.latency,_that.speed,_that.bytes,_that.error);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _SpeedTestResult implements SpeedTestResult {
+  const _SpeedTestResult({this.name = '', this.latency = 0, this.speed = 0, this.bytes = 0, this.error = ''});
+  factory _SpeedTestResult.fromJson(Map<String, dynamic> json) => _$SpeedTestResultFromJson(json);
+
+@override@JsonKey() final  String name;
+@override@JsonKey() final  int latency;
+@override@JsonKey() final  double speed;
+@override@JsonKey() final  int bytes;
+@override@JsonKey() final  String error;
+
+/// Create a copy of SpeedTestResult
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SpeedTestResultCopyWith<_SpeedTestResult> get copyWith => __$SpeedTestResultCopyWithImpl<_SpeedTestResult>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$SpeedTestResultToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SpeedTestResult&&(identical(other.name, name) || other.name == name)&&(identical(other.latency, latency) || other.latency == latency)&&(identical(other.speed, speed) || other.speed == speed)&&(identical(other.bytes, bytes) || other.bytes == bytes)&&(identical(other.error, error) || other.error == error));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,name,latency,speed,bytes,error);
+}
+
+@override
+String toString() {
+    return 'SpeedTestResult(name: $name, latency: $latency, speed: $speed, bytes: $bytes, error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$SpeedTestResultCopyWith<$Res> implements $SpeedTestResultCopyWith<$Res> {
+  factory _$SpeedTestResultCopyWith(_SpeedTestResult value, $Res Function(_SpeedTestResult) _then) = __$SpeedTestResultCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, int latency, double speed, int bytes, String error
+});
+
+
+
+
+}
+/// @nodoc
+class __$SpeedTestResultCopyWithImpl<$Res>
+    implements _$SpeedTestResultCopyWith<$Res> {
+  __$SpeedTestResultCopyWithImpl(this._self, this._then);
+
+  final _SpeedTestResult _self;
+  final $Res Function(_SpeedTestResult) _then;
+
+/// Create a copy of SpeedTestResult
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? latency = null,Object? speed = null,Object? bytes = null,Object? error = null,}) {
+  return _then(_SpeedTestResult(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,latency: null == latency ? _self.latency : latency // ignore: cast_nullable_to_non_nullable
+as int,speed: null == speed ? _self.speed : speed // ignore: cast_nullable_to_non_nullable
+as double,bytes: null == bytes ? _self.bytes : bytes // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$QuicTestParams {
+
+@JsonKey(name: 'proxy-name') String get proxyName; String? get host; int? get timeout;
+/// Create a copy of QuicTestParams
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$QuicTestParamsCopyWith<QuicTestParams> get copyWith => _$QuicTestParamsCopyWithImpl<QuicTestParams>(this as QuicTestParams, _$identity);
+
+  /// Serializes this QuicTestParams to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as QuicTestParams;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is QuicTestParams&&(identical(other.proxyName, _this.proxyName) || other.proxyName == _this.proxyName)&&(identical(other.host, _this.host) || other.host == _this.host)&&(identical(other.timeout, _this.timeout) || other.timeout == _this.timeout));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as QuicTestParams;
+  return Object.hash(runtimeType,_this.proxyName,_this.host,_this.timeout);
+}
+
+@override
+String toString() {
+  final _this = this as QuicTestParams;
+  return 'QuicTestParams(proxyName: ${_this.proxyName}, host: ${_this.host}, timeout: ${_this.timeout})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $QuicTestParamsCopyWith<$Res>  {
+  factory $QuicTestParamsCopyWith(QuicTestParams value, $Res Function(QuicTestParams) _then) = _$QuicTestParamsCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(name: 'proxy-name') String proxyName, String? host, int? timeout
+});
+
+
+
+
+}
+/// @nodoc
+class _$QuicTestParamsCopyWithImpl<$Res>
+    implements $QuicTestParamsCopyWith<$Res> {
+  _$QuicTestParamsCopyWithImpl(this._self, this._then);
+
+  final QuicTestParams _self;
+  final $Res Function(QuicTestParams) _then;
+
+/// Create a copy of QuicTestParams
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? proxyName = null,Object? host = freezed,Object? timeout = freezed,}) {
+  return _then(QuicTestParams(
+proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,host: freezed == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
+as String?,timeout: freezed == timeout ? _self.timeout : timeout // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [QuicTestParams].
+extension QuicTestParamsPatterns on QuicTestParams {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _QuicTestParams value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _QuicTestParams() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _QuicTestParams value)  $default,){
+final _that = this;
+switch (_that) {
+case _QuicTestParams():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _QuicTestParams value)?  $default,){
+final _that = this;
+switch (_that) {
+case _QuicTestParams() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-name')  String proxyName,  String? host,  int? timeout)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _QuicTestParams() when $default != null:
+return $default(_that.proxyName,_that.host,_that.timeout);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'proxy-name')  String proxyName,  String? host,  int? timeout)  $default,) {final _that = this;
+switch (_that) {
+case _QuicTestParams():
+return $default(_that.proxyName,_that.host,_that.timeout);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'proxy-name')  String proxyName,  String? host,  int? timeout)?  $default,) {final _that = this;
+switch (_that) {
+case _QuicTestParams() when $default != null:
+return $default(_that.proxyName,_that.host,_that.timeout);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _QuicTestParams implements QuicTestParams {
+  const _QuicTestParams({@JsonKey(name: 'proxy-name') required this.proxyName, this.host, this.timeout});
+  factory _QuicTestParams.fromJson(Map<String, dynamic> json) => _$QuicTestParamsFromJson(json);
+
+@override@JsonKey(name: 'proxy-name') final  String proxyName;
+@override final  String? host;
+@override final  int? timeout;
+
+/// Create a copy of QuicTestParams
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$QuicTestParamsCopyWith<_QuicTestParams> get copyWith => __$QuicTestParamsCopyWithImpl<_QuicTestParams>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$QuicTestParamsToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _QuicTestParams&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&(identical(other.host, host) || other.host == host)&&(identical(other.timeout, timeout) || other.timeout == timeout));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,proxyName,host,timeout);
+}
+
+@override
+String toString() {
+    return 'QuicTestParams(proxyName: $proxyName, host: $host, timeout: $timeout)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$QuicTestParamsCopyWith<$Res> implements $QuicTestParamsCopyWith<$Res> {
+  factory _$QuicTestParamsCopyWith(_QuicTestParams value, $Res Function(_QuicTestParams) _then) = __$QuicTestParamsCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(name: 'proxy-name') String proxyName, String? host, int? timeout
+});
+
+
+
+
+}
+/// @nodoc
+class __$QuicTestParamsCopyWithImpl<$Res>
+    implements _$QuicTestParamsCopyWith<$Res> {
+  __$QuicTestParamsCopyWithImpl(this._self, this._then);
+
+  final _QuicTestParams _self;
+  final $Res Function(_QuicTestParams) _then;
+
+/// Create a copy of QuicTestParams
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? proxyName = null,Object? host = freezed,Object? timeout = freezed,}) {
+  return _then(_QuicTestParams(
+proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,host: freezed == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
+as String?,timeout: freezed == timeout ? _self.timeout : timeout // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$QuicTestResult {
+
+ String get name; int get rtt; String get alpn; int get version; String get error; String get stage; String get target;@JsonKey(name: 'resolved-ip') String get resolvedIp; String get network;@JsonKey(name: 'sent-packets') int get sentPackets;@JsonKey(name: 'sent-bytes') int get sentBytes;@JsonKey(name: 'received-packets') int get receivedPackets;@JsonKey(name: 'received-bytes') int get receivedBytes;
+/// Create a copy of QuicTestResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$QuicTestResultCopyWith<QuicTestResult> get copyWith => _$QuicTestResultCopyWithImpl<QuicTestResult>(this as QuicTestResult, _$identity);
+
+  /// Serializes this QuicTestResult to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as QuicTestResult;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is QuicTestResult&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.rtt, _this.rtt) || other.rtt == _this.rtt)&&(identical(other.alpn, _this.alpn) || other.alpn == _this.alpn)&&(identical(other.version, _this.version) || other.version == _this.version)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.stage, _this.stage) || other.stage == _this.stage)&&(identical(other.target, _this.target) || other.target == _this.target)&&(identical(other.resolvedIp, _this.resolvedIp) || other.resolvedIp == _this.resolvedIp)&&(identical(other.network, _this.network) || other.network == _this.network)&&(identical(other.sentPackets, _this.sentPackets) || other.sentPackets == _this.sentPackets)&&(identical(other.sentBytes, _this.sentBytes) || other.sentBytes == _this.sentBytes)&&(identical(other.receivedPackets, _this.receivedPackets) || other.receivedPackets == _this.receivedPackets)&&(identical(other.receivedBytes, _this.receivedBytes) || other.receivedBytes == _this.receivedBytes));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as QuicTestResult;
+  return Object.hash(runtimeType,_this.name,_this.rtt,_this.alpn,_this.version,_this.error,_this.stage,_this.target,_this.resolvedIp,_this.network,_this.sentPackets,_this.sentBytes,_this.receivedPackets,_this.receivedBytes);
+}
+
+@override
+String toString() {
+  final _this = this as QuicTestResult;
+  return 'QuicTestResult(name: ${_this.name}, rtt: ${_this.rtt}, alpn: ${_this.alpn}, version: ${_this.version}, error: ${_this.error}, stage: ${_this.stage}, target: ${_this.target}, resolvedIp: ${_this.resolvedIp}, network: ${_this.network}, sentPackets: ${_this.sentPackets}, sentBytes: ${_this.sentBytes}, receivedPackets: ${_this.receivedPackets}, receivedBytes: ${_this.receivedBytes})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $QuicTestResultCopyWith<$Res>  {
+  factory $QuicTestResultCopyWith(QuicTestResult value, $Res Function(QuicTestResult) _then) = _$QuicTestResultCopyWithImpl;
+@useResult
+$Res call({
+ String name, int rtt, String alpn, int version, String error, String stage, String target,@JsonKey(name: 'resolved-ip') String resolvedIp, String network,@JsonKey(name: 'sent-packets') int sentPackets,@JsonKey(name: 'sent-bytes') int sentBytes,@JsonKey(name: 'received-packets') int receivedPackets,@JsonKey(name: 'received-bytes') int receivedBytes
+});
+
+
+
+
+}
+/// @nodoc
+class _$QuicTestResultCopyWithImpl<$Res>
+    implements $QuicTestResultCopyWith<$Res> {
+  _$QuicTestResultCopyWithImpl(this._self, this._then);
+
+  final QuicTestResult _self;
+  final $Res Function(QuicTestResult) _then;
+
+/// Create a copy of QuicTestResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? rtt = null,Object? alpn = null,Object? version = null,Object? error = null,Object? stage = null,Object? target = null,Object? resolvedIp = null,Object? network = null,Object? sentPackets = null,Object? sentBytes = null,Object? receivedPackets = null,Object? receivedBytes = null,}) {
+  return _then(QuicTestResult(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,rtt: null == rtt ? _self.rtt : rtt // ignore: cast_nullable_to_non_nullable
+as int,alpn: null == alpn ? _self.alpn : alpn // ignore: cast_nullable_to_non_nullable
+as String,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,stage: null == stage ? _self.stage : stage // ignore: cast_nullable_to_non_nullable
+as String,target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,resolvedIp: null == resolvedIp ? _self.resolvedIp : resolvedIp // ignore: cast_nullable_to_non_nullable
+as String,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
+as String,sentPackets: null == sentPackets ? _self.sentPackets : sentPackets // ignore: cast_nullable_to_non_nullable
+as int,sentBytes: null == sentBytes ? _self.sentBytes : sentBytes // ignore: cast_nullable_to_non_nullable
+as int,receivedPackets: null == receivedPackets ? _self.receivedPackets : receivedPackets // ignore: cast_nullable_to_non_nullable
+as int,receivedBytes: null == receivedBytes ? _self.receivedBytes : receivedBytes // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [QuicTestResult].
+extension QuicTestResultPatterns on QuicTestResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _QuicTestResult value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _QuicTestResult() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _QuicTestResult value)  $default,){
+final _that = this;
+switch (_that) {
+case _QuicTestResult():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _QuicTestResult value)?  $default,){
+final _that = this;
+switch (_that) {
+case _QuicTestResult() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  int rtt,  String alpn,  int version,  String error,  String stage,  String target, @JsonKey(name: 'resolved-ip')  String resolvedIp,  String network, @JsonKey(name: 'sent-packets')  int sentPackets, @JsonKey(name: 'sent-bytes')  int sentBytes, @JsonKey(name: 'received-packets')  int receivedPackets, @JsonKey(name: 'received-bytes')  int receivedBytes)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _QuicTestResult() when $default != null:
+return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error,_that.stage,_that.target,_that.resolvedIp,_that.network,_that.sentPackets,_that.sentBytes,_that.receivedPackets,_that.receivedBytes);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  int rtt,  String alpn,  int version,  String error,  String stage,  String target, @JsonKey(name: 'resolved-ip')  String resolvedIp,  String network, @JsonKey(name: 'sent-packets')  int sentPackets, @JsonKey(name: 'sent-bytes')  int sentBytes, @JsonKey(name: 'received-packets')  int receivedPackets, @JsonKey(name: 'received-bytes')  int receivedBytes)  $default,) {final _that = this;
+switch (_that) {
+case _QuicTestResult():
+return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error,_that.stage,_that.target,_that.resolvedIp,_that.network,_that.sentPackets,_that.sentBytes,_that.receivedPackets,_that.receivedBytes);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  int rtt,  String alpn,  int version,  String error,  String stage,  String target, @JsonKey(name: 'resolved-ip')  String resolvedIp,  String network, @JsonKey(name: 'sent-packets')  int sentPackets, @JsonKey(name: 'sent-bytes')  int sentBytes, @JsonKey(name: 'received-packets')  int receivedPackets, @JsonKey(name: 'received-bytes')  int receivedBytes)?  $default,) {final _that = this;
+switch (_that) {
+case _QuicTestResult() when $default != null:
+return $default(_that.name,_that.rtt,_that.alpn,_that.version,_that.error,_that.stage,_that.target,_that.resolvedIp,_that.network,_that.sentPackets,_that.sentBytes,_that.receivedPackets,_that.receivedBytes);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _QuicTestResult implements QuicTestResult {
+  const _QuicTestResult({this.name = '', this.rtt = 0, this.alpn = '', this.version = 0, this.error = '', this.stage = '', this.target = '', @JsonKey(name: 'resolved-ip') this.resolvedIp = '', this.network = '', @JsonKey(name: 'sent-packets') this.sentPackets = 0, @JsonKey(name: 'sent-bytes') this.sentBytes = 0, @JsonKey(name: 'received-packets') this.receivedPackets = 0, @JsonKey(name: 'received-bytes') this.receivedBytes = 0});
+  factory _QuicTestResult.fromJson(Map<String, dynamic> json) => _$QuicTestResultFromJson(json);
+
+@override@JsonKey() final  String name;
+@override@JsonKey() final  int rtt;
+@override@JsonKey() final  String alpn;
+@override@JsonKey() final  int version;
+@override@JsonKey() final  String error;
+@override@JsonKey() final  String stage;
+@override@JsonKey() final  String target;
+@override@JsonKey(name: 'resolved-ip') final  String resolvedIp;
+@override@JsonKey() final  String network;
+@override@JsonKey(name: 'sent-packets') final  int sentPackets;
+@override@JsonKey(name: 'sent-bytes') final  int sentBytes;
+@override@JsonKey(name: 'received-packets') final  int receivedPackets;
+@override@JsonKey(name: 'received-bytes') final  int receivedBytes;
+
+/// Create a copy of QuicTestResult
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$QuicTestResultCopyWith<_QuicTestResult> get copyWith => __$QuicTestResultCopyWithImpl<_QuicTestResult>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$QuicTestResultToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _QuicTestResult&&(identical(other.name, name) || other.name == name)&&(identical(other.rtt, rtt) || other.rtt == rtt)&&(identical(other.alpn, alpn) || other.alpn == alpn)&&(identical(other.version, version) || other.version == version)&&(identical(other.error, error) || other.error == error)&&(identical(other.stage, stage) || other.stage == stage)&&(identical(other.target, target) || other.target == target)&&(identical(other.resolvedIp, resolvedIp) || other.resolvedIp == resolvedIp)&&(identical(other.network, network) || other.network == network)&&(identical(other.sentPackets, sentPackets) || other.sentPackets == sentPackets)&&(identical(other.sentBytes, sentBytes) || other.sentBytes == sentBytes)&&(identical(other.receivedPackets, receivedPackets) || other.receivedPackets == receivedPackets)&&(identical(other.receivedBytes, receivedBytes) || other.receivedBytes == receivedBytes));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,name,rtt,alpn,version,error,stage,target,resolvedIp,network,sentPackets,sentBytes,receivedPackets,receivedBytes);
+}
+
+@override
+String toString() {
+    return 'QuicTestResult(name: $name, rtt: $rtt, alpn: $alpn, version: $version, error: $error, stage: $stage, target: $target, resolvedIp: $resolvedIp, network: $network, sentPackets: $sentPackets, sentBytes: $sentBytes, receivedPackets: $receivedPackets, receivedBytes: $receivedBytes)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$QuicTestResultCopyWith<$Res> implements $QuicTestResultCopyWith<$Res> {
+  factory _$QuicTestResultCopyWith(_QuicTestResult value, $Res Function(_QuicTestResult) _then) = __$QuicTestResultCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, int rtt, String alpn, int version, String error, String stage, String target,@JsonKey(name: 'resolved-ip') String resolvedIp, String network,@JsonKey(name: 'sent-packets') int sentPackets,@JsonKey(name: 'sent-bytes') int sentBytes,@JsonKey(name: 'received-packets') int receivedPackets,@JsonKey(name: 'received-bytes') int receivedBytes
+});
+
+
+
+
+}
+/// @nodoc
+class __$QuicTestResultCopyWithImpl<$Res>
+    implements _$QuicTestResultCopyWith<$Res> {
+  __$QuicTestResultCopyWithImpl(this._self, this._then);
+
+  final _QuicTestResult _self;
+  final $Res Function(_QuicTestResult) _then;
+
+/// Create a copy of QuicTestResult
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? rtt = null,Object? alpn = null,Object? version = null,Object? error = null,Object? stage = null,Object? target = null,Object? resolvedIp = null,Object? network = null,Object? sentPackets = null,Object? sentBytes = null,Object? receivedPackets = null,Object? receivedBytes = null,}) {
+  return _then(_QuicTestResult(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,rtt: null == rtt ? _self.rtt : rtt // ignore: cast_nullable_to_non_nullable
+as int,alpn: null == alpn ? _self.alpn : alpn // ignore: cast_nullable_to_non_nullable
+as String,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as int,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,stage: null == stage ? _self.stage : stage // ignore: cast_nullable_to_non_nullable
+as String,target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,resolvedIp: null == resolvedIp ? _self.resolvedIp : resolvedIp // ignore: cast_nullable_to_non_nullable
+as String,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
+as String,sentPackets: null == sentPackets ? _self.sentPackets : sentPackets // ignore: cast_nullable_to_non_nullable
+as int,sentBytes: null == sentBytes ? _self.sentBytes : sentBytes // ignore: cast_nullable_to_non_nullable
+as int,receivedPackets: null == receivedPackets ? _self.receivedPackets : receivedPackets // ignore: cast_nullable_to_non_nullable
+as int,receivedBytes: null == receivedBytes ? _self.receivedBytes : receivedBytes // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

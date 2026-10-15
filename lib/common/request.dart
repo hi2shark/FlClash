@@ -172,10 +172,46 @@ String _decodeUserInfo(String value) {
   }
 }
 
+({String value, Map<String, String> parameters}) parseHeaderValue(
+  String source,
+) {
+  final segments = <String>[];
+  final current = StringBuffer();
+  var inQuotes = false;
+  for (var index = 0; index < source.length; index++) {
+    final char = source[index];
+    if (char == '"') {
+      inQuotes = !inQuotes;
+      current.write(char);
+      continue;
+    }
+    if (char == ';' && !inQuotes) {
+      segments.add(current.toString());
+      current.clear();
+      continue;
+    }
+    current.write(char);
+  }
+  segments.add(current.toString());
+  final parameters = <String, String>{};
+  for (final segment in segments.skip(1)) {
+    final split = segment.indexOf('=');
+    if (split == -1) {
+      continue;
+    }
+    final key = segment.substring(0, split).trim().toLowerCase();
+    var value = segment.substring(split + 1).trim();
+    if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) {
+      value = value.substring(1, value.length - 1);
+    }
+    parameters[key] = value;
+  }
+  return (value: segments.first.trim(), parameters: parameters);
+}
+
 String? getFileNameForDisposition(String? disposition) {
   if (disposition == null) return null;
-  final parseValue = HeaderValue.parse(disposition);
-  final parameters = parseValue.parameters;
+  final parameters = parseHeaderValue(disposition).parameters;
   final fileNamePointKey = parameters.keys.firstWhere(
     (key) => key == 'filename*',
     orElse: () => '',

@@ -2788,6 +2788,579 @@ as int?,
 }
 
 /// @nodoc
+mixin _$NetworkDetectionState {
+
+ bool get isLoading; IpInfo? get ipInfo;
+/// Create a copy of NetworkDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$NetworkDetectionStateCopyWith<NetworkDetectionState> get copyWith => _$NetworkDetectionStateCopyWithImpl<NetworkDetectionState>(this as NetworkDetectionState, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as NetworkDetectionState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkDetectionState&&(identical(other.isLoading, _this.isLoading) || other.isLoading == _this.isLoading)&&(identical(other.ipInfo, _this.ipInfo) || other.ipInfo == _this.ipInfo));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as NetworkDetectionState;
+  return Object.hash(runtimeType,_this.isLoading,_this.ipInfo);
+}
+
+@override
+String toString() {
+  final _this = this as NetworkDetectionState;
+  return 'NetworkDetectionState(isLoading: ${_this.isLoading}, ipInfo: ${_this.ipInfo})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $NetworkDetectionStateCopyWith<$Res>  {
+  factory $NetworkDetectionStateCopyWith(NetworkDetectionState value, $Res Function(NetworkDetectionState) _then) = _$NetworkDetectionStateCopyWithImpl;
+@useResult
+$Res call({
+ bool isLoading, IpInfo? ipInfo
+});
+
+
+$IpInfoCopyWith<$Res>? get ipInfo;
+
+}
+/// @nodoc
+class _$NetworkDetectionStateCopyWithImpl<$Res>
+    implements $NetworkDetectionStateCopyWith<$Res> {
+  _$NetworkDetectionStateCopyWithImpl(this._self, this._then);
+
+  final NetworkDetectionState _self;
+  final $Res Function(NetworkDetectionState) _then;
+
+/// Create a copy of NetworkDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? isLoading = null,Object? ipInfo = freezed,}) {
+  return _then(NetworkDetectionState(
+isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,ipInfo: freezed == ipInfo ? _self.ipInfo : ipInfo // ignore: cast_nullable_to_non_nullable
+as IpInfo?,
+  ));
+}
+/// Create a copy of NetworkDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$IpInfoCopyWith<$Res>? get ipInfo {
+    if (_self.ipInfo == null) {
+    return null;
+  }
+
+  return $IpInfoCopyWith<$Res>(_self.ipInfo!, (value) {
+    return _then(_self.copyWith(ipInfo: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [NetworkDetectionState].
+extension NetworkDetectionStatePatterns on NetworkDetectionState {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _NetworkDetectionState value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _NetworkDetectionState() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _NetworkDetectionState value)  $default,){
+final _that = this;
+switch (_that) {
+case _NetworkDetectionState():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _NetworkDetectionState value)?  $default,){
+final _that = this;
+switch (_that) {
+case _NetworkDetectionState() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isLoading,  IpInfo? ipInfo)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _NetworkDetectionState() when $default != null:
+return $default(_that.isLoading,_that.ipInfo);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isLoading,  IpInfo? ipInfo)  $default,) {final _that = this;
+switch (_that) {
+case _NetworkDetectionState():
+return $default(_that.isLoading,_that.ipInfo);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isLoading,  IpInfo? ipInfo)?  $default,) {final _that = this;
+switch (_that) {
+case _NetworkDetectionState() when $default != null:
+return $default(_that.isLoading,_that.ipInfo);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _NetworkDetectionState implements NetworkDetectionState {
+  const _NetworkDetectionState({required this.isLoading, required this.ipInfo});
+  
+
+@override final  bool isLoading;
+@override final  IpInfo? ipInfo;
+
+/// Create a copy of NetworkDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$NetworkDetectionStateCopyWith<_NetworkDetectionState> get copyWith => __$NetworkDetectionStateCopyWithImpl<_NetworkDetectionState>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _NetworkDetectionState&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.ipInfo, ipInfo) || other.ipInfo == ipInfo));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,isLoading,ipInfo);
+}
+
+@override
+String toString() {
+    return 'NetworkDetectionState(isLoading: $isLoading, ipInfo: $ipInfo)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$NetworkDetectionStateCopyWith<$Res> implements $NetworkDetectionStateCopyWith<$Res> {
+  factory _$NetworkDetectionStateCopyWith(_NetworkDetectionState value, $Res Function(_NetworkDetectionState) _then) = __$NetworkDetectionStateCopyWithImpl;
+@override @useResult
+$Res call({
+ bool isLoading, IpInfo? ipInfo
+});
+
+
+@override $IpInfoCopyWith<$Res>? get ipInfo;
+
+}
+/// @nodoc
+class __$NetworkDetectionStateCopyWithImpl<$Res>
+    implements _$NetworkDetectionStateCopyWith<$Res> {
+  __$NetworkDetectionStateCopyWithImpl(this._self, this._then);
+
+  final _NetworkDetectionState _self;
+  final $Res Function(_NetworkDetectionState) _then;
+
+/// Create a copy of NetworkDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? isLoading = null,Object? ipInfo = freezed,}) {
+  return _then(_NetworkDetectionState(
+isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,ipInfo: freezed == ipInfo ? _self.ipInfo : ipInfo // ignore: cast_nullable_to_non_nullable
+as IpInfo?,
+  ));
+}
+
+/// Create a copy of NetworkDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$IpInfoCopyWith<$Res>? get ipInfo {
+    if (_self.ipInfo == null) {
+    return null;
+  }
+
+  return $IpInfoCopyWith<$Res>(_self.ipInfo!, (value) {
+    return _then(_self.copyWith(ipInfo: value));
+  });
+}
+}
+
+/// @nodoc
+mixin _$UnlockDetectionState {
+
+ bool get isLoading; String get proxyName; Map<String, UnlockTestRunItem> get results; String get error; DateTime? get testedAt;
+/// Create a copy of UnlockDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$UnlockDetectionStateCopyWith<UnlockDetectionState> get copyWith => _$UnlockDetectionStateCopyWithImpl<UnlockDetectionState>(this as UnlockDetectionState, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as UnlockDetectionState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnlockDetectionState&&(identical(other.isLoading, _this.isLoading) || other.isLoading == _this.isLoading)&&(identical(other.proxyName, _this.proxyName) || other.proxyName == _this.proxyName)&&const DeepCollectionEquality().equals(other.results, _this.results)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.testedAt, _this.testedAt) || other.testedAt == _this.testedAt));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as UnlockDetectionState;
+  return Object.hash(runtimeType,_this.isLoading,_this.proxyName,const DeepCollectionEquality().hash(_this.results),_this.error,_this.testedAt);
+}
+
+@override
+String toString() {
+  final _this = this as UnlockDetectionState;
+  return 'UnlockDetectionState(isLoading: ${_this.isLoading}, proxyName: ${_this.proxyName}, results: ${_this.results}, error: ${_this.error}, testedAt: ${_this.testedAt})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $UnlockDetectionStateCopyWith<$Res>  {
+  factory $UnlockDetectionStateCopyWith(UnlockDetectionState value, $Res Function(UnlockDetectionState) _then) = _$UnlockDetectionStateCopyWithImpl;
+@useResult
+$Res call({
+ bool isLoading, String proxyName, Map<String, UnlockTestRunItem> results, String error, DateTime? testedAt
+});
+
+
+
+
+}
+/// @nodoc
+class _$UnlockDetectionStateCopyWithImpl<$Res>
+    implements $UnlockDetectionStateCopyWith<$Res> {
+  _$UnlockDetectionStateCopyWithImpl(this._self, this._then);
+
+  final UnlockDetectionState _self;
+  final $Res Function(UnlockDetectionState) _then;
+
+/// Create a copy of UnlockDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? isLoading = null,Object? proxyName = null,Object? results = null,Object? error = null,Object? testedAt = freezed,}) {
+  return _then(UnlockDetectionState(
+isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,results: null == results ? _self.results : results // ignore: cast_nullable_to_non_nullable
+as Map<String, UnlockTestRunItem>,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,testedAt: freezed == testedAt ? _self.testedAt : testedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [UnlockDetectionState].
+extension UnlockDetectionStatePatterns on UnlockDetectionState {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _UnlockDetectionState value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _UnlockDetectionState() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _UnlockDetectionState value)  $default,){
+final _that = this;
+switch (_that) {
+case _UnlockDetectionState():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _UnlockDetectionState value)?  $default,){
+final _that = this;
+switch (_that) {
+case _UnlockDetectionState() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isLoading,  String proxyName,  Map<String, UnlockTestRunItem> results,  String error,  DateTime? testedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _UnlockDetectionState() when $default != null:
+return $default(_that.isLoading,_that.proxyName,_that.results,_that.error,_that.testedAt);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isLoading,  String proxyName,  Map<String, UnlockTestRunItem> results,  String error,  DateTime? testedAt)  $default,) {final _that = this;
+switch (_that) {
+case _UnlockDetectionState():
+return $default(_that.isLoading,_that.proxyName,_that.results,_that.error,_that.testedAt);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isLoading,  String proxyName,  Map<String, UnlockTestRunItem> results,  String error,  DateTime? testedAt)?  $default,) {final _that = this;
+switch (_that) {
+case _UnlockDetectionState() when $default != null:
+return $default(_that.isLoading,_that.proxyName,_that.results,_that.error,_that.testedAt);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _UnlockDetectionState implements UnlockDetectionState {
+  const _UnlockDetectionState({required this.isLoading, required this.proxyName, required  Map<String, UnlockTestRunItem> results, this.error = '', this.testedAt}): _results = results;
+  
+
+@override final  bool isLoading;
+@override final  String proxyName;
+ final  Map<String, UnlockTestRunItem> _results;
+@override Map<String, UnlockTestRunItem> get results {
+  if (_results is EqualUnmodifiableMapView) return _results;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_results);
+}
+
+@override@JsonKey() final  String error;
+@override final  DateTime? testedAt;
+
+/// Create a copy of UnlockDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$UnlockDetectionStateCopyWith<_UnlockDetectionState> get copyWith => __$UnlockDetectionStateCopyWithImpl<_UnlockDetectionState>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UnlockDetectionState&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&const DeepCollectionEquality().equals(other.results, _results)&&(identical(other.error, error) || other.error == error)&&(identical(other.testedAt, testedAt) || other.testedAt == testedAt));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,isLoading,proxyName,const DeepCollectionEquality().hash(_results),error,testedAt);
+}
+
+@override
+String toString() {
+    return 'UnlockDetectionState(isLoading: $isLoading, proxyName: $proxyName, results: $results, error: $error, testedAt: $testedAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$UnlockDetectionStateCopyWith<$Res> implements $UnlockDetectionStateCopyWith<$Res> {
+  factory _$UnlockDetectionStateCopyWith(_UnlockDetectionState value, $Res Function(_UnlockDetectionState) _then) = __$UnlockDetectionStateCopyWithImpl;
+@override @useResult
+$Res call({
+ bool isLoading, String proxyName, Map<String, UnlockTestRunItem> results, String error, DateTime? testedAt
+});
+
+
+
+
+}
+/// @nodoc
+class __$UnlockDetectionStateCopyWithImpl<$Res>
+    implements _$UnlockDetectionStateCopyWith<$Res> {
+  __$UnlockDetectionStateCopyWithImpl(this._self, this._then);
+
+  final _UnlockDetectionState _self;
+  final $Res Function(_UnlockDetectionState) _then;
+
+/// Create a copy of UnlockDetectionState
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? isLoading = null,Object? proxyName = null,Object? results = null,Object? error = null,Object? testedAt = freezed,}) {
+  return _then(_UnlockDetectionState(
+isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as bool,proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
+as String,results: null == results ? _self._results : results // ignore: cast_nullable_to_non_nullable
+as Map<String, UnlockTestRunItem>,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as String,testedAt: freezed == testedAt ? _self.testedAt : testedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$TrayState {
 
  Mode get mode; int get port; bool get autoLaunch; bool get systemProxy; bool get tunEnable; bool get isStart; List<Group> get groups; Map<String, String> get selectedMap; bool get showTrayTitle; bool get safeMode; Map<HotAction, HotKeyAction> get hotKeys;
@@ -8064,11 +8637,299 @@ as String?,
 
 }
 
+/// @nodoc
+mixin _$VpnState {
+
+ TunStack get stack; VpnProps get vpnProps; bool get dnsEnable;
+/// Create a copy of VpnState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$VpnStateCopyWith<VpnState> get copyWith => _$VpnStateCopyWithImpl<VpnState>(this as VpnState, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as VpnState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VpnState&&(identical(other.stack, _this.stack) || other.stack == _this.stack)&&(identical(other.vpnProps, _this.vpnProps) || other.vpnProps == _this.vpnProps)&&(identical(other.dnsEnable, _this.dnsEnable) || other.dnsEnable == _this.dnsEnable));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as VpnState;
+  return Object.hash(runtimeType,_this.stack,_this.vpnProps,_this.dnsEnable);
+}
+
+@override
+String toString() {
+  final _this = this as VpnState;
+  return 'VpnState(stack: ${_this.stack}, vpnProps: ${_this.vpnProps}, dnsEnable: ${_this.dnsEnable})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $VpnStateCopyWith<$Res>  {
+  factory $VpnStateCopyWith(VpnState value, $Res Function(VpnState) _then) = _$VpnStateCopyWithImpl;
+@useResult
+$Res call({
+ TunStack stack, VpnProps vpnProps, bool dnsEnable
+});
+
+
+$VpnPropsCopyWith<$Res> get vpnProps;
+
+}
+/// @nodoc
+class _$VpnStateCopyWithImpl<$Res>
+    implements $VpnStateCopyWith<$Res> {
+  _$VpnStateCopyWithImpl(this._self, this._then);
+
+  final VpnState _self;
+  final $Res Function(VpnState) _then;
+
+/// Create a copy of VpnState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? stack = null,Object? vpnProps = null,Object? dnsEnable = null,}) {
+  return _then(VpnState(
+stack: null == stack ? _self.stack : stack // ignore: cast_nullable_to_non_nullable
+as TunStack,vpnProps: null == vpnProps ? _self.vpnProps : vpnProps // ignore: cast_nullable_to_non_nullable
+as VpnProps,dnsEnable: null == dnsEnable ? _self.dnsEnable : dnsEnable // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+/// Create a copy of VpnState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$VpnPropsCopyWith<$Res> get vpnProps {
+  
+  return $VpnPropsCopyWith<$Res>(_self.vpnProps, (value) {
+    return _then(_self.copyWith(vpnProps: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [VpnState].
+extension VpnStatePatterns on VpnState {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _VpnState value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _VpnState() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _VpnState value)  $default,){
+final _that = this;
+switch (_that) {
+case _VpnState():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _VpnState value)?  $default,){
+final _that = this;
+switch (_that) {
+case _VpnState() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( TunStack stack,  VpnProps vpnProps,  bool dnsEnable)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _VpnState() when $default != null:
+return $default(_that.stack,_that.vpnProps,_that.dnsEnable);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( TunStack stack,  VpnProps vpnProps,  bool dnsEnable)  $default,) {final _that = this;
+switch (_that) {
+case _VpnState():
+return $default(_that.stack,_that.vpnProps,_that.dnsEnable);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( TunStack stack,  VpnProps vpnProps,  bool dnsEnable)?  $default,) {final _that = this;
+switch (_that) {
+case _VpnState() when $default != null:
+return $default(_that.stack,_that.vpnProps,_that.dnsEnable);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _VpnState implements VpnState {
+  const _VpnState({required this.stack, required this.vpnProps, required this.dnsEnable});
+  
+
+@override final  TunStack stack;
+@override final  VpnProps vpnProps;
+@override final  bool dnsEnable;
+
+/// Create a copy of VpnState
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$VpnStateCopyWith<_VpnState> get copyWith => __$VpnStateCopyWithImpl<_VpnState>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VpnState&&(identical(other.stack, stack) || other.stack == stack)&&(identical(other.vpnProps, vpnProps) || other.vpnProps == vpnProps)&&(identical(other.dnsEnable, dnsEnable) || other.dnsEnable == dnsEnable));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,stack,vpnProps,dnsEnable);
+}
+
+@override
+String toString() {
+    return 'VpnState(stack: $stack, vpnProps: $vpnProps, dnsEnable: $dnsEnable)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$VpnStateCopyWith<$Res> implements $VpnStateCopyWith<$Res> {
+  factory _$VpnStateCopyWith(_VpnState value, $Res Function(_VpnState) _then) = __$VpnStateCopyWithImpl;
+@override @useResult
+$Res call({
+ TunStack stack, VpnProps vpnProps, bool dnsEnable
+});
+
+
+@override $VpnPropsCopyWith<$Res> get vpnProps;
+
+}
+/// @nodoc
+class __$VpnStateCopyWithImpl<$Res>
+    implements _$VpnStateCopyWith<$Res> {
+  __$VpnStateCopyWithImpl(this._self, this._then);
+
+  final _VpnState _self;
+  final $Res Function(_VpnState) _then;
+
+/// Create a copy of VpnState
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? stack = null,Object? vpnProps = null,Object? dnsEnable = null,}) {
+  return _then(_VpnState(
+stack: null == stack ? _self.stack : stack // ignore: cast_nullable_to_non_nullable
+as TunStack,vpnProps: null == vpnProps ? _self.vpnProps : vpnProps // ignore: cast_nullable_to_non_nullable
+as VpnProps,dnsEnable: null == dnsEnable ? _self.dnsEnable : dnsEnable // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+/// Create a copy of VpnState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$VpnPropsCopyWith<$Res> get vpnProps {
+  
+  return $VpnPropsCopyWith<$Res>(_self.vpnProps, (value) {
+    return _then(_self.copyWith(vpnProps: value));
+  });
+}
+}
+
 
 /// @nodoc
 mixin _$SharedState {
 
- SetupParams? get setupParams; VpnOptions? get vpnOptions; String get stopTip; String get startTip; String get localNetworkTip; String get currentProfileName; String get stopText; bool get onlyStatisticsProxy; bool get showStopAction; bool get crashlytics;
+ SetupParams? get setupParams; VpnOptions? get vpnOptions; String get stopTip; String get startTip; String get localNetworkTip; String get currentProfileName; String get stopText; String get suspendedText; bool get onlyStatisticsProxy; bool get showStopAction; bool get crashlytics; bool get showNotificationStopAction;@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> get suspendOnWifiSsids;
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -8082,20 +8943,20 @@ $SharedStateCopyWith<SharedState> get copyWith => _$SharedStateCopyWithImpl<Shar
 @override
 bool operator ==(Object other) {
   final _this = this as SharedState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SharedState&&(identical(other.setupParams, _this.setupParams) || other.setupParams == _this.setupParams)&&(identical(other.vpnOptions, _this.vpnOptions) || other.vpnOptions == _this.vpnOptions)&&(identical(other.stopTip, _this.stopTip) || other.stopTip == _this.stopTip)&&(identical(other.startTip, _this.startTip) || other.startTip == _this.startTip)&&(identical(other.localNetworkTip, _this.localNetworkTip) || other.localNetworkTip == _this.localNetworkTip)&&(identical(other.currentProfileName, _this.currentProfileName) || other.currentProfileName == _this.currentProfileName)&&(identical(other.stopText, _this.stopText) || other.stopText == _this.stopText)&&(identical(other.onlyStatisticsProxy, _this.onlyStatisticsProxy) || other.onlyStatisticsProxy == _this.onlyStatisticsProxy)&&(identical(other.showStopAction, _this.showStopAction) || other.showStopAction == _this.showStopAction)&&(identical(other.crashlytics, _this.crashlytics) || other.crashlytics == _this.crashlytics));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SharedState&&(identical(other.setupParams, _this.setupParams) || other.setupParams == _this.setupParams)&&(identical(other.vpnOptions, _this.vpnOptions) || other.vpnOptions == _this.vpnOptions)&&(identical(other.stopTip, _this.stopTip) || other.stopTip == _this.stopTip)&&(identical(other.startTip, _this.startTip) || other.startTip == _this.startTip)&&(identical(other.localNetworkTip, _this.localNetworkTip) || other.localNetworkTip == _this.localNetworkTip)&&(identical(other.currentProfileName, _this.currentProfileName) || other.currentProfileName == _this.currentProfileName)&&(identical(other.stopText, _this.stopText) || other.stopText == _this.stopText)&&(identical(other.suspendedText, _this.suspendedText) || other.suspendedText == _this.suspendedText)&&(identical(other.onlyStatisticsProxy, _this.onlyStatisticsProxy) || other.onlyStatisticsProxy == _this.onlyStatisticsProxy)&&(identical(other.showStopAction, _this.showStopAction) || other.showStopAction == _this.showStopAction)&&(identical(other.crashlytics, _this.crashlytics) || other.crashlytics == _this.crashlytics)&&(identical(other.showNotificationStopAction, _this.showNotificationStopAction) || other.showNotificationStopAction == _this.showNotificationStopAction)&&const DeepCollectionEquality().equals(other.suspendOnWifiSsids, _this.suspendOnWifiSsids));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as SharedState;
-  return Object.hash(runtimeType,_this.setupParams,_this.vpnOptions,_this.stopTip,_this.startTip,_this.localNetworkTip,_this.currentProfileName,_this.stopText,_this.onlyStatisticsProxy,_this.showStopAction,_this.crashlytics);
+  return Object.hash(runtimeType,_this.setupParams,_this.vpnOptions,_this.stopTip,_this.startTip,_this.localNetworkTip,_this.currentProfileName,_this.stopText,_this.suspendedText,_this.onlyStatisticsProxy,_this.showStopAction,_this.crashlytics,_this.showNotificationStopAction,const DeepCollectionEquality().hash(_this.suspendOnWifiSsids));
 }
 
 @override
 String toString() {
   final _this = this as SharedState;
-  return 'SharedState(setupParams: ${_this.setupParams}, vpnOptions: ${_this.vpnOptions}, stopTip: ${_this.stopTip}, startTip: ${_this.startTip}, localNetworkTip: ${_this.localNetworkTip}, currentProfileName: ${_this.currentProfileName}, stopText: ${_this.stopText}, onlyStatisticsProxy: ${_this.onlyStatisticsProxy}, showStopAction: ${_this.showStopAction}, crashlytics: ${_this.crashlytics})';
+  return 'SharedState(setupParams: ${_this.setupParams}, vpnOptions: ${_this.vpnOptions}, stopTip: ${_this.stopTip}, startTip: ${_this.startTip}, localNetworkTip: ${_this.localNetworkTip}, currentProfileName: ${_this.currentProfileName}, stopText: ${_this.stopText}, suspendedText: ${_this.suspendedText}, onlyStatisticsProxy: ${_this.onlyStatisticsProxy}, showStopAction: ${_this.showStopAction}, crashlytics: ${_this.crashlytics}, showNotificationStopAction: ${_this.showNotificationStopAction}, suspendOnWifiSsids: ${_this.suspendOnWifiSsids})';
 }
 
 
@@ -8106,7 +8967,7 @@ abstract mixin class $SharedStateCopyWith<$Res>  {
   factory $SharedStateCopyWith(SharedState value, $Res Function(SharedState) _then) = _$SharedStateCopyWithImpl;
 @useResult
 $Res call({
- SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String localNetworkTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool showStopAction, bool crashlytics
+ SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String localNetworkTip, String currentProfileName, String stopText, String suspendedText, bool onlyStatisticsProxy, bool showStopAction, bool crashlytics, bool showNotificationStopAction,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
 });
 
 
@@ -8123,7 +8984,7 @@ class _$SharedStateCopyWithImpl<$Res>
 
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? localNetworkTip = null,Object? currentProfileName = null,Object? stopText = null,Object? onlyStatisticsProxy = null,Object? showStopAction = null,Object? crashlytics = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? localNetworkTip = null,Object? currentProfileName = null,Object? stopText = null,Object? suspendedText = null,Object? onlyStatisticsProxy = null,Object? showStopAction = null,Object? crashlytics = null,Object? showNotificationStopAction = null,Object? suspendOnWifiSsids = null,}) {
   return _then(SharedState(
 setupParams: freezed == setupParams ? _self.setupParams : setupParams // ignore: cast_nullable_to_non_nullable
 as SetupParams?,vpnOptions: freezed == vpnOptions ? _self.vpnOptions : vpnOptions // ignore: cast_nullable_to_non_nullable
@@ -8132,10 +8993,13 @@ as String,startTip: null == startTip ? _self.startTip : startTip // ignore: cast
 as String,localNetworkTip: null == localNetworkTip ? _self.localNetworkTip : localNetworkTip // ignore: cast_nullable_to_non_nullable
 as String,currentProfileName: null == currentProfileName ? _self.currentProfileName : currentProfileName // ignore: cast_nullable_to_non_nullable
 as String,stopText: null == stopText ? _self.stopText : stopText // ignore: cast_nullable_to_non_nullable
+as String,suspendedText: null == suspendedText ? _self.suspendedText : suspendedText // ignore: cast_nullable_to_non_nullable
 as String,onlyStatisticsProxy: null == onlyStatisticsProxy ? _self.onlyStatisticsProxy : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
 as bool,showStopAction: null == showStopAction ? _self.showStopAction : showStopAction // ignore: cast_nullable_to_non_nullable
 as bool,crashlytics: null == crashlytics ? _self.crashlytics : crashlytics // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,showNotificationStopAction: null == showNotificationStopAction ? _self.showNotificationStopAction : showNotificationStopAction // ignore: cast_nullable_to_non_nullable
+as bool,suspendOnWifiSsids: null == suspendOnWifiSsids ? _self.suspendOnWifiSsids : suspendOnWifiSsids // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 /// Create a copy of SharedState
@@ -8244,10 +9108,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String localNetworkTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool showStopAction,  bool crashlytics)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String localNetworkTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool showStopAction,  bool crashlytics,  bool showNotificationStopAction, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SharedState() when $default != null:
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.localNetworkTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.showStopAction,_that.crashlytics);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.localNetworkTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.showStopAction,_that.crashlytics,_that.showNotificationStopAction,_that.suspendOnWifiSsids);case _:
   return orElse();
 
 }
@@ -8265,10 +9129,10 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String localNetworkTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool showStopAction,  bool crashlytics)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String localNetworkTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool showStopAction,  bool crashlytics,  bool showNotificationStopAction, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)  $default,) {final _that = this;
 switch (_that) {
 case _SharedState():
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.localNetworkTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.showStopAction,_that.crashlytics);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.localNetworkTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.showStopAction,_that.crashlytics,_that.showNotificationStopAction,_that.suspendOnWifiSsids);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -8285,10 +9149,10 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String localNetworkTip,  String currentProfileName,  String stopText,  bool onlyStatisticsProxy,  bool showStopAction,  bool crashlytics)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SetupParams? setupParams,  VpnOptions? vpnOptions,  String stopTip,  String startTip,  String localNetworkTip,  String currentProfileName,  String stopText,  String suspendedText,  bool onlyStatisticsProxy,  bool showStopAction,  bool crashlytics,  bool showNotificationStopAction, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids)?  $default,) {final _that = this;
 switch (_that) {
 case _SharedState() when $default != null:
-return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.localNetworkTip,_that.currentProfileName,_that.stopText,_that.onlyStatisticsProxy,_that.showStopAction,_that.crashlytics);case _:
+return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,_that.localNetworkTip,_that.currentProfileName,_that.stopText,_that.suspendedText,_that.onlyStatisticsProxy,_that.showStopAction,_that.crashlytics,_that.showNotificationStopAction,_that.suspendOnWifiSsids);case _:
   return null;
 
 }
@@ -8300,7 +9164,7 @@ return $default(_that.setupParams,_that.vpnOptions,_that.stopTip,_that.startTip,
 @JsonSerializable()
 
 class _SharedState implements SharedState {
-  const _SharedState({this.setupParams, this.vpnOptions, required this.stopTip, required this.startTip, required this.localNetworkTip, required this.currentProfileName, required this.stopText, required this.onlyStatisticsProxy, this.showStopAction = true, required this.crashlytics});
+  const _SharedState({this.setupParams, this.vpnOptions, required this.stopTip, required this.startTip, required this.localNetworkTip, required this.currentProfileName, required this.stopText, this.suspendedText = 'Suspended...', required this.onlyStatisticsProxy, this.showStopAction = true, required this.crashlytics, this.showNotificationStopAction = true, @JsonKey(readValue: _readSuspendOnWifiSsids)  List<String> suspendOnWifiSsids = const []}): _suspendOnWifiSsids = suspendOnWifiSsids;
   factory _SharedState.fromJson(Map<String, dynamic> json) => _$SharedStateFromJson(json);
 
 @override final  SetupParams? setupParams;
@@ -8310,9 +9174,18 @@ class _SharedState implements SharedState {
 @override final  String localNetworkTip;
 @override final  String currentProfileName;
 @override final  String stopText;
+@override@JsonKey() final  String suspendedText;
 @override final  bool onlyStatisticsProxy;
 @override@JsonKey() final  bool showStopAction;
 @override final  bool crashlytics;
+@override@JsonKey() final  bool showNotificationStopAction;
+ final  List<String> _suspendOnWifiSsids;
+@override@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> get suspendOnWifiSsids {
+  if (_suspendOnWifiSsids is EqualUnmodifiableListView) return _suspendOnWifiSsids;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_suspendOnWifiSsids);
+}
+
 
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
@@ -8327,18 +9200,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.localNetworkTip, localNetworkTip) || other.localNetworkTip == localNetworkTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.showStopAction, showStopAction) || other.showStopAction == showStopAction)&&(identical(other.crashlytics, crashlytics) || other.crashlytics == crashlytics));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SharedState&&(identical(other.setupParams, setupParams) || other.setupParams == setupParams)&&(identical(other.vpnOptions, vpnOptions) || other.vpnOptions == vpnOptions)&&(identical(other.stopTip, stopTip) || other.stopTip == stopTip)&&(identical(other.startTip, startTip) || other.startTip == startTip)&&(identical(other.localNetworkTip, localNetworkTip) || other.localNetworkTip == localNetworkTip)&&(identical(other.currentProfileName, currentProfileName) || other.currentProfileName == currentProfileName)&&(identical(other.stopText, stopText) || other.stopText == stopText)&&(identical(other.suspendedText, suspendedText) || other.suspendedText == suspendedText)&&(identical(other.onlyStatisticsProxy, onlyStatisticsProxy) || other.onlyStatisticsProxy == onlyStatisticsProxy)&&(identical(other.showStopAction, showStopAction) || other.showStopAction == showStopAction)&&(identical(other.crashlytics, crashlytics) || other.crashlytics == crashlytics)&&(identical(other.showNotificationStopAction, showNotificationStopAction) || other.showNotificationStopAction == showNotificationStopAction)&&const DeepCollectionEquality().equals(other.suspendOnWifiSsids, _suspendOnWifiSsids));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,localNetworkTip,currentProfileName,stopText,onlyStatisticsProxy,showStopAction,crashlytics);
+    return Object.hash(runtimeType,setupParams,vpnOptions,stopTip,startTip,localNetworkTip,currentProfileName,stopText,suspendedText,onlyStatisticsProxy,showStopAction,crashlytics,showNotificationStopAction,const DeepCollectionEquality().hash(_suspendOnWifiSsids));
 }
 
 @override
 String toString() {
-    return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, localNetworkTip: $localNetworkTip, currentProfileName: $currentProfileName, stopText: $stopText, onlyStatisticsProxy: $onlyStatisticsProxy, showStopAction: $showStopAction, crashlytics: $crashlytics)';
+    return 'SharedState(setupParams: $setupParams, vpnOptions: $vpnOptions, stopTip: $stopTip, startTip: $startTip, localNetworkTip: $localNetworkTip, currentProfileName: $currentProfileName, stopText: $stopText, suspendedText: $suspendedText, onlyStatisticsProxy: $onlyStatisticsProxy, showStopAction: $showStopAction, crashlytics: $crashlytics, showNotificationStopAction: $showNotificationStopAction, suspendOnWifiSsids: $suspendOnWifiSsids)';
 }
 
 
@@ -8349,7 +9222,7 @@ abstract mixin class _$SharedStateCopyWith<$Res> implements $SharedStateCopyWith
   factory _$SharedStateCopyWith(_SharedState value, $Res Function(_SharedState) _then) = __$SharedStateCopyWithImpl;
 @override @useResult
 $Res call({
- SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String localNetworkTip, String currentProfileName, String stopText, bool onlyStatisticsProxy, bool showStopAction, bool crashlytics
+ SetupParams? setupParams, VpnOptions? vpnOptions, String stopTip, String startTip, String localNetworkTip, String currentProfileName, String stopText, String suspendedText, bool onlyStatisticsProxy, bool showStopAction, bool crashlytics, bool showNotificationStopAction,@JsonKey(readValue: _readSuspendOnWifiSsids) List<String> suspendOnWifiSsids
 });
 
 
@@ -8366,7 +9239,7 @@ class __$SharedStateCopyWithImpl<$Res>
 
 /// Create a copy of SharedState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? localNetworkTip = null,Object? currentProfileName = null,Object? stopText = null,Object? onlyStatisticsProxy = null,Object? showStopAction = null,Object? crashlytics = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? setupParams = freezed,Object? vpnOptions = freezed,Object? stopTip = null,Object? startTip = null,Object? localNetworkTip = null,Object? currentProfileName = null,Object? stopText = null,Object? suspendedText = null,Object? onlyStatisticsProxy = null,Object? showStopAction = null,Object? crashlytics = null,Object? showNotificationStopAction = null,Object? suspendOnWifiSsids = null,}) {
   return _then(_SharedState(
 setupParams: freezed == setupParams ? _self.setupParams : setupParams // ignore: cast_nullable_to_non_nullable
 as SetupParams?,vpnOptions: freezed == vpnOptions ? _self.vpnOptions : vpnOptions // ignore: cast_nullable_to_non_nullable
@@ -8375,10 +9248,13 @@ as String,startTip: null == startTip ? _self.startTip : startTip // ignore: cast
 as String,localNetworkTip: null == localNetworkTip ? _self.localNetworkTip : localNetworkTip // ignore: cast_nullable_to_non_nullable
 as String,currentProfileName: null == currentProfileName ? _self.currentProfileName : currentProfileName // ignore: cast_nullable_to_non_nullable
 as String,stopText: null == stopText ? _self.stopText : stopText // ignore: cast_nullable_to_non_nullable
+as String,suspendedText: null == suspendedText ? _self.suspendedText : suspendedText // ignore: cast_nullable_to_non_nullable
 as String,onlyStatisticsProxy: null == onlyStatisticsProxy ? _self.onlyStatisticsProxy : onlyStatisticsProxy // ignore: cast_nullable_to_non_nullable
 as bool,showStopAction: null == showStopAction ? _self.showStopAction : showStopAction // ignore: cast_nullable_to_non_nullable
 as bool,crashlytics: null == crashlytics ? _self.crashlytics : crashlytics // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,showNotificationStopAction: null == showNotificationStopAction ? _self.showNotificationStopAction : showNotificationStopAction // ignore: cast_nullable_to_non_nullable
+as bool,suspendOnWifiSsids: null == suspendOnWifiSsids ? _self._suspendOnWifiSsids : suspendOnWifiSsids // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 

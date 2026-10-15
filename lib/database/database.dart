@@ -20,6 +20,7 @@ part 'icons.dart';
 part 'profiles.dart';
 part 'rules.dart';
 part 'scripts.dart';
+part 'unlock_tests.dart';
 
 @DriftDatabase(
   tables: [
@@ -33,6 +34,7 @@ part 'scripts.dart';
     ClashProviders,
     CustomProxies,
     ProxyDialers,
+    UnlockTestRuns,
   ],
   daos: [
     ProfilesDao,
@@ -49,8 +51,10 @@ part 'scripts.dart';
 class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
+  late final UnlockTestRunsDao unlockTestRunsDao = UnlockTestRunsDao(this);
+
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 21;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -110,6 +114,11 @@ class Database extends _$Database {
             customProxies,
             customProxies.emptyOptions,
           );
+        }
+        if (from < 21) {
+          if (await _createTableIfMissing(m, unlockTestRuns)) {
+            await m.createIndex(unlockTestRunsCreatedAt);
+          }
         }
       }),
       beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),

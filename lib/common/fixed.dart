@@ -1,5 +1,7 @@
 import 'iterable.dart';
 
+typedef ValueCallback<T> = T Function();
+
 class FixedList<T> {
   final int maxLength;
   final List<T> _list;
@@ -50,6 +52,54 @@ class FixedList<T> {
 
   @override
   int get hashCode => Object.hash(identityHashCode(_list), _revision);
+}
+
+class FixedMap<K, V> {
+  int maxLength;
+  late Map<K, V> _map;
+
+  FixedMap(this.maxLength, {Map<K, V>? map}) {
+    _map = map ?? {};
+    _adjustMap();
+  }
+
+  V updateCacheValue(K key, ValueCallback<V> callback) {
+    final realValue = _map.updateCacheValue(key, callback);
+    _adjustMap();
+    return realValue;
+  }
+
+  void clear() {
+    _map.clear();
+  }
+
+  void updateMaxLength(int size) {
+    maxLength = size;
+    _adjustMap();
+  }
+
+  void updateMap(Map<K, V> map) {
+    _map = map;
+    _adjustMap();
+  }
+
+  void _adjustMap() {
+    if (maxLength <= 0) {
+      _map.clear();
+      return;
+    }
+    if (_map.length > maxLength) {
+      _map = Map.fromEntries(map.entries.toList()..truncate(maxLength));
+    }
+  }
+
+  V? get(K key) => _map[key];
+
+  bool containsKey(K key) => _map.containsKey(key);
+
+  int get length => _map.length;
+
+  Map<K, V> get map => Map.unmodifiable(_map);
 }
 
 /// Restores the head that [latest] trimmed off [current] so a paused view

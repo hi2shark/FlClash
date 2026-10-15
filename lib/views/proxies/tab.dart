@@ -43,6 +43,11 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
         _updateTabController(groupNames.length, index);
       }
     }, fireImmediately: true);
+    ref.listenManual(currentProfileIdProvider, (prev, next) {
+      if (prev != next) {
+        ProxiesTabView.pageListStoreMap.clear();
+      }
+    });
   }
 
   @override

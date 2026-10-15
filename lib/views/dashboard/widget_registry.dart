@@ -50,6 +50,17 @@ extension DashboardWidgetView on DashboardWidget {
       crossAxisCellCount: 4,
       child: MemoryInfo(),
     ),
+    DashboardWidget.coreMemoryInfo => const GridItem(
+      key: ValueKey(DashboardWidget.coreMemoryInfo),
+      crossAxisCellCount: 4,
+      child: CoreMemoryInfo(),
+    ),
+    DashboardWidget.unlockDetection => const GridItem(
+      key: ValueKey(DashboardWidget.unlockDetection),
+      crossAxisCellCount: 8,
+      mainAxisCellCount: 2,
+      child: UnlockDetection(),
+    ),
     DashboardWidget.serviceStatus => const GridItem(
       key: ValueKey(DashboardWidget.serviceStatus),
       crossAxisCellCount: 8,
@@ -84,6 +95,11 @@ extension DashboardWidgetView on DashboardWidget {
       key: ValueKey(DashboardWidget.profiles),
       crossAxisCellCount: 4,
       child: ProfilesCard(),
+    ),
+    DashboardWidget.wifiWatchCard => const GridItem(
+      key: ValueKey(DashboardWidget.wifiWatchCard),
+      crossAxisCellCount: 8,
+      child: WifiWatchCard(),
     ),
   };
 }

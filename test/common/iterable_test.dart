@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/iterable.dart';
 import 'package:test/test.dart';
 
@@ -80,10 +81,16 @@ void main() {
       expect(list, [1, 2, 3]);
     });
 
-    test('does nothing when maxLength is 0', () {
+    test('clears when maxLength is 0', () {
       final list = [1, 2, 3];
       list.truncate(0);
-      expect(list, [1, 2, 3]);
+      expect(list, isEmpty);
+    });
+
+    test('clears when maxLength is negative', () {
+      final list = [1, 2, 3];
+      list.truncate(-1);
+      expect(list, isEmpty);
     });
   });
 
@@ -102,6 +109,17 @@ void main() {
       expect(result, [
         [1, 2],
       ]);
+    });
+
+    test('caps delay tests at the core concurrency limit', () {
+      expect(maxConcurrentDelayTests, 32);
+      final items = List<int>.generate(101, (index) => index);
+      final batches = items.batch(maxConcurrentDelayTests);
+      expect(batches.length, 4);
+      expect(batches.first.length, 32);
+      expect(batches[1].length, 32);
+      expect(batches[2].length, 32);
+      expect(batches.last.length, 5);
     });
   });
 

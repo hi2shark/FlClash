@@ -1,0 +1,763 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/local_proxy.dart';
+import 'package:path/path.dart' as path;
+import 'package:yaml/yaml.dart' as yaml_parser;
+
+class LocalProxyProviderGenerator {
+  const LocalProxyProviderGenerator();
+
+  String generateYaml(List<LocalProxy> proxies) {
+    final enabled = proxies.where((p) => p.enabled).toList();
+    final proxyMaps = enabled.map(_buildProxyMap).toList();
+    return yaml.encode({'proxies': proxyMaps});
+  }
+
+  Map<String, dynamic> _buildProxyMap(LocalProxy proxy) {
+    final map = Map<String, dynamic>.from(proxy.config);
+    final type = proxy.type;
+    if (type == 'easytier') {
+      _normalizeEasyTier(map);
+    } else {
+      map['port'] = _toPort(map['port']);
+    }
+
+    if (type == 'ssh') {
+      _normalizeSshFields(map);
+    }
+
+    // Clean empty/null values regardless of protocol.
+    map.removeWhere(
+      (key, value) =>
+          value == null ||
+          value == '' ||
+          (value is List && value.isEmpty) ||
+          (value is Map && value.isEmpty),
+    );
+
+    if (type == 'nowhere') {
+      _normalizeNowhere(proxy, map);
+    } else {
+      _normalizeAlpn(map);
+    }
+
+    if (type == 'anytls') {
+      _normalizeEchOpts(map);
+      _removeZeroValues(map, [
+        'idle-session-check-interval',
+        'idle-session-timeout',
+        'min-idle-session',
+      ]);
+    }
+
+    return map;
+  }
+
+  void _normalizeNowhere(LocalProxy proxy, Map<String, dynamic> map) {
+    final server = map['server'];
+    if (server is! String || server.isEmpty) {
+      _invalidNowhere(proxy, 'server must be a non-empty string');
+    }
+
+    final port = map['port'];
+    if (port is! int || port < 1 || port > 65535) {
+      _invalidNowhere(proxy, 'port must be an integer from 1 to 65535');
+    }
+
+    final password = _resolveNowherePassword(proxy, map);
+    final stack = _resolveNowhereStack(proxy, map);
+    if (stack == _nowhereStack3) {
+      _validateNowhereServiceKey(proxy, password);
+    } else {
+      _validateUtf8Length(proxy, 'password/key', password);
+    }
+    map['password'] = password;
+    map.remove('key');
+    map.remove('spec');
+
+    if (stack == _nowhereStack3) {
+      _normalizeNowhere3(proxy, map);
+    } else {
+      _normalizeNowhere2(proxy, map);
+    }
+  }
+
+  /// The core dispatches `type: nowhere` by ALPN: an omitted ALPN or nw3
+  /// selects the Nowhere 3 stack, exactly nw2 selects the Nowhere 2 stack.
+  String _resolveNowhereStack(LocalProxy proxy, Map<String, dynamic> map) {
+    final value = map['alpn'];
+    if (value == null) {
+      return _nowhereStack3;
+    }
+
+    late final List<String> entries;
+    if (value is String) {
+      if (value.contains(',')) {
+        _invalidNowhere(proxy, 'ALPN must contain exactly one value');
+      }
+      entries = [value];
+    } else if (value is List) {
+      entries = [];
+      for (final item in value) {
+        if (item is! String) {
+          _invalidNowhere(proxy, 'ALPN entries must be strings');
+        }
+        entries.add(item);
+      }
+    } else {
+      _invalidNowhere(proxy, 'ALPN must be a string or list of strings');
+    }
+
+    if (entries.length != 1 || entries.first.isEmpty) {
+      _invalidNowhere(proxy, 'ALPN must contain exactly one value');
+    }
+    switch (entries.first) {
+      case 'nw2':
+        return _nowhereStack2;
+      case 'nw3':
+        return _nowhereStack3;
+      default:
+        _invalidNowhere(proxy, 'ALPN must be nw2 or nw3');
+    }
+  }
+
+  void _normalizeNowhere2(LocalProxy proxy, Map<String, dynamic> map) {
+    final carriers = _resolveNowhereCarriers(proxy, map);
+    map['up'] = carriers.$1;
+    map['down'] = carriers.$2;
+    map['network'] = carriers.$1;
+    map['alpn'] = ['nw2'];
+    map.remove('net');
+
+    _normalizeNowhereMorph(proxy, map);
+
+    final muxEnabled = _normalizeNowhereMux(proxy, map, carriers);
+    final dedicatedTcpTcp =
+        carriers.$1 == 'tcp' && carriers.$2 == 'tcp' && !muxEnabled;
+    final pool = _normalizeNonNegativeInteger(proxy, map, 'pool');
+    if (dedicatedTcpTcp) {
+      if (pool != null && pool > _nowhereMaxPoolSize) {
+        commonPrint.log(
+          '[Nowhere] Proxy "${proxy.name}" pool $pool exceeds maximum $_nowhereMaxPoolSize; using $_nowhereMaxPoolSize.',
+          logLevel: LogLevel.warning,
+        );
+        map['pool'] = _nowhereMaxPoolSize;
+      }
+    } else {
+      map.remove('pool');
+    }
+
+    _normalizeNonNegativeInteger(proxy, map, 'max-concurrent-dials');
+    final backoffInitial = _normalizeNonNegativeInteger(
+      proxy,
+      map,
+      'warm-backoff-initial',
+    );
+    final backoffMax = _normalizeNonNegativeInteger(
+      proxy,
+      map,
+      'warm-backoff-max',
+    );
+    _normalizeNonNegativeInteger(proxy, map, 'cwnd');
+
+    final effectiveInitial = backoffInitial == null || backoffInitial == 0
+        ? 1
+        : backoffInitial;
+    final effectiveMax = backoffMax == null || backoffMax == 0
+        ? 30
+        : backoffMax;
+    if (effectiveInitial > effectiveMax) {
+      _invalidNowhere(
+        proxy,
+        'warm-backoff-initial must not exceed warm-backoff-max after defaults',
+      );
+    }
+
+    map.remove('mix-fallback-timeout');
+    map.remove('bbr-profile');
+    map.remove('reduce-rtt');
+    map.remove('max-udp-relay-packet-size');
+    _normalizeEchOpts(map);
+  }
+
+  void _normalizeNowhere3(LocalProxy proxy, Map<String, dynamic> map) {
+    final net = _resolveNowhereNet(proxy, map);
+    map['net'] = net;
+    map.remove('up');
+    map.remove('down');
+    map.remove('network');
+    // The ALPN is left as-is: an explicit nw3 and an omitted value both
+    // select the Nowhere 3 stack in the core.
+
+    _normalizeNowhereMorph(proxy, map);
+
+    _normalizeNonNegativeInteger(proxy, map, 'cwnd');
+
+    // Nowhere 3 speaks one transport with fixed pooling, so the Nowhere 2
+    // knobs are rejected by the core and must not reach the generated YAML.
+    for (final key in const [
+      'mux',
+      'pool',
+      'prewarm-on-start',
+      'max-concurrent-dials',
+      'warm-backoff-initial',
+      'warm-backoff-max',
+      'mix-fallback-timeout',
+      'fingerprint',
+      'client-fingerprint',
+      'ech-opts',
+      'bbr-profile',
+      'reduce-rtt',
+      'max-udp-relay-packet-size',
+    ]) {
+      map.remove(key);
+    }
+  }
+
+  String _resolveNowhereNet(LocalProxy proxy, Map<String, dynamic> map) {
+    final value = map['net'];
+    if (value == null) {
+      return 'tcp';
+    }
+    if (value is! String) {
+      _invalidNowhere(proxy, 'net must be a string');
+    }
+    if (value != 'tcp' && value != 'udp') {
+      _invalidNowhere(proxy, 'net must be "tcp" or "udp"');
+    }
+    return value;
+  }
+
+  static final _nowhereServiceKeyPattern = RegExp(r'^[0-9a-f]{32}$');
+
+  void _validateNowhereServiceKey(LocalProxy proxy, String password) {
+    if (!_nowhereServiceKeyPattern.hasMatch(password)) {
+      _invalidNowhere(
+        proxy,
+        'Nowhere 3 password/key must be exactly 32 lowercase hexadecimal characters',
+      );
+    }
+  }
+
+  String _resolveNowherePassword(LocalProxy proxy, Map<String, dynamic> map) {
+    final password = map['password'];
+    if (password != null) {
+      if (password is! String) {
+        _invalidNowhere(proxy, 'password must be a string');
+      }
+      if (password.isNotEmpty) return password;
+    }
+
+    final key = map['key'];
+    if (key != null) {
+      if (key is! String) {
+        _invalidNowhere(proxy, 'key must be a string');
+      }
+      if (key.isNotEmpty) return key;
+    }
+
+    _invalidNowhere(proxy, 'password/key must be non-empty');
+  }
+
+  (String, String) _resolveNowhereCarriers(
+    LocalProxy proxy,
+    Map<String, dynamic> map,
+  ) {
+    final up = _optionalString(proxy, map, 'up');
+    final down = _optionalString(proxy, map, 'down');
+    late final String resolvedUp;
+    late final String resolvedDown;
+
+    if (up != null || down != null) {
+      if (up == null || down == null) {
+        _invalidNowhere(proxy, 'up and down must be set together');
+      }
+      resolvedUp = up;
+      resolvedDown = down;
+    } else {
+      final network = _optionalString(proxy, map, 'network');
+      final net = _optionalString(proxy, map, 'net');
+      final symmetric = network ?? net ?? 'udp';
+      resolvedUp = symmetric;
+      resolvedDown = symmetric;
+    }
+
+    if (!_isNowhereCarrier(resolvedUp) || !_isNowhereCarrier(resolvedDown)) {
+      _invalidNowhere(proxy, 'carriers must be "tcp" or "udp"');
+    }
+    return (resolvedUp, resolvedDown);
+  }
+
+  static const _nowhereMaxPoolSize = 256;
+  static const _nowhereStack2 = 'nw2';
+  static const _nowhereStack3 = 'nw3';
+
+  bool _isNowhereCarrier(String value) => value == 'tcp' || value == 'udp';
+
+  bool _normalizeNowhereMux(
+    LocalProxy proxy,
+    Map<String, dynamic> map,
+    (String, String) carriers,
+  ) {
+    final value = map['mux'];
+    if (value == null) {
+      map.remove('mux');
+      return false;
+    }
+    final parsed = value is int
+        ? value
+        : value is String
+        ? int.tryParse(value)
+        : null;
+    if (parsed == null || (parsed != 0 && parsed != 1)) {
+      _invalidNowhere(proxy, 'mux must be 0 or 1');
+    }
+    if (parsed == 1 && carriers.$1 == 'udp' && carriers.$2 == 'udp') {
+      commonPrint.log(
+        '[Nowhere] Proxy "${proxy.name}" mux=1 is canonicalized to 0 for udp/udp.',
+        logLevel: LogLevel.warning,
+      );
+      map.remove('mux');
+      return false;
+    }
+    if (parsed == 1) {
+      map['mux'] = 1;
+      return true;
+    }
+    map.remove('mux');
+    return false;
+  }
+
+  String? _optionalString(
+    LocalProxy proxy,
+    Map<String, dynamic> map,
+    String field,
+  ) {
+    final value = map[field];
+    if (value == null) return null;
+    if (value is! String) {
+      _invalidNowhere(proxy, '$field must be a string');
+    }
+    return value.isEmpty ? null : value;
+  }
+
+  void _normalizeNowhereMorph(LocalProxy proxy, Map<String, dynamic> map) {
+    final value = map['morph'];
+    if (value == null) {
+      map.remove('morph');
+      return;
+    }
+    final enabled =
+        value == true ||
+        value == 1 ||
+        value == '1' ||
+        value?.toString().toLowerCase() == 'true';
+    final disabled =
+        value == false ||
+        value == 0 ||
+        value == '0' ||
+        value?.toString().toLowerCase() == 'false';
+    if (!enabled && !disabled) {
+      _invalidNowhere(proxy, 'morph must be a boolean');
+    }
+    // An explicit false is kept: Nowhere 3 turns Morph on by default, so
+    // dropping it would silently re-enable the transform.
+    map['morph'] = enabled;
+  }
+
+  int? _normalizeNonNegativeInteger(
+    LocalProxy proxy,
+    Map<String, dynamic> map,
+    String field,
+  ) {
+    final value = map[field];
+    if (value == null) return null;
+
+    final parsed = value is int
+        ? value
+        : value is String
+        ? int.tryParse(value)
+        : null;
+    if (parsed == null || parsed < 0) {
+      _invalidNowhere(proxy, '$field must be a non-negative integer');
+    }
+    map[field] = parsed;
+    return parsed;
+  }
+
+  void _validateUtf8Length(LocalProxy proxy, String field, String value) {
+    late final int byteLength;
+    try {
+      byteLength = utf8.encode(value).length;
+    } catch (_) {
+      _invalidNowhere(proxy, '$field must be valid UTF-8');
+    }
+    if (byteLength > 255) {
+      _invalidNowhere(proxy, '$field must not exceed 255 UTF-8 bytes');
+    }
+  }
+
+  Never _invalidNowhere(LocalProxy proxy, String message) {
+    throw ArgumentError('Invalid Nowhere proxy "${proxy.name}": $message.');
+  }
+
+  int _toPort(dynamic value) {
+    if (value is int) return value;
+    if (value is String) {
+      final parsed = int.tryParse(value);
+      if (parsed != null) return parsed;
+    }
+    return 0;
+  }
+
+  void _normalizeEasyTier(Map<String, dynamic> map) {
+    map.remove('server');
+    map.remove('port');
+    const listKeys = [
+      'peers',
+      'listeners',
+      'mapped-listeners',
+      'exit-nodes',
+      'proxy-networks',
+    ];
+    for (final key in listKeys) {
+      final value = map[key];
+      if (value is String) {
+        final items = const LineSplitter()
+            .convert(value)
+            .map((line) => line.trim())
+            .where((line) => line.isNotEmpty)
+            .toList();
+        if (items.isEmpty) {
+          map.remove(key);
+        } else {
+          map[key] = items;
+        }
+      }
+    }
+  }
+
+  void _normalizeSshFields(Map<String, dynamic> map) {
+    _canonicalizeSshField(map, 'private-key', 'privateKey');
+    _canonicalizeSshField(
+      map,
+      'private-key-passphrase',
+      'privateKeyPassphrase',
+    );
+    _canonicalizeSshField(map, 'host-key', 'hostKey');
+    _canonicalizeSshField(map, 'host-key-algorithms', 'hostKeyAlgorithms');
+    map.remove('udp');
+  }
+
+  void _canonicalizeSshField(
+    Map<String, dynamic> map,
+    String canonicalKey,
+    String legacyKey,
+  ) {
+    if (!map.containsKey(canonicalKey) && map.containsKey(legacyKey)) {
+      map[canonicalKey] = map[legacyKey];
+    }
+    map.remove(legacyKey);
+  }
+
+  void _normalizeAlpn(Map<String, dynamic> map) {
+    final alpn = map['alpn'];
+    if (alpn is String && alpn.isNotEmpty) {
+      map['alpn'] = alpn
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    } else if (alpn is! List) {
+      map.remove('alpn');
+    }
+  }
+
+  void _normalizeEchOpts(Map<String, dynamic> map) {
+    final ech = map['ech-opts'];
+    if (ech is! Map || ech['enable'] != true) {
+      map.remove('ech-opts');
+      return;
+    }
+
+    final normalized = <String, dynamic>{'enable': true};
+    final config = ech['config']?.toString() ?? '';
+    if (config.isNotEmpty) {
+      normalized['config'] = config;
+    }
+    final queryServerName = ech['query-server-name']?.toString() ?? '';
+    if (queryServerName.isNotEmpty) {
+      normalized['query-server-name'] = queryServerName;
+    }
+    map['ech-opts'] = normalized;
+  }
+
+  void _removeZeroValues(Map<String, dynamic> map, List<String> keys) {
+    for (final key in keys) {
+      final value = map[key];
+      if (value == null || value == 0 || value == '') {
+        map.remove(key);
+      }
+    }
+  }
+
+  String _resolveProviderPath(String homePath, String providerPath) {
+    if (providerPath.isEmpty) {
+      throw ArgumentError.value(
+        providerPath,
+        'providerPath',
+        'Provider path must identify a file inside the application home.',
+      );
+    }
+
+    final resolved = path.canonicalize(
+      path.isAbsolute(providerPath)
+          ? providerPath
+          : path.join(homePath, providerPath),
+    );
+    if (!path.isWithin(homePath, resolved)) {
+      throw ArgumentError.value(
+        providerPath,
+        'providerPath',
+        'Provider path must resolve inside the application home directory.',
+      );
+    }
+    return resolved;
+  }
+
+  Future<void> _validateTargetPath(
+    String homePath,
+    String targetPath,
+    String providerPath, {
+    required bool createParent,
+  }) async {
+    final homeDirectory = Directory(homePath);
+    if (!await homeDirectory.exists()) {
+      if (!createParent) {
+        throw StateError('Application home directory no longer exists.');
+      }
+      await homeDirectory.create(recursive: true);
+    }
+
+    final parentPath = path.dirname(targetPath);
+    final relativeParent = path.relative(parentPath, from: homePath);
+    var currentPath = homePath;
+    for (final component in path.split(relativeParent)) {
+      if (component.isEmpty || component == '.') continue;
+      currentPath = path.join(currentPath, component);
+      final entityType = await FileSystemEntity.type(
+        currentPath,
+        followLinks: false,
+      );
+      if (entityType == FileSystemEntityType.notFound) {
+        if (!createParent) {
+          throw StateError('Provider parent directory no longer exists.');
+        }
+        await Directory(currentPath).create();
+      } else if (entityType != FileSystemEntityType.directory) {
+        throw ArgumentError.value(
+          providerPath,
+          'providerPath',
+          'Provider path must not traverse symbolic links or non-directories.',
+        );
+      }
+    }
+
+    final realHome = path.canonicalize(
+      await homeDirectory.resolveSymbolicLinks(),
+    );
+    final realParent = path.canonicalize(
+      await Directory(parentPath).resolveSymbolicLinks(),
+    );
+    if (!path.equals(realHome, realParent) &&
+        !path.isWithin(realHome, realParent)) {
+      throw ArgumentError.value(
+        providerPath,
+        'providerPath',
+        'Provider path must remain inside the application home directory.',
+      );
+    }
+
+    final targetType = await FileSystemEntity.type(
+      targetPath,
+      followLinks: false,
+    );
+    if (targetType != FileSystemEntityType.notFound &&
+        targetType != FileSystemEntityType.file) {
+      throw ArgumentError.value(
+        providerPath,
+        'providerPath',
+        'Provider target must be a regular file, not a link or directory.',
+      );
+    }
+  }
+
+  void _validateGeneratedYaml(String content) {
+    late final dynamic document;
+    try {
+      document = yaml_parser.loadYaml(content);
+    } catch (error) {
+      throw FormatException('Generated provider YAML is invalid: $error');
+    }
+    if (document is! Map || document['proxies'] is! List) {
+      throw const FormatException(
+        'Generated provider YAML must contain a proxies list.',
+      );
+    }
+  }
+
+  Future<File?> _backupProviderTarget(
+    File targetFile,
+    Directory temporaryDirectory,
+  ) async {
+    final targetType = await FileSystemEntity.type(
+      targetFile.path,
+      followLinks: false,
+    );
+    if (targetType == FileSystemEntityType.notFound) return null;
+    if (targetType != FileSystemEntityType.file) {
+      throw StateError('Provider target changed before replacement.');
+    }
+
+    final backupFile = File(
+      path.join(
+        temporaryDirectory.path,
+        '.${path.basename(targetFile.path)}.backup',
+      ),
+    );
+    await targetFile.copy(backupFile.path);
+    return backupFile;
+  }
+
+  Future<void> _replaceProviderTarget({
+    required File temporaryFile,
+    required File targetFile,
+    required File? backupFile,
+  }) async {
+    try {
+      await temporaryFile.rename(targetFile.path);
+    } catch (error, stackTrace) {
+      await _restoreProviderTarget(targetFile, backupFile);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+
+  Future<void> _restoreProviderTarget(File targetFile, File? backupFile) async {
+    try {
+      await _removeTargetEntry(targetFile.path);
+      if (backupFile == null) return;
+      if (!await backupFile.exists()) {
+        throw StateError('Provider backup is missing.');
+      }
+      try {
+        await backupFile.rename(targetFile.path);
+      } catch (_) {
+        await backupFile.copy(targetFile.path);
+      }
+    } catch (error) {
+      commonPrint.log(
+        'Failed to restore local proxy provider after replacement failure: $error',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
+
+  Future<void> _removeTargetEntry(String targetPath) async {
+    final targetType = await FileSystemEntity.type(
+      targetPath,
+      followLinks: false,
+    );
+    if (targetType == FileSystemEntityType.notFound) return;
+    if (targetType == FileSystemEntityType.file) {
+      await File(targetPath).delete();
+      return;
+    }
+    if (targetType == FileSystemEntityType.link) {
+      await Link(targetPath).delete();
+      return;
+    }
+    if (targetType == FileSystemEntityType.directory) {
+      await Directory(targetPath).delete();
+      return;
+    }
+    throw FileSystemException(
+      'Unsupported provider target type during restore',
+      targetPath,
+    );
+  }
+
+  Future<String> get _targetPath async => path.join(
+    await appPath.homeDirPath,
+    'proxy_providers',
+    'flclash-local.yaml',
+  );
+
+  Future<String> writeProviderFile(
+    List<LocalProxy> proxies, {
+    required String providerPath,
+  }) async {
+    final enabled = proxies.where((p) => p.enabled).toList();
+    if (enabled.isEmpty) {
+      return '';
+    }
+
+    final yamlString = generateYaml(enabled);
+    final homePath = path.canonicalize(await appPath.homeDirPath);
+    final targetPath = _resolveProviderPath(homePath, providerPath);
+    await _validateTargetPath(
+      homePath,
+      targetPath,
+      providerPath,
+      createParent: true,
+    );
+
+    Directory? temporaryDirectory;
+    try {
+      final targetFile = File(targetPath);
+      final targetDirectory = targetFile.parent;
+      temporaryDirectory = await targetDirectory.createTemp(
+        '.flclash-provider-',
+      );
+      final temporaryFile = File(
+        path.join(temporaryDirectory.path, '.${path.basename(targetPath)}.tmp'),
+      );
+      await temporaryFile.writeAsString(
+        yamlString,
+        encoding: utf8,
+        flush: true,
+      );
+      _validateGeneratedYaml(await temporaryFile.readAsString(encoding: utf8));
+      await _validateTargetPath(
+        homePath,
+        targetPath,
+        providerPath,
+        createParent: false,
+      );
+      final backupFile = await _backupProviderTarget(
+        targetFile,
+        temporaryDirectory,
+      );
+      await _replaceProviderTarget(
+        temporaryFile: temporaryFile,
+        targetFile: targetFile,
+        backupFile: backupFile,
+      );
+      return targetPath;
+    } finally {
+      final directory = temporaryDirectory;
+      if (directory != null && await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    }
+  }
+
+  Future<void> deleteProviderFile() async {
+    final file = File(await _targetPath);
+    await file.safeDelete();
+  }
+}
+
+const localProxyProviderGenerator = LocalProxyProviderGenerator();

@@ -189,6 +189,7 @@ class Bootstrap {
     unawaited(_container.read(resourcesActionProvider.notifier).autoUpdate());
     await bootGuard.markRunning();
     unawaited(_container.read(locationPermissionsProvider.notifier).refresh());
+    permissions.check();
   }
 
   Future<void> _showCrashRecoveryTip() async {

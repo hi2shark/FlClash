@@ -33,6 +33,7 @@ class ConnectivityManager extends ConsumerStatefulWidget {
 
 class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
   late final StreamSubscription subscription;
+  StreamSubscription<String?>? validatedWifiSsidSubscription;
   late final SsidReader _readSsid =
       widget.readSsid ?? WifiSsidManager.instance.getSsid;
 
@@ -45,6 +46,22 @@ class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
     final stream =
         widget.connectivityStream ?? Connectivity().onConnectivityChanged;
     subscription = stream.listen(_handleResults);
+    if (system.isAndroid) {
+      validatedWifiSsidSubscription = WifiSsidManager.instance
+          .watchValidatedWifiSsid()
+          .listen(
+            (ssid) {
+              ref.read(currentSSIDProvider.notifier).value = ssid;
+              commonPrint.log(
+                'Validated Wi-fi SSID: $ssid',
+                logLevel: LogLevel.info,
+              );
+            },
+            onError: (_) {
+              ref.read(currentSSIDProvider.notifier).value = null;
+            },
+          );
+    }
     ref.listenManual(excludeSSIDsProvider.select((state) => state.isNotEmpty), (
       previous,
       next,
@@ -106,6 +123,7 @@ class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
   @override
   void dispose() {
     subscription.cancel();
+    validatedWifiSsidSubscription?.cancel();
     super.dispose();
   }
 

@@ -446,7 +446,7 @@ final class SharedStateProvider
   }
 }
 
-String _$sharedStateHash() => r'1aeb51f6a7b6082f5df2a1942f45ec6c2abce606';
+String _$sharedStateHash() => r'27f65c8b324842b8344d62adfdfc982e2c2cea09';
 
 @ProviderFor(vpnRouteAddress)
 final vpnRouteAddressProvider = VpnRouteAddressProvider._();
@@ -523,7 +523,7 @@ final class VpnOptionsProvider
   }
 }
 
-String _$vpnOptionsHash() => r'c00e87278b32dd8977ed136aace10dccfe05508d';
+String _$vpnOptionsHash() => r'8f904c50a2075a41df0e5fb9b72fce4049f56248';
 
 @ProviderFor(AccessControlState)
 final accessControlStateProvider = AccessControlStateProvider._();
@@ -616,7 +616,7 @@ final class SuspendProvider extends $FunctionalProvider<bool, bool, bool>
   }
 }
 
-String _$suspendHash() => r'9ab9210f4f3c70f63d9858d492a9c09b3fb24bf1';
+String _$suspendHash() => r'fae069b1e239a49db8758214f6749e9dbb86b301';
 
 @ProviderFor(DynamicColor)
 final dynamicColorProvider = DynamicColorProvider._();
@@ -1802,7 +1802,7 @@ final class ProxyStateProvider
   }
 }
 
-String _$proxyStateHash() => r'76a71ab5da07dca9aeb351282c5c03ab222d0760';
+String _$proxyStateHash() => r'105c9ad9f186b15d8eff74ff87ff1eca16742a0c';
 
 @ProviderFor(proxiesActionsState)
 final proxiesActionsStateProvider = ProxiesActionsStateProvider._();
@@ -2918,7 +2918,7 @@ final class ProxyDescProvider
   }
 }
 
-String _$proxyDescHash() => r'16dbf0d090ba4699b1a282d804d1e75a9910696f';
+String _$proxyDescHash() => r'51b5a3954f9de5b50277ae7b05ef9694a1fd42c3';
 
 final class ProxyDescFamily extends $Family
     with $FunctionalFamilyOverride<String, Proxy> {

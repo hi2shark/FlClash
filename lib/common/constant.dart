@@ -15,7 +15,7 @@ const coreManifestName = 'manifest.json';
 const coreName = 'clash.meta';
 const browserUa =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const packageName = 'com.follow.clash';
+const packageName = 'com.hi2shark.flclash_nw';
 final unixSocketPath = '/tmp/FlClashSocket_${Random().nextInt(10000)}.sock';
 final windowsPipeName = '\\\\.\\pipe\\FlClashCore_${_randomPipeId()}';
 const helperPort = 47890;
@@ -81,6 +81,11 @@ const downloadTimeoutDuration = Duration(seconds: 20);
 /// A healthy source answers within a second; past this the outbound is down.
 const outboundIpTimeoutDuration = Duration(seconds: 6);
 
+/// Kept in step with defaultSpeedTestTimeout and defaultQuicTestTimeout in
+/// core/test.go.
+const speedTestTimeoutDuration = Duration(seconds: 15);
+const quicTestTimeoutDuration = Duration(seconds: 8);
+
 /// The Core may spend a method's own timeout twice, once queueing for a probe
 /// slot and once on the request, before the transport is considered
 /// unresponsive. [budgetFactor] covers methods that spend it more than once.
@@ -99,6 +104,7 @@ const coreConnectionWaitDuration = Duration(seconds: 10);
 const maxConcurrentDelayTests = 32;
 const maxConcurrentImports = 4;
 const maxConcurrentIconLoads = 8;
+
 const animateDuration = Duration(milliseconds: 100);
 const midDuration = Duration(milliseconds: 200);
 const commonDuration = Duration(milliseconds: 300);
@@ -129,7 +135,10 @@ const systemDnsRecordKey = 'system_dns_record';
 const bootRecordKey = 'boot_record';
 const defaultSystemDnsFallback = '223.5.5.5';
 const double dialogCommonWidth = 300;
-const repository = 'chen08209/FlClash';
+const repository = String.fromEnvironment(
+  'REPOSITORY',
+  defaultValue: 'chen08209/FlClash',
+);
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
 const defaultTestUrl = 'https://www.gstatic.com/generate_204';

@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/local_proxies/services/local_proxy_config_injector.dart';
+import 'package:fl_clash/local_rules/services/local_rule_config_injector.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -55,6 +57,9 @@ String? _readTextFile(String path) {
 }
 
 Future<List<Group>> toGroupsTask(ComputeGroupsState data) async {
+  if (data.proxiesData.proxies.length < 400) {
+    return buildGroups(data);
+  }
   return compute<ComputeGroupsState, List<Group>>(buildGroups, data);
 }
 
@@ -109,16 +114,21 @@ ClashConfig buildClashConfig(Map<String, dynamic> configMap) {
 Future<({String yaml, String md5})> makeRealProfileTask(
   MakeRealProfileState data,
 ) async {
-  return compute<MakeRealProfileState, ({String yaml, String md5})>(
+  // The mixin injectors are not isolate-safe, so they run here.
+  final rawConfig = await compute<MakeRealProfileState, Map<String, dynamic>>(
     _makeRealProfileTask,
     data,
   );
+  await localProxyConfigInjector.inject(rawConfig);
+  await localRuleConfigInjector.inject(rawConfig);
+  final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
+  return (yaml: yaml, md5: yaml.toMd5());
 }
 
-Future<({String yaml, String md5})> _makeRealProfileTask(
+Future<Map<String, dynamic>> _makeRealProfileTask(
   MakeRealProfileState data,
 ) async {
-  final rawConfig = Map.from(data.rawConfig);
+  final rawConfig = Map<String, dynamic>.from(data.rawConfig);
   final realPatchConfig = data.realPatchConfig;
   final profilesPath = data.profilesPath;
   final profileId = data.profileId;
@@ -233,13 +243,16 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
   }
   if (rawConfig['sniffer']?['sniff'] != null) {
     for (final value in (rawConfig['sniffer']?['sniff'] as Map).values) {
+      if (value is! Map) {
+        continue;
+      }
       if (value['ports'] != null && value['ports'] is List) {
         value['ports'] =
             value['ports']?.map((item) => item.toString()).toList() ?? [];
       }
     }
   }
-  if (rawConfig['profile'] == null) {
+  if (rawConfig['profile'] is! Map) {
     rawConfig['profile'] = {};
   }
   void injectUnconfinedProviders(
@@ -263,7 +276,7 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
   rawConfig['profile']['store-selected'] = false;
   rawConfig['geox-url'] = realPatchConfig.geoXUrl.raw;
   rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
-  if (rawConfig['hosts'] == null) {
+  if (rawConfig['hosts'] is! Map) {
     rawConfig['hosts'] = {};
   }
   for (final host in realPatchConfig.hosts.entries) {
@@ -288,6 +301,11 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
     ),
   );
   rawConfig['dns'] = rawDns;
+  final proxyServerNameserver = rawDns['proxy-server-nameserver'];
+  if (rawDns['respect-rules'] == true &&
+      (proxyServerNameserver is! List || proxyServerNameserver.isEmpty)) {
+    rawDns['respect-rules'] = false;
+  }
   final ntpOverride = overrides.ntp.overrideJson(overrides.ntpOverrideKeys);
   if (ntpOverride.isNotEmpty) {
     final rawNtp = rawConfig['ntp'] is Map
@@ -373,8 +391,13 @@ Future<({String yaml, String md5})> _makeRealProfileTask(
         .toList();
   }
   rawConfig['rules'] = rules;
-  final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
-  return (yaml: yaml, md5: yaml.toMd5());
+  final groups = rawConfig['proxy-groups'];
+  if (groups is List && groups.isNotEmpty && groups.first is! Map) {
+    rawConfig['proxy-groups'] = groups
+        .map((group) => (group as dynamic).toJson() as Map<String, dynamic>)
+        .toList();
+  }
+  return rawConfig;
 }
 
 typedef ShakingStoreArgs = ({

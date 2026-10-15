@@ -75,6 +75,15 @@ extension ColorExtension on Color {
         .toColor();
   }
 
+  Color darken([int amount = 10]) {
+    if (amount <= 0) return this;
+    if (amount > 100) return Colors.black;
+    final HSLColor hsl = HSLColor.fromColor(this);
+    return hsl
+        .withLightness(min(1, max(0, hsl.lightness - amount / 100)))
+        .toColor();
+  }
+
   String get hex {
     final value = toARGB32();
     final red = (value >> 16) & 0xFF;

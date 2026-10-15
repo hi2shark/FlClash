@@ -450,6 +450,9 @@ void main() {
     expect(find.textContaining('503 Service Unavailable'), findsNothing);
     expect(find.byType(AlertDialog), findsNothing);
 
+    // The sync also queues updateGroups, whose retry holds a timer that
+    // outlives the settled tree.
+    await tester.pump(const Duration(milliseconds: 700));
     await tester.pumpWidget(const SizedBox.shrink());
   });
 

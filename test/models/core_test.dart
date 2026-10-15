@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:test/test.dart';
@@ -49,6 +50,28 @@ void main() {
       expect(params.allowLan, true);
       expect(params.mode, Mode.rule);
       expect(params.logLevel, LogLevel.info);
+      expect(params.authentication, isEmpty);
+    });
+
+    test('fromJson and toJson keep authentication', () {
+      final json = {
+        'tun': {'enable': false},
+        'mixed-port': 7890,
+        'allow-lan': false,
+        'find-process-mode': 'off',
+        'mode': 'rule',
+        'log-level': 'info',
+        'ipv6': false,
+        'tcp-concurrent': false,
+        'external-controller': '',
+        'unified-delay': false,
+        'authentication': ['user:pass'],
+      };
+      final params = UpdateParams.fromJson(json);
+      expect(params.authentication, ['user:pass']);
+      expect(jsonDecode(jsonEncode(params.toJson()))['authentication'], [
+        'user:pass',
+      ]);
     });
   });
 
@@ -263,6 +286,138 @@ void main() {
       final event = CoreEvent.fromJson({'type': 'log', 'data': 'test log'});
       expect(event.type, CoreEventType.log);
       expect(event.data, 'test log');
+    });
+  });
+  group('ActionResult', () {
+    test('toResult returns success Result for success code', () {
+      const ar = ActionResult(
+        method: CoreMethod.getConfig,
+        data: {'key': 'value'},
+        code: ResultType.success,
+      );
+      final result = ar.toResult;
+      expect(result.isSuccess, true);
+      expect(result.data, {'key': 'value'});
+    });
+
+    test('toResult returns error Result for error code', () {
+      const ar = ActionResult(
+        method: CoreMethod.getConfig,
+        data: 'something went wrong',
+        code: ResultType.error,
+      );
+      final result = ar.toResult;
+      expect(result.isSuccess, false);
+      expect(result.message, 'something went wrong');
+    });
+  });
+
+  group('SharedState', () {
+    test('round trip includes suspend-on WiFi SSIDs', () {
+      const state = SharedState(
+        currentProfileName: 'Profile',
+        localNetworkTip: 'localNetworkTip',
+        stopText: 'Stop',
+        stopTip: 'Stopping VPN...',
+        startTip: 'Starting VPN...',
+        onlyStatisticsProxy: false,
+        crashlytics: true,
+        suspendOnWifiSsids: ['Home', 'Office'],
+      );
+
+      final restored = SharedState.fromJson(
+        jsonDecode(jsonEncode(state.toJson())) as Map<String, Object?>,
+      );
+
+      expect(restored.suspendOnWifiSsids, ['Home', 'Office']);
+    });
+
+    test('reads legacy excludeSSIDs key into suspend-on WiFi SSIDs', () {
+      final restored = SharedState.fromJson({
+        'currentProfileName': 'Profile',
+        'localNetworkTip': 'localNetworkTip',
+        'stopText': 'Stop',
+        'stopTip': 'Stopping VPN...',
+        'startTip': 'Starting VPN...',
+        'onlyStatisticsProxy': false,
+        'crashlytics': true,
+        'excludeSSIDs': ['Home'],
+      });
+
+      expect(restored.suspendOnWifiSsids, ['Home']);
+    });
+
+    test('needSyncSharedState keeps suspend-on WiFi SSIDs', () {
+      const state = SharedState(
+        setupParams: SetupParams(
+          selectedMap: {'Proxy': 'Auto'},
+          testUrl: 'https://example.com',
+        ),
+        currentProfileName: 'Profile',
+        localNetworkTip: 'localNetworkTip',
+        stopText: 'Stop',
+        stopTip: 'Stopping VPN...',
+        startTip: 'Starting VPN...',
+        onlyStatisticsProxy: false,
+        crashlytics: true,
+        suspendOnWifiSsids: ['Home'],
+      );
+
+      final synced = state.needSyncSharedState;
+
+      expect(synced.setupParams, null);
+      expect(synced.suspendOnWifiSsids, ['Home']);
+    });
+  });
+
+  group('VpnOptions', () {
+    test('round-trip includes dnsEnable', () {
+      const options = VpnOptions(
+        enable: true,
+        port: 7890,
+        ipv6: false,
+        dnsHijacking: false,
+        dnsEnable: true,
+        accessControlProps: AccessControlProps(),
+        allowBypass: true,
+        systemProxy: true,
+        bypassDomain: ['localhost'],
+        stack: 'mixed',
+      );
+
+      final restored = VpnOptions.fromJson(
+        jsonDecode(jsonEncode(options.toJson())) as Map<String, Object?>,
+      );
+
+      expect(restored.dnsEnable, true);
+      expect(restored.dnsHijacking, false);
+      expect(restored.port, 7890);
+      expect(restored.stack, 'mixed');
+    });
+
+    test('fromJson reads dnsEnable', () {
+      final options = VpnOptions.fromJson({
+        'enable': false,
+        'port': 7890,
+        'ipv6': true,
+        'dnsHijacking': true,
+        'dnsEnable': false,
+        'accessControlProps': {
+          'enable': false,
+          'mode': 'acceptSelected',
+          'acceptList': <String>[],
+          'rejectList': <String>[],
+        },
+        'allowBypass': false,
+        'systemProxy': false,
+        'bypassDomain': <String>[],
+        'stack': 'system',
+        'routeAddress': <String>[],
+      });
+
+      expect(options.dnsEnable, false);
+      expect(options.dnsHijacking, true);
+      expect(options.ipv6, true);
     });
   });
 }

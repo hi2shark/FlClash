@@ -20,6 +20,15 @@ const _allowed = {
   // `CoreEventManager` is a private-constructor singleton that fans core events
   // out for the whole run; closing its controller would end event delivery.
   'lib/core/event.dart#_controller',
+  // The local-proxy and local-rule stores are private-constructor singletons
+  // the UI watches for the whole run; they are only reset between tests.
+  'lib/local_rules/services/local_rule_store.dart#rulesNotifier',
+  'lib/local_rules/services/local_rule_store.dart#configNotifier',
+  'lib/local_proxies/services/local_proxy_store.dart#proxiesNotifier',
+  'lib/local_proxies/services/local_proxy_store.dart#configNotifier',
+  // `BackgroundResourceManager` is a private-constructor singleton whose
+  // notifier is the app-wide foreground/background flag.
+  'lib/manager/background_resource_manager.dart#isBackgroundNotifier',
 };
 
 final _declaration = RegExp(

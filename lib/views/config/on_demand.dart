@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -29,6 +30,16 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
   bool get _isAndroid => widget.isAndroid ?? system.isAndroid;
 
   bool get _isMacOS => widget.isMacOS ?? system.isMacOS;
+
+  Future<void> _handleCopySsid(BuildContext context, String? ssid) async {
+    if (ssid == null || ssid.isEmpty) {
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: ssid));
+    if (context.mounted) {
+      context.showNotifier(context.appLocalizations.copySuccess);
+    }
+  }
 
   void _handlePermanentlyDeniedLocationPermission() {
     if (_isMacOS) {
@@ -93,6 +104,22 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     unawaited(ref.read(batteryOptimizationIgnoredProvider.notifier).request());
   }
 
+  Future<void> _handleRequestBackgroundLocationPermission() async {
+    final permission = ref.read(backgroundLocationPermissionsProvider);
+    if (permission == WifiSsidPermission.granted) {
+      return;
+    }
+    if (permission == WifiSsidPermission.permanentlyDenied) {
+      unawaited(app?.openAppSettings());
+      return;
+    }
+    final res = await wifiSsidManager.requestBackgroundPermission();
+    if (!mounted) {
+      return;
+    }
+    ref.read(backgroundLocationPermissionsProvider.notifier).value = res;
+  }
+
   Future<void> _handleAddOrUpdate([String? ssid]) async {
     final ssids = ref.read(excludeSSIDsProvider);
     final appLocalizations = context.appLocalizations;
@@ -130,6 +157,152 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     ref.read(excludeSSIDsProvider.notifier).update((value) {
       return value.copyAndReorder(oldIndex, newIndex);
     });
+  }
+
+  Glyph _signalGlyph(int? rssi, bool hasNetwork) {
+    if (rssi != null && rssi < -70) {
+      return AppGlyphs.wifiOff;
+    }
+    return hasNetwork || rssi != null ? AppGlyphs.wifi : AppGlyphs.wifiOff;
+  }
+
+  Color _signalColor(
+    BuildContext context,
+    int? rssi,
+    bool hasNetwork,
+    bool isExcluded,
+    bool validated,
+  ) {
+    if (isExcluded && validated) {
+      return context.colorScheme.error;
+    }
+    if (rssi == null) {
+      return hasNetwork
+          ? context.colorScheme.primary
+          : context.colorScheme.outline;
+    }
+    if (rssi >= -60) return Colors.green;
+    if (rssi >= -75) return Colors.orange;
+    return context.colorScheme.error;
+  }
+
+  String _currentWifiStatus(
+    BuildContext context,
+    WifiWatchState state,
+    bool isExcluded,
+    bool enabled,
+  ) {
+    final appLocalizations = context.appLocalizations;
+    if (!enabled) {
+      return appLocalizations.disabled;
+    }
+    final hasKnownSsid = state.ssid != null || state.rawSsid != null;
+    if (state.suspended) {
+      return appLocalizations.suspended;
+    }
+    final deadline = state.pendingSuspendDeadline;
+    if (deadline != null) {
+      final remaining = deadline.difference(DateTime.now()).inSeconds;
+      if (remaining <= 0) {
+        return appLocalizations.wifiWatchSuspendingNow;
+      }
+      if (isExcluded) {
+        return appLocalizations.wifiWatchExcludedWillSuspend(
+          remaining.toString(),
+        );
+      }
+      return appLocalizations.wifiWatchWillSuspend(remaining.toString());
+    }
+    if (!state.wifiPresent && !hasKnownSsid) {
+      return appLocalizations.wifiWatchNoWifi;
+    }
+    if (!hasKnownSsid) {
+      return appLocalizations.wifiWatchResolving;
+    }
+    if (isExcluded) {
+      return state.validated
+          ? appLocalizations.wifiWatchExcluded
+          : appLocalizations.wifiWatchExcludedInactive;
+    }
+    if (state.validated) {
+      return appLocalizations.wifiWatchTrusted;
+    }
+    return appLocalizations.wifiWatchListening;
+  }
+
+  Widget _buildCurrentWifiSection() {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(top: 16),
+      sliver: SliverToBoxAdapter(
+        child: Consumer(
+          builder: (context, ref, _) {
+            final appLocalizations = context.appLocalizations;
+            final state = ref.watch(wifiWatchProvider);
+            final enabled = ref.watch(onDemandEnabledProvider);
+            final excludeSSIDs = ref.watch(excludeSSIDsProvider);
+            final ssid = state.ssid ?? state.rawSsid;
+            final hasSsid = ssid != null;
+            final hasNetwork = hasSsid || state.wifiPresent;
+            final isExcluded =
+                enabled && hasSsid && excludeSSIDs.contains(ssid);
+            final ssidTextStyle = context.textTheme.bodyMedium?.toLight;
+            final matchedSsidTextStyle = (ssidTextStyle ?? const TextStyle())
+                .copyWith(color: Colors.green, fontWeight: FontWeight.bold);
+            return generateSectionV3(
+              title: appLocalizations.currentWifiConnection,
+              items: [
+                DecorationListItem(
+                  title: Text(appLocalizations.currentWifiSsid),
+                  trailing: Text(
+                    ssid ??
+                        (hasNetwork
+                            ? appLocalizations.wifiWatchResolving
+                            : appLocalizations.wifiWatchNoWifi),
+                    style: isExcluded ? matchedSsidTextStyle : ssidTextStyle,
+                  ),
+                  onPressed: hasSsid
+                      ? () => _handleCopySsid(context, ssid)
+                      : null,
+                ),
+                DecorationListItem(
+                  title: Text(appLocalizations.currentWifiSignal),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (hasNetwork) ...[
+                        GlyphIcon(
+                          _signalGlyph(state.rssi, hasNetwork),
+                          size: 16.ap,
+                          color: _signalColor(
+                            context,
+                            state.rssi,
+                            hasNetwork,
+                            isExcluded,
+                            state.validated,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      Text(
+                        state.rssi != null ? '${state.rssi} dBm' : '-',
+                        style: context.textTheme.bodyMedium?.toLight,
+                      ),
+                    ],
+                  ),
+                ),
+                DecorationListItem(
+                  title: Text(appLocalizations.currentWifiStatus),
+                  trailing: Text(
+                    _currentWifiStatus(context, state, isExcluded, enabled),
+                    style: context.textTheme.bodyMedium?.toLight,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
   }
 
   Widget _buildItem({
@@ -275,6 +448,22 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     );
   }
 
+  Widget _buildBackgroundLocationPermissionItem() {
+    final appLocalizations = context.appLocalizations;
+    final granted = ref.watch(
+      backgroundLocationPermissionsProvider.select(
+        (state) => state == WifiSsidPermission.granted,
+      ),
+    );
+    return _buildPrerequisiteItem(
+      title: appLocalizations.backgroundLocationPermission,
+      action: _buildAuthorizeButton(
+        authorized: granted,
+        onPressed: _handleRequestBackgroundLocationPermission,
+      ),
+    );
+  }
+
   Widget _buildPrerequisites() {
     final appLocalizations = context.appLocalizations;
     return generateSectionV3(
@@ -282,11 +471,30 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       items: [
         if (_isAndroid) _buildBatteryOptimizationItem(),
         if (_isAndroid || _isMacOS) _buildLocationPermissionItem(),
+        if (_isAndroid) _buildBackgroundLocationPermissionItem(),
       ],
       footer: [
         if (_isAndroid) appLocalizations.batteryOptimizationDesc,
         if (_isAndroid || _isMacOS) appLocalizations.locationPermissionDesc,
+        if (_isAndroid) appLocalizations.backgroundLocationPermissionDesc,
       ].join('\n'),
+    );
+  }
+
+  Widget _buildOnDemandSection() {
+    final appLocalizations = context.appLocalizations;
+    final enabled = ref.watch(onDemandEnabledProvider);
+    return generateSectionV3(
+      items: [
+        ListItem.toggle(
+          title: Text(appLocalizations.onDemand),
+          subtitle: Text(appLocalizations.onDemandDesc),
+          value: enabled,
+          onChanged: (value) {
+            ref.read(onDemandEnabledProvider.notifier).update((_) => value);
+          },
+        ),
+      ],
     );
   }
 
@@ -379,6 +587,11 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
             ).copyWith(top: context.appBarInset),
             sliver: SliverToBoxAdapter(child: _buildPrerequisites()),
           ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverToBoxAdapter(child: _buildOnDemandSection()),
+          ),
+          _buildCurrentWifiSection(),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverToBoxAdapter(child: _buildExcludeSsidsHeader()),

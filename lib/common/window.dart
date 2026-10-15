@@ -24,6 +24,9 @@ class Window implements WindowPort {
             : Duration.zero,
       );
 
+  VoidCallback? onHide;
+  VoidCallback? onShow;
+
   Window._internal();
 
   factory Window() {
@@ -180,11 +183,13 @@ class Window implements WindowPort {
   Future<void> toggle() => _visibility.toggle();
 
   Future<void> _showWindow() async {
+    onShow?.call();
     await desktopWindow.show();
     await desktopWindow.focus();
   }
 
   Future<void> _hideWindow() async {
+    onHide?.call();
     await desktopWindow.hide();
   }
 

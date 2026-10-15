@@ -85,8 +85,15 @@ void _downgradeToV7(Database raw) {
   raw.execute('PRAGMA user_version = 7');
 }
 
+/// Schema version 20 had no `unlock_test_runs` table.
+void _downgradeToV20(Database raw) {
+  raw.execute('DROP TABLE IF EXISTS unlock_test_runs');
+  raw.execute('PRAGMA user_version = 20');
+}
+
 /// Schema version 19 had no `empty_options` on `custom_proxies`.
 void _downgradeToV19(Database raw) {
+  _downgradeToV20(raw);
   raw.execute('ALTER TABLE custom_proxies DROP COLUMN empty_options');
   raw.execute('PRAGMA user_version = 19');
 }
@@ -240,6 +247,13 @@ bool _hasTable(Database raw, String name) => raw.select(
   [name],
 ).isNotEmpty;
 
+Set<String> _indexesOf(Database raw) => {
+  for (final row in raw.select(
+    "SELECT name FROM sqlite_master WHERE type='index'",
+  ))
+    row['name'] as String,
+};
+
 int _userVersion(Database raw) =>
     raw.select('PRAGMA user_version').single['user_version'] as int;
 
@@ -248,12 +262,17 @@ void main() {
 
   late Database raw;
 
+  /// Drift stamps `user_version` with the database's schema version once a
+  /// database opens cleanly, so the expected value is read from the database.
+  late int currentSchemaVersion;
+
   setUp(() async {
     raw = sqlite3.openInMemory();
     final seed = fl.Database(
       NativeDatabase.opened(raw, closeUnderlyingOnClose: false),
     );
     await seed.customSelect('SELECT 1').get();
+    currentSchemaVersion = seed.schemaVersion;
     await seed.close();
   });
 
@@ -274,7 +293,7 @@ void main() {
 
     await openAndMigrate();
 
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
   });
 
   test('the v3 upgrade adds match_target to profiles', () async {
@@ -284,7 +303,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
   });
 
   test('the v4 upgrade adds url to scripts', () async {
@@ -298,7 +317,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'scripts'), contains('url'));
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
     final scripts = await database.scriptsDao.query().get();
     expect(scripts.single.label, 'Local');
     expect(scripts.single.url, isNull);
@@ -315,7 +334,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'scripts'), contains('order'));
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
     final scripts = await database.scriptsDao.query().get();
     expect(scripts.map((item) => item.label), ['First', 'Second']);
     expect(scripts.map((item) => item.order), [null, null]);
@@ -330,7 +349,7 @@ void main() {
       await openAndMigrate();
 
       expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-      expect(_userVersion(raw), 20);
+      expect(_userVersion(raw), currentSchemaVersion);
     },
   );
 
@@ -341,7 +360,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'clash_providers'), isTrue);
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
     expect(await database.clashProvidersDao.query().get(), isEmpty);
   });
 
@@ -354,7 +373,7 @@ void main() {
       await openAndMigrate();
 
       expect(_hasTable(raw, 'clash_providers'), isTrue);
-      expect(_userVersion(raw), 20);
+      expect(_userVersion(raw), currentSchemaVersion);
     },
   );
 
@@ -365,7 +384,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'proxy_groups'), contains('definition'));
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
   });
 
   test('a v6 user_version on the current proxy_groups still opens', () async {
@@ -375,7 +394,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'proxy_groups'), contains('definition'));
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
   });
 
   test(
@@ -399,7 +418,7 @@ void main() {
         _columnsOf(raw, 'clash_providers'),
         isNot(anyOf(contains('interval'), contains('filter'))),
       );
-      expect(_userVersion(raw), 20);
+      expect(_userVersion(raw), currentSchemaVersion);
       expect(
         (await database.clashProvidersDao.query().get()).single.label,
         'Kept',
@@ -506,7 +525,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'custom_proxies'), isTrue);
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
     expect(await database.customProxiesDao.query().get(), isEmpty);
   });
 
@@ -517,7 +536,7 @@ void main() {
 
     expect(_columnsOf(raw, 'proxy_groups'), contains('definition'));
     expect(_columnsOf(raw, 'proxy_groups'), isNot(contains('url')));
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
   });
 
   test('the v17 upgrade renames overwrite_type and adds overrides', () async {
@@ -587,7 +606,7 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
     expect(_hasTable(raw, 'profile_rule_mapping'), isFalse);
     expect(
       {
@@ -748,7 +767,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'proxy_dialers'), isTrue);
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
     expect(await database.proxyDialersDao.query(1).get(), isEmpty);
   });
 
@@ -760,7 +779,7 @@ void main() {
 
     expect(_hasTable(raw, 'icon_sets'), isTrue);
     expect(_columnsOf(raw, 'icon_sets'), contains('last_update_time'));
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
     expect(await database.iconSetsDao.query().get(), isEmpty);
   });
 
@@ -773,7 +792,7 @@ void main() {
       final database = await openAndMigrate();
 
       expect(_columnsOf(raw, 'icon_sets'), contains('last_update_time'));
-      expect(_userVersion(raw), 20);
+      expect(_userVersion(raw), currentSchemaVersion);
       expect(await database.iconSetsDao.query().get(), isEmpty);
     },
   );
@@ -854,7 +873,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'profiles'), contains('age_secret_key'));
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
     expect(
       (await database.profilesDao.query().get()).single.ageSecretKey,
       isEmpty,
@@ -872,12 +891,71 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'custom_proxies'), contains('empty_options'));
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
     expect(
       (await database.customProxiesDao.query().get()).single.emptyOptions,
       isEmpty,
     );
   });
+
+  test('the v21 upgrade adds the unlock_test_runs table', () async {
+    _downgradeToV20(raw);
+    expect(_hasTable(raw, 'unlock_test_runs'), isFalse);
+
+    final database = await openAndMigrate();
+
+    expect(
+      _columnsOf(raw, 'unlock_test_runs'),
+      containsAll(<String>[
+        'run_id',
+        'created_at',
+        'duration_ms',
+        'route_mode',
+        'proxy_name',
+        'catalog_version',
+        'results_json',
+      ]),
+    );
+    expect(_indexesOf(raw), contains('unlock_test_runs_created_at'));
+    expect(_userVersion(raw), currentSchemaVersion);
+    await database.unlockTestRunsDao.insertAndPrune(
+      fl.UnlockTestRunRecord(
+        runId: 'run',
+        createdAt: DateTime.utc(2026, 7, 21),
+        durationMs: 1200,
+        routeMode: 'appRoute',
+        catalogVersion: 2,
+        resultsJson: '[]',
+      ),
+    );
+    expect((await database.unlockTestRunsDao.latest()).single.runId, 'run');
+  });
+
+  test(
+    'a v20 user_version with unlock_test_runs already present still opens',
+    () async {
+      raw.execute('PRAGMA user_version = 20');
+      expect(_hasTable(raw, 'unlock_test_runs'), isTrue);
+
+      final database = await openAndMigrate();
+
+      expect(
+        _columnsOf(raw, 'unlock_test_runs'),
+        containsAll(<String>[
+          'run_id',
+          'created_at',
+          'duration_ms',
+          'route_mode',
+          'proxy_name',
+          'catalog_version',
+          'results_json',
+        ]),
+      );
+      expect(_indexesOf(raw), contains('unlock_test_runs_created_at'));
+      expect(_userVersion(raw), currentSchemaVersion);
+      expect(await database.unlockTestRunsDao.latest(), isEmpty);
+    },
+  );
 
   test(
     'a v17 user_version with definition already present still opens',
@@ -895,7 +973,7 @@ void main() {
 
       final database = await openAndMigrate();
 
-      expect(_userVersion(raw), 20);
+      expect(_userVersion(raw), currentSchemaVersion);
       expect(
         (await database.proxyGroupsDao.query(3).get()).single.hidden,
         isTrue,
@@ -908,7 +986,7 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
     expect(await database.customSelect('SELECT * FROM rules').get(), isEmpty);
   });
 
@@ -918,7 +996,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'rules'), before);
-    expect(_userVersion(raw), 20);
+    expect(_userVersion(raw), currentSchemaVersion);
     expect(_hasTable(raw, 'proxy_groups'), isTrue);
   });
 }

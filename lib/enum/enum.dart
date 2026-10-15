@@ -97,8 +97,12 @@ enum IpVersion {
 }
 
 extension GroupTypeExtension on GroupType {
+  /// Group types supported by the mihomo core (relay was removed).
+  static List<GroupType> get supportedValues =>
+      GroupType.values.where((type) => type != GroupType.Relay).toList();
+
   static List<String> get valueList =>
-      GroupType.values.map((e) => e.toString().split('.').last).toList();
+      supportedValues.map((e) => e.toString().split('.').last).toList();
 
   bool get isComputedSelected {
     return [GroupType.URLTest, GroupType.Fallback].contains(this);
@@ -107,7 +111,7 @@ extension GroupTypeExtension on GroupType {
   static GroupType? getGroupType(String value) {
     final index = GroupTypeExtension.valueList.indexOf(value);
     if (index == -1) return null;
-    return GroupType.values[index];
+    return GroupTypeExtension.supportedValues[index];
   }
 }
 
@@ -237,6 +241,7 @@ enum CoreEventType {
   request,
   dns,
   loaded,
+  unlockTestProgress,
   crash,
   geoUpdate,
   routeChanged,
@@ -484,9 +489,12 @@ enum DashboardWidget {
   networkDetection,
   tunButton(platforms: desktopPlatforms),
   vpnButton(platforms: [SupportPlatform.Android]),
+  wifiWatchCard(platforms: [SupportPlatform.Android]),
   systemProxyButton(platforms: desktopPlatforms),
   intranetIp,
   memoryInfo,
+  coreMemoryInfo,
+  unlockDetection,
   serviceStatus,
   dnsQueries,
   requests,
@@ -567,6 +575,11 @@ enum PageLabel {
   resources,
   connections,
   dns,
+  localProxies,
+  localRules,
+  networkTest,
+  unlockTest,
+  effectiveConfig,
 }
 
 enum RuleAction {
@@ -723,6 +736,8 @@ enum ProxyField {
   transport(['transport'], ProxyFieldKind.choice),
   up(['up']),
   down(['down']),
+  upCarrier(['up'], ProxyFieldKind.choice),
+  downCarrier(['down'], ProxyFieldKind.choice),
   network(['network'], ProxyFieldKind.choice),
   flow(['flow'], ProxyFieldKind.choice),
   wsPath(['ws-opts', 'path']),
@@ -764,7 +779,24 @@ enum ProxyField {
   mptcp(['mptcp'], ProxyFieldKind.toggle),
   interfaceName(['interface-name']),
   routingMark(['routing-mark'], ProxyFieldKind.number),
-  ipVersion(['ip-version'], ProxyFieldKind.choice);
+  ipVersion(['ip-version'], ProxyFieldKind.choice),
+  net(['net'], ProxyFieldKind.choice),
+  mux(['mux'], ProxyFieldKind.number),
+  pool(['pool'], ProxyFieldKind.number),
+  prewarmOnStart(['prewarm-on-start'], ProxyFieldKind.toggle),
+  maxConcurrentDials(['max-concurrent-dials'], ProxyFieldKind.number),
+  dial4(['dial4']),
+  dial6(['dial6']),
+  warmBackoffInitial(['warm-backoff-initial'], ProxyFieldKind.number),
+  warmBackoffMax(['warm-backoff-max'], ProxyFieldKind.number),
+  fingerprint(['fingerprint']),
+  pin(['pin'], ProxyFieldKind.secret),
+  certificate(['certificate']),
+  echEnable(['ech-opts', 'enable'], ProxyFieldKind.toggle),
+  echConfig(['ech-opts', 'config']),
+  echQueryServerName(['ech-opts', 'query-server-name']),
+  cwnd(['cwnd'], ProxyFieldKind.number),
+  morph(['morph'], ProxyFieldKind.toggle);
 
   final List<String> path;
   final ProxyFieldKind kind;

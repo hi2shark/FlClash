@@ -24,6 +24,12 @@ abstract mixin class ServiceListener {
   void onServiceEvent(CoreEvent event) {}
 
   void onServiceStopped() {}
+
+  void onServiceCrash(String message) {}
+
+  void onServiceSuspended(bool suspended) {}
+
+  void onWifiWatchState(String stateJson) {}
 }
 
 class Service {
@@ -64,6 +70,18 @@ class Service {
           }
           _startRequested = false;
           _dispatch('stop report', (listener) => listener.onServiceStopped());
+          break;
+        case 'suspended':
+          final suspended = call.arguments as bool? ?? false;
+          for (final listener in _listeners) {
+            listener.onServiceSuspended(suspended);
+          }
+          break;
+        case 'wifiWatchState':
+          final stateJson = call.arguments as String? ?? '{}';
+          for (final listener in _listeners) {
+            listener.onWifiWatchState(stateJson);
+          }
           break;
         default:
           throw MissingPluginException();
@@ -111,6 +129,11 @@ class Service {
         false;
   }
 
+  Future<bool> setSuspended(bool suspended) async {
+    return await methodChannel.invokeMethod<bool>('setSuspended', suspended) ??
+        false;
+  }
+
   Future<String> init() async {
     return await methodChannel.invokeMethod<String>('init') ?? '';
   }
@@ -133,6 +156,11 @@ class Service {
       return null;
     }
     return DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  Future<String> getWifiWatchState() async {
+    return await methodChannel.invokeMethod<String>('getWifiWatchState') ??
+        '{}';
   }
 
   bool get hasListeners {

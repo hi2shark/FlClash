@@ -10,6 +10,28 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 
+const _nonTestableProxyTypes = {'reject', 'rejectdrop', 'pass', 'passrule'};
+
+@visibleForTesting
+bool isNetworkTestCandidate(Object? proxy) {
+  if (proxy is! Map<Object?, Object?>) {
+    return false;
+  }
+  final type = proxy['type'];
+  if (type is! String) {
+    return false;
+  }
+  final normalizedType = type.trim().toLowerCase();
+  if (_nonTestableProxyTypes.contains(normalizedType)) {
+    return false;
+  }
+  return !GroupType.values.any(
+    (groupType) =>
+        groupType.name.toLowerCase() == normalizedType ||
+        groupType.value.toLowerCase() == normalizedType,
+  );
+}
+
 class CoreController {
   static CoreController? _instance;
   late CoreHandlerInterface _interface;
@@ -285,6 +307,46 @@ class CoreController {
 
   Future<List<ServiceCheckItem>> serviceCheck(ServiceCheckParams params) =>
       _interface.serviceCheck(params);
+
+  Future<SpeedTestResult> getSpeedTest(SpeedTestParams params) async {
+    final data = await _interface.speedTest(params);
+    return data ??
+        SpeedTestResult(name: params.proxyName, error: 'core did not respond');
+  }
+
+  Future<QuicTestResult> getQuicTest(QuicTestParams params) async {
+    final data = await _interface.quicTest(params);
+    return data ??
+        QuicTestResult(
+          name: params.proxyName,
+          stage: 'client_timeout',
+          target: params.host ?? 'cloudflare-quic.com:443',
+          error: 'core QUIC test did not respond before the client timeout',
+        );
+  }
+
+  Future<UnlockTestRunResult> getUnlockTest(UnlockTestRunParams params) async {
+    final data = await _interface.unlockTest(params);
+    return data ??
+        UnlockTestRunResult(
+          runId: params.runId,
+          routeMode: params.routeMode,
+          proxyName: params.proxyName,
+          error: 'timeout',
+        );
+  }
+
+  Future<bool> cancelUnlockTest(String runId) {
+    return _interface.cancelUnlockTest(runId);
+  }
+
+  Future<List<Proxy>> getAllProxies() async {
+    final proxiesData = await _interface.getProxies();
+    return proxiesData.proxies.values
+        .where(isNetworkTestCandidate)
+        .map((proxy) => Proxy.fromJson(Map<String, Object?>.from(proxy)))
+        .toList();
+  }
 
   Future<Map<String, dynamic>> getConfig(int id) async {
     return _readConfig(await appPath.getProfilePath(id.toString()));

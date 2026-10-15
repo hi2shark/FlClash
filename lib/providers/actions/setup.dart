@@ -24,11 +24,26 @@ class SetupAction extends _$SetupAction {
   final _setupScheduler = SerialTaskScheduler();
   final _listenerScheduler = SerialTaskScheduler();
   _RunRequest? _latestRunRequest;
-  DateTime? _startTime;
+  DateTime? startTime;
   _SetupInputs? _appliedInputs;
   var _pendingForceApply = false;
+  var _pollingPaused = false;
 
-  bool get _isRunning => _startTime != null && _startTime!.isBeforeNow;
+  bool get isStart => startTime != null && startTime!.isBeforeNow;
+
+  bool get isPollingPaused => _pollingPaused;
+
+  void pausePolling() {
+    if (!isStart) return;
+    _pollingPaused = true;
+    _syncRuntimeTicker();
+  }
+
+  void resumePolling() {
+    _pollingPaused = false;
+    if (!isStart) return;
+    _syncRuntimeTicker();
+  }
 
   @override
   void build() {
@@ -79,20 +94,22 @@ class SetupAction extends _$SetupAction {
   void _setLocalRunning(bool running) {
     _stopRuntimeTicker();
     if (!running) {
-      _startTime = null;
+      startTime = null;
+      _pollingPaused = false;
       debouncer.cancel(FunctionTag.applyProfile);
       _pendingForceApply = false;
       _updateRunTime();
       return;
     }
 
-    _startTime ??= DateTime.now();
+    startTime ??= DateTime.now();
+    _pollingPaused = false;
     _updateRunTime();
     _syncRuntimeTicker();
   }
 
   void _syncRuntimeTicker() {
-    if (_startTime == null || !_isTrafficShown) {
+    if (startTime == null || _pollingPaused || !_isTrafficShown) {
       _stopRuntimeTicker();
       return;
     }
@@ -117,7 +134,7 @@ class SetupAction extends _$SetupAction {
   }
 
   void _updateRunTime() {
-    final startTime = _startTime;
+    final startTime = this.startTime;
     ref.read(runTimeProvider.notifier).value = startTime == null
         ? null
         : DateTime.now().millisecondsSinceEpoch -
@@ -125,7 +142,7 @@ class SetupAction extends _$SetupAction {
   }
 
   Future<void> _updateStartTime() async {
-    _startTime = await service?.getRunTime();
+    startTime = await service?.getRunTime();
   }
 
   Future<void> initStatus() async {
@@ -135,7 +152,7 @@ class SetupAction extends _$SetupAction {
     if (system.isAndroid) {
       await _updateStartTime();
     }
-    final shouldRun = _isRunning || ref.read(appSettingProvider).autoRun;
+    final shouldRun = isStart || ref.read(appSettingProvider).autoRun;
     if (shouldRun) {
       await setRunning(true, initialize: true);
     } else {
@@ -151,7 +168,7 @@ class SetupAction extends _$SetupAction {
     final request = _RunRequest(
       running: running,
       initialize: running && initialize,
-      previousStartTime: _startTime,
+      previousStartTime: startTime,
     );
     _latestRunRequest = request;
     _setLocalRunning(running);
@@ -223,7 +240,11 @@ class SetupAction extends _$SetupAction {
 
   Future<void> _setListening(bool running) async {
     final vpnOptions = await ref.read(vpnOptionsProvider.future);
-    await setCoreRunning(running);
+    final listening = await setCoreRunning(running);
+    // A refused start leaves the Core stopped, so roll the run back.
+    if (running && !listening) {
+      throw MessageException(currentAppLocalizations.unknownNetworkError);
+    }
     ref.read(runningVpnOptionsProvider.notifier).value = running
         ? vpnOptions
         : null;
@@ -253,7 +274,7 @@ class SetupAction extends _$SetupAction {
     if (!_isCurrent(request)) {
       return;
     }
-    _startTime = request.previousStartTime;
+    startTime = request.previousStartTime;
     _setLocalRunning(!request.running);
   }
 
