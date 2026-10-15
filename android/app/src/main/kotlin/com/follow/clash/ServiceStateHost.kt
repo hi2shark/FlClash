@@ -39,6 +39,8 @@ internal interface ServiceStateHost {
 
     fun updateNotificationParams(params: NotificationParams)
 
+    fun updateSuspendOnWifiSsids(value: Set<String>)
+
     fun loadSharedState(): SharedState
 
     fun isVpnPermissionGranted(): Boolean
@@ -50,6 +52,10 @@ internal interface ServiceStateHost {
     fun app(): AppGateway?
 
     fun notifyStopped()
+
+    fun notifySuspendedChanged(suspended: Boolean)
+
+    fun notifyWifiWatchStateChanged(stateJson: String)
 
     suspend fun quickSetup(initParams: String, setupParams: String): Result<String>
 
@@ -107,6 +113,9 @@ internal object AndroidServiceStateHost : ServiceStateHost {
     override fun updateNotificationParams(params: NotificationParams) =
         ServiceConfig.updateNotificationParams(params)
 
+    override fun updateSuspendOnWifiSsids(value: Set<String>) =
+        ServiceConfig.updateSuspendOnWifiSsids(value)
+
     override fun loadSharedState(): SharedState = GlobalState.application.sharedState
 
     override fun isVpnPermissionGranted(): Boolean =
@@ -141,6 +150,14 @@ internal object AndroidServiceStateHost : ServiceStateHost {
 
     override fun notifyStopped() {
         flutterEngine?.plugin<ServicePlugin>()?.notifyStopped()
+    }
+
+    override fun notifySuspendedChanged(suspended: Boolean) {
+        flutterEngine?.plugin<ServicePlugin>()?.notifySuspended(suspended)
+    }
+
+    override fun notifyWifiWatchStateChanged(stateJson: String) {
+        flutterEngine?.plugin<ServicePlugin>()?.notifyWifiWatchState(stateJson)
     }
 
     override suspend fun quickSetup(initParams: String, setupParams: String): Result<String> =

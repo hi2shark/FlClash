@@ -108,6 +108,9 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
     val toasts = mutableListOf<String>()
     val logs = mutableListOf<String>()
     val notificationParams = mutableListOf<NotificationParams>()
+    val suspendOnWifiSsids = mutableListOf<Set<String>>()
+    val suspendedChanges = mutableListOf<Boolean>()
+    val wifiWatchStates = mutableListOf<String>()
     val crashlytics = mutableListOf<Boolean>()
     var setupCalls = 0
     var startCalls = 0
@@ -132,6 +135,10 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
         notificationParams += params
     }
 
+    override fun updateSuspendOnWifiSsids(value: Set<String>) {
+        suspendOnWifiSsids += value
+    }
+
     override fun loadSharedState(): SharedState = storedSharedState
 
     override fun isVpnPermissionGranted(): Boolean = vpnPermissionGranted
@@ -144,6 +151,14 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
 
     override fun notifyStopped() {
         stoppedNotifications++
+    }
+
+    override fun notifySuspendedChanged(suspended: Boolean) {
+        suspendedChanges += suspended
+    }
+
+    override fun notifyWifiWatchStateChanged(stateJson: String) {
+        wifiWatchStates += stateJson
     }
 
     override suspend fun quickSetup(initParams: String, setupParams: String): Result<String> {

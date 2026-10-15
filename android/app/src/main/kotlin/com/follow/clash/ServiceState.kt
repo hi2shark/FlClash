@@ -26,6 +26,12 @@ object ServiceState {
 
     suspend fun handleVpnRevokeAction() = machine.handleVpnRevokeAction()
 
+    fun handleServiceSuspendedChanged(suspended: Boolean) =
+        AndroidServiceStateHost.notifySuspendedChanged(suspended)
+
+    fun handleWifiWatchStateChanged(stateJson: String) =
+        AndroidServiceStateHost.notifyWifiWatchStateChanged(stateJson)
+
     suspend fun awaitRunTime(): Long = machine.awaitRunTime()
 
     fun requestStart(): Deferred<Boolean> = machine.requestStart()

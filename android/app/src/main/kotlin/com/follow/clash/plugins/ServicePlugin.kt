@@ -45,6 +45,8 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             "syncState" -> syncState(call, result)
             "start" -> start(call, result)
             "stop" -> stop(call, result)
+            "setSuspended" -> setSuspended(call, result)
+            "getWifiWatchState" -> getWifiWatchState(result)
             else -> result.notImplemented()
         }
     }
@@ -109,12 +111,37 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         result.success(true)
     }
 
+    private fun setSuspended(call: MethodCall, result: MethodChannel.Result) {
+        val suspended = call.arguments as? Boolean ?: false
+        scope.launch {
+            result.success(ServiceController.setSuspended(suspended))
+        }
+    }
+
+    private fun getWifiWatchState(result: MethodChannel.Result) {
+        scope.launch {
+            result.success(ServiceController.getWifiWatchState())
+        }
+    }
+
     // Read on the platform thread, where start and stop arrive: revision and intent are one instant.
     fun notifyStopped() {
         scope.launch(Dispatchers.Main) {
             if (!ServiceState.isRunRequested) {
                 channel.invokeMethod("stopped", commandRevision)
             }
+        }
+    }
+
+    fun notifySuspended(suspended: Boolean) {
+        scope.launch(Dispatchers.Main) {
+            channel.invokeMethod("suspended", suspended)
+        }
+    }
+
+    fun notifyWifiWatchState(stateJson: String) {
+        scope.launch(Dispatchers.Main) {
+            channel.invokeMethod("wifiWatchState", stateJson)
         }
     }
 

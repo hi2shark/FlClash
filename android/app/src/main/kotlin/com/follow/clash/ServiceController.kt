@@ -13,6 +13,7 @@ import com.follow.clash.core.Core
 import com.follow.clash.service.ManagedService
 import com.follow.clash.service.ProxyService
 import com.follow.clash.service.ServiceConfig
+import com.follow.clash.service.ServiceStartResult
 import com.follow.clash.service.VpnService
 import com.follow.clash.service.models.VpnOptions
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +45,7 @@ object ServiceController {
     private fun release() {
         clearBinding()
         runtime = null
+        ServiceConfig.runtimeState.markDisconnected()
         Core.stopListener()
     }
 
@@ -115,6 +117,23 @@ object ServiceController {
     suspend fun stop() = lock.withLock {
         tearDownServices()
         release()
+    }
+
+    suspend fun setSuspended(suspended: Boolean): Boolean {
+        val currentBinding = binding ?: return false
+        val result = currentBinding.useService { it.setSuspended(suspended) }.getOrElse { error ->
+            GlobalState.log("Unable to set service suspended: $error")
+            ServiceStartResult.failure(error.message.orEmpty())
+        }
+        return result.success
+    }
+
+    suspend fun getWifiWatchState(): String {
+        val currentBinding = binding ?: return "{}"
+        return currentBinding.useService { it.getWifiWatchStateJson() }.getOrElse { error ->
+            GlobalState.log("Unable to read wifi watch state: $error")
+            "{}"
+        }
     }
 
     private suspend fun tearDownServices() {

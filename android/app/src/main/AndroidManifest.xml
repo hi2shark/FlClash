@@ -19,6 +19,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
@@ -115,6 +119,8 @@
             <intent-filter>
                 <action android:name="${applicationId}.intent.action.VPN_START_REQUESTED" />
                 <action android:name="${applicationId}.intent.action.VPN_REVOKED" />
+                <action android:name="${applicationId}.intent.action.SERVICE_SUSPENDED_CHANGED" />
+                <action android:name="${applicationId}.intent.action.WIFI_WATCH_STATE_CHANGED" />
             </intent-filter>
         </receiver>
 

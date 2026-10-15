@@ -184,6 +184,7 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
     private fun applySharedState() {
         host.setCrashlytics(sharedState.crashlytics)
         host.updateNotificationParams(notificationParams(sharedState))
+        host.updateSuspendOnWifiSsids(sharedState.suspendOnWifiSsids.toSet())
     }
 
     private suspend fun setupCore(): Boolean {
@@ -376,6 +377,7 @@ internal class ServiceStateMachine(private val host: ServiceStateHost) {
         fun notificationParams(state: SharedState): NotificationParams = NotificationParams(
             title = state.currentProfileName,
             stopText = state.stopText,
+            suspendedText = state.suspendedText,
             onlyStatisticsProxy = state.onlyStatisticsProxy,
             showStopAction = state.showStopAction,
         )

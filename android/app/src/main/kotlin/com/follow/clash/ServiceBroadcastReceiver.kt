@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import com.follow.clash.common.BroadcastAction
+import com.follow.clash.common.BroadcastExtra
 import com.follow.clash.common.BroadcastLease
 import com.follow.clash.common.GlobalState
 import com.follow.clash.common.action
@@ -22,7 +23,7 @@ class ServiceBroadcastReceiver : BroadcastReceiver() {
         mainHandler.postDelayed(timeout, BROADCAST_TIMEOUT_MILLIS)
         GlobalState.launch {
             try {
-                handleAction(action)
+                handleAction(intent)
             } catch (error: Exception) {
                 GlobalState.log("Unable to handle service broadcast $action: $error")
             } finally {
@@ -32,11 +33,21 @@ class ServiceBroadcastReceiver : BroadcastReceiver() {
         }
     }
 
-    private suspend fun handleAction(action: String) {
-        when (action) {
+    private suspend fun handleAction(intent: Intent) {
+        when (intent.action) {
             BroadcastAction.VPN_START_REQUESTED.action -> ServiceState.handleStartAction()
 
             BroadcastAction.VPN_REVOKED.action -> ServiceState.handleVpnRevokeAction()
+
+            BroadcastAction.SERVICE_SUSPENDED_CHANGED.action ->
+                ServiceState.handleServiceSuspendedChanged(
+                    intent.getBooleanExtra(BroadcastExtra.SUSPENDED, false),
+                )
+
+            BroadcastAction.WIFI_WATCH_STATE_CHANGED.action ->
+                ServiceState.handleWifiWatchStateChanged(
+                    intent.getStringExtra(BroadcastExtra.WIFI_WATCH_STATE) ?: "{}",
+                )
         }
     }
 

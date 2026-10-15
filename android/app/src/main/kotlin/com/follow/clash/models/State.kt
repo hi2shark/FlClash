@@ -11,8 +11,10 @@ data class SharedState(
     val crashlytics: Boolean = true,
     val currentProfileName: String = "FlClash",
     val stopText: String = "Stop",
+    val suspendedText: String = "Suspended...",
     val onlyStatisticsProxy: Boolean = false,
     val showStopAction: Boolean = true,
+    val suspendOnWifiSsids: List<String> = emptyList(),
     val vpnOptions: VpnOptions? = null,
     val setupParams: SetupParams? = null,
 )
