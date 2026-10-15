@@ -11,6 +11,13 @@ enum class QuickAction {
 enum class BroadcastAction {
     VPN_START_REQUESTED,
     VPN_REVOKED,
+    SERVICE_SUSPENDED_CHANGED,
+    WIFI_WATCH_STATE_CHANGED,
+}
+
+object BroadcastExtra {
+    const val SUSPENDED = "suspended"
+    const val WIFI_WATCH_STATE = "wifiWatchState"
 }
 
 enum class AccessControlMode {

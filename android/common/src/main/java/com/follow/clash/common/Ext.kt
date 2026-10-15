@@ -44,9 +44,14 @@ val BroadcastAction.action: String
     get() = "${GlobalState.application.packageName}.intent.action.${this.name}"
 
 fun BroadcastAction.sendBroadcast() {
+    sendBroadcast { }
+}
+
+fun BroadcastAction.sendBroadcast(configure: Intent.() -> Unit) {
     val broadcastAction = action
     val intent = Intent(broadcastAction).apply {
         component = Components.serviceBroadcastReceiver
+        configure()
     }
     GlobalState.application.sendBroadcast(
         intent,
