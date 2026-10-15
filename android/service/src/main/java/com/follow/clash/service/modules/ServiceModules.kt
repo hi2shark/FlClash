@@ -1,6 +1,7 @@
 package com.follow.clash.service.modules
 
 import android.app.Service
+import com.follow.clash.service.ManagedService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -16,14 +17,27 @@ internal class ServiceModules(private val service: Service) {
     private var scope: CoroutineScope? = null
     private var modules = emptyList<ServiceModule>()
 
+    var wifiWatchModule: WifiWatchModule? = null
+        private set
+
     @Synchronized
     fun start() {
         if (scope != null) return
 
         val nextScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        // Assign the field before start(): starting registers network callbacks
+        // and can fire the first onStateChanged() before the list is built. If
+        // the field were assigned afterwards, getWifiWatchStateJson() would
+        // read wifiWatchModule == null and drop SSID/RSSI from the first push.
+        val wifiWatchModule = WifiWatchModule(service) {
+            (service as? ManagedService)?.publishWifiWatchState()
+        }
+        this.wifiWatchModule = wifiWatchModule
         val nextModules = listOf(
             NotificationModule(service, nextScope),
             NetworkObserveModule(service),
+            SuspendModule(service),
+            wifiWatchModule,
         )
         val startedModules = mutableListOf<ServiceModule>()
 
@@ -36,6 +50,7 @@ internal class ServiceModules(private val service: Service) {
             modules = nextModules
         } catch (error: Throwable) {
             nextScope.cancel()
+            this.wifiWatchModule = null
             startedModules.asReversed().forEach { module ->
                 runCatching { module.stop() }
             }
@@ -49,8 +64,12 @@ internal class ServiceModules(private val service: Service) {
         val currentModules = modules
         scope = null
         modules = emptyList()
+        wifiWatchModule = null
 
         currentScope.cancel()
+        // Reverse order stops WifiWatchModule first, so a pending delayed
+        // suspend / force-resume can never fire after the listener or the tun
+        // is torn down beneath it.
         currentModules.asReversed().forEach { module ->
             runCatching { module.stop() }
         }

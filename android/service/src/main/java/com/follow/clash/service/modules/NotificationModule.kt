@@ -36,14 +36,24 @@ private data class ExtendedNotificationParams(
     val stopText: String,
     val showStopAction: Boolean,
     val contentText: String,
+    val suspendedText: String,
 )
 
+/**
+ * A suspended service shows the suspended label instead of the live speed/traffic; the
+ * combine re-derives this on every suspend transition and on each 1s ticker tick.
+ */
 private val NotificationParams.extended: ExtendedNotificationParams
     get() = ExtendedNotificationParams(
         title,
         stopText,
         showStopAction,
-        Core.getSpeedTrafficText(onlyStatisticsProxy),
+        if (ServiceConfig.runtimeState.isSuspended) {
+            suspendedText
+        } else {
+            Core.getSpeedTrafficText(onlyStatisticsProxy)
+        },
+        suspendedText,
     )
 
 internal class NotificationModule(
@@ -76,7 +86,9 @@ internal class NotificationModule(
                         }
                     },
                     ServiceConfig.notificationParams,
-                ) { _, params ->
+                    // isSuspendedFlow re-emits once runtimeState is up to date.
+                    ServiceConfig.runtimeState.isSuspendedFlow,
+                ) { _, params, _ ->
                     params.extended
                 }.distinctUntilChanged()
                     .collect(::update)

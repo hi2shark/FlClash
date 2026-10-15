@@ -3,6 +3,7 @@ package com.follow.clash.service
 import android.app.Service
 import android.content.ComponentCallbacks2
 import com.follow.clash.common.BroadcastAction
+import com.follow.clash.common.BroadcastExtra
 import com.follow.clash.common.GlobalState
 import com.follow.clash.common.sendBroadcast
 import com.follow.clash.core.Core
@@ -11,6 +12,34 @@ interface ManagedService {
     fun start()
 
     fun stop()
+
+    val isSuspended: Boolean
+
+    /** VpnService true, ProxyService false. WifiWatchModule uses this to tell its own tunnel from a third-party VPN. */
+    val isVpn: Boolean
+
+    fun setSuspended(suspended: Boolean): ServiceStartResult
+    fun setWifiSuspended(suspended: Boolean): ServiceStartResult
+    fun setIdleSuspended(suspended: Boolean): ServiceStartResult
+
+    fun getWifiWatchStateJson(): String = "{}"
+
+    fun publishWifiWatchState() {
+        notifyWifiWatchStateChanged(getWifiWatchStateJson())
+    }
+
+    fun notifySuspendedChanged(suspended: Boolean) {
+        ServiceConfig.runtimeState.setSuspended(suspended)
+        BroadcastAction.SERVICE_SUSPENDED_CHANGED.sendBroadcast {
+            putExtra(BroadcastExtra.SUSPENDED, suspended)
+        }
+    }
+
+    fun notifyWifiWatchStateChanged(stateJson: String) {
+        BroadcastAction.WIFI_WATCH_STATE_CHANGED.sendBroadcast {
+            putExtra(BroadcastExtra.WIFI_WATCH_STATE, stateJson)
+        }
+    }
 }
 
 internal fun Service.notifyVpnStartRequested() {

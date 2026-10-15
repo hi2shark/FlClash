@@ -20,6 +20,7 @@ import com.follow.clash.service.models.toCIDR
 import com.follow.clash.service.models.tunMtu
 import com.follow.clash.service.models.tunOptions
 import com.follow.clash.service.modules.ServiceModules
+import com.google.gson.Gson
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
 import android.net.VpnService as SystemVpnService
@@ -29,6 +30,48 @@ class VpnService : SystemVpnService(), ManagedService {
     private val binder = LocalBinder()
     private val tunLock = Any()
     private var tunRunning = false
+
+    @Volatile
+    private var running = false
+
+    private val suspensionController = SuspensionController(
+        serviceName = "VPN service",
+        isRunning = { running },
+        applySuspended = {
+            VpnSuspendController(
+                currentOptions = { ServiceConfig.vpnOptions },
+                stopTun = { stopTunLocked() },
+                startTun = { handleStart(it) },
+            ).setSuspended(it)
+        },
+        onSuspendedChanged = { notifySuspendedChanged(it) },
+    )
+
+    override val isVpn: Boolean = true
+
+    override val isSuspended: Boolean
+        get() = suspensionController.isSuspended
+
+    override fun setSuspended(suspended: Boolean): ServiceStartResult =
+        suspensionController.setExternalSuspended(suspended)
+
+    override fun setWifiSuspended(suspended: Boolean): ServiceStartResult =
+        suspensionController.setWifiSuspended(suspended)
+
+    override fun setIdleSuspended(suspended: Boolean): ServiceStartResult =
+        suspensionController.setIdleSuspended(suspended)
+
+    override fun getWifiWatchStateJson(): String = Gson().toJson(
+        modules.wifiWatchModule?.currentState(isSuspended)
+            ?: WifiWatchState(
+                ssid = null,
+                rssi = null,
+                validated = false,
+                wifiPresent = false,
+                suspended = isSuspended,
+                pendingSuspendDeadline = null,
+            ),
+    )
 
     override fun onDestroy() {
         try {
@@ -76,6 +119,9 @@ class VpnService : SystemVpnService(), ManagedService {
 
     private val VpnOptions.tunDns
         get(): String {
+            if (!dnsEnable) {
+                return ""
+            }
             if (dnsHijacking) {
                 return NET_ANY
             }
@@ -222,6 +268,7 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     private fun Builder.addDnsServers(options: VpnOptions) {
+        if (!options.dnsEnable) return
         addDnsServer(DNS)
         if (options.ipv6) {
             addDnsServer(DNS6)
@@ -259,14 +306,24 @@ class VpnService : SystemVpnService(), ManagedService {
         try {
             modules.start()
             handleStart(requireNotNull(ServiceConfig.vpnOptions) { "VPN options are missing" })
+            running = true
+            // runtimeState gates setSuspended on isRunning, so it must lead.
+            ServiceConfig.runtimeState.markStarted()
+            suspensionController.reset()
+            notifySuspendedChanged(false)
         } catch (error: Exception) {
             stop()
+            ServiceConfig.runtimeState.markStartFailed()
             throw error
         }
     }
 
     override fun stop() {
         try {
+            running = false
+            suspensionController.reset()
+            notifySuspendedChanged(false)
+            ServiceConfig.runtimeState.markStopped()
             cleanup()
         } finally {
             stopSelf()

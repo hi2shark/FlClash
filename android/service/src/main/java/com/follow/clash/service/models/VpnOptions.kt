@@ -18,6 +18,7 @@ data class VpnOptions(
     val port: Int,
     val ipv6: Boolean,
     val dnsHijacking: Boolean,
+    val dnsEnable: Boolean = false,
     val accessControlProps: AccessControlProps,
     val allowBypass: Boolean,
     val systemProxy: Boolean,
