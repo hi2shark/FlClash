@@ -34,6 +34,10 @@ const (
 	getTotalTrafficMethod          CoreMethod = "getTotalTraffic"
 	resetTrafficMethod             CoreMethod = "resetTraffic"
 	asyncTestDelayMethod           CoreMethod = "asyncTestDelay"
+	speedTestMethod                CoreMethod = "speedTest"
+	quicTestMethod                 CoreMethod = "quicTest"
+	unlockTestMethod               CoreMethod = "unlockTest"
+	cancelUnlockTestMethod         CoreMethod = "cancelUnlockTest"
 	probeMethod                    CoreMethod = "probe"
 	outboundIpMethod               CoreMethod = "outboundIp"
 	serviceCheckMethod             CoreMethod = "serviceCheck"
@@ -72,8 +76,9 @@ const (
 	LoadedMessage    MessageType = "loaded"
 	GeoUpdateMessage MessageType = "geoUpdate"
 	// Named after the Dart enum value, which is how CoreEvent.fromJson decodes it.
-	RouteChangedMessage MessageType = "routeChanged"
-	DialerLoopMessage   MessageType = "dialerLoop"
+	RouteChangedMessage       MessageType = "routeChanged"
+	DialerLoopMessage         MessageType = "dialerLoop"
+	UnlockTestProgressMessage MessageType = "unlockTestProgress"
 )
 
 type Message struct {
@@ -163,6 +168,18 @@ type RouteState struct {
 type TestDelayParams struct {
 	ProxyName string `json:"proxy-name"`
 	TestUrl   string `json:"test-url"`
+	Timeout   int64  `json:"timeout"`
+}
+
+type SpeedTestParams struct {
+	ProxyName string `json:"proxy-name"`
+	TestUrl   string `json:"test-url"`
+	Timeout   int64  `json:"timeout"`
+}
+
+type QuicTestParams struct {
+	ProxyName string `json:"proxy-name"`
+	Host      string `json:"host"`
 	Timeout   int64  `json:"timeout"`
 }
 

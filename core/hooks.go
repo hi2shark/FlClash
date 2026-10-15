@@ -20,6 +20,7 @@ func init() {
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
 		notifyProbeRoute(c)
+		captureUnlockTestChain(c)
 		sendMessage(RequestMessage, c)
 	}
 	dns.DefaultQueryNotify = func(record dns.QueryRecord) {
