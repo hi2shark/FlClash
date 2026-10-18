@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.9.0001 (2026-10-18)
+
+**Breaking Changes**
+
+- **android** The application id is now com.hi2shark.flclash_nw; uninstall the previous build before updating (91ab0bf9)
+
+**Features**
+
+- **core** Clash.Meta is replaced by clash-meta-nw, adding Nowhere 3 (06f5fe25)
+- **dart** Local proxies, local rules, unlock test and WiFi watch (58357ade)
+- **core** Speed, QUIC and unlock test methods (2c8f7aab)
+- **views** Local proxies view and navigation (1a38d720)
+- **config** Effective config inspection (bbedfb4d)
+- **views** Speed and QUIC network tests (d5a7cbcc)
+- **views** Unlock test (98f45c28)
+- **android** WiFi watch suspends the VPN on trusted networks (f7248e99)
+- **plugins** Validated WiFi SSID stream for Android (3c80c8cf)
+- **core** Core memory management (b3ed41c5)
+- **views** Custom download URL for network tests (3f322a77)
+- **ci** Build matrix covers more platforms and architectures (4c28d4c3)
+
+**Bug Fixes**
+
+- **android** Service suspension is wired through the app module (e9a46317)
+- **core** QUIC UDP address resolution (bc3080ef)
+
 ## v0.9.0 (2026-10-14)
 
 **Breaking Changes**

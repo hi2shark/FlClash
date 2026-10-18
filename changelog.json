@@ -2,6 +2,104 @@
   "schemaVersion": 2,
   "versions": [
     {
+      "version": "0.9.0001",
+      "tag": "v0.9.0001",
+      "date": "2026-10-18",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "breaking",
+          "entries": [
+            {
+              "id": "91ab0bf9",
+              "scope": "android",
+              "text": "The application id is now com.hi2shark.flclash_nw; uninstall the previous build before updating"
+            }
+          ]
+        },
+        {
+          "type": "feat",
+          "entries": [
+            {
+              "id": "06f5fe25",
+              "scope": "core",
+              "text": "Clash.Meta is replaced by clash-meta-nw, adding Nowhere 3"
+            },
+            {
+              "id": "58357ade",
+              "scope": "dart",
+              "text": "Local proxies, local rules, unlock test and WiFi watch"
+            },
+            {
+              "id": "2c8f7aab",
+              "scope": "core",
+              "text": "Speed, QUIC and unlock test methods"
+            },
+            {
+              "id": "1a38d720",
+              "scope": "views",
+              "text": "Local proxies view and navigation"
+            },
+            {
+              "id": "bbedfb4d",
+              "scope": "config",
+              "text": "Effective config inspection"
+            },
+            {
+              "id": "d5a7cbcc",
+              "scope": "views",
+              "text": "Speed and QUIC network tests"
+            },
+            {
+              "id": "98f45c28",
+              "scope": "views",
+              "text": "Unlock test"
+            },
+            {
+              "id": "f7248e99",
+              "scope": "android",
+              "text": "WiFi watch suspends the VPN on trusted networks"
+            },
+            {
+              "id": "3c80c8cf",
+              "scope": "plugins",
+              "text": "Validated WiFi SSID stream for Android"
+            },
+            {
+              "id": "b3ed41c5",
+              "scope": "core",
+              "text": "Core memory management"
+            },
+            {
+              "id": "3f322a77",
+              "scope": "views",
+              "text": "Custom download URL for network tests"
+            },
+            {
+              "id": "4c28d4c3",
+              "scope": "ci",
+              "text": "Build matrix covers more platforms and architectures"
+            }
+          ]
+        },
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "e9a46317",
+              "scope": "android",
+              "text": "Service suspension is wired through the app module"
+            },
+            {
+              "id": "bc3080ef",
+              "scope": "core",
+              "text": "QUIC UDP address resolution"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.0",
       "tag": "v0.9.0",
       "date": "2026-10-14",

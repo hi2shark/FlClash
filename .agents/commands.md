@@ -281,6 +281,12 @@ Telegram post. They publish no GitHub release, so the update dialog never sees t
 version from `pubspec.yaml` rather than the tag, so the patch has to be bumped before the first `-pre.N` of a cycle:
 while `v<pubspec version>` is still tagged it refuses to collect anything and the release job fails.
 
+This repository publishes its own releases. `build` runs for both the upstream owner and `hi2shark`, so the download
+URLs resolve against whichever repository hosts the tag, while the Telegram, Homebrew and F-Droid pushes stay with
+`chen08209`, whose secrets and destination repositories they name. The `telegram-bot-api` service container exits when
+its credentials are absent, so the fork keeps it alive with placeholder values that only the gated upstream push step
+would ever talk to.
+
 ### Website
 
 `site/` is the GitHub Pages site: a static page that renders `CHANGELOG.md` and the download links in the browser, and
