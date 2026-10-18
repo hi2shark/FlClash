@@ -1,10 +1,9 @@
-package main
+package core
 
 import (
 	"context"
 	"core/unlocktest"
 	gotls "crypto/tls"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -176,305 +175,249 @@ func rejectLikeProxy(proxy C.Proxy) bool {
 	}
 }
 
-func sendTestResult(fn func(string), result interface{}) {
-	data, err := json.Marshal(result)
-	if err != nil {
-		logError("Error: %s", err)
-		fn("")
-		return
-	}
-	fn(string(data))
-}
+func handleSpeedTest(params *SpeedTestParams) *SpeedTestResult {
+	result := &SpeedTestResult{Name: params.ProxyName}
 
-func handleSpeedTest(paramsString string, fn func(string)) {
-	go func() {
-		var params = &SpeedTestParams{}
-		if err := json.Unmarshal([]byte(paramsString), params); err != nil {
-			sendTestResult(fn, &SpeedTestResult{Error: fmt.Sprintf("invalid params: %s", err)})
-			return
-		}
-
-		result := &SpeedTestResult{Name: params.ProxyName}
-
-		testUrl := params.TestUrl
+	testUrl := params.TestUrl
+	if testUrl == "" {
+		testUrl = currentTestURL()
 		if testUrl == "" {
 			testUrl = defaultSpeedTestUrl
 		}
+	}
 
-		timeout := time.Duration(params.Timeout) * time.Millisecond
-		if timeout <= 0 {
-			timeout = defaultSpeedTestTimeout
-		}
+	timeout := timeoutFromMillis(params.Timeout, defaultSpeedTestTimeout)
 
-		proxy := getProxiesWithProviders()[params.ProxyName]
-		if proxy == nil {
-			result.Error = fmt.Sprintf("proxy %s not found", params.ProxyName)
-			sendTestResult(fn, result)
-			return
-		}
-		if rejectLikeProxy(proxy) {
-			result.Error = fmt.Sprintf("proxy %s can not be tested", params.ProxyName)
-			sendTestResult(fn, result)
-			return
-		}
+	proxy := lookupProxy(params.ProxyName)
+	if proxy == nil {
+		result.Error = fmt.Sprintf("proxy %s not found", params.ProxyName)
+		return result
+	}
+	if rejectLikeProxy(proxy) {
+		result.Error = fmt.Sprintf("proxy %s can not be tested", params.ProxyName)
+		return result
+	}
 
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-		transport := &http.Transport{
-			DisableKeepAlives: true,
-			TLSClientConfig:   &gotls.Config{InsecureSkipVerify: true},
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				host, portString, err := net.SplitHostPort(addr)
-				if err != nil {
-					return nil, err
-				}
-				port, err := strconv.ParseUint(portString, 10, 16)
-				if err != nil {
-					return nil, err
-				}
-				metadata := &C.Metadata{
-					NetWork: C.TCP,
-					Host:    host,
-					DstPort: uint16(port),
-				}
-				return proxy.DialContext(ctx, metadata)
-			},
-		}
-		defer transport.CloseIdleConnections()
-
-		client := &http.Client{Transport: transport}
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testUrl, nil)
-		if err != nil {
-			result.Error = err.Error()
-			sendTestResult(fn, result)
-			return
-		}
-
-		start := time.Now()
-		resp, err := client.Do(req)
-		if err != nil {
-			result.Error = err.Error()
-			sendTestResult(fn, result)
-			return
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode >= 400 {
-			result.Error = fmt.Sprintf("http status %d", resp.StatusCode)
-		}
-
-		var firstByteAt time.Time
-		buf := make([]byte, 32*1024)
-		for {
-			n, readErr := resp.Body.Read(buf)
-			if n > 0 {
-				if firstByteAt.IsZero() {
-					firstByteAt = time.Now()
-				}
-				result.Bytes += int64(n)
+	transport := &http.Transport{
+		DisableKeepAlives: true,
+		TLSClientConfig:   &gotls.Config{InsecureSkipVerify: true},
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			host, portString, err := net.SplitHostPort(addr)
+			if err != nil {
+				return nil, err
 			}
-			if readErr != nil {
-				if readErr != io.EOF && result.Error == "" {
-					result.Error = readErr.Error()
-				}
-				break
+			port, err := strconv.ParseUint(portString, 10, 16)
+			if err != nil {
+				return nil, err
 			}
-		}
+			metadata := &C.Metadata{
+				NetWork: C.TCP,
+				Host:    host,
+				DstPort: uint16(port),
+			}
+			return proxy.DialContext(ctx, metadata)
+		},
+	}
+	defer transport.CloseIdleConnections()
 
-		end := time.Now()
-		if firstByteAt.IsZero() {
-			// empty body: fall back to header receive time
-			result.Latency = end.Sub(start).Milliseconds()
-		} else {
-			result.Latency = firstByteAt.Sub(start).Milliseconds()
-		}
+	client := &http.Client{Transport: transport}
 
-		transfer := end.Sub(firstByteAt)
-		if firstByteAt.IsZero() || transfer <= 0 {
-			transfer = end.Sub(start)
-		}
-		if seconds := transfer.Seconds(); seconds > 0 {
-			result.Speed = float64(result.Bytes) / seconds
-		}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, testUrl, nil)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
 
-		sendTestResult(fn, result)
-	}()
+	start := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		result.Error = fmt.Sprintf("http status %d", resp.StatusCode)
+	}
+
+	var firstByteAt time.Time
+	buf := make([]byte, 32*1024)
+	for {
+		n, readErr := resp.Body.Read(buf)
+		if n > 0 {
+			if firstByteAt.IsZero() {
+				firstByteAt = time.Now()
+			}
+			result.Bytes += int64(n)
+		}
+		if readErr != nil {
+			if readErr != io.EOF && result.Error == "" {
+				result.Error = readErr.Error()
+			}
+			break
+		}
+	}
+
+	end := time.Now()
+	if firstByteAt.IsZero() {
+		// empty body: fall back to header receive time
+		result.Latency = end.Sub(start).Milliseconds()
+	} else {
+		result.Latency = firstByteAt.Sub(start).Milliseconds()
+	}
+
+	transfer := end.Sub(firstByteAt)
+	if firstByteAt.IsZero() || transfer <= 0 {
+		transfer = end.Sub(start)
+	}
+	if seconds := transfer.Seconds(); seconds > 0 {
+		result.Speed = float64(result.Bytes) / seconds
+	}
+
+	return result
 }
 
-func handleQuicTest(paramsString string, fn func(string)) {
-	go func() {
-		var params = &QuicTestParams{}
-		if err := json.Unmarshal([]byte(paramsString), params); err != nil {
-			sendTestResult(fn, &QuicTestResult{
-				Stage: "target_parse",
-				Error: fmt.Sprintf("invalid params: %s", err),
-			})
-			return
-		}
+func handleQuicTest(params *QuicTestParams) *QuicTestResult {
+	result := &QuicTestResult{Name: params.ProxyName, Stage: "target_parse"}
+	target, serverName, err := normalizeQuicTarget(params.Host)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	result.Target = target
 
-		result := &QuicTestResult{Name: params.ProxyName, Stage: "target_parse"}
-		target, serverName, err := normalizeQuicTarget(params.Host)
-		if err != nil {
-			result.Error = err.Error()
-			sendTestResult(fn, result)
-			return
-		}
-		result.Target = target
+	timeout := timeoutFromMillis(params.Timeout, defaultQuicTestTimeout)
 
-		timeout := time.Duration(params.Timeout) * time.Millisecond
-		if timeout <= 0 {
-			timeout = defaultQuicTestTimeout
-		}
+	result.Stage = "proxy_lookup"
+	proxy := lookupProxy(params.ProxyName)
+	if proxy == nil {
+		result.Error = fmt.Sprintf("proxy %s not found", params.ProxyName)
+		return result
+	}
 
-		result.Stage = "proxy_lookup"
-		proxy := getProxiesWithProviders()[params.ProxyName]
-		if proxy == nil {
-			result.Error = fmt.Sprintf("proxy %s not found", params.ProxyName)
-			sendTestResult(fn, result)
-			return
-		}
+	result.Stage = "udp_capability"
+	if rejectLikeProxy(proxy) {
+		result.Error = fmt.Sprintf("proxy %s can not be tested", params.ProxyName)
+		return result
+	}
 
-		result.Stage = "udp_capability"
-		if rejectLikeProxy(proxy) {
-			result.Error = fmt.Sprintf("proxy %s can not be tested", params.ProxyName)
-			sendTestResult(fn, result)
-			return
-		}
+	if !proxy.SupportUDP() {
+		result.Error = fmt.Sprintf("proxy %s does not support udp", params.ProxyName)
+		return result
+	}
 
-		if !proxy.SupportUDP() {
-			result.Error = fmt.Sprintf("proxy %s does not support udp", params.ProxyName)
-			sendTestResult(fn, result)
-			return
-		}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		defer cancel()
+	metadata := &C.Metadata{NetWork: C.UDP}
+	if err := metadata.SetRemoteAddress(target); err != nil {
+		result.Stage = "target_parse"
+		result.Error = fmt.Sprintf("set QUIC target: %v", err)
+		return result
+	}
 
-		metadata := &C.Metadata{NetWork: C.UDP}
-		if err := metadata.SetRemoteAddress(target); err != nil {
-			result.Stage = "target_parse"
-			result.Error = fmt.Sprintf("set QUIC target: %v", err)
-			sendTestResult(fn, result)
-			return
-		}
+	result.Stage = "udp_relay_open"
+	packetConn, err := proxy.ListenPacketContext(ctx, metadata)
+	if err != nil {
+		result.Error = fmt.Sprintf("open UDP relay: %v", err)
+		return result
+	}
+	defer packetConn.Close()
 
-		result.Stage = "udp_relay_open"
-		packetConn, err := proxy.ListenPacketContext(ctx, metadata)
-		if err != nil {
-			result.Error = fmt.Sprintf("open UDP relay: %v", err)
-			sendTestResult(fn, result)
-			return
-		}
-		defer packetConn.Close()
+	result.Stage = "target_resolve"
+	udpAddr, network, err := resolvedQuicUDPAddr(metadata)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	if metadata.Resolved() {
+		result.ResolvedIP = udpAddr.String()
+	}
+	result.Network = network
 
-		result.Stage = "target_resolve"
-		udpAddr, network, err := resolvedQuicUDPAddr(metadata)
-		if err != nil {
-			result.Error = err.Error()
-			sendTestResult(fn, result)
-			return
-		}
-		if metadata.Resolved() {
-			result.ResolvedIP = udpAddr.String()
-		}
-		result.Network = network
+	tlsConfig := &tls.Config{
+		ServerName:         serverName,
+		NextProtos:         []string{"h3"},
+		InsecureSkipVerify: true,
+	}
 
-		tlsConfig := &tls.Config{
-			ServerName:         serverName,
-			NextProtos:         []string{"h3"},
-			InsecureSkipVerify: true,
-		}
-
-		start := time.Now()
-		result.Stage = "quic_dial"
-		quicConn := &quicPacketConn{PacketConn: packetConn, peer: udpAddr}
-		conn, err := quic.DialEarly(ctx, quicConn, udpAddr, tlsConfig, nil)
-		if err != nil {
-			quicConn.updateResult(result)
-			if ctx.Err() != nil {
-				result.Stage = "quic_handshake"
-				result.Error = fmt.Sprintf(
-					"QUIC handshake timeout: %v; sent=%d received=%d",
-					ctx.Err(),
-					result.SentPackets,
-					result.ReceivedPackets,
-				)
-			} else if result.SentPackets > 0 {
-				result.Stage = "quic_handshake"
-				result.Error = fmt.Sprintf(
-					"QUIC handshake failed: %v; sent=%d received=%d",
-					err,
-					result.SentPackets,
-					result.ReceivedPackets,
-				)
-			} else {
-				result.Error = fmt.Sprintf("start QUIC connection: %v", err)
-			}
-			sendTestResult(fn, result)
-			return
-		}
-		defer conn.CloseWithError(0, "")
-
-		result.Stage = "quic_handshake"
-		select {
-		case <-conn.HandshakeComplete():
-		case <-conn.Context().Done():
-			quicConn.updateResult(result)
-			result.Error = fmt.Sprintf(
-				"QUIC handshake failed: %v; sent=%d received=%d",
-				context.Cause(conn.Context()),
-				result.SentPackets,
-				result.ReceivedPackets,
-			)
-			sendTestResult(fn, result)
-			return
-		case <-ctx.Done():
-			quicConn.updateResult(result)
+	start := time.Now()
+	result.Stage = "quic_dial"
+	quicConn := &quicPacketConn{PacketConn: packetConn, peer: udpAddr}
+	conn, err := quic.DialEarly(ctx, quicConn, udpAddr, tlsConfig, nil)
+	if err != nil {
+		quicConn.updateResult(result)
+		if ctx.Err() != nil {
+			result.Stage = "quic_handshake"
 			result.Error = fmt.Sprintf(
 				"QUIC handshake timeout: %v; sent=%d received=%d",
 				ctx.Err(),
 				result.SentPackets,
 				result.ReceivedPackets,
 			)
-			sendTestResult(fn, result)
-			return
+		} else if result.SentPackets > 0 {
+			result.Stage = "quic_handshake"
+			result.Error = fmt.Sprintf(
+				"QUIC handshake failed: %v; sent=%d received=%d",
+				err,
+				result.SentPackets,
+				result.ReceivedPackets,
+			)
+		} else {
+			result.Error = fmt.Sprintf("start QUIC connection: %v", err)
 		}
+		return result
+	}
+	defer conn.CloseWithError(0, "")
 
+	result.Stage = "quic_handshake"
+	select {
+	case <-conn.HandshakeComplete():
+	case <-conn.Context().Done():
 		quicConn.updateResult(result)
-		result.Rtt = time.Since(start).Milliseconds()
-		state := conn.ConnectionState()
-		result.Alpn = state.TLS.NegotiatedProtocol
-		result.Version = uint32(state.Version)
-		result.Stage = "completed"
+		result.Error = fmt.Sprintf(
+			"QUIC handshake failed: %v; sent=%d received=%d",
+			context.Cause(conn.Context()),
+			result.SentPackets,
+			result.ReceivedPackets,
+		)
+		return result
+	case <-ctx.Done():
+		quicConn.updateResult(result)
+		result.Error = fmt.Sprintf(
+			"QUIC handshake timeout: %v; sent=%d received=%d",
+			ctx.Err(),
+			result.SentPackets,
+			result.ReceivedPackets,
+		)
+		return result
+	}
 
-		sendTestResult(fn, result)
-	}()
+	quicConn.updateResult(result)
+	result.Rtt = time.Since(start).Milliseconds()
+	state := conn.ConnectionState()
+	result.Alpn = state.TLS.NegotiatedProtocol
+	result.Version = uint32(state.Version)
+	result.Stage = "completed"
+
+	return result
 }
 
 var unlockManager = unlocktest.NewManager(unlocktest.Runner{})
 
-func handleUnlockTest(paramsString string, fn func(string)) {
-	go func() {
-		var request unlocktest.Request
-		if err := json.Unmarshal([]byte(paramsString), &request); err != nil {
-			sendTestResult(fn, &unlocktest.Result{Error: "invalid unlock test params"})
-			return
-		}
-		result := unlockManager.Run(
-			context.Background(),
-			request,
-			dialUnlockTestContext,
-			func(progress unlocktest.Progress) {
-				sendMessage(Message{
-					Type: UnlockTestProgressMessage,
-					Data: progress,
-				})
-			},
-		)
-		sendTestResult(fn, &result)
-	}()
+func handleUnlockTest(request *unlocktest.Request) *unlocktest.Result {
+	result := unlockManager.Run(
+		context.Background(),
+		*request,
+		dialUnlockTestContext,
+		func(progress unlocktest.Progress) {
+			sendMessage(UnlockTestProgressMessage, progress)
+		},
+	)
+	return &result
 }
 
 func handleCancelUnlockTest(runID string) bool {

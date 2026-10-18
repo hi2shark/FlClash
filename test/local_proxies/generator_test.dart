@@ -714,7 +714,12 @@ void main() {
     });
 
     test('rejects ALPN values other than nw2 or nw3', () {
-      for (final alpn in ['h2', 'nw2,h3', ['nw2', 'nw3'], 'nw3,nw2']) {
+      for (final alpn in [
+        'h2',
+        'nw2,h3',
+        ['nw2', 'nw3'],
+        'nw3,nw2',
+      ]) {
         final config = _validNowhereConfig()..['alpn'] = alpn;
         expect(
           () =>

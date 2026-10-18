@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of '../local_proxy.dart';
@@ -9,6 +9,7 @@ part of '../local_proxy.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $LocalProxyCopyWith<LocalProxy> get copyWith => _$LocalProxyCopyWithImpl<LocalPr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LocalProxy&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&const DeepCollectionEquality().equals(other.config, config)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.sortIndex, sortIndex) || other.sortIndex == sortIndex)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  final _this = this as LocalProxy;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LocalProxy&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.enabled, _this.enabled) || other.enabled == _this.enabled)&&const DeepCollectionEquality().equals(other.config, _this.config)&&const DeepCollectionEquality().equals(other.tags, _this.tags)&&(identical(other.sortIndex, _this.sortIndex) || other.sortIndex == _this.sortIndex)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,type,enabled,const DeepCollectionEquality().hash(config),const DeepCollectionEquality().hash(tags),sortIndex,createdAt,updatedAt);
+int get hashCode {
+  final _this = this as LocalProxy;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.type,_this.enabled,const DeepCollectionEquality().hash(_this.config),const DeepCollectionEquality().hash(_this.tags),_this.sortIndex,_this.createdAt,_this.updatedAt);
+}
 
 @override
 String toString() {
-  return 'LocalProxy(id: $id, name: $name, type: $type, enabled: $enabled, config: $config, tags: $tags, sortIndex: $sortIndex, createdAt: $createdAt, updatedAt: $updatedAt)';
+  final _this = this as LocalProxy;
+  return 'LocalProxy(id: ${_this.id}, name: ${_this.name}, type: ${_this.type}, enabled: ${_this.enabled}, config: ${_this.config}, tags: ${_this.tags}, sortIndex: ${_this.sortIndex}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -66,7 +72,7 @@ class _$LocalProxyCopyWithImpl<$Res>
 /// Create a copy of LocalProxy
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? type = null,Object? enabled = null,Object? config = null,Object? tags = null,Object? sortIndex = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
-  return _then(_self.copyWith(
+  return _then(LocalProxy(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -217,7 +223,7 @@ return $default(_that.id,_that.name,_that.type,_that.enabled,_that.config,_that.
 @JsonSerializable()
 
 class _LocalProxy implements LocalProxy {
-  const _LocalProxy({@JsonKey(fromJson: Snowflake.buildId) required this.id, required this.name, required this.type, this.enabled = true, final  Map<String, dynamic> config = const {}, final  List<String> tags = const [], this.sortIndex, required this.createdAt, required this.updatedAt}): _config = config,_tags = tags;
+  const _LocalProxy({@JsonKey(fromJson: Snowflake.buildId) required this.id, required this.name, required this.type, this.enabled = true,  Map<String, dynamic> config = const {},  List<String> tags = const [], this.sortIndex, required this.createdAt, required this.updatedAt}): _config = config,_tags = tags;
   factory _LocalProxy.fromJson(Map<String, dynamic> json) => _$LocalProxyFromJson(json);
 
 @override@JsonKey(fromJson: Snowflake.buildId) final  int id;
@@ -255,16 +261,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LocalProxy&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&const DeepCollectionEquality().equals(other._config, _config)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.sortIndex, sortIndex) || other.sortIndex == sortIndex)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LocalProxy&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&const DeepCollectionEquality().equals(other.config, _config)&&const DeepCollectionEquality().equals(other.tags, _tags)&&(identical(other.sortIndex, sortIndex) || other.sortIndex == sortIndex)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,type,enabled,const DeepCollectionEquality().hash(_config),const DeepCollectionEquality().hash(_tags),sortIndex,createdAt,updatedAt);
+int get hashCode {
+    return Object.hash(runtimeType,id,name,type,enabled,const DeepCollectionEquality().hash(_config),const DeepCollectionEquality().hash(_tags),sortIndex,createdAt,updatedAt);
+}
 
 @override
 String toString() {
-  return 'LocalProxy(id: $id, name: $name, type: $type, enabled: $enabled, config: $config, tags: $tags, sortIndex: $sortIndex, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'LocalProxy(id: $id, name: $name, type: $type, enabled: $enabled, config: $config, tags: $tags, sortIndex: $sortIndex, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 

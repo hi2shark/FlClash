@@ -1,5 +1,32 @@
 part of 'database.dart';
 
+@DataClassName('RawUnlockTestRun')
+@TableIndex(
+  name: 'unlock_test_runs_created_at',
+  columns: {IndexedColumn(#createdAt, orderBy: OrderingMode.desc)},
+)
+class UnlockTestRuns extends Table {
+  @override
+  String get tableName => 'unlock_test_runs';
+
+  TextColumn get runId => text()();
+
+  IntColumn get createdAt => integer()();
+
+  IntColumn get durationMs => integer()();
+
+  TextColumn get routeMode => text()();
+
+  TextColumn get proxyName => text().nullable()();
+
+  IntColumn get catalogVersion => integer()();
+
+  TextColumn get resultsJson => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {runId};
+}
+
 class UnlockTestRunRecord {
   final String runId;
   final DateTime createdAt;

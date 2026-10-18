@@ -2,17 +2,19 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/theme.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_list_page.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+
+import '../helpers/glyph_finders.dart';
 
 class _FakePathProvider extends PathProviderPlatform {
   final String root;
@@ -69,9 +71,7 @@ Widget _testApp(ProviderContainer container) {
       locale: const Locale('en'),
       localizationsDelegates: const [
         AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
       ],
       supportedLocales: AppLocalizations.delegate.supportedLocales,
       home: Builder(
@@ -143,16 +143,10 @@ void main() {
     final switchWidget = tester.widget<Switch>(find.byType(Switch));
     expect(switchWidget.onChanged, isNotNull);
     final editButton = tester.widget<IconButton>(
-      find.ancestor(
-        of: find.byIcon(Icons.edit_outlined),
-        matching: find.byType(IconButton),
-      ),
+      find.widgetWithGlyph(IconButton, AppGlyphs.edit),
     );
     final deleteButton = tester.widget<IconButton>(
-      find.ancestor(
-        of: find.byIcon(Icons.delete_outlined),
-        matching: find.byType(IconButton),
-      ),
+      find.widgetWithGlyph(IconButton, AppGlyphs.delete),
     );
     expect(editButton.onPressed, isNotNull);
     expect(deleteButton.onPressed, isNotNull);
@@ -182,11 +176,11 @@ void main() {
         greaterThan(statusBottom),
       );
       expect(
-        tester.getRect(find.byIcon(Icons.edit_outlined)).top,
+        tester.getRect(find.byGlyph(AppGlyphs.edit)).top,
         greaterThan(statusBottom),
       );
       expect(
-        tester.getRect(find.byIcon(Icons.delete_outlined)).top,
+        tester.getRect(find.byGlyph(AppGlyphs.delete)).top,
         greaterThan(statusBottom),
       );
     },

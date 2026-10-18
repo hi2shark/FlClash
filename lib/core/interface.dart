@@ -1,16 +1,22 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 
+import 'desktop/model.dart';
+import 'method.dart';
+
 mixin CoreInterface {
+  Future<CoreLifecycleResult> start();
+
+  Future<CoreLifecycleResult> restart();
+
+  Future<CoreLifecycleResult> stop();
+
+  Future<CoreLifecycleResult> close();
+
   Future<bool> init(InitParams params);
-
-  Future<String> preload();
-
-  Future<bool> shutdown(bool isUser);
 
   Future<bool> get isInit;
 
@@ -18,15 +24,37 @@ mixin CoreInterface {
 
   Future<String> validateConfig(String path);
 
-  Future<Result> getConfig(String path);
+  Future<String> decryptConfig(String path, String ageSecretKey);
 
-  Future<String> asyncTestDelay(String url, String proxyName);
+  Future<List<String>> validateProxies(List<Map<String, dynamic>> proxies);
 
-  Future<String> speedTest(SpeedTestParams params);
+  Future<List<String>> validateFilters(List<String> filters);
 
-  Future<String> quicTest(QuicTestParams params);
+  Future<List<Map<String, dynamic>>> convertProxies(String path);
 
-  Future<String> unlockTest(UnlockTestRunParams params);
+  Future<List<String>> encodeShareLinks(List<Map<String, dynamic>> proxies);
+
+  Future<List<List<Map<String, dynamic>>>> decodeShareLinks(List<String> lines);
+
+  Future<Map<String, dynamic>> getConfig(String path);
+
+  Future<String> dumpRuleSet(String path);
+
+  Future<RuleSetInfo> compileRuleSet(String name, {String url = ''});
+
+  Future<Delay?> asyncTestDelay(String url, String proxyName);
+
+  Future<ProbeResult?> probe(ProbeParams params);
+
+  Future<OutboundIpResult?> outboundIp(OutboundIpParams params);
+
+  Future<List<ServiceCheckItem>> serviceCheck(ServiceCheckParams params);
+
+  Future<SpeedTestResult?> speedTest(SpeedTestParams params);
+
+  Future<QuicTestResult?> quicTest(QuicTestParams params);
+
+  Future<UnlockTestRunResult?> unlockTest(UnlockTestRunParams params);
 
   Future<bool> cancelUnlockTest(String runId);
 
@@ -36,15 +64,17 @@ mixin CoreInterface {
 
   Future<ProxiesData> getProxies();
 
-  Future<String> changeProxy(ChangeProxyParams changeProxyParams);
+  Future<ChangeProxyResult> changeProxy(ChangeProxyParams changeProxyParams);
+
+  Future<RouteSnapshot?> watchRoute(bool watch);
 
   Future<bool> startListener();
 
   Future<bool> stopListener();
 
-  Future<String> getExternalProviders();
+  Future<List<ExternalProvider>> getExternalProviders();
 
-  Future<String>? getExternalProvider(String externalProviderName);
+  Future<ExternalProvider?> getExternalProvider(String externalProviderName);
 
   Future<String> updateGeoData(String type);
 
@@ -55,13 +85,11 @@ mixin CoreInterface {
 
   Future<String> updateExternalProvider(String providerName);
 
-  FutureOr<String> getTraffic(bool onlyStatisticsProxy);
+  FutureOr<Traffic> getTraffic(bool onlyStatisticsProxy);
 
-  FutureOr<String> getTotalTraffic(bool onlyStatisticsProxy);
+  FutureOr<Traffic> getTotalTraffic(bool onlyStatisticsProxy);
 
-  FutureOr<String> getCountryCode(String ip);
-
-  FutureOr<String> getMemory();
+  FutureOr<CoreMemoryStats?> getMemoryStats();
 
   FutureOr<void> resetTraffic();
 
@@ -69,17 +97,13 @@ mixin CoreInterface {
 
   FutureOr<void> stopLog();
 
-  FutureOr<void> startRequestNotify();
-
-  FutureOr<void> stopRequestNotify();
-
   Future<bool> crash();
 
-  FutureOr<String> getConnections();
+  FutureOr<List<TrackerInfo>> getConnections();
+
+  FutureOr<int> getConnectionCount();
 
   FutureOr<bool> closeConnection(String id);
-
-  FutureOr<String> deleteFile(String path);
 
   FutureOr<String> clearEffect(int profileId);
 
@@ -89,118 +113,236 @@ mixin CoreInterface {
 }
 
 abstract class CoreHandlerInterface with CoreInterface {
-  Completer get completer;
-
-  FutureOr<bool> destroy();
-
-  Future<T?> _invoke<T>({
-    required ActionMethod method,
-    dynamic data,
+  Future<T?> _invokeMethod<T>({
+    required CoreMethod method,
+    Object? arguments,
     Duration? timeout,
   }) async {
-    try {
-      await completer.future.timeout(const Duration(seconds: 10));
-    } catch (e) {
-      commonPrint.log(
-        'Invoke pre ${method.name} timeout $e',
-        logLevel: LogLevel.error,
-      );
-      return null;
-    }
-    return await utils.handleWatch(
+    return await handleWatch(
       onStart: () {
-        commonPrint.log('Invoke ${method.name} ${DateTime.now()} $data');
+        commonPrint.log(
+          'Invoke method ${method.name} ${DateTime.now()} $arguments',
+        );
       },
       function: () async {
-        final result = invoke<T>(method: method, data: data, timeout: timeout);
-        if (timeout == null) {
-          return result;
-        }
-        return result.timeout(timeout, onTimeout: () => null);
+        return invokeMethod<T>(
+          method: method,
+          arguments: arguments,
+          timeout: timeout,
+        );
       },
-      onEnd: (data, elapsedMilliseconds) {
-        commonPrint.log('Invoke ${method.name} ${elapsedMilliseconds}ms');
+      onEnd: (result, elapsedMilliseconds) {
+        commonPrint.log(
+          'Invoke method ${method.name} completed in ${elapsedMilliseconds}ms',
+        );
       },
     );
   }
 
-  Future<T?> invoke<T>({
-    required ActionMethod method,
-    dynamic data,
+  Future<T?> invokeMethod<T>({
+    required CoreMethod method,
+    Object? arguments,
     Duration? timeout,
   });
 
-  Future<T> parasResult<T>(ActionResult result) async {
-    return switch (result.method) {
-      ActionMethod.getConfig => result.toResult as T,
-      _ => result.data as T,
-    };
+  Future<String> _invokeMessage({
+    required CoreMethod method,
+    Object? arguments,
+    Duration? timeout,
+  }) async {
+    final message = await _invokeMethod<String>(
+      method: method,
+      arguments: arguments,
+      timeout: timeout,
+    );
+    if (message == null) {
+      throw CoreMethodException(
+        code: 'no_response',
+        message: 'Core did not answer ${method.name}',
+      );
+    }
+    return message;
   }
 
   @override
   Future<bool> init(InitParams params) async {
-    return await _invoke<bool>(
-          method: ActionMethod.initClash,
-          data: json.encode(params),
+    return await _invokeMethod<bool>(
+          method: CoreMethod.initClash,
+          arguments: params.toJson(),
         ) ??
         false;
   }
 
   @override
-  Future<bool> shutdown(bool isUser);
-
-  @override
   Future<bool> get isInit async {
-    return await _invoke<bool>(method: ActionMethod.getIsInit) ?? false;
+    return await _invokeMethod<bool>(method: CoreMethod.getIsInit) ?? false;
   }
 
   @override
   Future<bool> forceGc() async {
-    return await _invoke<bool>(method: ActionMethod.forceGc) ?? false;
+    return await _invokeMethod<bool>(method: CoreMethod.forceGc) ?? false;
   }
 
   @override
   Future<String> validateConfig(String path) async {
-    return await _invoke<String>(
-          method: ActionMethod.validateConfig,
-          data: path,
-        ) ??
-        '';
+    return _invokeMessage(method: CoreMethod.validateConfig, arguments: path);
+  }
+
+  @override
+  Future<String> decryptConfig(String path, String ageSecretKey) async {
+    return _invokeMessage(
+      method: CoreMethod.decryptConfig,
+      arguments: {'path': path, 'age-secret-key': ageSecretKey},
+    );
+  }
+
+  @override
+  Future<List<String>> validateProxies(
+    List<Map<String, dynamic>> proxies,
+  ) async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.validateProxies,
+      arguments: proxies,
+    );
+    if (data == null || data.length != proxies.length) {
+      throw CoreMethodException(
+        code: 'no_response',
+        message: 'Core did not answer ${CoreMethod.validateProxies.name}',
+      );
+    }
+    return data.map((item) => item?.toString() ?? '').toList();
+  }
+
+  @override
+  Future<List<String>> validateFilters(List<String> filters) async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.validateFilters,
+      arguments: filters,
+    );
+    if (data == null || data.length != filters.length) {
+      throw CoreMethodException(
+        code: 'no_response',
+        message: 'Core did not answer ${CoreMethod.validateFilters.name}',
+      );
+    }
+    return data.map((item) => item?.toString() ?? '').toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> convertProxies(String path) async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.convertProxies,
+      arguments: path,
+    );
+    return [
+      for (final item in data ?? const [])
+        if (item is Map) Map<String, dynamic>.from(item),
+    ];
+  }
+
+  @override
+  Future<List<String>> encodeShareLinks(
+    List<Map<String, dynamic>> proxies,
+  ) async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.encodeShareLinks,
+      arguments: proxies,
+    );
+    if (data == null || data.length != proxies.length) {
+      throw CoreMethodException(
+        code: 'no_response',
+        message: 'Core did not answer ${CoreMethod.encodeShareLinks.name}',
+      );
+    }
+    return data.map((item) => item?.toString() ?? '').toList();
+  }
+
+  @override
+  Future<List<List<Map<String, dynamic>>>> decodeShareLinks(
+    List<String> lines,
+  ) async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.decodeShareLinks,
+      arguments: lines,
+    );
+    if (data == null || data.length != lines.length) {
+      throw CoreMethodException(
+        code: 'no_response',
+        message: 'Core did not answer ${CoreMethod.decodeShareLinks.name}',
+      );
+    }
+    return [
+      for (final line in data)
+        [
+          for (final item in line is List ? line : const [])
+            if (item is Map) Map<String, dynamic>.from(item),
+        ],
+    ];
   }
 
   @override
   Future<String> updateConfig(UpdateParams updateParams) async {
-    return await _invoke<String>(
-          method: ActionMethod.updateConfig,
-          data: json.encode(updateParams),
-        ) ??
-        '';
+    return _invokeMessage(
+      method: CoreMethod.updateConfig,
+      arguments: updateParams.toJson(),
+    );
   }
 
   @override
-  Future<Result> getConfig(String path) async {
-    final res = await _invoke(method: ActionMethod.getConfig, data: path);
-    return res ?? Result.success({});
+  Future<Map<String, dynamic>> getConfig(String path) async {
+    final result = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.getConfig,
+      arguments: path,
+    );
+    if (result == null) {
+      throw const CoreMethodException(
+        code: 'empty_result',
+        message: 'Core returned an empty config result',
+      );
+    }
+    return result;
   }
 
   @override
   Future<String> setupConfig(SetupParams setupParams) async {
-    return await _invoke<String>(
-          method: ActionMethod.setupConfig,
-          data: json.encode(setupParams),
-        ) ??
-        '';
+    return _invokeMessage(
+      method: CoreMethod.setupConfig,
+      arguments: setupParams.toJson(),
+    );
+  }
+
+  @override
+  Future<String> dumpRuleSet(String path) async {
+    return _invokeMessage(method: CoreMethod.dumpRuleSet, arguments: path);
+  }
+
+  @override
+  Future<RuleSetInfo> compileRuleSet(String name, {String url = ''}) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.compileRuleSet,
+      arguments: {'name': name, 'url': url},
+    );
+    if (data == null) {
+      throw const CoreMethodException(
+        code: 'no_response',
+        message: 'Core did not answer compileRuleSet',
+      );
+    }
+    return (
+      behavior: RuleProviderBehavior.values.byName(data['behavior'] as String),
+      format: RuleProviderFormat.values.byName(data['format'] as String),
+    );
   }
 
   @override
   Future<bool> crash() async {
-    return await _invoke<bool>(method: ActionMethod.crash) ?? false;
+    return await _invokeMethod<bool>(method: CoreMethod.crash) ?? false;
   }
 
   @override
   Future<ProxiesData> getProxies() async {
-    final data = await _invoke<Map<String, dynamic>>(
-      method: ActionMethod.getProxies,
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.getProxies,
     );
     return data != null
         ? ProxiesData.fromJson(data)
@@ -208,36 +350,60 @@ abstract class CoreHandlerInterface with CoreInterface {
   }
 
   @override
-  Future<String> changeProxy(ChangeProxyParams changeProxyParams) async {
-    return await _invoke<String>(
-          method: ActionMethod.changeProxy,
-          data: json.encode(changeProxyParams),
-        ) ??
-        '';
+  Future<ChangeProxyResult> changeProxy(
+    ChangeProxyParams changeProxyParams,
+  ) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.changeProxy,
+      arguments: changeProxyParams.toJson(),
+    );
+    if (data == null) {
+      throw CoreMethodException(
+        code: 'no_response',
+        message: 'Core did not answer ${CoreMethod.changeProxy.name}',
+      );
+    }
+    return ChangeProxyResult.fromJson(data);
   }
 
   @override
-  Future<String> getExternalProviders() async {
-    return await _invoke<String>(method: ActionMethod.getExternalProviders) ??
-        '';
+  Future<RouteSnapshot?> watchRoute(bool watch) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.watchRoute,
+      arguments: watch,
+    );
+    return data == null ? null : RouteSnapshot.fromJson(data);
   }
 
   @override
-  Future<String> getExternalProvider(String externalProviderName) async {
-    return await _invoke<String>(
-          method: ActionMethod.getExternalProvider,
-          data: externalProviderName,
-        ) ??
-        '';
+  Future<List<ExternalProvider>> getExternalProviders() async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.getExternalProviders,
+    );
+    return data
+            ?.whereType<Map>()
+            .map(
+              (item) =>
+                  ExternalProvider.fromJson(Map<String, Object?>.from(item)),
+            )
+            .toList() ??
+        [];
+  }
+
+  @override
+  Future<ExternalProvider?> getExternalProvider(
+    String externalProviderName,
+  ) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.getExternalProvider,
+      arguments: externalProviderName,
+    );
+    return data == null ? null : ExternalProvider.fromJson(data);
   }
 
   @override
   Future<String> updateGeoData(String type) async {
-    return await _invoke<String>(
-          method: ActionMethod.updateGeoData,
-          data: type,
-        ) ??
-        '';
+    return _invokeMessage(method: CoreMethod.updateGeoData, arguments: type);
   }
 
   @override
@@ -245,212 +411,229 @@ abstract class CoreHandlerInterface with CoreInterface {
     required String providerName,
     required String data,
   }) async {
-    return await _invoke<String>(
-          method: ActionMethod.sideLoadExternalProvider,
-          data: json.encode({'providerName': providerName, 'data': data}),
-        ) ??
-        '';
+    return _invokeMessage(
+      method: CoreMethod.sideLoadExternalProvider,
+      arguments: {'providerName': providerName, 'data': data},
+    );
   }
 
   @override
   Future<String> updateExternalProvider(String providerName) async {
-    return await _invoke<String>(
-          method: ActionMethod.updateExternalProvider,
-          data: providerName,
-        ) ??
-        '';
+    return _invokeMessage(
+      method: CoreMethod.updateExternalProvider,
+      arguments: providerName,
+    );
   }
 
   @override
-  Future<String> getConnections() async {
-    return await _invoke<String>(method: ActionMethod.getConnections) ?? '';
+  Future<List<TrackerInfo>> getConnections() async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.getConnections,
+    );
+    final connections = data?['connections'];
+    if (connections is! List) {
+      return [];
+    }
+    return connections
+        .whereType<Map>()
+        .map((item) => TrackerInfo.fromJson(Map<String, Object?>.from(item)))
+        .toList();
+  }
+
+  @override
+  Future<int> getConnectionCount() async {
+    return await _invokeMethod<int>(method: CoreMethod.getConnectionCount) ?? 0;
   }
 
   @override
   Future<bool> closeConnections() async {
-    return await _invoke<bool>(method: ActionMethod.closeConnections) ?? false;
+    return await _invokeMethod<bool>(method: CoreMethod.closeConnections) ??
+        false;
   }
 
   @override
   Future<bool> resetConnections() async {
-    return await _invoke<bool>(method: ActionMethod.resetConnections) ?? false;
+    return await _invokeMethod<bool>(method: CoreMethod.resetConnections) ??
+        false;
   }
 
   @override
   Future<bool> closeConnection(String id) async {
-    return await _invoke<bool>(
-          method: ActionMethod.closeConnection,
-          data: id,
+    return await _invokeMethod<bool>(
+          method: CoreMethod.closeConnection,
+          arguments: id,
         ) ??
         false;
   }
 
   @override
-  Future<String> getTotalTraffic(bool onlyStatisticsProxy) async {
-    return await _invoke<String>(
-          method: ActionMethod.getTotalTraffic,
-          data: onlyStatisticsProxy,
-        ) ??
-        '';
+  Future<Traffic> getTotalTraffic(bool onlyStatisticsProxy) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.getTotalTraffic,
+      arguments: onlyStatisticsProxy,
+    );
+    return data == null ? const Traffic() : Traffic.fromJson(data);
   }
 
   @override
-  Future<String> getTraffic(bool onlyStatisticsProxy) async {
-    return await _invoke<String>(
-          method: ActionMethod.getTraffic,
-          data: onlyStatisticsProxy,
-        ) ??
-        '';
-  }
-
-  @override
-  Future<String> deleteFile(String path) async {
-    return await _invoke<String>(method: ActionMethod.deleteFile, data: path) ??
-        '';
+  Future<Traffic> getTraffic(bool onlyStatisticsProxy) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.getTraffic,
+      arguments: onlyStatisticsProxy,
+    );
+    return data == null ? const Traffic() : Traffic.fromJson(data);
   }
 
   @override
   Future<String> clearEffect(int profileId) async {
-    return await _invoke<String>(
-          method: ActionMethod.clearEffect,
-          data: profileId.toString(),
-        ) ??
-        '';
+    return _invokeMessage(method: CoreMethod.clearEffect, arguments: profileId);
   }
 
   @override
-  FutureOr<void> resetTraffic() {
-    _invoke(method: ActionMethod.resetTraffic);
-  }
+  FutureOr<void> resetTraffic() => _invokeUnobserved(CoreMethod.resetTraffic);
 
   @override
-  FutureOr<void> startLog() {
-    _invoke(method: ActionMethod.startLog);
-  }
+  FutureOr<void> startLog() => _invokeUnobserved(CoreMethod.startLog);
 
   @override
-  FutureOr<void> stopLog() {
-    _invoke<bool>(method: ActionMethod.stopLog);
-  }
+  FutureOr<void> stopLog() => _invokeUnobserved(CoreMethod.stopLog);
 
-  @override
-  FutureOr<void> startRequestNotify() {
-    _invoke(method: ActionMethod.startRequestNotify);
-  }
-
-  @override
-  FutureOr<void> stopRequestNotify() {
-    _invoke(method: ActionMethod.stopRequestNotify);
+  /// For calls whose callers never wait on them, so a Core that is gone or
+  /// restarting cannot surface as an unhandled asynchronous error.
+  Future<void> _invokeUnobserved(CoreMethod method) async {
+    try {
+      await _invokeMethod<Object?>(method: method);
+    } catch (error) {
+      commonPrint.log(
+        '${method.name} failed: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
   }
 
   @override
   Future<bool> startListener() async {
-    return await _invoke<bool>(method: ActionMethod.startListener) ?? false;
+    return await _invokeMethod<bool>(method: CoreMethod.startListener) ?? false;
   }
 
   @override
   Future<bool> stopListener() async {
-    return await _invoke<bool>(method: ActionMethod.stopListener) ?? false;
+    return await _invokeMethod<bool>(method: CoreMethod.stopListener) ?? false;
   }
 
   @override
-  Future<String> asyncTestDelay(String url, String proxyName) async {
+  Future<Delay?> asyncTestDelay(String url, String proxyName) async {
     final delayParams = {
       'proxy-name': proxyName,
-      'timeout': httpTimeoutDuration.inMilliseconds,
+      'timeout': delayTestTimeoutDuration.inMilliseconds,
       'test-url': url,
     };
-    return await _invoke<String>(
-          method: ActionMethod.asyncTestDelay,
-          data: json.encode(delayParams),
-          timeout: const Duration(seconds: 6),
-        ) ??
-        json.encode(Delay(name: proxyName, value: -1, url: url));
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.asyncTestDelay,
+      arguments: delayParams,
+      timeout: delayTestGuardDuration,
+    );
+    return data == null ? null : Delay.fromJson(data);
   }
 
   @override
-  Future<String> speedTest(SpeedTestParams params) async {
-    final requestedTimeout = params.timeout;
-    final invokeTimeout = requestedTimeout != null && requestedTimeout > 0
-        ? Duration(milliseconds: requestedTimeout) + const Duration(seconds: 5)
-        : const Duration(seconds: 30);
-    return await _invoke<String>(
-          method: ActionMethod.speedTest,
-          data: json.encode(params.toJson()),
-          timeout: invokeTimeout,
-        ) ??
-        json.encode(SpeedTestResult(name: params.proxyName, error: 'timeout'));
+  Future<ProbeResult?> probe(ProbeParams params) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.probe,
+      arguments: params.toJson(),
+      timeout: probeGuardDuration(params),
+    );
+    return data == null ? null : ProbeResult.fromJson(data);
   }
 
   @override
-  Future<String> quicTest(QuicTestParams params) async {
-    final requestedTimeout = params.timeout;
-    final invokeTimeout = requestedTimeout != null && requestedTimeout > 0
-        ? Duration(milliseconds: requestedTimeout) + const Duration(seconds: 2)
-        : const Duration(seconds: 12);
-    return await _invoke<String>(
-          method: ActionMethod.quicTest,
-          data: json.encode(params.toJson()),
-          timeout: invokeTimeout,
-        ) ??
-        json.encode(
-          QuicTestResult(
-            name: params.proxyName,
-            stage: 'client_timeout',
-            target: params.host ?? 'cloudflare-quic.com:443',
-            error: 'core QUIC test did not respond before the client timeout',
-          ),
-        );
+  Future<OutboundIpResult?> outboundIp(OutboundIpParams params) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.outboundIp,
+      arguments: params.toJson(),
+      timeout: coreGuardFor(params.timeout),
+    );
+    return data == null ? null : OutboundIpResult.fromJson(data);
   }
 
   @override
-  Future<String> unlockTest(UnlockTestRunParams params) async {
+  Future<List<ServiceCheckItem>> serviceCheck(ServiceCheckParams params) async {
+    final data = await _invokeMethod<List<dynamic>>(
+      method: CoreMethod.serviceCheck,
+      arguments: params.toJson(),
+      timeout: coreGuardFor(
+        params.timeout,
+        budgetFactor: serviceSweepBudgetFactor,
+      ),
+    );
+    return data == null
+        ? const []
+        : data
+              .map(
+                (item) =>
+                    ServiceCheckItem.fromJson(item as Map<String, dynamic>),
+              )
+              .toList();
+  }
+
+  @override
+  Future<SpeedTestResult?> speedTest(SpeedTestParams params) async {
+    final timeout = params.timeout != null && params.timeout! > 0
+        ? params.timeout!
+        : speedTestTimeoutDuration.inMilliseconds;
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.speedTest,
+      arguments: params.toJson(),
+      timeout: coreGuardFor(timeout),
+    );
+    return data == null ? null : SpeedTestResult.fromJson(data);
+  }
+
+  @override
+  Future<QuicTestResult?> quicTest(QuicTestParams params) async {
+    final timeout = params.timeout != null && params.timeout! > 0
+        ? params.timeout!
+        : quicTestTimeoutDuration.inMilliseconds;
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.quicTest,
+      arguments: params.toJson(),
+      timeout: coreGuardFor(timeout),
+    );
+    return data == null ? null : QuicTestResult.fromJson(data);
+  }
+
+  @override
+  Future<UnlockTestRunResult?> unlockTest(UnlockTestRunParams params) async {
     final perTestTimeout = params.timeout > 0
         ? params.timeout
-        : httpTimeoutDuration.inMilliseconds;
-    final testCount = params.targetIds.length;
-    final batches = testCount == 0
+        : unlockTestTimeout;
+    final batches = params.targetIds.isEmpty
         ? 1
-        : (testCount + unlockTestConcurrency - 1) ~/ unlockTestConcurrency;
-    final invokeTimeout = Duration(
-      milliseconds: perTestTimeout * batches + 5000,
+        : (params.targetIds.length + unlockTestConcurrency - 1) ~/
+              unlockTestConcurrency;
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.unlockTest,
+      arguments: params.toJson(),
+      timeout: coreGuardFor(perTestTimeout * batches),
     );
-    return await _invoke<String>(
-          method: ActionMethod.unlockTest,
-          data: json.encode(params.toJson()),
-          timeout: invokeTimeout,
-        ) ??
-        json.encode(
-          UnlockTestRunResult(
-            runId: params.runId,
-            routeMode: params.routeMode,
-            proxyName: params.proxyName,
-            error: 'timeout',
-          ).toJson(),
-        );
+    return data == null ? null : UnlockTestRunResult.fromJson(data);
   }
 
   @override
   Future<bool> cancelUnlockTest(String runId) async {
-    return await _invoke<bool>(
-          method: ActionMethod.cancelUnlockTest,
-          data: runId,
-          timeout: const Duration(seconds: 2),
+    return await _invokeMethod<bool>(
+          method: CoreMethod.cancelUnlockTest,
+          arguments: runId,
+          timeout: coreGuardFor(2000),
         ) ??
         false;
   }
 
   @override
-  Future<String> getCountryCode(String ip) async {
-    return await _invoke<String>(
-          method: ActionMethod.getCountryCode,
-          data: ip,
-        ) ??
-        '';
-  }
-
-  @override
-  Future<String> getMemory() async {
-    return await _invoke<String>(method: ActionMethod.getMemory) ?? '';
+  Future<CoreMemoryStats?> getMemoryStats() async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.getMemoryStats,
+    );
+    return data == null ? null : CoreMemoryStats.fromJson(data);
   }
 }

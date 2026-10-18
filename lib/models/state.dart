@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'app.dart';
@@ -15,28 +15,8 @@ part 'generated/state.freezed.dart';
 part 'generated/state.g.dart';
 
 @freezed
-abstract class VM<A> with _$VM<A> {
-  const factory VM(A a) = _VM;
-}
-
-@freezed
-abstract class VM2<A, B> with _$VM2<A, B> {
-  const factory VM2(A a, B b) = _VM2;
-}
-
-@freezed
-abstract class VM3<A, B, C> with _$VM3<A, B, C> {
-  const factory VM3(A a, B b, C c) = _VM3;
-}
-
-@freezed
-abstract class VM4<A, B, C, D> with _$VM4<A, B, C, D> {
-  const factory VM4(A a, B b, C c, D d) = _VM4;
-}
-
-@freezed
-abstract class VM5<A, B, C, D, E> with _$VM5<A, B, C, D, E> {
-  const factory VM5(A a, B b, C c, D d, E e) = _VM5;
+abstract class SelectValue<T> with _$SelectValue<T> {
+  const factory SelectValue(T value) = _SelectValue;
 }
 
 @freezed
@@ -57,6 +37,7 @@ abstract class CommonMessage with _$CommonMessage {
   const factory CommonMessage({
     required String id,
     required String text,
+    @Default(MessageLevel.info) MessageLevel level,
     @Default(Duration(seconds: 3)) Duration duration,
     MessageActionState? actionState,
   }) = _CommonMessage;
@@ -73,7 +54,6 @@ abstract class MessageActionState with _$MessageActionState {
 @freezed
 abstract class AppBarState with _$AppBarState {
   const factory AppBarState({
-    @Default([]) List<Widget> actions,
     AppBarSearchState? searchState,
     AppBarEditState? editState,
   }) = _AppBarState;
@@ -83,7 +63,6 @@ abstract class AppBarState with _$AppBarState {
 abstract class AppBarSearchState with _$AppBarSearchState {
   const factory AppBarSearchState({
     required Function(String) onSearch,
-    @Default(true) bool autoAddSearch,
     @Default(null) String? query,
   }) = _AppBarSearchState;
 }
@@ -109,7 +88,6 @@ abstract class ProfilesState with _$ProfilesState {
   const factory ProfilesState({
     required List<Profile> profiles,
     required int? currentProfileId,
-    required int columns,
   }) = _ProfilesState;
 }
 
@@ -141,11 +119,11 @@ abstract class TrayState with _$TrayState {
     required bool systemProxy,
     required bool tunEnable,
     required bool isStart,
-    required String? locale,
-    required Brightness? brightness,
     required List<Group> groups,
     required Map<String, String> selectedMap,
     required bool showTrayTitle,
+    required bool safeMode,
+    @Default({}) Map<HotAction, HotKeyAction> hotKeys,
   }) = _TrayState;
 }
 
@@ -185,7 +163,6 @@ abstract class ProxiesListState with _$ProxiesListState {
     required List<Group> groups,
     required Set<String> currentUnfoldSet,
     required ProxyCardType proxyCardType,
-    required int columns,
   }) = _ProxiesListState;
 }
 
@@ -195,8 +172,15 @@ abstract class ProxiesTabState with _$ProxiesTabState {
     required List<Group> groups,
     required String? currentGroupName,
     required ProxyCardType proxyCardType,
-    required int columns,
   }) = _ProxiesTabState;
+}
+
+@freezed
+abstract class ProxiesTabControllerState with _$ProxiesTabControllerState {
+  const factory ProxiesTabControllerState({
+    required List<String> groupNames,
+    required String? currentGroupName,
+  }) = _ProxiesTabControllerState;
 }
 
 @freezed
@@ -208,7 +192,6 @@ abstract class ProxyGroupSelectorState with _$ProxyGroupSelectorState {
     required num sortNum,
     required GroupType groupType,
     required List<Proxy> proxies,
-    required int columns,
   }) = _ProxyGroupSelectorState;
 }
 
@@ -288,10 +271,35 @@ abstract class ProxyState with _$ProxyState {
 }
 
 @freezed
+abstract class ThemeColorsSelectorState with _$ThemeColorsSelectorState {
+  const factory ThemeColorsSelectorState({
+    required int? primaryColor,
+    required List<int> primaryColors,
+    required DynamicSchemeVariant schemeVariant,
+    required bool isDefault,
+  }) = _ThemeColorsSelectorState;
+}
+
+@freezed
+abstract class SystemProxySelectorState with _$SystemProxySelectorState {
+  const factory SystemProxySelectorState({
+    required bool systemProxy,
+    required List<String> bypassDomain,
+  }) = _SystemProxySelectorState;
+}
+
+@freezed
+abstract class CurrentProfileSelectorState with _$CurrentProfileSelectorState {
+  const factory CurrentProfileSelectorState({
+    required String label,
+    required Map<String, String> selectedMap,
+  }) = _CurrentProfileSelectorState;
+}
+
+@freezed
 abstract class DashboardState with _$DashboardState {
   const factory DashboardState({
     required List<DashboardWidget> dashboardWidgets,
-    required double contentWidth,
   }) = _DashboardState;
 }
 
@@ -324,10 +332,12 @@ abstract class SharedState with _$SharedState {
     VpnOptions? vpnOptions,
     required String stopTip,
     required String startTip,
+    required String localNetworkTip,
     required String currentProfileName,
     required String stopText,
     @Default('Suspended...') String suspendedText,
     required bool onlyStatisticsProxy,
+    @Default(true) bool showStopAction,
     required bool crashlytics,
     @Default(true) bool showNotificationStopAction,
     @JsonKey(readValue: _readSuspendOnWifiSsids)
@@ -361,13 +371,20 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required int profileId,
     required Map<String, dynamic> rawConfig,
     required PatchClashConfig realPatchConfig,
-    required bool overrideDns,
+    @Default(ProfileOverrides()) ProfileOverrides overrides,
+
+    /// Set for a subscription, whose own DNS values an emptied entry replaces.
+    @Default(false) bool keepEmptyDnsOverrides,
     required bool appendSystemDns,
     required List<ProxyGroup> proxyGroups,
     required List<Rule> rules,
     required List<Rule> addedRules,
     required String defaultUA,
     @Default([]) List<String> authentication,
+    @Default({}) Map<String, dynamic> injectedProxyProviders,
+    @Default({}) Map<String, dynamic> injectedRuleProviders,
+    String? matchTarget,
+    @Default(false) bool safeMode,
   }) = _MakeRealProfileState;
 }
 
@@ -378,8 +395,11 @@ abstract class MigrationData with _$MigrationData {
     @Default([]) List<Rule> rules,
     @Default([]) List<Script> scripts,
     @Default([]) List<Profile> profiles,
-    @Default([]) List<ProfileRuleLink> links,
+    @Default([]) List<DisabledRule> disabledRules,
     @Default([]) List<ProxyGroup> proxyGroups,
+    @Default([]) List<ClashProvider> clashProviders,
+    @Default([]) List<CustomProxy> customProxies,
+    @Default([]) List<ProxyDialer> proxyDialers,
   }) = _MigrationData;
 }
 
@@ -388,51 +408,17 @@ abstract class SetupState with _$SetupState {
   const factory SetupState({
     required int? profileId,
     required int? profileLastUpdateDate,
-    required OverwriteType overwriteType,
+    required ProfileType profileType,
+    required ExtendType extendType,
     required List<Rule> rules,
     required List<ProxyGroup> proxyGroups,
     required List<Rule> addedRules,
     required Script? script,
-    required bool overrideDns,
-    required Dns dns,
+    required ProfileOverrides overrides,
+    @Default([]) List<ClashProvider> clashProviders,
+    @Default({}) Map<String, int> profileProviders,
+    @Default([]) List<CustomProxy> appProxies,
+    @Default({}) Map<int, String> proxyDialers,
+    String? matchTarget,
   }) = _SetupState;
 }
-
-// extension SetupStateExt on SetupState {
-//   bool needSetup(SetupState? lastSetupState) {
-//     if (lastSetupState == null) {
-//       return false;
-//     }
-//     if (profileId != lastSetupState.profileId) {
-//       return true;
-//     }
-//     if (profileLastUpdateDate != lastSetupState.profileLastUpdateDate) {
-//       return true;
-//     }
-//     final scriptIsChange = script != lastSetupState.script;
-//     if (overwriteType != lastSetupState.overwriteType) {
-//       if (!ruleListEquality.equals(addedRules, lastSetupState.addedRules) ||
-//           scriptIsChange) {
-//         return true;
-//       }
-//     } else {
-//       if (overwriteType == OverwriteType.script) {
-//         if (scriptIsChange) {
-//           return true;
-//         }
-//       }
-//       if (overwriteType == OverwriteType.standard) {
-//         if (!ruleListEquality.equals(addedRules, lastSetupState.addedRules)) {
-//           return true;
-//         }
-//       }
-//     }
-//     if (overrideDns != lastSetupState.overrideDns) {
-//       return true;
-//     }
-//     if (overrideDns == true && dns != lastSetupState.dns) {
-//       return true;
-//     }
-//     return false;
-//   }
-// }

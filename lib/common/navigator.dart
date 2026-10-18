@@ -1,35 +1,84 @@
+import 'dart:async';
+
 import 'package:animations/animations.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:fl_clash/widgets/deferred_push.dart';
+import 'package:fl_clash/widgets/drag_back.dart';
+import 'package:fl_clash/widgets/keyboard_inset_hold.dart';
+import 'package:fl_clash/widgets/page_transition.dart';
+import 'package:fl_clash/widgets/sheet_navigator.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:material_ui/material_ui.dart';
+
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 class BaseNavigator {
-  static Future<T?> push<T>(BuildContext context, Widget child) async {
-    if (!globalState.container.read(isMobileViewProvider)) {
-      return Navigator.of(
-        context,
-      ).push<T>(CommonDesktopRoute(builder: (context) => child));
+  static PageRoute<T> _routeOf<T>(BuildContext context, Widget child) {
+    if (!context.isMobileView) {
+      return CommonDesktopRoute(builder: (context) => child);
     }
-    return Navigator.of(
-      context,
-    ).push<T>(CommonRoute(builder: (context) => child));
+    return CommonRoute(builder: (context) => child);
   }
 
-  // static Future<T?> modal<T>(BuildContext context, Widget child) async {
-  //   if (globalState.appState.viewMode != ViewMode.mobile) {
-  //     return await globalState.showCommonDialog<T>(
-  //       child: CommonModal(
-  //         child: child,
-  //       ),
-  //     );
-  //   }
-  //   return await Navigator.of(context).push<T>(
-  //     CommonRoute(
-  //       builder: (context) => child,
-  //     ),
-  //   );
-  // }
+  static Future<T?> push<T>(BuildContext context, Widget child) async {
+    return Navigator.of(context).push<T>(_routeOf(context, child));
+  }
+
+  static Future<T?> pushReplacement<T>(BuildContext context, Widget child) {
+    return Navigator.of(
+      context,
+    ).pushReplacement<T, void>(_routeOf(context, child));
+  }
+}
+
+// Work a page starts on arrival drops frames while the route still animates.
+// A sheet's first page arrives with the sheet, so the sheet's route counts too.
+Iterable<ModalRoute<Object?>> _arrivalRoutes(ModalRoute<Object?>? page) sync* {
+  var route = page;
+  while (route != null) {
+    yield route;
+    final navigator = route.navigator;
+    if (navigator == null ||
+        !navigator.mounted ||
+        navigator.widget is! SheetPagesNavigator) {
+      return;
+    }
+    route = ModalRoute.of(navigator.context);
+  }
+}
+
+Future<void> whenRouteSettled(BuildContext context) async {
+  final routes = _arrivalRoutes(ModalRoute.of(context));
+  for (final route in routes) {
+    await _whenSettled(route);
+  }
+}
+
+bool isRouteArriving(BuildContext context) => _arrivalRoutes(
+  ModalRoute.of(context),
+).any((route) => route.offstage || (route.animation?.isAnimating ?? false));
+
+Future<void> _whenSettled(ModalRoute<Object?> route) async {
+  // HeroController builds a pushed route offstage for its first frame, with
+  // the animation pinned to completed, so it only tells the truth after that.
+  while (route.offstage && route.isActive) {
+    await SchedulerBinding.instance.endOfFrame;
+  }
+  final animation = route.animation;
+  if (animation == null || !animation.isAnimating) {
+    return;
+  }
+  final completer = Completer<void>();
+  void handleStatus(AnimationStatus status) {
+    if (status.isAnimating) {
+      return;
+    }
+    animation.removeStatusListener(handleStatus);
+    completer.complete();
+  }
+
+  animation.addStatusListener(handleStatus);
+  return completer.future;
 }
 
 const commonSharedXPageTransitions = SharedAxisPageTransitionsBuilder(
@@ -37,7 +86,8 @@ const commonSharedXPageTransitions = SharedAxisPageTransitionsBuilder(
   fillColor: Colors.transparent,
 );
 
-class CommonDesktopRoute<T> extends PageRoute<T> {
+class CommonDesktopRoute<T> extends PageRoute<T>
+    with DragBackRouteMixin<T>, DeferredPushRouteMixin<T> {
   final Widget Function(BuildContext context) builder;
 
   CommonDesktopRoute({required this.builder});
@@ -54,11 +104,24 @@ class CommonDesktopRoute<T> extends PageRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
   ) {
-    final Widget result = builder(context);
     return Semantics(
       scopesRoute: true,
       explicitChildNodes: true,
-      child: FadeTransition(opacity: animation, child: result),
+      child: KeyboardInsetHold(child: builder(context)),
+    );
+  }
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return dragBackDetector(
+      isDragBackActive
+          ? dragBackSlide(context, animation, child)
+          : FadeTransition(opacity: animation, child: child),
     );
   }
 
@@ -72,10 +135,22 @@ class CommonDesktopRoute<T> extends PageRoute<T> {
   Duration get reverseTransitionDuration => const Duration(milliseconds: 200);
 }
 
-class CommonRoute<T> extends PageRoute<T> {
+class CommonRoute<T> extends PageRoute<T>
+    with DragBackRouteMixin<T>, DeferredPushRouteMixin<T> {
   final Widget Function(BuildContext context) builder;
 
   CommonRoute({required this.builder});
+
+  bool _overSettledPage = false;
+
+  @override
+  void didChangePrevious(Route<dynamic>? previousRoute) {
+    super.didChangePrevious(previousRoute);
+    _overSettledPage =
+        previousRoute is CommonRoute &&
+        previousRoute.animation!.isCompleted &&
+        previousRoute.secondaryAnimation!.isDismissed;
+  }
 
   @override
   Color? get barrierColor => null;
@@ -92,25 +167,46 @@ class CommonRoute<T> extends PageRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
   ) {
-    final Widget result = builder(context);
     return Semantics(
       scopesRoute: true,
       explicitChildNodes: true,
-      child: SharedAxisTransition(
-        animation: animation,
-        secondaryAnimation: secondaryAnimation,
-        transitionType: SharedAxisTransitionType.horizontal,
-        fillColor: context.colorScheme.surface,
-        child: result,
+      child: KeyboardInsetHold(child: builder(context)),
+    );
+  }
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final dragging = isDragBackActive;
+    final surface = context.colorScheme.surface;
+    return dragBackDetector(
+      dragBackSlide(
+        context,
+        animation,
+        SharedXPageTransition(
+          animation: dragging ? kAlwaysCompleteAnimation : animation,
+          secondaryAnimation: dragging
+              ? kAlwaysDismissedAnimation
+              : secondaryAnimation,
+          color: surface,
+          slide: SharedXPageTransition.pageSlide,
+          overSettledPage: _overSettledPage,
+          uncoveredByGesture: navigator!.userGestureInProgress,
+          child: ColoredBox(
+            color: dragging ? Colors.transparent : surface,
+            child: child,
+          ),
+        ),
       ),
     );
   }
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 300);
-
-  @override
-  Duration get reverseTransitionDuration => const Duration(milliseconds: 300);
+  Duration get transitionDuration => SharedXPageTransition.duration;
 }
 
 final Animatable<Offset> _kRightMiddleTween = Tween<Offset>(

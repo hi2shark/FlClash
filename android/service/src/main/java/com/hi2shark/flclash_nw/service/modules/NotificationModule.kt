@@ -1,6 +1,5 @@
 package com.hi2shark.flclash_nw.service.modules
 
-import android.app.Notification
 import android.app.Notification.FOREGROUND_SERVICE_IMMEDIATE
 import android.app.Service
 import android.app.Service.STOP_FOREGROUND_REMOVE
@@ -12,155 +11,137 @@ import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.Components
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.common.QuickAction
+import com.hi2shark.flclash_nw.common.ensureNotificationChannel
 import com.hi2shark.flclash_nw.common.quickIntent
 import com.hi2shark.flclash_nw.common.receiveBroadcastFlow
 import com.hi2shark.flclash_nw.common.startForeground
-import com.hi2shark.flclash_nw.common.tickerFlow
 import com.hi2shark.flclash_nw.common.toPendingIntent
 import com.hi2shark.flclash_nw.core.Core
 import com.hi2shark.flclash_nw.service.R
-import com.hi2shark.flclash_nw.service.State
+import com.hi2shark.flclash_nw.service.ServiceConfig
 import com.hi2shark.flclash_nw.service.models.NotificationParams
 import com.hi2shark.flclash_nw.service.models.getSpeedTrafficText
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
-data class ExtendedNotificationParams(
+private data class ExtendedNotificationParams(
     val title: String,
     val stopText: String,
-    val onlyStatisticsProxy: Boolean,
+    val showStopAction: Boolean,
     val contentText: String,
     val suspendedText: String,
-    val showStopAction: Boolean,
 )
 
 /**
- * Builds the notification-facing params. When the service is suspended (whether
- * by the user, WiFi-watch, or Doze idle), the contentText is replaced with the
- * localized "Suspended..." text instead of the live speed/traffic.
- *
- * [NotificationModule] includes `runtimeState.isSuspendedFlow` in its combine,
- * so this is re-evaluated the moment suspend state changes (no 1s ticker
- * latency), and also once per second by the ticker to refresh the live
- * speed/traffic text while not suspended.
+ * A suspended service shows the suspended label instead of the live speed/traffic; the
+ * combine re-derives this on every suspend transition and on each 1s ticker tick.
  */
-val NotificationParams.extended: ExtendedNotificationParams
-    get() {
-        val suspended = State.runtimeState.isSuspended
-        return ExtendedNotificationParams(
-            title = title,
-            stopText = stopText,
-            onlyStatisticsProxy = onlyStatisticsProxy,
-            contentText = if (suspended) suspendedText
-                else Core.getSpeedTrafficText(onlyStatisticsProxy),
-            suspendedText = suspendedText,
-            showStopAction = showStopAction,
+private val NotificationParams.extended: ExtendedNotificationParams
+    get() = ExtendedNotificationParams(
+        title,
+        stopText,
+        showStopAction,
+        if (ServiceConfig.runtimeState.isSuspended) {
+            suspendedText
+        } else {
+            Core.getSpeedTrafficText(onlyStatisticsProxy)
+        },
+        suspendedText,
+    )
+
+internal class NotificationModule(
+    private val service: Service,
+    private val scope: CoroutineScope,
+) : ServiceModule {
+    override fun start() {
+        service.ensureNotificationChannel()
+        update(ServiceConfig.notificationParams.value.extended)
+        scope.launch {
+            // Some ROMs, vivo's among them, drop updates posted behind the
+            // keyguard, so unlocking restarts the loop to post once more.
+            // SystemUI, an app, sends USER_PRESENT, which a receiver that is
+            // not exported never gets; all three actions are protected.
+            service.receiveBroadcastFlow(exported = true) {
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_USER_PRESENT)
+            }.map { intent ->
+                intent.action != Intent.ACTION_SCREEN_OFF
+            }.onStart {
+                emit(isScreenOn())
+            }.collectLatest { screenOn ->
+                if (!screenOn) return@collectLatest
+                combine(
+                    flow {
+                        while (true) {
+                            delay(1_000)
+                            emit(Unit)
+                        }
+                    },
+                    ServiceConfig.notificationParams,
+                    // isSuspendedFlow re-emits once runtimeState is up to date.
+                    ServiceConfig.runtimeState.isSuspendedFlow,
+                ) { _, params, _ ->
+                    params.extended
+                }.distinctUntilChanged()
+                    .collect(::update)
+            }
+        }
+    }
+
+    private fun isScreenOn() =
+        service.getSystemService<PowerManager>()?.isInteractive ?: true
+
+    private val notificationBuilder: NotificationCompat.Builder by lazy {
+        val intent = Intent().setComponent(Components.mainActivity)
+
+        NotificationCompat.Builder(
+            service,
+            GlobalState.NOTIFICATION_CHANNEL,
+        ).apply {
+            setSmallIcon(R.drawable.ic_service)
+            setContentTitle("FlClash")
+            setContentIntent(intent.toPendingIntent)
+            setPriority(NotificationCompat.PRIORITY_LOW)
+            setCategory(NotificationCompat.CATEGORY_SERVICE)
+            setOngoing(true)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
+            }
+            setShowWhen(true)
+            setOnlyAlertOnce(true)
+        }
+    }
+
+    private val stopIntent by lazy { QuickAction.STOP.quickIntent.toPendingIntent }
+
+    private fun update(params: ExtendedNotificationParams) {
+        service.startForeground(
+            with(notificationBuilder) {
+                setContentTitle(params.title)
+                setContentText(params.contentText)
+                clearActions()
+                if (params.showStopAction) {
+                    addAction(0, params.stopText, stopIntent)
+                }
+                build()
+            },
         )
     }
 
-private fun Service.isScreenOn(): Boolean {
-    val pm = getSystemService<PowerManager>()
-    return when (pm != null) {
-        true -> pm.isInteractive
-        false -> true
-    }
-}
-
-private fun Service.buildServiceNotification(
-    params: ExtendedNotificationParams,
-): Notification {
-    val intent = Intent().setComponent(Components.MAIN_ACTIVITY)
-    return NotificationCompat.Builder(
-        this, GlobalState.NOTIFICATION_CHANNEL
-    ).apply {
-        setSmallIcon(R.drawable.ic_service)
-        setContentTitle("FlClash")
-        setContentIntent(intent.toPendingIntent)
-        setPriority(NotificationCompat.PRIORITY_HIGH)
-        setCategory(NotificationCompat.CATEGORY_SERVICE)
-        setOngoing(true)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
-        }
-        setShowWhen(true)
-        setOnlyAlertOnce(true)
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-//                setRequestPromotedOngoing(true)
-//            }
-        clearActions()
-        if (params.showStopAction) {
-            addAction(
-                0, params.stopText, QuickAction.STOP.quickIntent.toPendingIntent
-            )
-        }
-        setContentTitle(params.title)
-        setContentText(params.contentText)
-    }.build()
-}
-
-fun Service.startForegroundWithNotification(
-    params: ExtendedNotificationParams = (State.notificationParamsFlow.value ?: NotificationParams()).extended,
-) {
-    startForeground(buildServiceNotification(params))
-}
-
-class NotificationModule(private val service: Service) : Module() {
-    private val scope = CoroutineScope(Dispatchers.Default)
-
-    override fun onInstall() {
-        scope.launch {
-            val screenFlow = service.receiveBroadcastFlow {
-                addAction(Intent.ACTION_SCREEN_ON)
-                addAction(Intent.ACTION_SCREEN_OFF)
-            }.map { intent ->
-                intent.action == Intent.ACTION_SCREEN_ON
-            }.onStart {
-                emit(service.isScreenOn())
-            }
-
-            combine(
-                tickerFlow(1000, 0),
-                State.notificationParamsFlow,
-                screenFlow,
-                State.runtimeState.isSuspendedFlow,
-            ) { _, params, screenOn, _ ->
-                // Re-derive extended on every tick, param change, screen toggle,
-                // AND suspend/resume transition. The `extended` getter reads
-                // State.runtimeState.isSuspended internally, which is already
-                // up to date by the time isSuspendedFlow re-emits, so the
-                // resulting ExtendedNotificationParams reflects the new state.
-                params?.extended to screenOn
-            }.filter { (params, screenOn) -> params != null && screenOn }
-                .distinctUntilChanged { old, new -> old.first == new.first && old.second == new.second }
-                .collect { (params, _) ->
-                    update(params!!)
-                }
-
-            State.notificationParamsFlow.value?.let {
-                update(it.extended)
-            } ?: run {
-                update(NotificationParams().extended)
-            }
-        }
-    }
-
-    private fun update(params: ExtendedNotificationParams) {
-        service.startForegroundWithNotification(params)
-    }
-
-    override fun onUninstall() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    @Suppress("DEPRECATION")
+    override fun stop() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             service.stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
             service.stopForeground(true)
         }
-        scope.cancel()
     }
 }

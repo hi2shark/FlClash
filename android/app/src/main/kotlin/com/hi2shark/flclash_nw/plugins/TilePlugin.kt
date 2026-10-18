@@ -7,7 +7,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
 class TilePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
-
     private lateinit var channel: MethodChannel
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -21,13 +20,10 @@ class TilePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 
     fun handleStart() {
-        channel.invokeMethodOnMainThread<Any>("start", null)
+        channel.invokeMethodOnMainThread("start")
     }
 
-    fun handleStop() {
-        channel.invokeMethodOnMainThread<Any>("stop", null)
+    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        result.notImplemented()
     }
-
-
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {}
 }

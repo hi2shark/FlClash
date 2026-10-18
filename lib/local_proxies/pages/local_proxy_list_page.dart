@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_edit_page.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_import_page.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
@@ -7,7 +8,7 @@ import 'package:fl_clash/pages/scan.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class LocalProxyListPage extends StatefulWidget {
   const LocalProxyListPage({super.key});
@@ -83,6 +84,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
   }
 
   Future<void> _toggleAndReload(int id) async {
+    final appLocalizations = context.appLocalizations;
     final original = _findProxy(id);
     if (original == null) return;
 
@@ -100,7 +102,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
     await _restoreToggle(id, original.enabled);
     await _reapplyPreviousConfig();
     if (mounted) {
-      globalState.showNotifier(context.appLocalizations.localProxyReloadFailed);
+      context.showNotifier(appLocalizations.localProxyReloadFailed);
     }
   }
 
@@ -165,7 +167,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
 
   Future<void> _handleDelete(LocalProxy proxy) async {
     final appLocalizations = context.appLocalizations;
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
       title: appLocalizations.tip,
       message: TextSpan(
         text: appLocalizations.deleteTip(appLocalizations.proxy),
@@ -204,7 +206,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.paste),
+                  leading: const GlyphIcon(AppGlyphs.paste),
                   title: Text(appLocalizations.pasteShareLink),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -212,7 +214,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.qr_code_scanner),
+                  leading: const GlyphIcon(AppGlyphs.qrCode),
                   title: Text(appLocalizations.scanQrcode),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -232,7 +234,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                 ),
                 for (final type in manualProxyTypes)
                   ListTile(
-                    leading: const Icon(Icons.edit_note),
+                    leading: const GlyphIcon(AppGlyphs.edit),
                     title: Text(_protocolLabel(type)),
                     onTap: () {
                       Navigator.of(context).pop();
@@ -265,9 +267,8 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                   controller: _searchController,
                   onChanged: (value) => setState(() => _query = value.trim()),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: const GlyphIcon(AppGlyphs.search),
                     hintText: appLocalizations.searchLocalProxy,
-                    border: const OutlineInputBorder(),
                   ),
                 ),
               ),
@@ -311,7 +312,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
         heroTag: null,
         onPressed: _showAddMenu,
         label: Text(appLocalizations.add),
-        icon: const Icon(Icons.add),
+        icon: const GlyphIcon(AppGlyphs.add, fill: 1),
       ),
     );
   }
@@ -369,11 +370,13 @@ class _ProxyCard extends StatelessWidget {
                 children: [
                   Switch(value: proxy.enabled, onChanged: (_) => onToggle()),
                   IconButton(
-                    icon: const Icon(Icons.edit_outlined),
+                    icon: const GlyphIcon(AppGlyphs.edit),
+                    tooltip: appLocalizations.edit,
                     onPressed: onEdit,
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete_outlined),
+                    icon: const GlyphIcon(AppGlyphs.delete),
+                    tooltip: appLocalizations.delete,
                     onPressed: onDelete,
                   ),
                 ],

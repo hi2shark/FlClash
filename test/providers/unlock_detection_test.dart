@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/event.dart';
@@ -90,7 +89,7 @@ void main() {
           selectedTargets: ['chatgpt', 'netflix'],
         ),
       );
-      final response = Completer<String>();
+      final response = Completer<UnlockTestRunResult>();
       when(() => mock.unlockTest(any())).thenAnswer((_) => response.future);
 
       final pending = container
@@ -116,7 +115,7 @@ void main() {
       expect(params.targetIds, ['chatgpt', 'netflix']);
 
       response.complete(
-        jsonEncode({
+        UnlockTestRunResult.fromJson({
           'run-id': params.runId,
           'route-mode': 'appRoute',
           'results': [
@@ -137,7 +136,7 @@ void main() {
       container = buildContainer(
         const UnlockTestProps(enable: true, selectedTargets: ['chatgpt']),
       );
-      final response = Completer<String>();
+      final response = Completer<UnlockTestRunResult>();
       when(() => mock.unlockTest(any())).thenAnswer((_) => response.future);
       final pending = container
           .read(unlockDetectionProvider.notifier)
@@ -165,7 +164,7 @@ void main() {
       );
 
       response.complete(
-        jsonEncode({
+        UnlockTestRunResult.fromJson({
           'run-id': params.runId,
           'route-mode': 'appRoute',
           'results': [
@@ -180,7 +179,7 @@ void main() {
       container = buildContainer(
         const UnlockTestProps(enable: true, selectedTargets: ['chatgpt']),
       );
-      final response = Completer<String>();
+      final response = Completer<UnlockTestRunResult>();
       when(() => mock.unlockTest(any())).thenAnswer((_) => response.future);
       final pending = container
           .read(unlockDetectionProvider.notifier)
@@ -208,7 +207,7 @@ void main() {
       );
 
       response.complete(
-        jsonEncode({
+        UnlockTestRunResult.fromJson({
           'run-id': params.runId,
           'route-mode': 'appRoute',
           'results': [
@@ -228,7 +227,7 @@ void main() {
         when(() => mock.unlockTest(any())).thenAnswer((invocation) async {
           final params =
               invocation.positionalArguments.single as UnlockTestRunParams;
-          return jsonEncode({
+          return UnlockTestRunResult.fromJson({
             'run-id': params.runId,
             'route-mode': 'proxy',
             'proxy-name': 'P1',
@@ -259,7 +258,7 @@ void main() {
         const UnlockTestProps(enable: true, selectedTargets: ['chatgpt']),
         historyWriter: (_) async => historyWrites++,
       );
-      final response = Completer<String>();
+      final response = Completer<UnlockTestRunResult>();
       when(() => mock.unlockTest(any())).thenAnswer((_) => response.future);
       when(() => mock.cancelUnlockTest(any())).thenAnswer((_) async => true);
       final pending = container
@@ -277,7 +276,7 @@ void main() {
       expect(container.read(unlockDetectionProvider).isLoading, false);
 
       response.complete(
-        jsonEncode({
+        UnlockTestRunResult.fromJson({
           'run-id': params.runId,
           'route-mode': 'appRoute',
           'cancelled': true,
@@ -296,7 +295,7 @@ void main() {
       when(() => mock.unlockTest(any())).thenAnswer((invocation) async {
         final params =
             invocation.positionalArguments.single as UnlockTestRunParams;
-        return jsonEncode({
+        return UnlockTestRunResult.fromJson({
           'run-id': params.runId,
           'route-mode': 'appRoute',
           'results': [

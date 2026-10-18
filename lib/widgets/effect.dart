@@ -1,18 +1,21 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/widgets/inherited.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class EffectGestureDetector extends StatefulWidget {
   final Widget child;
   final GestureLongPressCallback? onLongPress;
+  final GestureTapCallback? onSecondaryTap;
   final GestureTapCallback? onTap;
 
   const EffectGestureDetector({
     super.key,
     required this.child,
     this.onLongPress,
+    this.onSecondaryTap,
     this.onTap,
   });
 
@@ -51,6 +54,7 @@ class _EffectGestureDetectorState extends State<EffectGestureDetector>
           });
         },
         onTap: widget.onTap,
+        onSecondaryTap: widget.onSecondaryTap,
         onLongPressEnd: (_) {
           setState(() {
             _scale = 1;
@@ -119,7 +123,7 @@ class _CommonExpandIconState extends State<CommonExpandIcon>
       builder: (_, child) {
         return RotationTransition(turns: _iconTurns, child: child!);
       },
-      child: const Icon(Icons.expand_more),
+      child: const GlyphIcon(AppGlyphs.caretDown, fill: 1),
     );
   }
 }
@@ -129,16 +133,17 @@ Widget commonProxyDecorator(
   int index,
   Animation<double> animation,
 ) {
-  return ProxyDecoratorProvider(
-    isProxyDecorator: true,
-    child: AnimatedBuilder(
-      animation: animation,
-      builder: (_, Widget? child) {
-        final double animValue = Curves.easeInOut.transform(animation.value);
-        final double scale = lerpDouble(1, 1.02, animValue)!;
-        return Transform.scale(scale: scale, child: child);
-      },
-      child: child,
-    ),
+  return AnimatedBuilder(
+    animation: animation,
+    builder: (_, Widget? child) {
+      final double animValue = Curves.easeInOut.transform(animation.value);
+      final double scale = lerpDouble(1, 1.02, animValue)!;
+      return ProxyDecoratorProvider(
+        isProxyDecorator: true,
+        lift: animValue,
+        child: Transform.scale(scale: scale, child: child),
+      );
+    },
+    child: child,
   );
 }

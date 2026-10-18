@@ -2,39 +2,39 @@ import 'iterable.dart';
 
 typedef ValueCallback<T> = T Function();
 
-/// Bounded list that mutates in place. Use [share] after mutation to obtain a
-/// new wrapper (same backing storage) so Riverpod can notify listeners without
-/// copying every element.
 class FixedList<T> {
   final int maxLength;
   final List<T> _list;
 
-  FixedList(this.maxLength, {List<T>? list})
-    : _list = List<T>.of(list ?? const []) {
-    _list.truncate(maxLength);
-  }
+  final int _revision;
+  List<T>? _snapshot;
 
-  FixedList._share(this.maxLength, this._list);
+  FixedList(this.maxLength, {List<T>? list})
+    : assert(maxLength > 0, 'FixedList without a cap grows without bound'),
+      _list = (list ?? [])..truncate(maxLength),
+      _revision = 0;
+
+  FixedList._(this.maxLength, this._list, this._revision);
+
+  int get revision => _revision;
 
   void add(T item) {
-    if (maxLength <= 0) {
-      _list.clear();
-      return;
-    }
     _list.add(item);
-    if (_list.length > maxLength) {
-      _list.removeRange(0, _list.length - maxLength);
-    }
+    _list.truncate(maxLength);
+    _snapshot = null;
   }
 
   void clear() {
     _list.clear();
+    _snapshot = null;
   }
 
-  /// New [FixedList] wrapping the same buffer (no element copy).
-  FixedList<T> share() => FixedList._share(maxLength, _list);
+  FixedList<T> append(T item) {
+    add(item);
+    return FixedList._(maxLength, _list, _revision + 1);
+  }
 
-  List<T> get list => List.unmodifiable(_list);
+  List<T> get list => _snapshot ??= List.unmodifiable(_list);
 
   int get length => _list.length;
 
@@ -43,6 +43,15 @@ class FixedList<T> {
   FixedList<T> copyWith() {
     return FixedList(maxLength, list: List.of(_list));
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is FixedList<T> &&
+      identical(other._list, _list) &&
+      other._revision == _revision;
+
+  @override
+  int get hashCode => Object.hash(identityHashCode(_list), _revision);
 }
 
 class FixedMap<K, V> {
@@ -91,4 +100,18 @@ class FixedMap<K, V> {
   int get length => _map.length;
 
   Map<K, V> get map => Map.unmodifiable(_map);
+}
+
+/// Restores the head that [latest] trimmed off [current] so a paused view
+/// stays anchored; the result is capped at [limit] from the tail.
+List<T> retainTrimmedHead<T>(List<T> current, List<T> latest, int limit) {
+  if (current.isEmpty || latest.isEmpty) {
+    return latest;
+  }
+  final index = current.indexWhere((item) => identical(item, latest.first));
+  if (index == 0) {
+    return latest;
+  }
+  final head = index > 0 ? current.sublist(0, index) : current;
+  return List.unmodifiable([...head, ...latest].take(limit));
 }

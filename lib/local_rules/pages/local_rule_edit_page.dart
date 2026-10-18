@@ -1,11 +1,11 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/local_rules/services/local_rule_store.dart';
 import 'package:fl_clash/local_rules/services/local_rule_targets.dart';
 import 'package:fl_clash/models/local_rule.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class LocalRuleEditPage extends StatefulWidget {
   const LocalRuleEditPage({super.key, this.rule, this.catalog});
@@ -58,8 +58,7 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
   }
 
   Future<void> _handleSelectAction() async {
-    final selected = await globalState.showCommonDialog<RuleAction>(
-      filter: false,
+    final selected = await dialogs.showCommonDialog<RuleAction>(
       child: OptionsDialog<RuleAction>(
         title: context.appLocalizations.ruleName,
         options: RuleAction.addedRuleActions,
@@ -89,7 +88,7 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid) return;
     if ((_rule.ruleTarget ?? '').isEmpty) {
-      globalState.showNotifier(context.appLocalizations.selectSplitStrategy);
+      context.showNotifier(context.appLocalizations.selectSplitStrategy);
       return;
     }
 
@@ -119,10 +118,11 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
       title: _isEditing
           ? appLocalizations.editLocalRule
           : appLocalizations.addLocalRule,
-      floatingActionButton: CommonFloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: _handleSave,
-        icon: const Icon(Icons.save),
-        label: appLocalizations.save,
+        label: Text(appLocalizations.save),
+        icon: const GlyphIcon(AppGlyphs.save, fill: 1),
       ),
       body: Form(
         key: _formKey,
@@ -133,7 +133,7 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
               child: ListItem(
                 title: Text(appLocalizations.ruleName),
                 subtitle: Text(_rule.ruleAction.value),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward),
                 onTap: _handleSelectAction,
               ),
             ),
@@ -173,7 +173,7 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
                       ? appLocalizations.invalidPolicy(target)
                       : target,
                 ),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward),
                 onTap: _handleSelectTarget,
               ),
             ),
@@ -182,28 +182,24 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
               CommonCard(
                 child: Column(
                   children: [
-                    ListItem.switchItem(
+                    ListItem.toggle(
                       title: Text(appLocalizations.matchSourceIp),
-                      delegate: SwitchDelegate<bool>(
-                        value: _rule.src,
-                        onChanged: (value) {
-                          setState(() {
-                            _rule = _rule.copyWith(src: value);
-                          });
-                        },
-                      ),
+                      value: _rule.src,
+                      onChanged: (value) {
+                        setState(() {
+                          _rule = _rule.copyWith(src: value);
+                        });
+                      },
                     ),
                     const Divider(height: 1),
-                    ListItem.switchItem(
+                    ListItem.toggle(
                       title: Text(appLocalizations.noResolveHostname),
-                      delegate: SwitchDelegate<bool>(
-                        value: _rule.noResolve,
-                        onChanged: (value) {
-                          setState(() {
-                            _rule = _rule.copyWith(noResolve: value);
-                          });
-                        },
-                      ),
+                      value: _rule.noResolve,
+                      onChanged: (value) {
+                        setState(() {
+                          _rule = _rule.copyWith(noResolve: value);
+                        });
+                      },
                     ),
                   ],
                 ),
@@ -217,11 +213,7 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
 }
 
 class LocalRuleTargetPage extends StatelessWidget {
-  const LocalRuleTargetPage({
-    super.key,
-    required this.catalog,
-    this.selected,
-  });
+  const LocalRuleTargetPage({super.key, required this.catalog, this.selected});
 
   final LocalRuleTargetCatalog catalog;
   final String? selected;
@@ -238,7 +230,7 @@ class LocalRuleTargetPage extends StatelessWidget {
         ListItem(
           title: Text(title),
           subtitle: subtitle != null ? Text(subtitle) : null,
-          trailing: selected == title ? const Icon(Icons.check) : null,
+          trailing: selected == title ? const GlyphIcon(AppGlyphs.check) : null,
           onTap: () {
             Navigator.of(context).pop(title);
           },
@@ -276,9 +268,7 @@ class LocalRuleTargetPage extends StatelessWidget {
           const SizedBox(height: 8),
           if (groups.isEmpty)
             CommonCard(
-              child: ListItem(
-                title: Text(appLocalizations.noLocalRuleGroups),
-              ),
+              child: ListItem(title: Text(appLocalizations.noLocalRuleGroups)),
             )
           else
             CommonCard(

@@ -1,13 +1,16 @@
 export 'app.dart';
+export 'changelog.dart';
 export 'clash_config.dart';
 export 'common.dart';
 export 'config.dart';
 export 'core.dart';
+export 'ip_quality.dart';
 export 'local_proxy.dart';
 export 'local_proxy_provider_config.dart';
 export 'local_rule.dart';
 export 'local_rule_mixin_config.dart';
 export 'profile.dart';
+export 'references.dart';
 export 'state.dart';
 export 'unlock_test.dart';
 export 'wifi_watch_state.dart';

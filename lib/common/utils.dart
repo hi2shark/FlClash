@@ -6,7 +6,7 @@ import 'dart:ui';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 class Utils {
@@ -189,28 +189,6 @@ class Utils {
   //       ? PinyinHelper.getFirstWordPinyin(value.substring(0, 1))
   //       : '';
   // }
-
-  String? getFileNameForDisposition(String? disposition) {
-    if (disposition == null) return null;
-    final parseValue = HeaderValue.parse(disposition);
-    final parameters = parseValue.parameters;
-    final fileNamePointKey = parameters.keys.firstWhere(
-      (key) => key == 'filename*',
-      orElse: () => '',
-    );
-    if (fileNamePointKey.isNotEmpty) {
-      final res = parameters[fileNamePointKey]?.split("''") ?? [];
-      if (res.length >= 2) {
-        return Uri.decodeComponent(res[1]);
-      }
-    }
-    final fileNameKey = parameters.keys.firstWhere(
-      (key) => key == 'filename',
-      orElse: () => '',
-    );
-    if (fileNameKey.isEmpty) return null;
-    return parameters[fileNameKey];
-  }
 
   FlutterView getScreen() {
     return WidgetsBinding.instance.platformDispatcher.views.first;

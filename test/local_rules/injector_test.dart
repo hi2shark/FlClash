@@ -150,9 +150,7 @@ void main() {
 
   test('skips missing groups and nodes without throwing', () async {
     await localRuleStore.saveConfig(const LocalRuleMixinConfig(enabled: true));
-    await localRuleStore.add(
-      _rule(id: 1, content: 'ok.com', target: 'DIRECT'),
-    );
+    await localRuleStore.add(_rule(id: 1, content: 'ok.com', target: 'DIRECT'));
     await localRuleStore.add(
       _rule(id: 2, content: 'missing.com', target: 'Gone'),
     );
@@ -219,9 +217,7 @@ void main() {
 
   test('skips disabled rules', () async {
     await localRuleStore.saveConfig(const LocalRuleMixinConfig(enabled: true));
-    await localRuleStore.add(
-      _rule(id: 1, content: 'off.com', enabled: false),
-    );
+    await localRuleStore.add(_rule(id: 1, content: 'off.com', enabled: false));
     await localRuleStore.add(_rule(id: 2, content: 'on.com'));
     final rawConfig = <String, dynamic>{'rules': <String>[]};
 

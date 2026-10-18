@@ -1,19 +1,9 @@
-import 'dart:ffi';
-
 import 'package:drift/native.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqlite3/open.dart';
 
 void main() {
   late Database database;
-
-  setUpAll(() {
-    open.overrideFor(
-      OperatingSystem.linux,
-      () => DynamicLibrary.open('libsqlite3.so.0'),
-    );
-  });
 
   setUp(() {
     database = Database(NativeDatabase.memory());

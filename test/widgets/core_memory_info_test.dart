@@ -1,4 +1,5 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/views/dashboard/widget_registry.dart';
 import 'package:fl_clash/widgets/grid.dart';
 import 'package:flutter_test/flutter_test.dart';
 

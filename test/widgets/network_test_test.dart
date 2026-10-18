@@ -1,65 +1,68 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/network_test.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockCoreHandler extends Mock implements CoreHandlerInterface {}
 
+const _lifecycleResult = CoreLifecycleResult(
+  revision: 0,
+  outcome: CoreLifecycleOutcome.applied,
+);
+
 class _RecordingCoreHandler extends CoreHandlerInterface {
-  final Completer<void> _ready = Completer<void>()..complete();
-  ActionMethod? method;
-  dynamic data;
+  CoreMethod? method;
+  Object? arguments;
   Duration? timeout;
 
   @override
-  Completer get completer => _ready;
-
-  @override
-  FutureOr<bool> destroy() async => true;
-
-  @override
-  Future<String> preload() async => '';
-
-  @override
-  Future<bool> shutdown(bool isUser) async => true;
-
-  @override
-  Future<T?> invoke<T>({
-    required ActionMethod method,
-    dynamic data,
+  Future<T?> invokeMethod<T>({
+    required CoreMethod method,
+    Object? arguments,
     Duration? timeout,
   }) async {
     this.method = method;
-    this.data = data;
+    this.arguments = arguments;
     this.timeout = timeout;
-    return jsonEncode({'name': 'P'}) as T?;
+    return <String, dynamic>{'name': 'P'} as T?;
   }
+
+  @override
+  Future<CoreLifecycleResult> start() async => _lifecycleResult;
+
+  @override
+  Future<CoreLifecycleResult> restart() async => _lifecycleResult;
+
+  @override
+  Future<CoreLifecycleResult> stop() async => _lifecycleResult;
+
+  @override
+  Future<CoreLifecycleResult> close() async => _lifecycleResult;
 }
 
-class _PendingCoreHandler extends _RecordingCoreHandler {
+class _UnansweredCoreHandler extends _RecordingCoreHandler {
   @override
-  Future<T?> invoke<T>({
-    required ActionMethod method,
-    dynamic data,
+  Future<T?> invokeMethod<T>({
+    required CoreMethod method,
+    Object? arguments,
     Duration? timeout,
-  }) {
+  }) async {
     this.method = method;
-    this.data = data;
+    this.arguments = arguments;
     this.timeout = timeout;
-    return Completer<T?>().future;
+    return null;
   }
 }
 
@@ -70,9 +73,7 @@ Widget _wrap(Widget child) {
       navigatorKey: globalState.navigatorKey,
       localizationsDelegates: const [
         AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
       ],
       supportedLocales: AppLocalizations.delegate.supportedLocales,
       home: Builder(
@@ -91,25 +92,21 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.tap(finder);
 }
 
-String _speedResult({int latency = 1}) {
-  return jsonEncode(
-    SpeedTestResult(
-      name: 'DIRECT',
-      latency: latency,
-      speed: 1000,
-      bytes: 1000,
-    ).toJson(),
+SpeedTestResult _speedResult({int latency = 1}) {
+  return SpeedTestResult(
+    name: 'DIRECT',
+    latency: latency,
+    speed: 1000,
+    bytes: 1000,
   );
 }
 
-String _quicResult({String target = 'cloudflare-quic.com:443'}) {
-  return jsonEncode(
-    QuicTestResult(
-      name: 'DIRECT',
-      target: target,
-      stage: 'completed',
-      rtt: 1,
-    ).toJson(),
+QuicTestResult _quicResult({String target = 'cloudflare-quic.com:443'}) {
+  return QuicTestResult(
+    name: 'DIRECT',
+    target: target,
+    stage: 'completed',
+    rtt: 1,
   );
 }
 
@@ -146,7 +143,10 @@ void main() {
         'CacheFly 100 MB',
       ]),
     );
-    expect(presetsByLabel.keys.where((label) => label.startsWith('OVH')), isEmpty);
+    expect(
+      presetsByLabel.keys.where((label) => label.startsWith('OVH')),
+      isEmpty,
+    );
     expect(presetsByLabel, isNot(contains('Cloudflare 100 MB')));
     expect(
       presets.map((preset) => preset.url),
@@ -224,9 +224,9 @@ void main() {
         timeout: 20000,
       ),
     );
-    expect(handler.method, ActionMethod.speedTest);
-    expect(handler.timeout, const Duration(seconds: 25));
-    expect(jsonDecode(handler.data as String), {
+    expect(handler.method, CoreMethod.speedTest);
+    expect(handler.timeout, const Duration(seconds: 45));
+    expect(handler.arguments, {
       'proxy-name': 'P',
       'test-url': 'https://offline.invalid/?bytes=10000000',
       'timeout': 20000,
@@ -239,20 +239,20 @@ void main() {
         timeout: 10000,
       ),
     );
-    expect(handler.method, ActionMethod.quicTest);
-    expect(handler.timeout, const Duration(seconds: 12));
-    expect(jsonDecode(handler.data as String), {
+    expect(handler.method, CoreMethod.quicTest);
+    expect(handler.timeout, const Duration(seconds: 25));
+    expect(handler.arguments, {
       'proxy-name': 'P',
       'host': 'offline.invalid:8443',
       'timeout': 10000,
     });
   });
 
-  testWidgets('core interface enforces timeout for a pending invoke', (
-    tester,
-  ) async {
-    final handler = _PendingCoreHandler();
-    final resultFuture = handler.quicTest(
+  test('a Core that never answers surfaces the client timeout', () async {
+    final handler = _UnansweredCoreHandler();
+    final unansweredController = CoreController.test(handler);
+
+    final result = await unansweredController.getQuicTest(
       const QuicTestParams(
         proxyName: 'P',
         host: 'offline.invalid:443',
@@ -260,25 +260,23 @@ void main() {
       ),
     );
 
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 3));
-
-    expect(handler.timeout, const Duration(milliseconds: 2001));
-    expect(jsonDecode(await resultFuture), {
-      'name': 'P',
-      'rtt': 0,
-      'alpn': '',
-      'version': 0,
-      'error': 'core QUIC test did not respond before the client timeout',
-      'stage': 'client_timeout',
-      'target': 'offline.invalid:443',
-      'resolved-ip': '',
-      'network': '',
-      'sent-packets': 0,
-      'sent-bytes': 0,
-      'received-packets': 0,
-      'received-bytes': 0,
-    });
+    expect(handler.timeout, const Duration(milliseconds: 5002));
+    expect(result.name, 'P');
+    expect(result.rtt, 0);
+    expect(result.alpn, '');
+    expect(result.version, 0);
+    expect(
+      result.error,
+      'core QUIC test did not respond before the client timeout',
+    );
+    expect(result.stage, 'client_timeout');
+    expect(result.target, 'offline.invalid:443');
+    expect(result.resolvedIp, '');
+    expect(result.network, '');
+    expect(result.sentPackets, 0);
+    expect(result.sentBytes, 0);
+    expect(result.receivedPackets, 0);
+    expect(result.receivedBytes, 0);
   });
 
   testWidgets('NetworkTestView starts with speed and QUIC targets collapsed', (
@@ -439,8 +437,8 @@ void main() {
   testWidgets('stale speed result is ignored after package changes', (
     tester,
   ) async {
-    final firstResult = Completer<String>();
-    final secondResult = Completer<String>();
+    final firstResult = Completer<SpeedTestResult>();
+    final secondResult = Completer<SpeedTestResult>();
     var callCount = 0;
     when(() => mock.speedTest(any())).thenAnswer((_) {
       callCount++;
@@ -481,8 +479,8 @@ void main() {
   testWidgets('stale QUIC result is ignored after target changes', (
     tester,
   ) async {
-    final firstResult = Completer<String>();
-    final secondResult = Completer<String>();
+    final firstResult = Completer<QuicTestResult>();
+    final secondResult = Completer<QuicTestResult>();
     final calls = <QuicTestParams>[];
     when(() => mock.quicTest(any())).thenAnswer((invocation) {
       calls.add(invocation.positionalArguments.single as QuicTestParams);

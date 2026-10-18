@@ -1,22 +1,22 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/dashboard/widget_metrics.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class WifiWatchCard extends StatelessWidget {
   const WifiWatchCard({super.key});
 
-  IconData _signalIcon(int? rssi, bool hasNetwork) {
-    if (rssi == null) {
-      return hasNetwork ? Icons.wifi : Icons.signal_wifi_0_bar;
+  Glyph _signalIcon(bool hasNetwork) {
+    if (!hasNetwork) {
+      return AppGlyphs.wifiOff;
     }
-    if (rssi >= -55) return Icons.signal_wifi_4_bar;
-    if (rssi >= -70) return Icons.wifi;
-    return Icons.signal_wifi_0_bar;
+    return AppGlyphs.wifi;
   }
 
   Color _signalColor(
@@ -133,11 +133,11 @@ class WifiWatchCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return SizedBox(
-      height: getWidgetHeight(1),
+      height: DashboardWidgetMetrics.heightOf(context, 1),
       child: CommonCard(
         info: Info(
           label: appLocalizations.wifiWatchTitle,
-          iconData: Icons.wifi_tethering,
+          glyph: AppGlyphs.wifi,
         ),
         onPressed: () {},
         child: Container(
@@ -172,8 +172,8 @@ class WifiWatchCard extends StatelessWidget {
                     return FadeThroughBox(
                       child: Row(
                         children: [
-                          Icon(
-                            _signalIcon(state.rssi, hasNetwork),
+                          GlyphIcon(
+                            _signalIcon(hasNetwork),
                             size: 20,
                             color: _signalColor(
                               context,

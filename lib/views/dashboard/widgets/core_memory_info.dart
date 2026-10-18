@@ -2,23 +2,31 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/manager/background_resource_manager.dart';
+import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/dashboard/widget_metrics.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 final _coreMemoryStateNotifier = ValueNotifier<num>(0);
 
-class CoreMemoryInfo extends StatefulWidget {
+class CoreMemoryInfo extends ConsumerStatefulWidget {
   const CoreMemoryInfo({super.key});
 
   @override
-  State<CoreMemoryInfo> createState() => _CoreMemoryInfoState();
+  ConsumerState<CoreMemoryInfo> createState() => _CoreMemoryInfoState();
 }
 
-class _CoreMemoryInfoState extends State<CoreMemoryInfo>
+class _CoreMemoryInfoState extends ConsumerState<CoreMemoryInfo>
     with WidgetsBindingObserver {
   Timer? timer;
+
+  CoreController get _core => ref.read(coreHandlerProvider);
 
   @override
   void initState() {
@@ -66,7 +74,8 @@ class _CoreMemoryInfoState extends State<CoreMemoryInfo>
   bool get _shouldPoll {
     if (backgroundResourceManager.isBackground) return false;
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
-    return lifecycleState == null || lifecycleState == AppLifecycleState.resumed;
+    return lifecycleState == null ||
+        lifecycleState == AppLifecycleState.resumed;
   }
 
   Future<void> _updateMemory() async {
@@ -76,8 +85,9 @@ class _CoreMemoryInfoState extends State<CoreMemoryInfo>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted || !_shouldPoll) return;
       try {
-        if (coreController.isCompleted) {
-          _coreMemoryStateNotifier.value = await coreController.getMemory();
+        if (ref.read(coreStatusProvider) == CoreStatus.connected) {
+          _coreMemoryStateNotifier.value =
+              (await _core.getMemoryStats())?.rss ?? 0;
         } else {
           _coreMemoryStateNotifier.value = 0;
         }
@@ -96,15 +106,15 @@ class _CoreMemoryInfoState extends State<CoreMemoryInfo>
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return SizedBox(
-      height: getWidgetHeight(1),
+      height: DashboardWidgetMetrics.heightOf(context, 1),
       child: RepaintBoundary(
         child: CommonCard(
           info: Info(
-            iconData: Icons.memory_outlined,
             label: appLocalizations.coreMemoryInfo,
+            glyph: AppGlyphs.memory,
           ),
           onPressed: () {
-            coreController.requestGc();
+            _core.requestGc();
           },
           child: Container(
             padding: baseInfoEdgeInsets.copyWith(top: 0),

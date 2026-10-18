@@ -1,85 +1,95 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/models/common.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/widgets/inherited.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'dart:async';
 
-import 'scaffold.dart';
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/widgets/inherited.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'sheet_navigator.dart';
 import 'side_sheet.dart';
+import 'snap_sheet.dart';
 
 @immutable
 class SheetProps {
-  final double? maxWidth;
-  final double? maxHeight;
-  final bool isScrollControlled;
-  final bool useSafeArea;
   final Color? backgroundColor;
-  final bool blur;
+
+  final List<double> detents;
+
+  final SheetTransition transition;
 
   const SheetProps({
-    this.maxWidth,
-    this.maxHeight,
     this.backgroundColor,
-    this.useSafeArea = true,
-    this.isScrollControlled = false,
-    this.blur = true,
+    this.detents = snapSheetDetents,
+    this.transition = SheetTransition.slide,
   });
 }
 
 @immutable
 class ExtendProps {
-  final double? maxWidth;
-  final bool useSafeArea;
-  final bool blur;
   final bool forceFull;
 
-  const ExtendProps({
-    this.maxWidth,
-    this.useSafeArea = true,
-    this.blur = true,
-    this.forceFull = false,
-  });
+  const ExtendProps({this.forceFull = false});
 }
 
 enum SheetType { page, bottomSheet, sideSheet }
+
+enum SheetTransition { slide, stack }
+
+const stackedSheetPeek = 14.0;
+
+/// Flutter's Cupertino sheet measured this on iOS 18.
+const stackedSheetScale = 1 - 0.0835;
 
 Future<T?> showSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
   SheetProps props = const SheetProps(),
 }) {
-  final isMobile = globalState.container.read(isMobileViewProvider);
-  return switch (isMobile) {
-    true => showModalBottomSheet<T>(
-      context: context,
-      isScrollControlled: props.isScrollControlled,
-      builder: (_) {
-        return SheetProvider(
-          type: SheetType.bottomSheet,
-          child: builder(context),
-        );
-      },
-      backgroundColor: props.backgroundColor,
-      showDragHandle: false,
-      useSafeArea: props.useSafeArea,
-    ),
-    false => showModalSideSheet<T>(
-      useSafeArea: props.useSafeArea,
-      isScrollControlled: props.isScrollControlled,
-      context: context,
-      backgroundColor: props.backgroundColor,
-      constraints: BoxConstraints(maxWidth: props.maxWidth ?? 360),
-      filter: props.blur ? commonFilter : null,
-      builder: (_) {
-        return SheetProvider(
-          type: SheetType.sideSheet,
-          child: builder(context),
-        );
-      },
-    ),
-  };
+  final isMobile = context.isMobileView;
+  final barrierColor = context.colorScheme.modalScrim;
+  if (isMobile) {
+    final navigator = sheetNavigatorOf(context);
+    return navigator.push(
+      SnapSheetRoute<T>(
+        builder: (sheetContext, _) => builder(sheetContext),
+        detents: props.detents,
+        transition: props.transition,
+        fitsContent: true,
+        sheetBarrierColor: barrierColor,
+        barrierLabel: MaterialLocalizations.of(
+          context,
+        ).modalBarrierDismissLabel,
+        capturedThemes: InheritedTheme.capture(
+          from: context,
+          to: navigator.context,
+        ),
+      ),
+    );
+  }
+  return _showSideSheet<T>(
+    context,
+    backgroundColor: props.backgroundColor,
+    builder: builder,
+  );
+}
+
+Future<T?> _showSideSheet<T>(
+  BuildContext context, {
+  required WidgetBuilder builder,
+  Color? backgroundColor,
+}) {
+  return showModalSideSheet<T>(
+    context: context,
+    backgroundColor: backgroundColor,
+    barrierColor: context.colorScheme.modalScrim,
+    builder: (sheetContext) {
+      return SheetProvider(
+        type: SheetType.sideSheet,
+        child: builder(sheetContext),
+      );
+    },
+  );
 }
 
 Future<T?> showExtend<T>(
@@ -87,233 +97,139 @@ Future<T?> showExtend<T>(
   required WidgetBuilder builder,
   ExtendProps props = const ExtendProps(),
 }) {
-  final isMobile = globalState.container.read(isMobileViewProvider);
+  final isMobile = context.isMobileView;
   return switch (isMobile || props.forceFull) {
     true => BaseNavigator.push(
       context,
       SheetProvider(type: SheetType.page, child: builder(context)),
     ),
-    false => showModalSideSheet<T>(
-      useSafeArea: props.useSafeArea,
-      context: context,
-      constraints: BoxConstraints(maxWidth: props.maxWidth ?? 360),
-      filter: props.blur ? commonFilter : null,
-      builder: (context) {
-        return SheetProvider(
-          type: SheetType.sideSheet,
-          child: builder(context),
-        );
-      },
-    ),
+    false => _showSideSheet<T>(context, builder: builder),
   };
 }
 
-class AdaptiveSheetScaffold extends StatefulWidget {
-  final Widget body;
-  final String title;
-  final bool sheetTransparentToolBar;
-  final List<IconButtonData> actions;
-  final VoidCallback? backAction;
+/// Opens a sheet the reader can drag between [detents], starting at the
+/// shortest. Where a sheet cannot have detents the
+/// content keeps its own scroll controller and [initialScrollOffset] is the
+/// caller's own business.
+///
+/// The sheet follows the view across the mobile breakpoint: it reopens in the
+/// other form, and the result is whichever form the reader closes.
+Future<T?> showSnapSheet<T>(
+  BuildContext context, {
+  required SnapSheetBuilder builder,
+  double initialScrollOffset = 0,
+  List<double> detents = snapSheetDetents,
+  SheetTransition transition = SheetTransition.slide,
+}) {
+  final completer = Completer<T?>();
 
-  const AdaptiveSheetScaffold({
-    super.key,
-    required this.body,
-    required this.title,
-    this.sheetTransparentToolBar = false,
-    this.actions = const [],
-    this.backAction,
-  });
+  void open({required bool isMobile}) {
+    var crossed = false;
+    var popped = false;
 
-  @override
-  State<AdaptiveSheetScaffold> createState() => _AdaptiveSheetScaffoldState();
+    // The mobile layout drops a desktop page's navigator, sheet and all.
+    void reopenIfDropped() {
+      if (crossed || popped) {
+        return;
+      }
+      crossed = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          open(isMobile: context.isMobileView);
+        } else {
+          completer.complete();
+        }
+      });
+    }
+
+    Widget home(BuildContext sheetContext, ScrollController? controller) {
+      return _SnapSheetHome(
+        isMobile: isMobile,
+        onCross: () {
+          if (crossed || !sheetContext.mounted || !context.mounted) {
+            return;
+          }
+          if (ModalRoute.of(sheetContext)?.isCurrent != true) {
+            return;
+          }
+          crossed = true;
+          Navigator.of(sheetContext).pop();
+          open(isMobile: !isMobile);
+        },
+        onDispose: reopenIfDropped,
+        child: builder(sheetContext, controller),
+      );
+    }
+
+    final barrierColor = context.colorScheme.modalScrim;
+    final Future<T?> closed;
+    if (isMobile) {
+      final navigator = sheetNavigatorOf(context);
+      closed = navigator.push(
+        SnapSheetRoute<T>(
+          builder: home,
+          detents: detents,
+          transition: transition,
+          initialScrollOffset: initialScrollOffset,
+          sheetBarrierColor: barrierColor,
+          barrierLabel: MaterialLocalizations.of(
+            context,
+          ).modalBarrierDismissLabel,
+          capturedThemes: InheritedTheme.capture(
+            from: context,
+            to: navigator.context,
+          ),
+        ),
+      );
+    } else {
+      closed = _showSideSheet<T>(
+        context,
+        builder: (sheetContext) => home(sheetContext, null),
+      );
+    }
+    unawaited(
+      closed.then((value) {
+        popped = true;
+        if (!crossed) {
+          completer.complete(value);
+        }
+      }),
+    );
+  }
+
+  open(isMobile: context.isMobileView);
+  return completer.future;
 }
 
-class _AdaptiveSheetScaffoldState extends State<AdaptiveSheetScaffold> {
-  final _isScrolledController = ValueNotifier<bool>(false);
+class _SnapSheetHome extends ConsumerStatefulWidget {
+  const _SnapSheetHome({
+    required this.isMobile,
+    required this.onCross,
+    required this.onDispose,
+    required this.child,
+  });
 
-  IconData get backIconData {
-    if (kIsWeb) {
-      return Icons.arrow_back;
-    }
-    switch (Theme.of(context).platform) {
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        return Icons.arrow_back;
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        return Icons.arrow_back_ios_new_rounded;
-    }
-  }
+  final bool isMobile;
+  final VoidCallback onCross;
+  final VoidCallback onDispose;
+  final Widget child;
 
   @override
-  void didUpdateWidget(covariant AdaptiveSheetScaffold oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.backAction != widget.backAction) {
-      setState(() {});
-    }
-  }
+  ConsumerState<_SnapSheetHome> createState() => _SnapSheetHomeState();
+}
 
+class _SnapSheetHomeState extends ConsumerState<_SnapSheetHome> {
   @override
   void dispose() {
-    _isScrolledController.dispose();
+    widget.onDispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final sheetProvider = SheetProvider.of(context);
-    final nestedNavigatorPop = sheetProvider?.nestedNavigatorPop;
-    final ModalRoute<dynamic>? route = ModalRoute.of(context);
-    final type = sheetProvider?.type ?? SheetType.page;
-    final backgroundColor = type == SheetType.bottomSheet
-        ? context.colorScheme.surfaceContainerLow
-        : context.colorScheme.surface;
-    final useCloseIcon =
-        type != SheetType.page &&
-        (nestedNavigatorPop != null && route?.impliesAppBarDismissal == false ||
-            nestedNavigatorPop == null);
-    Widget buildIconButton(IconButtonData data) {
-      if (type == SheetType.bottomSheet) {
-        return IconButton.filledTonal(
-          onPressed: data.onPressed,
-          style: IconButton.styleFrom(
-            visualDensity: VisualDensity.standard,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          icon: Icon(data.icon),
-        );
-      }
-      return IconButton(
-        onPressed: data.onPressed,
-        style: IconButton.styleFrom(
-          visualDensity: VisualDensity.standard,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        icon: Icon(data.icon),
-      );
+    if (ref.watch(isMobileViewProvider) != widget.isMobile) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => widget.onCross());
     }
-
-    final actions = widget.actions.map(buildIconButton).toList();
-
-    final popButton = type != SheetType.page
-        ? (useCloseIcon
-              ? buildIconButton(
-                  IconButtonData(
-                    icon: Icons.close,
-                    onPressed: context.safeNestedPop,
-                  ),
-                )
-              : buildIconButton(
-                  IconButtonData(
-                    icon: backIconData,
-                    onPressed:
-                        widget.backAction ??
-                        () {
-                          Navigator.of(context).pop();
-                        },
-                  ),
-                ))
-        : null;
-
-    final suffixPop = type != SheetType.page && actions.isEmpty && useCloseIcon;
-    final appBar = AppBar(
-      backgroundColor: backgroundColor,
-      forceMaterialTransparency: type == SheetType.bottomSheet ? true : false,
-      leading: suffixPop ? null : popButton,
-      automaticallyImplyLeading: type == SheetType.page ? true : false,
-      centerTitle: true,
-      toolbarHeight: type == SheetType.bottomSheet ? 48 : null,
-      title: Text(widget.title),
-      titleTextStyle: type == SheetType.bottomSheet
-          ? context.textTheme.titleLarge?.adjustSize(-4)
-          : null,
-      actions: !suffixPop ? genActions(actions) : genActions([?popButton]),
-    );
-    if (type == SheetType.bottomSheet) {
-      const handleSize = Size(28, 4);
-      final sheetAppBar = Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Container(
-              alignment: Alignment.center,
-              height: handleSize.height,
-              width: handleSize.width,
-              decoration: ShapeDecoration(
-                color: context.colorScheme.onSurfaceVariant,
-                shape: RoundedSuperellipseBorder(
-                  borderRadius: BorderRadius.circular(handleSize.height / 2),
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: appBar,
-          ),
-          const SizedBox(height: 6),
-        ],
-      );
-      return ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!widget.sheetTransparentToolBar) ...[
-              sheetAppBar,
-              Flexible(child: widget.body),
-            ] else ...[
-              Flexible(
-                child: Stack(
-                  children: [
-                    NotificationListener<ScrollNotification>(
-                      child: widget.body,
-                      onNotification: (notification) {
-                        if (notification is ScrollUpdateNotification) {
-                          final pixels = notification.metrics.pixels;
-                          _isScrolledController.value = pixels > 6;
-                        }
-                        return false;
-                      },
-                    ),
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: ValueListenableBuilder(
-                        valueListenable: _isScrolledController,
-                        builder: (_, isScrolled, child) {
-                          return ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(28),
-                            ),
-                            child: BackdropFilter(
-                              filter: commonFilter,
-                              child: ColoredBox(
-                                color: isScrolled
-                                    ? backgroundColor.opacity60
-                                    : backgroundColor,
-                                child: child!,
-                              ),
-                            ),
-                          );
-                        },
-                        child: sheetAppBar,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
-            SizedBox(height: MediaQuery.of(context).viewPadding.bottom),
-          ],
-        ),
-      );
-    }
-    return CommonScaffold(appBar: appBar, body: widget.body);
+    return widget.child;
   }
 }

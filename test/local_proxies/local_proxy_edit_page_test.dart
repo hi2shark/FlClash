@@ -2,17 +2,15 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_edit_page.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/local_proxy.dart';
-import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+
+import '../helpers/test_app.dart';
 
 class _FakePathProvider extends PathProviderPlatform {
   final String root;
@@ -47,26 +45,16 @@ class _FakePathProvider extends PathProviderPlatform {
 }
 
 Widget _wrap(Widget child) {
-  return MaterialApp(
+  return TestApp(
     locale: const Locale('en'),
-    localizationsDelegates: const [
-      AppLocalizations.delegate,
-      GlobalMaterialLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-    ],
-    supportedLocales: AppLocalizations.delegate.supportedLocales,
-    home: Builder(
-      builder: (context) {
-        globalState.theme = CommonTheme.of(context, 1.0);
-        return Navigator(
-          onGenerateInitialRoutes: (_, _) => [
-            MaterialPageRoute(builder: (_) => const SizedBox.shrink()),
-            MaterialPageRoute(builder: (_) => child),
-          ],
-        );
-      },
+    wrapInProviderScope: true,
+    homeBuilder: (page) => Navigator(
+      onGenerateInitialRoutes: (_, _) => [
+        MaterialPageRoute(builder: (_) => const SizedBox.shrink()),
+        MaterialPageRoute(builder: (_) => page),
+      ],
     ),
+    child: child,
   );
 }
 
@@ -785,8 +773,10 @@ void main() {
     await tester.pumpWidget(_wrap(LocalProxyEditPage(proxy: storedBeforeEdit)));
     await _pumpFrames(tester);
 
-    expect(_fieldController(tester, 'Share key (shared key)').text,
-        '0123456789abcdef0123456789abcdef');
+    expect(
+      _fieldController(tester, 'Share key (shared key)').text,
+      '0123456789abcdef0123456789abcdef',
+    );
     expect(find.text('Morph'), findsOneWidget);
     expect(find.text('Up'), findsNothing);
     expect(find.text('Down'), findsNothing);

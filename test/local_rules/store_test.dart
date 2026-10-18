@@ -113,10 +113,11 @@ void main() {
 
     await localRuleStore.reorder(0, 2);
 
-    expect(
-      localRuleStore.rules.map((rule) => rule.content).toList(),
-      ['second.com', 'third.com', 'first.com'],
-    );
+    expect(localRuleStore.rules.map((rule) => rule.content).toList(), [
+      'second.com',
+      'third.com',
+      'first.com',
+    ]);
   });
 
   test('load migrates invalid and duplicate ids', () async {

@@ -2,19 +2,14 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
 }
 
 android {
     namespace = "com.hi2shark.flclash_nw.service"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
-    }
-
-    buildFeatures {
-        aidl = true
     }
 
     compileOptions {
@@ -22,13 +17,9 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    buildTypes {
-        release {
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+    sourceSets {
+        // Unit tests live under android/tests/ instead of each module's src/test.
+        getByName("test").java.setSrcDirs(listOf("../tests/service"))
     }
 }
 
@@ -38,10 +29,11 @@ kotlin {
     }
 }
 
-
 dependencies {
     implementation(project(":core"))
     implementation(project(":common"))
     implementation(libs.gson)
     implementation(libs.androidx.core)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

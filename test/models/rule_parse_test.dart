@@ -64,9 +64,7 @@ void main() {
       expect(domain.content, '*.example.com');
       expect(domain.rawValue, 'DOMAIN-WILDCARD,*.example.com,DIRECT');
 
-      final process = Rule.parse(
-        'PROCESS-NAME-WILDCARD,chrome*,PROXY',
-      );
+      final process = Rule.parse('PROCESS-NAME-WILDCARD,chrome*,PROXY');
       expect(process.ruleAction, RuleAction.PROCESS_NAME_WILDCARD);
       expect(process.content, 'chrome*');
     });

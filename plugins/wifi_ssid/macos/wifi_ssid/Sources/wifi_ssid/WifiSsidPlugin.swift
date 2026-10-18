@@ -3,34 +3,40 @@ import CoreLocation
 import CoreWLAN
 import FlutterMacOS
 
-// Permission values must match WifiSsidPermission enum index in Dart:
-//   0 = granted, 1 = denied, 2 = permanentlyDenied
 public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate {
 
-    private let locationManager = CLLocationManager()
-    private var pendingPermissionResult: FlutterResult?
+    // Both talk to system daemons (locationd, wifid) on creation, so they are
+    // not built until Dart asks for the SSID or the permission.
+    private lazy var locationManager: CLLocationManager = {
+        let manager = CLLocationManager()
+        manager.delegate = self
+        return manager
+    }()
+    private lazy var wifiClient = CWWiFiClient.shared()
+    private let ssidQueue = DispatchQueue(label: "com.hi2shark.flclash_nw.wifi_ssid")
+    private var pendingPermissionResults: [FlutterResult] = []
+
+    private enum Method {
+        static let getSsid = "getSsid"
+        static let checkPermission = "checkPermission"
+        static let requestPermission = "requestPermission"
+    }
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
-            name: "wifi_ssid",
-            binaryMessenger: registrar.messenger
+            name: "wifi_ssid", binaryMessenger: registrar.messenger
         )
         let instance = WifiSsidPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
 
-    override init() {
-        super.init()
-        locationManager.delegate = self
-    }
-
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
-        case "getSsid":
+        case Method.getSsid:
             getSsid(result: result)
-        case "checkPermission":
+        case Method.checkPermission:
             checkPermission(result: result)
-        case "requestPermission":
+        case Method.requestPermission:
             requestPermission(result: result)
         default:
             result(FlutterMethodNotImplemented)
@@ -40,33 +46,42 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
     // MARK: - Permission
 
     private func checkPermission(result: @escaping FlutterResult) {
-        let status = locationManager.authorizationStatus
-        result(mapAuthStatus(status).rawValue)
+        // CoreWLAN only requires location authorization on macOS 14+.
+        guard #available(macOS 14, *) else {
+            result(WifiSsidPermission.granted.rawValue)
+            return
+        }
+        result(mapAuthStatus(locationManager.authorizationStatus).rawValue)
     }
 
     private func requestPermission(result: @escaping FlutterResult) {
-        let status = locationManager.authorizationStatus
-        if status == .authorizedAlways {
-            result(0) // granted
+        guard #available(macOS 14, *) else {
+            result(WifiSsidPermission.granted.rawValue)
             return
         }
-        if status == .denied {
-            result(2) // permanentlyDenied
+        let permission = mapAuthStatus(locationManager.authorizationStatus)
+        if permission != .denied {
+            result(permission.rawValue)
             return
         }
-        pendingPermissionResult = result
+        pendingPermissionResults.append(result)
         locationManager.requestWhenInUseAuthorization()
     }
 
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        guard let result = pendingPermissionResult else { return }
-        pendingPermissionResult = nil
-        result(mapAuthStatus(manager.authorizationStatus).rawValue)
+        // A new manager reports its status once, and the lazy one is created
+        // by the request itself, so that report can land while the prompt is up.
+        guard manager.authorizationStatus != .notDetermined,
+              !pendingPermissionResults.isEmpty else { return }
+        let results = pendingPermissionResults
+        pendingPermissionResults.removeAll()
+        let permission = mapAuthStatus(manager.authorizationStatus).rawValue
+        results.forEach { $0(permission) }
     }
 
     private func mapAuthStatus(_ status: CLAuthorizationStatus) -> WifiSsidPermission {
         switch status {
-        case .authorizedAlways:
+        case .authorizedAlways, .authorizedWhenInUse:
             return .granted
         case .denied, .restricted:
             return .permanentlyDenied
@@ -76,6 +91,7 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
     }
 
     private enum WifiSsidPermission: Int {
+        // Values must match WifiSsidPermission.index in Dart.
         case granted = 0
         case denied = 1
         case permanentlyDenied = 2
@@ -84,14 +100,20 @@ public class WifiSsidPlugin: NSObject, FlutterPlugin, CLLocationManagerDelegate 
     // MARK: - SSID
 
     private func getSsid(result: @escaping FlutterResult) {
-        if #available(macOS 10.10, *) {
-            if let interface = CWWiFiClient.shared().interface() {
-                result(interface.ssid())
-            } else {
+        if #available(macOS 14, *) {
+            guard mapAuthStatus(locationManager.authorizationStatus) == .granted else {
                 result(nil)
+                return
             }
-        } else {
-            result(nil)
+        }
+        // CoreWLAN reaches wifid over XPC, so a wedged daemon would hold the
+        // platform thread and freeze the window until it answers.
+        let client = wifiClient
+        ssidQueue.async {
+            let ssid = client.interface()?.ssid()
+            DispatchQueue.main.async {
+                result(ssid)
+            }
         }
     }
 }

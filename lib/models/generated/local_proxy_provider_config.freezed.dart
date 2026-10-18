@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of '../local_proxy_provider_config.dart';
@@ -9,6 +9,7 @@ part of '../local_proxy_provider_config.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $LocalProxyProviderConfigCopyWith<LocalProxyProviderConfig> get copyWith => _$Lo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LocalProxyProviderConfig&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.providerName, providerName) || other.providerName == providerName)&&(identical(other.providerKey, providerKey) || other.providerKey == providerKey)&&(identical(other.providerPath, providerPath) || other.providerPath == providerPath)&&const DeepCollectionEquality().equals(other.targetGroups, targetGroups)&&(identical(other.healthCheckEnabled, healthCheckEnabled) || other.healthCheckEnabled == healthCheckEnabled)&&(identical(other.healthCheckUrl, healthCheckUrl) || other.healthCheckUrl == healthCheckUrl)&&(identical(other.healthCheckInterval, healthCheckInterval) || other.healthCheckInterval == healthCheckInterval)&&(identical(other.healthCheckTimeout, healthCheckTimeout) || other.healthCheckTimeout == healthCheckTimeout));
+  final _this = this as LocalProxyProviderConfig;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LocalProxyProviderConfig&&(identical(other.enabled, _this.enabled) || other.enabled == _this.enabled)&&(identical(other.providerName, _this.providerName) || other.providerName == _this.providerName)&&(identical(other.providerKey, _this.providerKey) || other.providerKey == _this.providerKey)&&(identical(other.providerPath, _this.providerPath) || other.providerPath == _this.providerPath)&&const DeepCollectionEquality().equals(other.targetGroups, _this.targetGroups)&&(identical(other.healthCheckEnabled, _this.healthCheckEnabled) || other.healthCheckEnabled == _this.healthCheckEnabled)&&(identical(other.healthCheckUrl, _this.healthCheckUrl) || other.healthCheckUrl == _this.healthCheckUrl)&&(identical(other.healthCheckInterval, _this.healthCheckInterval) || other.healthCheckInterval == _this.healthCheckInterval)&&(identical(other.healthCheckTimeout, _this.healthCheckTimeout) || other.healthCheckTimeout == _this.healthCheckTimeout));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,enabled,providerName,providerKey,providerPath,const DeepCollectionEquality().hash(targetGroups),healthCheckEnabled,healthCheckUrl,healthCheckInterval,healthCheckTimeout);
+int get hashCode {
+  final _this = this as LocalProxyProviderConfig;
+  return Object.hash(runtimeType,_this.enabled,_this.providerName,_this.providerKey,_this.providerPath,const DeepCollectionEquality().hash(_this.targetGroups),_this.healthCheckEnabled,_this.healthCheckUrl,_this.healthCheckInterval,_this.healthCheckTimeout);
+}
 
 @override
 String toString() {
-  return 'LocalProxyProviderConfig(enabled: $enabled, providerName: $providerName, providerKey: $providerKey, providerPath: $providerPath, targetGroups: $targetGroups, healthCheckEnabled: $healthCheckEnabled, healthCheckUrl: $healthCheckUrl, healthCheckInterval: $healthCheckInterval, healthCheckTimeout: $healthCheckTimeout)';
+  final _this = this as LocalProxyProviderConfig;
+  return 'LocalProxyProviderConfig(enabled: ${_this.enabled}, providerName: ${_this.providerName}, providerKey: ${_this.providerKey}, providerPath: ${_this.providerPath}, targetGroups: ${_this.targetGroups}, healthCheckEnabled: ${_this.healthCheckEnabled}, healthCheckUrl: ${_this.healthCheckUrl}, healthCheckInterval: ${_this.healthCheckInterval}, healthCheckTimeout: ${_this.healthCheckTimeout})';
 }
 
 
@@ -66,7 +72,7 @@ class _$LocalProxyProviderConfigCopyWithImpl<$Res>
 /// Create a copy of LocalProxyProviderConfig
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? enabled = null,Object? providerName = null,Object? providerKey = null,Object? providerPath = null,Object? targetGroups = null,Object? healthCheckEnabled = null,Object? healthCheckUrl = null,Object? healthCheckInterval = null,Object? healthCheckTimeout = null,}) {
-  return _then(_self.copyWith(
+  return _then(LocalProxyProviderConfig(
 enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
 as bool,providerName: null == providerName ? _self.providerName : providerName // ignore: cast_nullable_to_non_nullable
 as String,providerKey: null == providerKey ? _self.providerKey : providerKey // ignore: cast_nullable_to_non_nullable
@@ -217,7 +223,7 @@ return $default(_that.enabled,_that.providerName,_that.providerKey,_that.provide
 @JsonSerializable()
 
 class _LocalProxyProviderConfig implements LocalProxyProviderConfig {
-  const _LocalProxyProviderConfig({this.enabled = false, this.providerName = 'FlClash Local', this.providerKey = '_flclash_local', this.providerPath = './proxy_providers/flclash-local.yaml', final  List<String> targetGroups = const [], this.healthCheckEnabled = true, this.healthCheckUrl = 'https://www.gstatic.com/generate_204', this.healthCheckInterval = 300, this.healthCheckTimeout = 5000}): _targetGroups = targetGroups;
+  const _LocalProxyProviderConfig({this.enabled = false, this.providerName = 'FlClash Local', this.providerKey = '_flclash_local', this.providerPath = './proxy_providers/flclash-local.yaml',  List<String> targetGroups = const [], this.healthCheckEnabled = true, this.healthCheckUrl = 'https://www.gstatic.com/generate_204', this.healthCheckInterval = 300, this.healthCheckTimeout = 5000}): _targetGroups = targetGroups;
   factory _LocalProxyProviderConfig.fromJson(Map<String, dynamic> json) => _$LocalProxyProviderConfigFromJson(json);
 
 @override@JsonKey() final  bool enabled;
@@ -249,16 +255,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LocalProxyProviderConfig&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.providerName, providerName) || other.providerName == providerName)&&(identical(other.providerKey, providerKey) || other.providerKey == providerKey)&&(identical(other.providerPath, providerPath) || other.providerPath == providerPath)&&const DeepCollectionEquality().equals(other._targetGroups, _targetGroups)&&(identical(other.healthCheckEnabled, healthCheckEnabled) || other.healthCheckEnabled == healthCheckEnabled)&&(identical(other.healthCheckUrl, healthCheckUrl) || other.healthCheckUrl == healthCheckUrl)&&(identical(other.healthCheckInterval, healthCheckInterval) || other.healthCheckInterval == healthCheckInterval)&&(identical(other.healthCheckTimeout, healthCheckTimeout) || other.healthCheckTimeout == healthCheckTimeout));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LocalProxyProviderConfig&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.providerName, providerName) || other.providerName == providerName)&&(identical(other.providerKey, providerKey) || other.providerKey == providerKey)&&(identical(other.providerPath, providerPath) || other.providerPath == providerPath)&&const DeepCollectionEquality().equals(other.targetGroups, _targetGroups)&&(identical(other.healthCheckEnabled, healthCheckEnabled) || other.healthCheckEnabled == healthCheckEnabled)&&(identical(other.healthCheckUrl, healthCheckUrl) || other.healthCheckUrl == healthCheckUrl)&&(identical(other.healthCheckInterval, healthCheckInterval) || other.healthCheckInterval == healthCheckInterval)&&(identical(other.healthCheckTimeout, healthCheckTimeout) || other.healthCheckTimeout == healthCheckTimeout));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,enabled,providerName,providerKey,providerPath,const DeepCollectionEquality().hash(_targetGroups),healthCheckEnabled,healthCheckUrl,healthCheckInterval,healthCheckTimeout);
+int get hashCode {
+    return Object.hash(runtimeType,enabled,providerName,providerKey,providerPath,const DeepCollectionEquality().hash(_targetGroups),healthCheckEnabled,healthCheckUrl,healthCheckInterval,healthCheckTimeout);
+}
 
 @override
 String toString() {
-  return 'LocalProxyProviderConfig(enabled: $enabled, providerName: $providerName, providerKey: $providerKey, providerPath: $providerPath, targetGroups: $targetGroups, healthCheckEnabled: $healthCheckEnabled, healthCheckUrl: $healthCheckUrl, healthCheckInterval: $healthCheckInterval, healthCheckTimeout: $healthCheckTimeout)';
+    return 'LocalProxyProviderConfig(enabled: $enabled, providerName: $providerName, providerKey: $providerKey, providerPath: $providerPath, targetGroups: $targetGroups, healthCheckEnabled: $healthCheckEnabled, healthCheckUrl: $healthCheckUrl, healthCheckInterval: $healthCheckInterval, healthCheckTimeout: $healthCheckTimeout)';
 }
 
 

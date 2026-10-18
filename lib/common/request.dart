@@ -1,20 +1,25 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
 class Request {
   late final Dio dio;
   late final Dio _clashDio;
   String? userAgent;
+
+  ProviderReader? _read;
+
+  void attach(ProviderReader read) {
+    _read = read;
+  }
 
   Request() {
     dio = Dio(BaseOptions(headers: {'User-Agent': browserUa}));
@@ -24,180 +29,203 @@ class Request {
         final client = HttpClient();
         client.findProxy = (Uri uri) {
           client.userAgent = globalState.ua;
-          return FlClashHttpOverrides.handleFindProxy(uri);
+          final read = _read;
+          if (read == null) {
+            return 'DIRECT';
+          }
+          return FlClashHttpOverrides.findProxyForReader(read, uri);
         };
         return client;
       },
     );
   }
 
+  Future<Response<T>> _download<T>(String url, ResponseType responseType) {
+    final target = downloadTarget(url);
+    final cancelToken = CancelToken();
+    return _clashDio
+        .getUri<T>(
+          target.uri,
+          options: Options(responseType: responseType, headers: target.headers),
+          cancelToken: cancelToken,
+        )
+        .timeout(
+          downloadTimeoutDuration,
+          onTimeout: () {
+            cancelToken.cancel();
+            throw DioException.receiveTimeout(
+              timeout: downloadTimeoutDuration,
+              requestOptions: RequestOptions(path: url),
+            );
+          },
+        );
+  }
+
   Future<Response<Uint8List>> getFileResponseForUrl(String url) async {
     try {
-      return await _clashDio.get<Uint8List>(
-        url,
-        options: Options(responseType: ResponseType.bytes),
-      );
+      return await _download<Uint8List>(url, ResponseType.bytes);
     } catch (e) {
-      commonPrint.log('getFileResponseForUrl error ${e.toString()}');
-      if (e is DioException) {
-        if (e.type == DioExceptionType.unknown) {
-          throw currentAppLocalizations.unknownNetworkError;
-        } else if (e.type == DioExceptionType.badResponse) {
-          throw currentAppLocalizations.networkException;
-        }
-        rethrow;
-      }
-      throw currentAppLocalizations.unknownNetworkError;
+      commonPrint.log(
+        'getFileResponseForUrl error ${compactError(e)}',
+        logLevel: LogLevel.warning,
+      );
+      rethrow;
     }
   }
 
   Future<Response<String>> getTextResponseForUrl(String url) async {
-    final response = await _clashDio.get<String>(
-      url,
-      options: Options(responseType: ResponseType.plain),
-    );
-    return response;
-  }
-
-  Future<MemoryImage?> getImage(String url) async {
-    if (url.isEmpty) return null;
-    final response = await dio.get<Uint8List>(
-      url,
-      options: Options(responseType: ResponseType.bytes),
-    );
-    final data = response.data;
-    if (data == null) return null;
-    return MemoryImage(data);
-  }
-
-  Future<Map<String, dynamic>?> checkForUpdate() async {
     try {
-      final response = await dio.get(
+      return await _download<String>(url, ResponseType.plain);
+    } catch (e) {
+      commonPrint.log(
+        'getTextResponseForUrl error ${compactError(e)}',
+        logLevel: LogLevel.warning,
+      );
+      rethrow;
+    }
+  }
+
+  /// Null when this build is current; throws when GitHub cannot be asked.
+  Future<Map<String, dynamic>?> checkForUpdate() async {
+    final release = await latestRelease();
+    final remoteVersion = release['tag_name'] as String;
+    final version = globalState.packageInfo.version;
+    final hasUpdate =
+        compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
+    return hasUpdate ? release : null;
+  }
+
+  /// The release page redirect still answers once the hourly API quota is spent.
+  @visibleForTesting
+  Future<Map<String, dynamic>> latestRelease() async {
+    try {
+      final response = await dio.get<Map<String, dynamic>>(
         'https://api.github.com/repos/$repository/releases/latest',
         options: Options(responseType: ResponseType.json),
       );
-      if (response.statusCode != 200) return null;
-      final data = response.data as Map<String, dynamic>;
-      final remoteVersion = data['tag_name'];
-      final version = globalState.packageInfo.version;
-      final hasUpdate =
-          utils.compareVersions(remoteVersion.replaceAll('v', ''), version) > 0;
-      if (!hasUpdate) return null;
-      return data;
-    } catch (e) {
-      commonPrint.log('checkForUpdate failed', logLevel: LogLevel.warning);
-      return null;
+      return response.data!;
+    } on DioException catch (error) {
+      commonPrint.log(
+        'latest release API failed: ${compactError(error)}',
+        logLevel: LogLevel.warning,
+      );
     }
-  }
-
-  final Map<String, IpInfo Function(Map<String, dynamic>)> _ipInfoSources = {
-    'https://ipwho.is': IpInfo.fromIpWhoIsJson,
-    'https://api.myip.com': IpInfo.fromMyIpJson,
-    'https://ipapi.co/json': IpInfo.fromIpApiCoJson,
-    'https://ident.me/json': IpInfo.fromIdentMeJson,
-    'http://ip-api.com/json': IpInfo.fromIpAPIJson,
-    'https://api.ip.sb/geoip': IpInfo.fromIpSbJson,
-    'https://ipinfo.io/json': IpInfo.fromIpInfoIoJson,
-  };
-
-  Future<Result<IpInfo?>> checkIp({CancelToken? cancelToken}) async {
-    var failureCount = 0;
-    final token = cancelToken ?? CancelToken();
-    final futures = _ipInfoSources.entries.map((source) async {
-      final Completer<Result<IpInfo?>> completer = Completer();
-      void handleFailRes() {
-        if (!completer.isCompleted && failureCount == _ipInfoSources.length) {
-          completer.complete(Result.success(null));
-        }
-      }
-
-      final future = dio
-          .get<Map<String, dynamic>>(
-            source.key,
-            cancelToken: token,
-            options: Options(responseType: ResponseType.json),
-          )
-          .timeout(const Duration(seconds: 10));
-      future
-          .then((res) {
-            if (res.statusCode == HttpStatus.ok && res.data != null) {
-              completer.complete(Result.success(source.value(res.data!)));
-              return;
-            }
-            commonPrint.log('checkIp data empty', logLevel: LogLevel.info);
-            failureCount++;
-            handleFailRes();
-          })
-          .catchError((e) {
-            failureCount++;
-            if (e is DioException && e.type == DioExceptionType.cancel) {
-              completer.complete(Result.error('cancelled'));
-              return;
-            }
-            commonPrint.log('checkIp error $e', logLevel: LogLevel.warning);
-            handleFailRes();
-          });
-      return completer.future;
-    });
-    final res = await Future.any(futures);
-    token.cancel();
-    return res;
-  }
-
-  Future<bool> pingHelper() async {
-    if (kDebugMode) return true;
-    try {
-      final response = await dio
-          .get(
-            'http://$localhost:$helperPort/ping',
-            options: Options(responseType: ResponseType.plain),
-          )
-          .timeout(const Duration(milliseconds: 2000));
-      if (response.statusCode != HttpStatus.ok) {
-        return false;
-      }
-      return (response.data as String) == globalState.coreSHA256;
-    } catch (_) {
-      return false;
+    final response = await dio.get<void>(
+      'https://github.com/$repository/releases/latest',
+      options: Options(
+        followRedirects: false,
+        validateStatus: (status) => status != null && status < 400,
+      ),
+    );
+    final location = response.headers.value(HttpHeaders.locationHeader);
+    final segments = Uri.tryParse(location ?? '')?.pathSegments ?? const [];
+    final tagIndex = segments.indexOf('tag') + 1;
+    if (tagIndex == 0 || tagIndex >= segments.length) {
+      throw FormatException('No release tag in the redirect', location);
     }
-  }
-
-  Future<bool> startCoreByHelper(String arg) async {
-    try {
-      final response = await dio
-          .post(
-            'http://$localhost:$helperPort/start',
-            data: json.encode({'path': appPath.corePath, 'arg': arg}),
-            options: Options(responseType: ResponseType.plain),
-          )
-          .timeout(const Duration(milliseconds: 2000));
-      if (response.statusCode != HttpStatus.ok) {
-        return false;
-      }
-      final data = response.data as String;
-      return data.isEmpty;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<bool> stopCoreByHelper() async {
-    try {
-      final response = await dio
-          .post(
-            'http://$localhost:$helperPort/stop',
-            options: Options(responseType: ResponseType.plain),
-          )
-          .timeout(const Duration(milliseconds: 2000));
-      if (response.statusCode != HttpStatus.ok) {
-        return false;
-      }
-      final data = response.data as String;
-      return data.isEmpty;
-    } catch (_) {
-      return false;
-    }
+    return {'tag_name': segments[tagIndex]};
   }
 }
 
 final request = Request();
+
+/// Some subscription servers send a gzip or zlib body without saying so in
+/// Content-Encoding, which is the only signal dart:io decompresses on.
+Uint8List decompressUnlabeled(Uint8List bytes) {
+  final codec = switch (bytes) {
+    [0x1f, 0x8b, ...] => gzip,
+    [0x78, final flags, ...] when (0x78 << 8 | flags) % 31 == 0 => zlib,
+    _ => null,
+  };
+  if (codec == null) {
+    return bytes;
+  }
+  try {
+    return Uint8List.fromList(codec.decode(bytes));
+  } on FormatException {
+    return bytes;
+  }
+}
+
+/// dart:io turns [Uri.userInfo] into Basic credentials still percent-encoded.
+@visibleForTesting
+({Uri uri, Map<String, Object> headers}) downloadTarget(String url) {
+  final uri = url.webUri ?? Uri.parse(url);
+  if (uri.userInfo.isEmpty) {
+    return (uri: uri, headers: const {});
+  }
+  final credentials = uri.userInfo.split(':').map(_decodeUserInfo).join(':');
+  return (
+    uri: uri.replace(userInfo: ''),
+    headers: {
+      HttpHeaders.authorizationHeader:
+          'Basic ${base64.encode(utf8.encode(credentials))}',
+    },
+  );
+}
+
+String _decodeUserInfo(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on ArgumentError {
+    return value;
+  }
+}
+
+({String value, Map<String, String> parameters}) parseHeaderValue(
+  String source,
+) {
+  final segments = <String>[];
+  final current = StringBuffer();
+  var inQuotes = false;
+  for (var index = 0; index < source.length; index++) {
+    final char = source[index];
+    if (char == '"') {
+      inQuotes = !inQuotes;
+      current.write(char);
+      continue;
+    }
+    if (char == ';' && !inQuotes) {
+      segments.add(current.toString());
+      current.clear();
+      continue;
+    }
+    current.write(char);
+  }
+  segments.add(current.toString());
+  final parameters = <String, String>{};
+  for (final segment in segments.skip(1)) {
+    final split = segment.indexOf('=');
+    if (split == -1) {
+      continue;
+    }
+    final key = segment.substring(0, split).trim().toLowerCase();
+    var value = segment.substring(split + 1).trim();
+    if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) {
+      value = value.substring(1, value.length - 1);
+    }
+    parameters[key] = value;
+  }
+  return (value: segments.first.trim(), parameters: parameters);
+}
+
+String? getFileNameForDisposition(String? disposition) {
+  if (disposition == null) return null;
+  final parameters = parseHeaderValue(disposition).parameters;
+  final fileNamePointKey = parameters.keys.firstWhere(
+    (key) => key == 'filename*',
+    orElse: () => '',
+  );
+  if (fileNamePointKey.isNotEmpty) {
+    final res = parameters[fileNamePointKey]?.split("''") ?? [];
+    if (res.length >= 2) {
+      return Uri.decodeComponent(res[1]);
+    }
+  }
+  final fileNameKey = parameters.keys.firstWhere(
+    (key) => key == 'filename',
+    orElse: () => '',
+  );
+  if (fileNameKey.isEmpty) return null;
+  return parameters[fileNameKey];
+}

@@ -1,17 +1,15 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('TooltipText derives tooltip message from rich text', (
     tester,
   ) async {
-    // A modest width plus a single-line text that obviously exceeds it
-    // guarantees didExceedMaxLines is true under the test font, without
-    // relying on degenerate 1px layout behavior. The SSID · status pair
-    // mirrors the production consumer in WifiWatchCard.
+    // The narrow box forces a single-line overflow, which is the only
+    // condition under which TooltipText attaches its tooltip.
     const richText = Text.rich(
       TextSpan(
         children: [
@@ -37,8 +35,7 @@ void main() {
       ),
     );
 
-    // pumpAndSettle ensures LayoutBuilder has applied the final constraints
-    // and the overflow measurement has completed before we assert.
+    // Settle so the overflow measurement completes before the assertion.
     await tester.pumpAndSettle();
 
     final tooltip = tester.widget<Tooltip>(find.byType(Tooltip));
@@ -66,8 +63,6 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    // When there is no overflow the widget must not attach a long-press
-    // Tooltip, so the plain Text is returned directly.
     expect(find.byType(Tooltip), findsNothing);
     expect(find.byType(Text), findsOneWidget);
   });

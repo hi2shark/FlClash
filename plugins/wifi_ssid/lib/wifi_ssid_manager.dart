@@ -1,19 +1,12 @@
 import 'package:flutter/services.dart';
 
-enum WifiSsidPermission {
-  granted,
-  denied,
-  permanentlyDenied,
-}
+enum WifiSsidPermission { granted, denied, permanentlyDenied }
 
 class WifiConnectionInfo {
+  const WifiConnectionInfo({this.ssid, this.rssi});
+
   final String? ssid;
   final int? rssi;
-
-  const WifiConnectionInfo({
-    this.ssid,
-    this.rssi,
-  });
 
   factory WifiConnectionInfo.fromMap(Map<dynamic, dynamic>? map) {
     if (map == null) {
@@ -45,57 +38,72 @@ class WifiSsidManager {
 
   static final WifiSsidManager instance = WifiSsidManager._();
 
-  final MethodChannel _channel = const MethodChannel('wifi_ssid');
-  final EventChannel _validatedWifiSsidChannel = const EventChannel(
+  static const _channel = MethodChannel('wifi_ssid');
+  static const _getSsidMethod = 'getSsid';
+  static const _getCurrentWifiInfoMethod = 'getCurrentWifiInfo';
+  static const _checkPermissionMethod = 'checkPermission';
+  static const _requestPermissionMethod = 'requestPermission';
+  static const _checkBackgroundPermissionMethod = 'checkBackgroundPermission';
+  static const _requestBackgroundPermissionMethod =
+      'requestBackgroundPermission';
+  static const _validatedWifiSsidChannel = EventChannel(
     'wifi_ssid/validated_wifi_ssid',
   );
 
-  /// Returns the current WiFi SSID, or null if not connected to WiFi.
-  Future<String?> getSsid() async {
-    return await _channel.invokeMethod<String>('getSsid');
+  Future<String?> getSsid() {
+    return _channel.invokeMethod<String>(_getSsidMethod);
   }
 
-  /// Returns the current WiFi SSID and RSSI when the platform exposes them.
   Future<WifiConnectionInfo> getCurrentWifiInfo() async {
     final result = await _channel.invokeMapMethod<dynamic, dynamic>(
-      'getCurrentWifiInfo',
+      _getCurrentWifiInfoMethod,
     );
     return WifiConnectionInfo.fromMap(result);
   }
 
-  /// Emits the SSID only when Android reports a validated WiFi network.
-  ///
-  /// Other platforms use the plugin's regular SSID lookup paths and do not
-  /// currently provide a validated-WiFi stream.
+  /// Android only; every other platform gets an empty stream.
   Stream<String?> watchValidatedWifiSsid() {
-    return _validatedWifiSsidChannel
-        .receiveBroadcastStream()
-        .map((event) => event as String?);
+    return _validatedWifiSsidChannel.receiveBroadcastStream().map(
+      (event) => event as String?,
+    );
   }
 
-  /// Checks whether location permission has been granted.
   Future<WifiSsidPermission> checkPermission() async {
-    final result = await _channel.invokeMethod<int>('checkPermission');
-    return WifiSsidPermission.values[result ?? 1];
+    final result = await _channel.invokeMethod<int>(_checkPermissionMethod);
+    return _decodePermission(result);
   }
 
-  /// Requests location permission from the user.
   Future<WifiSsidPermission> requestPermission() async {
-    final result = await _channel.invokeMethod<int>('requestPermission');
-    return WifiSsidPermission.values[result ?? 1];
+    final result = await _channel.invokeMethod<int>(_requestPermissionMethod);
+    return _decodePermission(result);
   }
 
-  /// Checks whether background location permission has been granted
-  /// (Android 10+). On older Android versions this always returns [granted].
+  /// Older Android versions always report granted.
   Future<WifiSsidPermission> checkBackgroundPermission() async {
-    final result = await _channel.invokeMethod<int>('checkBackgroundPermission');
-    return WifiSsidPermission.values[result ?? 1];
+    final result = await _channel.invokeMethod<int>(
+      _checkBackgroundPermissionMethod,
+    );
+    return _decodePermission(result);
   }
 
-  /// Requests background location permission from the user (Android 10+).
   Future<WifiSsidPermission> requestBackgroundPermission() async {
-    final result = await _channel.invokeMethod<int>('requestBackgroundPermission');
-    return WifiSsidPermission.values[result ?? 1];
+    final result = await _channel.invokeMethod<int>(
+      _requestBackgroundPermissionMethod,
+    );
+    return _decodePermission(result);
+  }
+
+  WifiSsidPermission _decodePermission(int? value) {
+    return switch (value) {
+      0 => WifiSsidPermission.granted,
+      2 => WifiSsidPermission.permanentlyDenied,
+      null || 1 => WifiSsidPermission.denied,
+      _ => throw PlatformException(
+        code: 'INVALID_PERMISSION_STATE',
+        message: 'Native wifi_ssid returned an invalid permission state.',
+        details: value,
+      ),
+    };
   }
 }
 

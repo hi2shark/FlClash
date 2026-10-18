@@ -1,17 +1,14 @@
 import 'dart:io';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/local_rules/pages/local_rule_edit_page.dart';
 import 'package:fl_clash/local_rules/services/local_rule_store.dart';
 import 'package:fl_clash/local_rules/services/local_rule_targets.dart';
-import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+
+import '../helpers/test_app.dart';
 
 class _FakePathProvider extends PathProviderPlatform {
   final String root;
@@ -46,22 +43,10 @@ class _FakePathProvider extends PathProviderPlatform {
 }
 
 Widget _wrap(Widget child) {
-  return MaterialApp(
+  return TestApp(
+    wrapInProviderScope: true,
     locale: const Locale('en'),
-    localizationsDelegates: const [
-      AppLocalizations.delegate,
-      GlobalMaterialLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-    ],
-    supportedLocales: AppLocalizations.delegate.supportedLocales,
-    home: Builder(
-      builder: (context) {
-        globalState.theme = CommonTheme.of(context, 1.0);
-        globalState.measure = Measure.of(context, 1);
-        return child;
-      },
-    ),
+    child: child,
   );
 }
 
@@ -103,12 +88,17 @@ void main() {
       localProxyMixinActive: true,
     );
 
+    tester.view.physicalSize = const Size(1400, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
       _wrap(const LocalRuleTargetPage(catalog: catalog, selected: 'DIRECT')),
     );
     await _pumpFrames(tester);
 
-    expect(find.text('Basic strategy'), findsOneWidget);
+    expect(find.text('Basic strategies'), findsOneWidget);
     expect(find.text('DIRECT'), findsOneWidget);
     expect(find.text('REJECT'), findsOneWidget);
     expect(find.text('Proxy group'), findsOneWidget);
@@ -122,6 +112,11 @@ void main() {
     tester,
   ) async {
     const catalog = LocalRuleTargetCatalog();
+
+    tester.view.physicalSize = const Size(1400, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(_wrap(const LocalRuleTargetPage(catalog: catalog)));
     await _pumpFrames(tester);

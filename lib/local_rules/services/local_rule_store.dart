@@ -5,7 +5,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/local_rule.dart';
 import 'package:fl_clash/models/local_rule_mixin_config.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart';
 
 class _LocalRuleData {
@@ -92,10 +92,7 @@ class LocalRuleStore {
         'Failed to load local rules: $e\n$s',
         logLevel: LogLevel.warning,
       );
-      _data = const _LocalRuleData(
-        config: LocalRuleMixinConfig(),
-        rules: [],
-      );
+      _data = const _LocalRuleData(config: LocalRuleMixinConfig(), rules: []);
       return false;
     }
   }
@@ -229,10 +226,7 @@ class LocalRuleStore {
 
   void resetForTest() {
     _initialized = false;
-    _data = const _LocalRuleData(
-      config: LocalRuleMixinConfig(),
-      rules: [],
-    );
+    _data = const _LocalRuleData(config: LocalRuleMixinConfig(), rules: []);
     _notify();
   }
 }

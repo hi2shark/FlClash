@@ -58,7 +58,12 @@ void main() {
 
     expect(await client.getPackageIcon('com.missing'), isNull);
     expect(await client.getPackageIcon('com.missing'), isNull);
-    expect(calls, 1);
+    expect(client.hasPackageIcon('com.missing'), isTrue);
     expect(client.getCachedPackageIcon('com.missing'), isNull);
+
+    final settledCalls = calls;
+    expect(settledCalls, 2);
+    expect(await client.getPackageIcon('com.missing'), isNull);
+    expect(calls, settledCalls);
   });
 }

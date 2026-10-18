@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"context"
@@ -62,27 +62,45 @@ func (c *fakePacketConn) SetDeadline(_ time.Time) error      { return nil }
 func (c *fakePacketConn) SetReadDeadline(_ time.Time) error  { return nil }
 func (c *fakePacketConn) SetWriteDeadline(_ time.Time) error { return nil }
 
-func waitTestResult(t *testing.T, ch chan string) string {
-	t.Helper()
-	select {
-	case value := <-ch:
-		return value
-	case <-time.After(5 * time.Second):
-		t.Fatal("timed out waiting for test result")
-		return ""
+func TestSpeedTestRejectsInvalidParams(t *testing.T) {
+	frame := handleMethodCall(&MethodCall{Method: speedTestMethod, Arguments: json.RawMessage("not-a-json")})
+
+	var envelope struct {
+		Error *MethodError `json:"error"`
+	}
+	if err := json.Unmarshal(frame, &envelope); err != nil {
+		t.Fatalf("response is not valid JSON: %v", err)
+	}
+	if envelope.Error == nil || envelope.Error.Code != "invalid_arguments" {
+		t.Fatalf("error = %+v, want code invalid_arguments", envelope.Error)
 	}
 }
 
-func TestHandleSpeedTestInvalidParams(t *testing.T) {
-	ch := make(chan string, 1)
-	handleSpeedTest("not-a-json", func(value string) { ch <- value })
+func TestQuicTestRejectsInvalidParams(t *testing.T) {
+	frame := handleMethodCall(&MethodCall{Method: quicTestMethod, Arguments: json.RawMessage("{")})
 
-	var result SpeedTestResult
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
+	var envelope struct {
+		Error *MethodError `json:"error"`
 	}
-	if !strings.Contains(result.Error, "invalid params") {
-		t.Fatalf("expected invalid params error, got %q", result.Error)
+	if err := json.Unmarshal(frame, &envelope); err != nil {
+		t.Fatalf("response is not valid JSON: %v", err)
+	}
+	if envelope.Error == nil || envelope.Error.Code != "invalid_arguments" {
+		t.Fatalf("error = %+v, want code invalid_arguments", envelope.Error)
+	}
+}
+
+func TestUnlockTestRejectsInvalidParams(t *testing.T) {
+	frame := handleMethodCall(&MethodCall{Method: unlockTestMethod, Arguments: json.RawMessage("not-a-json")})
+
+	var envelope struct {
+		Error *MethodError `json:"error"`
+	}
+	if err := json.Unmarshal(frame, &envelope); err != nil {
+		t.Fatalf("response is not valid JSON: %v", err)
+	}
+	if envelope.Error == nil || envelope.Error.Code != "invalid_arguments" {
+		t.Fatalf("error = %+v, want code invalid_arguments", envelope.Error)
 	}
 }
 
@@ -92,13 +110,8 @@ func TestHandleSpeedTestProxyNotFound(t *testing.T) {
 	})
 	tunnel.UpdateProxies(map[string]C.Proxy{}, map[string]P.ProxyProvider{})
 
-	ch := make(chan string, 1)
-	handleSpeedTest(`{"proxy-name":"nonexistent-speed-proxy"}`, func(value string) { ch <- value })
+	result := handleSpeedTest(&SpeedTestParams{ProxyName: "nonexistent-speed-proxy"})
 
-	var result SpeedTestResult
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
 	if result.Name != "nonexistent-speed-proxy" {
 		t.Fatalf("expected name to echo proxy-name, got %q", result.Name)
 	}
@@ -116,31 +129,10 @@ func TestHandleSpeedTestRejectProxy(t *testing.T) {
 		map[string]P.ProxyProvider{},
 	)
 
-	ch := make(chan string, 1)
-	handleSpeedTest(`{"proxy-name":"REJECT","timeout":100}`, func(value string) { ch <- value })
+	result := handleSpeedTest(&SpeedTestParams{ProxyName: "REJECT", Timeout: 100})
 
-	var result SpeedTestResult
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
 	if result.Error == "" {
 		t.Fatal("expected error for REJECT proxy, got empty error")
-	}
-}
-
-func TestHandleQuicTestInvalidParams(t *testing.T) {
-	ch := make(chan string, 1)
-	handleQuicTest("{", func(value string) { ch <- value })
-
-	var result QuicTestResult
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
-	if !strings.Contains(result.Error, "invalid params") {
-		t.Fatalf("expected invalid params error, got %q", result.Error)
-	}
-	if result.Stage != "target_parse" {
-		t.Fatalf("expected target_parse stage, got %q", result.Stage)
 	}
 }
 
@@ -150,13 +142,8 @@ func TestHandleQuicTestProxyNotFound(t *testing.T) {
 	})
 	tunnel.UpdateProxies(map[string]C.Proxy{}, map[string]P.ProxyProvider{})
 
-	ch := make(chan string, 1)
-	handleQuicTest(`{"proxy-name":"nonexistent-quic-proxy"}`, func(value string) { ch <- value })
+	result := handleQuicTest(&QuicTestParams{ProxyName: "nonexistent-quic-proxy"})
 
-	var result QuicTestResult
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
 	if result.Name != "nonexistent-quic-proxy" {
 		t.Fatalf("expected name to echo proxy-name, got %q", result.Name)
 	}
@@ -177,14 +164,9 @@ func TestHandleQuicTestRejectProxy(t *testing.T) {
 		map[string]P.ProxyProvider{},
 	)
 
-	ch := make(chan string, 1)
 	// REJECT reports SupportUDP() == true, so this also guards the nop adapter check
-	handleQuicTest(`{"proxy-name":"REJECT","timeout":100}`, func(value string) { ch <- value })
+	result := handleQuicTest(&QuicTestParams{ProxyName: "REJECT", Timeout: 100})
 
-	var result QuicTestResult
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
 	if result.Error == "" {
 		t.Fatal("expected error for REJECT proxy, got empty error")
 	}
@@ -208,13 +190,8 @@ func TestHandleQuicTestProxyWithoutUDP(t *testing.T) {
 		map[string]P.ProxyProvider{},
 	)
 
-	ch := make(chan string, 1)
-	handleQuicTest(`{"proxy-name":"TCP_ONLY","timeout":100}`, func(value string) { ch <- value })
+	result := handleQuicTest(&QuicTestParams{ProxyName: "TCP_ONLY", Timeout: 100})
 
-	var result QuicTestResult
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
 	if !strings.Contains(result.Error, "does not support udp") {
 		t.Fatalf("expected UDP capability error, got %q", result.Error)
 	}
@@ -223,30 +200,13 @@ func TestHandleQuicTestProxyWithoutUDP(t *testing.T) {
 	}
 }
 
-func TestHandleUnlockTestInvalidParams(t *testing.T) {
-	ch := make(chan string, 1)
-	handleUnlockTest("not-a-json", func(value string) { ch <- value })
-
-	var result unlocktest.Result
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
-	if !strings.Contains(result.Error, "invalid unlock test params") {
-		t.Fatalf("expected invalid params error, got %q", result.Error)
-	}
-}
-
 func TestHandleUnlockTestNoTargets(t *testing.T) {
-	ch := make(chan string, 1)
-	handleUnlockTest(
-		`{"run-id":"empty","route-mode":"appRoute","target-ids":[]}`,
-		func(value string) { ch <- value },
-	)
+	result := handleUnlockTest(&unlocktest.Request{
+		RunID:     "empty",
+		RouteMode: unlocktest.RouteModeAppRoute,
+		TargetIDs: []string{},
+	})
 
-	var result unlocktest.Result
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
 	if !strings.Contains(result.Error, "no unlock test targets") {
 		t.Fatalf("expected no targets error, got %q", result.Error)
 	}
@@ -470,16 +430,12 @@ func TestHandleQuicTestUnresolvedUDPRelayContinuesPastResolve(t *testing.T) {
 		map[string]P.ProxyProvider{},
 	)
 
-	ch := make(chan string, 1)
-	handleQuicTest(
-		`{"proxy-name":"UNRESOLVED_UDP","host":"dns.invalid:443","timeout":100}`,
-		func(value string) { ch <- value },
-	)
+	result := handleQuicTest(&QuicTestParams{
+		ProxyName: "UNRESOLVED_UDP",
+		Host:      "dns.invalid:443",
+		Timeout:   100,
+	})
 
-	var result QuicTestResult
-	if err := json.Unmarshal([]byte(waitTestResult(t, ch)), &result); err != nil {
-		t.Fatalf("result is not valid json: %v", err)
-	}
 	if result.Stage == "target_resolve" {
 		t.Fatalf("unresolved UDP relay should continue past target_resolve, got %+v", result)
 	}

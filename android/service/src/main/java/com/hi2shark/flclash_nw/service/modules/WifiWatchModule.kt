@@ -16,30 +16,30 @@ import android.os.PowerManager
 import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.service.DefaultNetworkResumeAction
-import com.hi2shark.flclash_nw.service.IBaseService
+import com.hi2shark.flclash_nw.service.ManagedService
 import com.hi2shark.flclash_nw.service.PhysicalDefaultNetworkTracker
+import com.hi2shark.flclash_nw.service.ServiceConfig
 import com.hi2shark.flclash_nw.service.ServiceStartResult
-import com.hi2shark.flclash_nw.service.State
+import com.hi2shark.flclash_nw.service.WifiNetworkCandidate
+import com.hi2shark.flclash_nw.service.WifiNetworkSelectionSource
 import com.hi2shark.flclash_nw.service.WifiWatchResumeRetry
 import com.hi2shark.flclash_nw.service.WifiWatchRssi
 import com.hi2shark.flclash_nw.service.WifiWatchState
 import com.hi2shark.flclash_nw.service.WifiWatchSuspendController
 import com.hi2shark.flclash_nw.service.defaultNetworkResumeAction
 import com.hi2shark.flclash_nw.service.selectWifiNetwork
-import com.hi2shark.flclash_nw.service.WifiNetworkCandidate
-import com.hi2shark.flclash_nw.service.WifiNetworkSelectionSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class WifiWatchModule(
+internal class WifiWatchModule(
     private val service: Service,
     private val onStateChanged: () -> Unit = {},
-) : Module() {
+) : ServiceModule {
     // ConnectivityManager can invoke the WiFi and physical-default callbacks
     // on different threads. Serialize them so an old snapshot cannot publish
     // after a newer network transition.
@@ -57,11 +57,11 @@ class WifiWatchModule(
      * (the service type never changes). Only when this is true AND a VPN
      * transport is the active network do we fall back to RSSI-based trust,
      * because our own tunnel obscures the underlying WiFi's validated state.
-     * Third-party VPNs or the proxy-only CommonService must not trigger the
+     * Third-party VPNs or the proxy-only service must not trigger the
      * RSSI fallback.
      */
     private val isOwnVpnService: Boolean =
-        (service as? IBaseService)?.isVpn == true
+        (service as? ManagedService)?.isVpn == true
 
     private val wakeLock by lazy {
         (service.applicationContext.getSystemService(Context.POWER_SERVICE) as? PowerManager)
@@ -98,9 +98,9 @@ class WifiWatchModule(
     private val preferredWifiNetwork: Network?
         get() = physicalDefaultNetwork.preferredWifi
 
-    override fun onInstall() {
+    override fun start() {
         scope.launch {
-            State.suspendOnWifiSsidsFlow.collect {
+            ServiceConfig.suspendOnWifiSsids.collect {
                 controller.updateSuspendOnWifiSsids(it)
             }
         }
@@ -152,9 +152,9 @@ class WifiWatchModule(
     }
 
     private fun applyWifiSuspended(suspended: Boolean): ServiceStartResult {
-        val baseService = service as? IBaseService
+        val managedService = service as? ManagedService
             ?: return ServiceStartResult.failure("service unavailable")
-        val result = baseService.setWifiSuspended(suspended)
+        val result = managedService.setWifiSuspended(suspended)
         if (!result.success) {
             GlobalState.log("WiFi-watch setWifiSuspended($suspended) failed: ${result.message}")
         }
@@ -230,7 +230,7 @@ class WifiWatchModule(
      * is lifted only after an explicit non-Cellular, non-VPN default appears.
      *
      * Two paths feed the cellular check:
-     *  - API 24+ ([registerDefaultNetworkCallback]): immediate, event-driven.
+     *  - API 24+ ([registerDefaultNetworkWatch]): immediate, event-driven.
      *  - All versions (including API 23 where the default callback is absent):
      *    a best-effort poll on every WiFi capability update via
      *    [reconsiderForceResumeFromActiveNetwork], which catches the common
@@ -702,7 +702,7 @@ class WifiWatchModule(
      *
      * The fallback applies only when this module runs inside the VpnService
      * ([isOwnVpnService]) AND a VPN transport is the active network. A
-     * third-party VPN running alongside the proxy-only CommonService does not
+     * third-party VPN running alongside the proxy-only service does not
      * obscure our view of WiFi validation, so we keep using SystemValidated
      * and avoid a false-positive suspend.
      */
@@ -830,7 +830,7 @@ class WifiWatchModule(
         return rssi
     }
 
-    override fun onUninstall() {
+    override fun stop() {
         cancelWifiResolutionReconcile("module uninstall")
         cancelDefaultLostReconsider("module uninstall")
         resumeRetry.cancel("module uninstall")

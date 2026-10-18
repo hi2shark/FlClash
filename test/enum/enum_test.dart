@@ -1,7 +1,6 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hotkey_manager/hotkey_manager.dart';
 
 void main() {
   group('GroupType', () {
@@ -26,7 +25,10 @@ void main() {
     });
 
     test('excludes relay removed by the core from supported values', () {
-      expect(GroupTypeExtension.supportedValues, isNot(contains(GroupType.Relay)));
+      expect(
+        GroupTypeExtension.supportedValues,
+        isNot(contains(GroupType.Relay)),
+      );
       expect(GroupTypeExtension.valueList, isNot(contains('Relay')));
       expect(GroupTypeExtension.getGroupType('Relay'), isNull);
     });
@@ -38,24 +40,7 @@ void main() {
     });
   });
 
-  group('UsedProxyExtension', () {
-    test('returns enum names as proxy values', () {
-      expect(UsedProxy.GLOBAL.value, 'GLOBAL');
-      expect(UsedProxy.DIRECT.value, 'DIRECT');
-      expect(UsedProxy.REJECT.value, 'REJECT');
-    });
-  });
-
-  group('KeyboardModifierExt', () {
-    test('maps keyboard modifiers to hotkey modifiers', () {
-      expect(KeyboardModifier.alt.toHotKeyModifier(), HotKeyModifier.alt);
-      expect(
-        KeyboardModifier.control.toHotKeyModifier(),
-        HotKeyModifier.control,
-      );
-      expect(KeyboardModifier.shift.toHotKeyModifier(), HotKeyModifier.shift);
-    });
-
+  group('KeyboardModifier', () {
     test('keeps platform key variants for paired modifiers', () {
       expect(KeyboardModifier.alt.physicalKeys, [
         PhysicalKeyboardKey.altLeft,
@@ -106,7 +91,18 @@ void main() {
 
   group('RuleTarget', () {
     test('contains built-in target names', () {
-      expect(RuleTarget.baseTargets, {'DIRECT', 'REJECT'});
+      expect(RuleTarget.baseTargets, {
+        'DIRECT',
+        'REJECT',
+        'REJECT-DROP',
+        'PASS',
+        'PASS-RULE',
+        'COMPATIBLE',
+      });
+    });
+
+    test('lets a rule name the GLOBAL the core adds', () {
+      expect(RuleTarget.ruleTargets, {...RuleTarget.baseTargets, 'GLOBAL'});
     });
   });
 

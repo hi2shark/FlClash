@@ -22,7 +22,7 @@ void main() {
       expect(value.onlyStatisticsProxy, false);
       expect(value.autoLaunch, false);
       expect(value.closeConnections, true);
-      expect(value.isAnimateToPage, true);
+      expect(value.tabAnimation, TabAnimation.slide);
     });
 
     test('can update state', () {
@@ -115,23 +115,13 @@ void main() {
       const davProps = DAVProps(
         uri: 'https://dav.example.com',
         user: 'user',
-        password: 'password',
+        password: 'secret',
       );
 
       container.read(davSettingProvider.notifier).update((_) => davProps);
 
       expect(container.read(davSettingProvider), davProps);
-    });
-  });
-
-  group('OverrideDns provider', () {
-    test('default is false', () {
-      expect(container.read(overrideDnsProvider), false);
-    });
-
-    test('can toggle on', () {
-      container.read(overrideDnsProvider.notifier).update((_) => true);
-      expect(container.read(overrideDnsProvider), true);
+      expect(container.read(configProvider).davProps?.password, 'secret');
     });
   });
 
@@ -211,7 +201,6 @@ void main() {
       expect(config.vpnProps.enable, true);
       expect(config.networkProps.systemProxy, true);
       expect(config.currentProfileId, null);
-      expect(config.overrideDns, false);
       expect(config.hotKeyActions, isEmpty);
       expect(config.onDemandEnabled, true);
       expect(config.patchClashConfig, const PatchClashConfig());
@@ -220,7 +209,6 @@ void main() {
 
     test('reflects updated sub-provider values', () {
       container.read(currentProfileIdProvider.notifier).update((_) => 99);
-      container.read(overrideDnsProvider.notifier).update((_) => true);
       container.read(onDemandEnabledProvider.notifier).update((_) => false);
       container
           .read(patchClashConfigProvider.notifier)
@@ -231,28 +219,40 @@ void main() {
 
       final config = container.read(configProvider);
       expect(config.currentProfileId, 99);
-      expect(config.overrideDns, true);
       expect(config.onDemandEnabled, false);
       expect(config.patchClashConfig.mixedPort, 7890);
       expect(config.excludeSSIDs, ['Office Wi-Fi']);
     });
   });
 
+  group('writeConfig', () {
+    test('never leaves a restored open controller without a secret', () {
+      final ref = container.read(Provider<Ref>((ref) => ref));
+
+      writeConfig(
+        ref,
+        const Config(
+          themeProps: ThemeProps(),
+          patchClashConfig: PatchClashConfig(
+            externalController: ExternalControllerStatus.open,
+          ),
+        ),
+      );
+
+      expect(container.read(patchClashConfigProvider).secret, hasLength(32));
+    });
+  });
+
   group('buildConfigOverrides', () {
     test('produces correct overrides', () {
-      const config = Config(
-        themeProps: ThemeProps(),
-        currentProfileId: 7,
-        overrideDns: true,
-      );
+      const config = Config(themeProps: ThemeProps(), currentProfileId: 7);
       final overrides = buildConfigOverrides(config);
-      expect(overrides.length, 14);
+      expect(overrides.length, 13);
 
       final overrideContainer = ProviderContainer(overrides: overrides);
       addTearDown(overrideContainer.dispose);
 
       expect(overrideContainer.read(currentProfileIdProvider), 7);
-      expect(overrideContainer.read(overrideDnsProvider), true);
       expect(overrideContainer.read(onDemandEnabledProvider), true);
       expect(overrideContainer.read(unlockTestSettingProvider).enable, false);
       expect(

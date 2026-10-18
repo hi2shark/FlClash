@@ -1,9 +1,9 @@
 package com.hi2shark.flclash_nw.service
 
-import com.google.gson.Gson
-import com.google.gson.JsonParser
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.core.Core
+import com.google.gson.Gson
+import com.google.gson.JsonParser
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -21,10 +21,11 @@ object AndroidCoreActions {
             mapOf(
                 "id" to "android_$method",
                 "method" to method,
-            )
+            ),
         )
-        Core.invokeAction(data) { result ->
-            success = result?.let { parseBooleanResult(it) } == true
+        Core.invokeMethod(data) { result ->
+            success = result?.decodeToString()?.takeIf { it.isNotEmpty() }
+                ?.let { parseBooleanResult(it) } == true
             latch.countDown()
         }
         val completed = latch.await(3, TimeUnit.SECONDS)
@@ -37,7 +38,7 @@ object AndroidCoreActions {
     private fun parseBooleanResult(result: String): Boolean {
         return runCatching {
             val json = JsonParser.parseString(result).asJsonObject
-            json["code"].asInt == 0 && json["data"].asBoolean
+            json["error"] == null && json["result"]?.asBoolean == true
         }.getOrDefault(false)
     }
 }

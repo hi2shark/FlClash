@@ -378,14 +378,14 @@ void main() {
 
     test('enforces decoded UTF-8 byte limits for the key', () {
       final key255 = List.filled(255, 'k').join();
-      final accepted = parser
-          .parseMany('nowhere://$key255@example.com')
-          .single;
+      final accepted = parser.parseMany('nowhere://$key255@example.com').single;
       expect(accepted.error, isNull);
       expect(accepted.proxy!.config['password'], key255);
 
       final tooLongKey = List.filled(256, 'k').join();
-      final result = parser.parseMany('nowhere://$tooLongKey@example.com').single;
+      final result = parser
+          .parseMany('nowhere://$tooLongKey@example.com')
+          .single;
       expect(result.proxy, isNull);
       expect(result.error, contains('255 UTF-8 bytes'));
 

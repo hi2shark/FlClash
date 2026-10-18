@@ -68,23 +68,6 @@ void main() {
     });
   });
 
-  group('IterableExt.takeLast', () {
-    test('takes last n elements', () {
-      final result = [1, 2, 3, 4, 5].takeLast(count: 3).toList();
-      expect(result, [3, 4, 5]);
-    });
-
-    test('returns all when count >= length', () {
-      final result = [1, 2].takeLast(count: 5).toList();
-      expect(result, [1, 2]);
-    });
-
-    test('returns empty when count <= 0', () {
-      final result = [1, 2, 3].takeLast(count: 0).toList();
-      expect(result, isEmpty);
-    });
-  });
-
   group('ListExt.truncate', () {
     test('removes from beginning when over max', () {
       final list = [1, 2, 3, 4, 5];
@@ -129,13 +112,14 @@ void main() {
     });
 
     test('caps delay tests at the core concurrency limit', () {
-      expect(maxConcurrentDelayTests, 50);
+      expect(maxConcurrentDelayTests, 32);
       final items = List<int>.generate(101, (index) => index);
       final batches = items.batch(maxConcurrentDelayTests);
-      expect(batches.length, 3);
-      expect(batches.first.length, 50);
-      expect(batches[1].length, 50);
-      expect(batches.last.length, 1);
+      expect(batches.length, 4);
+      expect(batches.first.length, 32);
+      expect(batches[1].length, 32);
+      expect(batches[2].length, 32);
+      expect(batches.last.length, 5);
     });
   });
 
@@ -170,23 +154,6 @@ void main() {
 
       expect(list, ['a', 'b', 'c']);
       expect(result, ['b', 'c', 'a']);
-    });
-  });
-
-  group('ListExt.safeSublist', () {
-    test('returns full list when start <= 0', () {
-      final result = [1, 2, 3].safeSublist(0);
-      expect(result, [1, 2, 3]);
-    });
-
-    test('returns empty when start > length', () {
-      final result = [1, 2, 3].safeSublist(5);
-      expect(result, isEmpty);
-    });
-
-    test('clamps end to length', () {
-      final result = [1, 2, 3].safeSublist(1, 10);
-      expect(result, [2, 3]);
     });
   });
 
@@ -242,26 +209,6 @@ void main() {
     });
   });
 
-  group('DoubleListExt.findInterval', () {
-    test('returns -1 for empty list', () {
-      expect(<double>[].findInterval(5), -1);
-    });
-
-    test('returns -1 when target < first', () {
-      expect([10.0, 20.0, 30.0].findInterval(5), -1);
-    });
-
-    test('returns last index when target >= last', () {
-      expect([10.0, 20.0, 30.0].findInterval(30), 2);
-      expect([10.0, 20.0, 30.0].findInterval(50), 2);
-    });
-
-    test('finds correct interval', () {
-      expect([10.0, 20.0, 30.0].findInterval(15), 0);
-      expect([10.0, 20.0, 30.0].findInterval(25), 1);
-    });
-  });
-
   group('MapExt.updateCacheValue', () {
     test('creates entry when missing', () {
       final map = <String, int>{};
@@ -274,26 +221,6 @@ void main() {
       final map = {'a': 10};
       final result = map.updateCacheValue('a', () => 42);
       expect(result, 10);
-    });
-  });
-
-  group('MapExt.copyWitUpdate', () {
-    test('adds key with value', () {
-      final map = {'a': 1};
-      final result = map.copyWitUpdate('b', 2);
-      expect(result, {'a': 1, 'b': 2});
-    });
-
-    test('removes key when value is null', () {
-      final map = {'a': 1, 'b': 2};
-      final result = map.copyWitUpdate('b', null);
-      expect(result, {'a': 1});
-    });
-
-    test('does not mutate original', () {
-      final map = {'a': 1};
-      map.copyWitUpdate('b', 2);
-      expect(map.length, 1);
     });
   });
 }

@@ -1,75 +1,77 @@
-import 'package:animations/animations.dart';
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/inherited.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
 import 'input.dart';
+import 'open_container.dart';
 import 'scaffold.dart';
 import 'sheet.dart';
+import 'sortable.dart';
 
-class Delegate {
-  const Delegate();
+part 'list_row_separator.dart';
+part 'list_selected.dart';
+
+sealed class _ListItemAction {
+  const _ListItemAction();
 }
 
-class RadioDelegate<T> extends Delegate {
+final class _DefaultAction extends _ListItemAction {
+  const _DefaultAction();
+}
+
+final class _RadioAction<T> extends _ListItemAction {
   final T value;
-  final void Function()? onTab;
+  final VoidCallback? onTap;
 
-  const RadioDelegate({required this.value, this.onTab});
+  const _RadioAction({required this.value, this.onTap});
 }
 
-class SwitchDelegate<T> extends Delegate {
+final class _ToggleAction extends _ListItemAction {
   final bool value;
   final ValueChanged<bool>? onChanged;
 
-  const SwitchDelegate({required this.value, this.onChanged});
+  const _ToggleAction({required this.value, this.onChanged});
 }
 
-class CheckboxDelegate<T> extends Delegate {
+final class _CheckboxAction extends _ListItemAction {
   final bool value;
   final ValueChanged<bool?>? onChanged;
 
-  const CheckboxDelegate({this.value = false, this.onChanged});
+  const _CheckboxAction({required this.value, this.onChanged});
 }
 
-class OpenDelegate<T> extends Delegate {
+final class _OpenAction extends _ListItemAction {
   final Widget widget;
-  final double? maxWidth;
-  final bool blur;
-  final bool forceFull;
-  final ValueChanged<T?>? onChanged;
+  final ValueChanged<dynamic>? onChanged;
 
-  const OpenDelegate({
+  final bool forceFull;
+
+  const _OpenAction({
     required this.widget,
-    this.maxWidth,
-    this.blur = true,
-    this.forceFull = true,
     this.onChanged,
+    required this.forceFull,
   });
 }
 
-class NextDelegate extends Delegate {
+final class _NextAction extends _ListItemAction {
   final Widget widget;
-  final double? maxWidth;
-  final bool blur;
 
-  const NextDelegate({required this.widget, this.maxWidth, this.blur = true});
+  const _NextAction({required this.widget});
 }
 
-class OptionsDelegate<T> extends Delegate {
+final class _OptionsAction<T> extends _ListItemAction {
   final List<T> options;
   final String title;
   final T value;
   final String Function(T value) textBuilder;
-  final Function(T? value) onChanged;
+  final ValueChanged<T?> onChanged;
 
-  const OptionsDelegate({
+  const _OptionsAction({
     required this.title,
     required this.options,
     required this.textBuilder,
@@ -78,18 +80,17 @@ class OptionsDelegate<T> extends Delegate {
   });
 }
 
-class InputDelegate extends Delegate {
+final class _InputAction extends _ListItemAction {
   final String title;
   final String value;
   final String? suffixText;
-  final Function(String? value) onChanged;
+  final ValueChanged<String?> onChanged;
   final FormFieldValidator<String>? validator;
   final int? maxLength;
   final TextInputType? keyboardType;
-
   final String? resetValue;
 
-  const InputDelegate({
+  const _InputAction({
     required this.title,
     required this.value,
     this.suffixText,
@@ -109,7 +110,7 @@ class ListItem<T> extends StatelessWidget {
   final ListTileTitleAlignment tileTitleAlignment;
   final bool? dense;
   final Widget? trailing;
-  final Delegate delegate;
+  final _ListItemAction _action;
   final double? horizontalTitleGap;
   final TextStyle? titleTextStyle;
   final TextStyle? subtitleTextStyle;
@@ -134,18 +135,20 @@ class ListItem<T> extends StatelessWidget {
     this.color,
     this.minTileHeight,
     this.visualDensity,
-    this.minVerticalPadding = 12,
+    this.minVerticalPadding = listRowVerticalPadding,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
-  }) : delegate = const Delegate();
+  }) : _action = const _DefaultAction();
 
-  const ListItem.open({
+  ListItem.open({
     super.key,
     required this.title,
     this.subtitle,
     this.leading,
     this.padding = const EdgeInsets.symmetric(horizontal: 16),
     this.trailing,
-    required OpenDelegate this.delegate,
+    required Widget widget,
+    ValueChanged<dynamic>? onChanged,
+    bool forceFull = true,
     this.horizontalTitleGap,
     this.dense,
     this.titleTextStyle,
@@ -153,18 +156,23 @@ class ListItem<T> extends StatelessWidget {
     this.color,
     this.minTileHeight,
     this.visualDensity,
-    this.minVerticalPadding = 12,
+    this.minVerticalPadding = listRowVerticalPadding,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
-  }) : onTap = null;
+  }) : _action = _OpenAction(
+         widget: widget,
+         onChanged: onChanged,
+         forceFull: forceFull,
+       ),
+       onTap = null;
 
-  const ListItem.next({
+  ListItem.next({
     super.key,
     required this.title,
     this.subtitle,
     this.leading,
     this.padding = const EdgeInsets.symmetric(horizontal: 16),
     this.trailing,
-    required NextDelegate this.delegate,
+    required Widget widget,
     this.horizontalTitleGap,
     this.dense,
     this.titleTextStyle,
@@ -172,18 +180,23 @@ class ListItem<T> extends StatelessWidget {
     this.color,
     this.minTileHeight,
     this.visualDensity,
-    this.minVerticalPadding = 12,
+    this.minVerticalPadding = listRowVerticalPadding,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
-  }) : onTap = null;
+  }) : _action = _NextAction(widget: widget),
+       onTap = null;
 
-  const ListItem.options({
+  ListItem.options({
     super.key,
     required this.title,
     this.subtitle,
     this.leading,
     this.padding = const EdgeInsets.symmetric(horizontal: 16),
     this.trailing,
-    required OptionsDelegate<T> this.delegate,
+    required String dialogTitle,
+    required List<T> options,
+    required T value,
+    required String Function(T value) textBuilder,
+    required ValueChanged<T?> onChanged,
     this.horizontalTitleGap,
     this.dense,
     this.titleTextStyle,
@@ -191,18 +204,32 @@ class ListItem<T> extends StatelessWidget {
     this.color,
     this.minTileHeight,
     this.visualDensity,
-    this.minVerticalPadding = 12,
+    this.minVerticalPadding = listRowVerticalPadding,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
-  }) : onTap = null;
+  }) : _action = _OptionsAction<T>(
+         title: dialogTitle,
+         options: options,
+         value: value,
+         textBuilder: textBuilder,
+         onChanged: onChanged,
+       ),
+       onTap = null;
 
-  const ListItem.input({
+  ListItem.input({
     super.key,
     required this.title,
     this.subtitle,
     this.leading,
     this.padding = const EdgeInsets.symmetric(horizontal: 16),
     this.trailing,
-    required InputDelegate this.delegate,
+    required String dialogTitle,
+    required String value,
+    String? suffixText,
+    required ValueChanged<String?> onChanged,
+    FormFieldValidator<String>? validator,
+    int? maxLength,
+    TextInputType? keyboardType,
+    String? resetValue,
     this.horizontalTitleGap,
     this.dense,
     this.titleTextStyle,
@@ -210,17 +237,28 @@ class ListItem<T> extends StatelessWidget {
     this.color,
     this.minTileHeight,
     this.visualDensity,
-    this.minVerticalPadding = 12,
+    this.minVerticalPadding = listRowVerticalPadding,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
-  }) : onTap = null;
+  }) : _action = _InputAction(
+         title: dialogTitle,
+         value: value,
+         suffixText: suffixText,
+         onChanged: onChanged,
+         validator: validator,
+         maxLength: maxLength,
+         keyboardType: keyboardType,
+         resetValue: resetValue,
+       ),
+       onTap = null;
 
-  const ListItem.checkbox({
+  ListItem.checkbox({
     super.key,
     required this.title,
     this.subtitle,
     this.leading,
     this.padding = const EdgeInsets.only(left: 16, right: 8),
-    required CheckboxDelegate<T> this.delegate,
+    bool value = false,
+    ValueChanged<bool?>? onChanged,
     this.horizontalTitleGap,
     this.dense,
     this.titleTextStyle,
@@ -228,18 +266,20 @@ class ListItem<T> extends StatelessWidget {
     this.color,
     this.minTileHeight,
     this.visualDensity,
-    this.minVerticalPadding = 12,
+    this.minVerticalPadding = listRowVerticalPadding,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
-  }) : trailing = null,
+  }) : _action = _CheckboxAction(value: value, onChanged: onChanged),
+       trailing = null,
        onTap = null;
 
-  const ListItem.switchItem({
+  ListItem.toggle({
     super.key,
     required this.title,
     this.subtitle,
     this.leading,
     this.padding = const EdgeInsets.only(left: 16, right: 8),
-    required SwitchDelegate<T> this.delegate,
+    required bool value,
+    ValueChanged<bool>? onChanged,
     this.horizontalTitleGap,
     this.dense,
     this.titleTextStyle,
@@ -247,18 +287,20 @@ class ListItem<T> extends StatelessWidget {
     this.color,
     this.minTileHeight,
     this.visualDensity,
-    this.minVerticalPadding = 12,
+    this.minVerticalPadding = listRowVerticalPadding,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
-  }) : trailing = null,
+  }) : _action = _ToggleAction(value: value, onChanged: onChanged),
+       trailing = null,
        onTap = null;
 
-  const ListItem.radio({
+  ListItem.radio({
     super.key,
     required this.title,
     this.subtitle,
     this.trailing,
     this.padding = const EdgeInsets.only(left: 12, right: 16),
-    required RadioDelegate<T> this.delegate,
+    required T value,
+    VoidCallback? onTap,
     this.horizontalTitleGap = 8,
     this.dense,
     this.titleTextStyle,
@@ -266,31 +308,51 @@ class ListItem<T> extends StatelessWidget {
     this.color,
     this.minTileHeight,
     this.visualDensity,
-    this.minVerticalPadding = 12,
+    this.minVerticalPadding = listRowVerticalPadding,
     this.tileTitleAlignment = ListTileTitleAlignment.center,
-  }) : leading = null,
+  }) : _action = _RadioAction<T>(value: value, onTap: onTap),
+       leading = null,
        onTap = null;
 
-  Widget _buildListTile({
+  Widget _buildListTile(
+    BuildContext context, {
+    required ItemPosition? position,
+    required WidgetStatesController? rowStates,
     void Function()? onTap,
     Widget? trailing,
     Widget? leading,
   }) {
+    if (position != null) {
+      // OpenContainer reparents the closed tile out of the section's provider.
+      return ItemPositionProvider(
+        position: position,
+        child: DecorationListItem(
+          leading: leading ?? this.leading,
+          title: title,
+          subtitle: subtitle,
+          trailing: trailing ?? this.trailing,
+          contentPadding: padding,
+          horizontalTitleGap: horizontalTitleGap,
+          onPressed: onTap,
+        ),
+      );
+    }
     return ListTile(
       key: key,
       dense: dense,
       visualDensity: visualDensity,
       tileColor: color,
-      titleTextStyle: titleTextStyle,
-      subtitleTextStyle: subtitleTextStyle,
+      titleTextStyle: titleTextStyle ?? context.listTitleStyle,
+      subtitleTextStyle: subtitleTextStyle ?? context.listSubtitleStyle,
       leading: leading ?? this.leading,
       horizontalTitleGap: horizontalTitleGap,
-      title: title,
-      minTileHeight: minTileHeight,
+      title: rowStates == null ? title : _ListRowSeparatorStart(child: title),
+      minTileHeight: minTileHeight ?? listRowMinHeight,
       minVerticalPadding: minVerticalPadding,
       subtitle: subtitle,
       titleAlignment: tileTitleAlignment,
       onTap: onTap,
+      statesController: rowStates,
       trailing: trailing ?? this.trailing,
       contentPadding: padding,
     );
@@ -298,157 +360,166 @@ class ListItem<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (delegate is OpenDelegate) {
-      final openDelegate = delegate as OpenDelegate;
-      final child = openDelegate.widget;
-      final onChanged = openDelegate.onChanged;
-      return OpenContainer<T>(
-        closedColor: context.colorScheme.surface,
-        openColor: context.colorScheme.surface,
-        closedElevation: 0,
-        openElevation: 0,
-        openShape: const RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.zero,
-        ),
-        closedShape: const RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.zero,
-        ),
-        closedBuilder: (context, action) {
-          Future<void> openAction() async {
-            final isMobile = globalState.container.read(isMobileViewProvider);
-            if (!isMobile || kDebugMode) {
-              final res = await showExtend(
-                context,
-                props: ExtendProps(
-                  blur: openDelegate.blur,
-                  maxWidth: openDelegate.maxWidth,
-                  forceFull: openDelegate.forceFull,
-                ),
-                builder: (_) {
-                  return child;
-                },
-              );
-              if (onChanged != null) {
-                onChanged(res);
-              }
-              return;
-            }
-            action();
-          }
-
-          return _buildListTile(onTap: openAction);
-        },
-        onClosed: onChanged,
-        openBuilder: (_, action) {
-          return child;
-        },
-      );
-    }
-    if (delegate is NextDelegate) {
-      final nextDelegate = delegate as NextDelegate;
-      final child = nextDelegate.widget;
-
-      return _buildListTile(
-        onTap: () {
-          showExtend(
+    final position = ItemPositionProvider.of(context)?.position;
+    final rowStates = _SeparatedListRow.statesOf(context);
+    switch (_action) {
+      case final _OpenAction openDelegate:
+        final child = openDelegate.widget;
+        final onChanged = openDelegate.onChanged;
+        if (!context.isMobileView) {
+          return _buildListTile(
             context,
-            props: ExtendProps(
-              blur: nextDelegate.blur,
-              maxWidth: nextDelegate.maxWidth,
-            ),
-            builder: (_) {
-              return child;
+            position: position,
+            rowStates: rowStates,
+            onTap: () async {
+              final result = await showExtend<dynamic>(
+                context,
+                props: ExtendProps(forceFull: openDelegate.forceFull),
+                builder: (_) => child,
+              );
+              onChanged?.call(result);
             },
           );
-        },
-      );
-    }
-    if (delegate is OptionsDelegate) {
-      final optionsDelegate = delegate as OptionsDelegate<T>;
-      return _buildListTile(
-        onTap: () async {
-          final value = await globalState.showCommonDialog<T>(
-            child: OptionsDialog<T>(
-              title: optionsDelegate.title,
-              options: optionsDelegate.options,
-              textBuilder: optionsDelegate.textBuilder,
-              value: optionsDelegate.value,
-            ),
-          );
-          optionsDelegate.onChanged(value);
-        },
-      );
-    }
-    if (delegate is InputDelegate) {
-      final inputDelegate = delegate as InputDelegate;
-      return _buildListTile(
-        onTap: () async {
-          final value = await globalState.showCommonDialog<String>(
-            child: InputDialog(
-              title: inputDelegate.title,
-              value: inputDelegate.value,
-              suffixText: inputDelegate.suffixText,
-              resetValue: inputDelegate.resetValue,
-              inputFormatters: inputDelegate.maxLength == null
-                  ? null
-                  : TextInputLimits.limit(inputDelegate.maxLength!),
-              keyboardType: inputDelegate.keyboardType,
-              validator: inputDelegate.validator,
-            ),
-          );
-          inputDelegate.onChanged(value);
-        },
-      );
-    }
-    if (delegate is CheckboxDelegate) {
-      final checkboxDelegate = delegate as CheckboxDelegate;
-      return _buildListTile(
-        onTap: () {
-          if (checkboxDelegate.onChanged != null) {
-            checkboxDelegate.onChanged!(!checkboxDelegate.value);
-          }
-        },
-        trailing: CommonCheckBox(
-          value: checkboxDelegate.value,
-          onChanged: checkboxDelegate.onChanged,
-        ),
-      );
-    }
-    if (delegate is SwitchDelegate) {
-      final switchDelegate = delegate as SwitchDelegate;
-      return _buildListTile(
-        onTap: () {
-          if (switchDelegate.onChanged != null) {
-            switchDelegate.onChanged!(!switchDelegate.value);
-          }
-        },
-        trailing: Switch(
-          value: switchDelegate.value,
-          onChanged: switchDelegate.onChanged,
-        ),
-      );
-    }
-    if (delegate is RadioDelegate) {
-      final radioDelegate = delegate as RadioDelegate<T>;
-      return _buildListTile(
-        onTap: radioDelegate.onTab,
-        leading: Radio<T>(
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          value: radioDelegate.value,
-          toggleable: true,
-        ),
-        trailing: trailing,
-      );
-    }
+        }
+        return OpenContainer<dynamic>(
+          tappable: false,
+          clipBehavior: Clip.none,
+          closedBuilder: (context, action) {
+            return _buildListTile(
+              context,
+              position: position,
+              rowStates: rowStates,
+              onTap: action,
+            );
+          },
+          onClosed: onChanged,
+          openBuilder: (_, action) {
+            return child;
+          },
+        );
+      case final _NextAction nextDelegate:
+        final child = nextDelegate.widget;
 
-    return _buildListTile(onTap: onTap);
+        return _buildListTile(
+          context,
+          position: position,
+          rowStates: rowStates,
+          onTap: () {
+            showExtend(
+              context,
+              builder: (_) {
+                return child;
+              },
+            );
+          },
+        );
+      case final _OptionsAction options:
+        final optionsDelegate = options as _OptionsAction<T>;
+        return _buildListTile(
+          context,
+          position: position,
+          rowStates: rowStates,
+          onTap: () async {
+            // Options are boxed so that a nullable option such as the default
+            // locale stays distinct from the null a dismissed dialog returns.
+            final selected = await dialogs.showCommonDialog<(T,)>(
+              child: OptionsDialog<(T,)>(
+                title: optionsDelegate.title,
+                options: [
+                  for (final option in optionsDelegate.options) (option,),
+                ],
+                textBuilder: (option) => optionsDelegate.textBuilder(option.$1),
+                value: (optionsDelegate.value,),
+              ),
+            );
+            if (selected == null) {
+              return;
+            }
+            optionsDelegate.onChanged(selected.$1);
+          },
+        );
+      case final _InputAction inputDelegate:
+        return _buildListTile(
+          context,
+          position: position,
+          rowStates: rowStates,
+          onTap: () async {
+            final value = await dialogs.showCommonDialog<String>(
+              child: InputDialog(
+                title: inputDelegate.title,
+                value: inputDelegate.value,
+                suffixText: inputDelegate.suffixText,
+                resetValue: inputDelegate.resetValue,
+                inputFormatters: inputDelegate.maxLength == null
+                    ? null
+                    : TextInputLimits.limit(inputDelegate.maxLength!),
+                keyboardType: inputDelegate.keyboardType,
+                validator: inputDelegate.validator,
+              ),
+            );
+            inputDelegate.onChanged(value);
+          },
+        );
+      case final _CheckboxAction checkboxDelegate:
+        return _buildListTile(
+          context,
+          position: position,
+          rowStates: rowStates,
+          onTap: checkboxDelegate.onChanged == null
+              ? null
+              : () {
+                  checkboxDelegate.onChanged!(!checkboxDelegate.value);
+                },
+          trailing: CommonCheckBox(
+            value: checkboxDelegate.value,
+            onChanged: checkboxDelegate.onChanged,
+          ),
+        );
+      case final _ToggleAction toggleAction:
+        return _buildListTile(
+          context,
+          position: position,
+          rowStates: rowStates,
+          onTap: toggleAction.onChanged == null
+              ? null
+              : () {
+                  toggleAction.onChanged!(!toggleAction.value);
+                },
+          trailing: Switch(
+            value: toggleAction.value,
+            onChanged: toggleAction.onChanged,
+          ),
+        );
+      case final _RadioAction radio:
+        final radioDelegate = radio as _RadioAction<T>;
+        return _buildListTile(
+          context,
+          position: position,
+          rowStates: rowStates,
+          onTap: radioDelegate.onTap,
+          leading: ExcludeFocus(
+            child: Radio<T>(
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              value: radioDelegate.value,
+              toggleable: true,
+            ),
+          ),
+          trailing: trailing,
+        );
+      case _DefaultAction():
+        return _buildListTile(
+          context,
+          position: position,
+          rowStates: rowStates,
+          onTap: onTap,
+        );
+    }
   }
 }
 
 class ListHeader extends StatelessWidget {
   final String title;
-  final String? subTitle;
   final List<Widget> actions;
   final EdgeInsets? padding;
   final double? space;
@@ -456,7 +527,6 @@ class ListHeader extends StatelessWidget {
   const ListHeader({
     super.key,
     required this.title,
-    this.subTitle,
     this.padding,
     List<Widget>? actions,
     this.space,
@@ -470,35 +540,46 @@ class ListHeader extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        spacing: 36,
+        spacing: actions.isEmpty ? 0 : 12,
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: context.textTheme.labelLarge?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant.opacity80,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (subTitle != null)
-                  Text(
-                    subTitle!,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: context.colorScheme.outline,
-                    ),
-                  ),
-              ],
+            child: Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: context.sectionHeaderStyle,
             ),
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.end,
-            children: [...genActions(actions, space: space)],
+            spacing: space ?? appBarActionSpace,
+            children: [...actions],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class ListFooter extends StatelessWidget {
+  final String text;
+
+  const ListFooter({super.key, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: EdgeInsets.only(left: 16.mAp, right: 16.mAp, top: 8.mAp),
+      child: Text(
+        text,
+        style: context.textTheme.bodySmall
+            ?.adjustSize(1)
+            .copyWith(
+              height: 18 / 13,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
       ),
     );
   }
@@ -511,9 +592,7 @@ List<Widget> generateSection({
   bool isFirst = false,
   bool separated = true,
 }) {
-  final genItems = separated
-      ? items.separated(const Divider(height: 0))
-      : items;
+  final genItems = separated ? _separatedRows(items) : items;
   return [
     if (items.isNotEmpty && title != null)
       ListHeader(
@@ -527,33 +606,10 @@ List<Widget> generateSection({
   ];
 }
 
-Widget generateSectionV2({
-  String? title,
-  required Iterable<Widget> items,
-  List<Widget>? actions,
-  bool separated = true,
-}) {
-  final genItems = items
-      .map<Widget>((item) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: CommonCard(
-            type: CommonCardType.filled,
-            radius: 0,
-            child: item,
-          ),
-        );
-      })
-      .separated(const Divider(height: 2, color: Colors.transparent));
-  return Column(
-    children: [
-      if (items.isNotEmpty && title != null)
-        ListHeader(title: title, actions: actions),
-      ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: Column(children: [...genItems]),
-      ),
-    ],
+Iterable<Widget> _separatedRows(Iterable<Widget> items) {
+  final last = items.length - 1;
+  return items.mapIndexed(
+    (index, item) => _SeparatedListRow(separated: index < last, child: item),
   );
 }
 
@@ -561,19 +617,20 @@ Widget generateSectionV3({
   String? title,
   required Iterable<Widget> items,
   List<Widget>? actions,
+  String? footer,
 }) {
-  final genItems = items.mapIndexed<Widget>((index, item) {
-    final position = ItemPosition.get(index, items.length);
-    if (position != ItemPosition.middle) {
-      return ItemPositionProvider(position: position, child: item);
-    }
-    return item;
-  });
+  final genItems = items.mapIndexed<Widget>(
+    (index, item) => ItemPositionProvider(
+      position: ItemPosition.get(index, items.length),
+      child: item,
+    ),
+  );
   return Column(
     children: [
       if (items.isNotEmpty && title != null)
         ListHeader(title: title, actions: actions),
       Column(children: [...genItems]),
+      if (items.isNotEmpty && footer != null) ListFooter(text: footer),
     ],
   );
 }
@@ -584,215 +641,17 @@ List<Widget> generateInfoSection({
   List<Widget>? actions,
   bool separated = true,
 }) {
-  final genItems = separated
-      ? items.separated(const Divider(height: 0))
-      : items;
+  final genItems = separated ? _separatedRows(items) : items;
   return [
     if (items.isNotEmpty) InfoHeader(info: info, actions: actions),
     ...genItems,
   ];
 }
 
-Widget generateListView(List<Widget> items) {
+Widget generateListView(List<Widget> items, {double topPadding = 0}) {
   return ListView.builder(
     itemCount: items.length,
     itemBuilder: (_, index) => items[index],
-    padding: const EdgeInsets.only(bottom: 16),
+    padding: EdgeInsets.only(top: topPadding, bottom: 16),
   );
-}
-
-class CommonSelectedListItem extends StatelessWidget {
-  final bool isSelected;
-  final bool isEditing;
-  final Widget title;
-  final VoidCallback onSelected;
-  final VoidCallback onPressed;
-
-  const CommonSelectedListItem({
-    super.key,
-    required this.isSelected,
-    required this.onSelected,
-    this.isEditing = false,
-    required this.title,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-        color: Colors.transparent,
-        child: CommonCard(
-          radius: 18,
-          type: CommonCardType.filled,
-          isSelected: isSelected,
-          onPressed: () {
-            if (isEditing) {
-              onSelected();
-              return;
-            }
-            onPressed();
-          },
-          child: ListTile(
-            minTileHeight: 32 + globalState.measure.bodyMediumHeight,
-            minVerticalPadding: 12,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-            trailing: SizedBox(
-              width: 24,
-              height: 24,
-              child: CommonCheckBox(
-                value: isSelected,
-                isCircle: true,
-                onChanged: (_) {
-                  onSelected();
-                },
-              ),
-            ),
-            title: title,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class DecorationListItem extends StatelessWidget {
-  final Widget title;
-  final Widget? subtitle;
-  final Widget? leading;
-  final Widget? trailing;
-  final bool? isSelected;
-  final double? horizontalTitleGap;
-  final EdgeInsetsGeometry? contentPadding;
-  final VoidCallback? onPressed;
-  final double? minVerticalPadding;
-  final bool invalid;
-
-  const DecorationListItem({
-    super.key,
-    this.contentPadding,
-    required this.title,
-    this.leading,
-    this.trailing,
-    this.subtitle,
-    this.isSelected,
-    this.onPressed,
-    this.horizontalTitleGap,
-    this.minVerticalPadding,
-    this.invalid = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final proxyDecorator =
-        ProxyDecoratorProvider.of(context)?.isProxyDecorator ?? false;
-    final position = ItemPositionProvider.of(context)?.position;
-    final isStart = [
-      ItemPosition.start,
-      ItemPosition.startAndEnd,
-    ].contains(position);
-    final isEnd = [
-      ItemPosition.end,
-      ItemPosition.startAndEnd,
-    ].contains(position);
-    final borderRadius = BorderRadius.vertical(
-      top: isStart ? const Radius.circular(24) : Radius.zero,
-      bottom: isEnd ? const Radius.circular(24) : Radius.zero,
-    );
-    return CommonCard(
-      shape: proxyDecorator == true
-          ? LinearBorder.none
-          : RoundedSuperellipseBorder(borderRadius: borderRadius),
-      isError: invalid,
-      isSelected: isSelected,
-      padding: EdgeInsets.zero,
-      type: CommonCardType.filled,
-      onPressed: proxyDecorator ? null : onPressed,
-      child: LayoutBuilder(
-        builder: (_, constraints) {
-          final isInfinite = constraints.maxHeight >= double.infinity;
-          final tile = ListTile(
-            leading: leading,
-            contentPadding:
-                contentPadding ?? const EdgeInsets.only(right: 16, left: 16),
-            title: title,
-            subtitle: subtitle,
-            minVerticalPadding: minVerticalPadding ?? 6,
-            minTileHeight: 54,
-            horizontalTitleGap: horizontalTitleGap,
-            trailing: trailing,
-          );
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                fit: isInfinite ? FlexFit.loose : FlexFit.tight,
-                child: tile,
-              ),
-              if (!invalid && proxyDecorator != true && !isEnd)
-                const Divider(height: 0, indent: 14, endIndent: 14),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class SelectedDecorationListItem extends StatelessWidget {
-  final bool isSelected;
-  final bool isEditing;
-  final Widget title;
-  final Widget? subtitle;
-  final VoidCallback onSelected;
-  final VoidCallback onPressed;
-  final double? horizontalTitleGap;
-  final Widget? leading;
-  final bool invalid;
-  final double? minVerticalPadding;
-
-  const SelectedDecorationListItem({
-    super.key,
-    required this.isSelected,
-    required this.onSelected,
-    this.horizontalTitleGap,
-    this.isEditing = false,
-    this.invalid = false,
-    required this.title,
-    required this.onPressed,
-    this.minVerticalPadding,
-    this.subtitle,
-    this.leading,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DecorationListItem(
-      title: title,
-      minVerticalPadding: minVerticalPadding,
-      contentPadding: const EdgeInsets.only(left: 16, right: 0),
-      isSelected: isSelected,
-      invalid: invalid,
-      leading: leading,
-      horizontalTitleGap: horizontalTitleGap,
-      onPressed: () {
-        if (isEditing) {
-          onSelected();
-          return;
-        }
-        onPressed();
-      },
-      subtitle: subtitle,
-      trailing: CommonCheckBox(
-        value: isSelected,
-        isCircle: true,
-        onChanged: (_) {
-          onSelected();
-        },
-      ),
-    );
-  }
 }

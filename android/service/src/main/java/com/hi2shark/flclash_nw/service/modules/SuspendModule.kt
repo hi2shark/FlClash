@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.PowerManager
 import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.receiveBroadcastFlow
-import com.hi2shark.flclash_nw.service.IBaseService
+import com.hi2shark.flclash_nw.service.ManagedService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -14,8 +14,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
-
-class SuspendModule(private val service: Service) : Module() {
+internal class SuspendModule(private val service: Service) : ServiceModule {
     private val scope = CoroutineScope(Dispatchers.Default)
 
     private fun isScreenOn(): Boolean {
@@ -32,11 +31,11 @@ class SuspendModule(private val service: Service) : Module() {
         }
 
     /**
-     * Screen/idle suspension is now routed through the service's idle-suspend
+     * Screen/idle suspension is routed through the service's idle-suspend
      * channel (setIdleSuspended) so it composes with external and WiFi-watch
      * suspensions via the shared ServiceSuspensionReasons arbiter, instead of
-     * calling Core.suspended directly. Routing everything through
-     * applyDesiredSuspended guarantees Core state, the isSuspended flag and the
+     * calling Core.suspended directly. Routing everything through the arbiter
+     * guarantees Core state, the isSuspended flag and the
      * SERVICE_SUSPENDED_CHANGED broadcast all stay in sync.
      *
      * When the screen is on the service is never idle-suspended. When off, the
@@ -45,12 +44,10 @@ class SuspendModule(private val service: Service) : Module() {
      * independently by the arbiter.
      */
     private fun onUpdate(isScreenOn: Boolean) {
-        val baseService = service as? IBaseService ?: return
-        val idleSuspended = !isScreenOn && isDeviceIdleMode
-        baseService.setIdleSuspended(idleSuspended)
+        (service as? ManagedService)?.setIdleSuspended(!isScreenOn && isDeviceIdleMode)
     }
 
-    override fun onInstall() {
+    override fun start() {
         scope.launch {
             val screenFlow = service.receiveBroadcastFlow {
                 addAction(Intent.ACTION_SCREEN_ON)
@@ -76,7 +73,7 @@ class SuspendModule(private val service: Service) : Module() {
         }
     }
 
-    override fun onUninstall() {
+    override fun stop() {
         scope.cancel()
     }
 }

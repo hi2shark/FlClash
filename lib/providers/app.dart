@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show Locale;
 
-import 'package:dio/dio.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/event.dart';
@@ -10,12 +11,25 @@ import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/service.dart';
-import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
 part 'generated/app.g.dart';
+
+@Riverpod(keepAlive: true)
+bool safeMode(Ref ref) => safeModeBuild;
+
+@Riverpod(keepAlive: true)
+class AuthorizedTunEnable extends _$AuthorizedTunEnable
+    with AutoDisposeNotifierMixin {
+  @override
+  TunAuthorizationState build() {
+    return TunAuthorizationState.none;
+  }
+}
 
 typedef UnlockTestHistoryWriter =
     Future<void> Function(UnlockTestRunRecord record);
@@ -23,14 +37,6 @@ typedef UnlockTestHistoryWriter =
 @Riverpod(keepAlive: true)
 UnlockTestHistoryWriter unlockTestHistoryWriter(Ref ref) {
   return database.unlockTestRunsDao.insertAndPrune;
-}
-
-@riverpod
-class RealTunEnable extends _$RealTunEnable with AutoDisposeNotifierMixin {
-  @override
-  bool build() {
-    return false;
-  }
 }
 
 @Riverpod(keepAlive: true)
@@ -46,15 +52,14 @@ class AndroidServiceSuspended extends _$AndroidServiceSuspended
 class Logs extends _$Logs with AutoDisposeNotifierMixin {
   @override
   FixedList<Log> build() {
-    return FixedList(maxLength);
+    return FixedList(maxLogsLength);
   }
 
   void add(Log value) {
     if (!ref.mounted) {
       return;
     }
-    state.add(value);
-    this.value = state.share();
+    this.value = state.append(value);
   }
 
   Future<bool> exportLogs() async {
@@ -63,7 +68,7 @@ class Logs extends _$Logs with AutoDisposeNotifierMixin {
     final file = File(tempFilePath);
     await file.safeWriteAsString(logString);
     bool res = false;
-    res = await picker.saveFileWithPath(utils.logFile, tempFilePath) != null;
+    res = await picker.saveFileWithPath(logFileName, tempFilePath) != null;
     return res;
   }
 }
@@ -72,12 +77,45 @@ class Logs extends _$Logs with AutoDisposeNotifierMixin {
 class Requests extends _$Requests with AutoDisposeNotifierMixin {
   @override
   FixedList<TrackerInfo> build() {
-    return FixedList(maxLength);
+    return FixedList(maxRequestsLength);
   }
 
   void addRequest(TrackerInfo value) {
-    state.add(value);
-    this.value = state.share();
+    if (!ref.mounted) {
+      return;
+    }
+    this.value = state.append(value);
+  }
+}
+
+@Riverpod(keepAlive: true)
+class DnsQueries extends _$DnsQueries with AutoDisposeNotifierMixin {
+  @override
+  FixedList<DnsQuery> build() {
+    return FixedList(maxDnsQueriesLength);
+  }
+
+  void addQuery(DnsQuery value) {
+    if (!ref.mounted) {
+      return;
+    }
+    this.value = state.append(value);
+  }
+}
+
+@Riverpod(keepAlive: true)
+class DnsQueryCount extends _$DnsQueryCount with AutoDisposeNotifierMixin {
+  @override
+  int build() {
+    return 0;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class RequestCount extends _$RequestCount with AutoDisposeNotifierMixin {
+  @override
+  int build() {
+    return 0;
   }
 }
 
@@ -97,7 +135,7 @@ class Providers extends _$Providers with AutoDisposeNotifierMixin {
   }
 
   Future<void> syncProviders() async {
-    value = await coreController.getExternalProviders();
+    value = await ref.read(coreHandlerProvider).getExternalProviders();
   }
 }
 
@@ -122,17 +160,18 @@ class SystemBrightness extends _$SystemBrightness
 class Traffics extends _$Traffics with AutoDisposeNotifierMixin {
   @override
   FixedList<Traffic> build() {
-    return FixedList(30);
+    return FixedList(trafficSampleLength);
   }
 
   void addTraffic(Traffic value) {
-    state.add(value);
-    this.value = state.share();
+    if (!ref.mounted) {
+      return;
+    }
+    this.value = state.append(value);
   }
 
   void clear() {
-    state.clear();
-    value = state.share();
+    value = state.copyWith()..clear();
   }
 }
 
@@ -141,6 +180,14 @@ class TotalTraffic extends _$TotalTraffic with AutoDisposeNotifierMixin {
   @override
   Traffic build() {
     return const Traffic();
+  }
+}
+
+@Riverpod(keepAlive: true)
+class LoadedLocale extends _$LoadedLocale with AutoDisposeNotifierMixin {
+  @override
+  Locale? build() {
+    return null;
   }
 }
 
@@ -160,6 +207,27 @@ class RunTime extends _$RunTime with AutoDisposeNotifierMixin {
   }
 }
 
+/// What the running Android service was started with: it builds the tunnel
+/// once, so a later change waits for a restart.
+@Riverpod(keepAlive: true)
+class RunningVpnOptions extends _$RunningVpnOptions
+    with AutoDisposeNotifierMixin {
+  @override
+  VpnOptions? build() {
+    return null;
+  }
+}
+
+/// False while the window is hidden or the Android activity is in the
+/// background; work that only feeds the UI waits for it to come back.
+@Riverpod(keepAlive: true)
+class AppVisible extends _$AppVisible with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return true;
+  }
+}
+
 @Riverpod(keepAlive: true)
 class ViewSize extends _$ViewSize with AutoDisposeNotifierMixin {
   @override
@@ -176,6 +244,15 @@ class SideWidth extends _$SideWidth with AutoDisposeNotifierMixin {
   }
 }
 
+/// Whether the native window currently draws a backdrop behind the content.
+@Riverpod(keepAlive: true)
+class WindowBlur extends _$WindowBlur with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return false;
+  }
+}
+
 @Riverpod(keepAlive: true)
 double viewWidth(Ref ref) {
   return ref.watch(viewSizeProvider).width;
@@ -183,17 +260,12 @@ double viewWidth(Ref ref) {
 
 @Riverpod(keepAlive: true)
 ViewMode viewMode(Ref ref) {
-  return utils.getViewMode(ref.watch(viewWidthProvider));
+  return getViewMode(ref.watch(viewWidthProvider));
 }
 
 @Riverpod(keepAlive: true)
 bool isMobileView(Ref ref) {
   return ref.watch(viewModeProvider) == ViewMode.mobile;
-}
-
-@Riverpod(keepAlive: true)
-double viewHeight(Ref ref) {
-  return ref.watch(viewSizeProvider).height;
 }
 
 @Riverpod(keepAlive: true)
@@ -242,22 +314,6 @@ class CheckIpNum extends _$CheckIpNum with AutoDisposeNotifierMixin {
 }
 
 @Riverpod(keepAlive: true)
-class BackBlock extends _$BackBlock with AutoDisposeNotifierMixin {
-  @override
-  bool build() {
-    return false;
-  }
-
-  void backBlock() {
-    value = true;
-  }
-
-  void unBackBlock() {
-    value = false;
-  }
-}
-
-@Riverpod(keepAlive: true)
 class Version extends _$Version with AutoDisposeNotifierMixin {
   @override
   int build() {
@@ -275,7 +331,10 @@ class Groups extends _$Groups with AutoDisposeNotifierMixin {
 
 @Riverpod(keepAlive: true)
 class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
-  static const int _maxUrlBuckets = 3;
+  DelayMap? _owned;
+  DelayMap? _published;
+
+  static const _maxUrlBuckets = 3;
 
   @override
   DelayMap build() {
@@ -283,41 +342,184 @@ class DelayDataSource extends _$DelayDataSource with AutoDisposeNotifierMixin {
   }
 
   void setDelay(Delay delay) {
-    if (state[delay.url]?[delay.name] == delay.value) {
+    setDelays([delay]);
+  }
+
+  /// Publishes a live view, so a dependent that keeps the map must copy it.
+  void setDelays(Iterable<Delay> delays) {
+    final delayMap = _ownedDelayMap();
+    var changed = false;
+    for (final delay in delays) {
+      if (delayMap[delay.url]?[delay.name] == delay.value) {
+        continue;
+      }
+      (delayMap[delay.url] ??= {})[delay.name] = delay.value;
+      changed = true;
+    }
+    if (changed) {
+      _boundUrlBuckets(delayMap, delays.map((delay) => delay.url));
+      value = _published = UnmodifiableMapView(delayMap);
+    }
+  }
+
+  void _boundUrlBuckets(DelayMap delayMap, Iterable<String> activeUrls) {
+    if (delayMap.length <= _maxUrlBuckets) {
       return;
     }
-    final DelayMap newDelayMap = Map<String, Map<String, int?>>.from(
-      state.map(
-        (key, value) => MapEntry(key, Map<String, int?>.from(value)),
-      ),
-    );
-    final urlBucket = newDelayMap.putIfAbsent(
-      delay.url,
-      () => <String, int?>{},
-    );
-    urlBucket[delay.name] = delay.value;
-    // Move active URL to the end (LRU/MRU by insertion order).
-    final bucket = newDelayMap.remove(delay.url);
-    if (bucket != null) {
-      newDelayMap[delay.url] = bucket;
+    final protected = activeUrls.toSet();
+    final defaultTestUrl = ref.read(appSettingProvider).testUrl;
+    if (defaultTestUrl.isNotEmpty) {
+      protected.add(defaultTestUrl);
     }
-    if (newDelayMap.length > _maxUrlBuckets) {
-      final protected = <String>{delay.url};
-      final defaultTestUrl = ref.read(appSettingProvider).testUrl;
-      if (defaultTestUrl.isNotEmpty) {
-        protected.add(defaultTestUrl);
+    for (final url in delayMap.keys.toList()) {
+      if (delayMap.length <= _maxUrlBuckets) {
+        break;
       }
-      final keys = newDelayMap.keys.toList();
-      for (final key in keys) {
-        if (newDelayMap.length <= _maxUrlBuckets) {
-          break;
-        }
-        if (!protected.contains(key)) {
-          newDelayMap.remove(key);
-        }
+      if (!protected.contains(url)) {
+        delayMap.remove(url);
       }
     }
-    value = newDelayMap;
+  }
+
+  DelayMap _ownedDelayMap() {
+    final owned = _owned;
+    if (owned != null && identical(state, _published)) {
+      return owned;
+    }
+    return _owned = {
+      for (final entry in state.entries) entry.key: {...entry.value},
+    };
+  }
+}
+
+@Riverpod(keepAlive: true)
+class PendingDelayTests extends _$PendingDelayTests
+    with AutoDisposeNotifierMixin {
+  final Map<String, int> _holds = {};
+  final Map<String, int> _runs = {};
+  final Map<String, DelayTestPhase> _phases = {};
+
+  @override
+  Map<String, DelayTestPhase> build() {
+    return const <String, DelayTestPhase>{};
+  }
+
+  /// [finished] keys had started, so they give up their run as well as their
+  /// hold; [released] keys never started.
+  void apply({
+    Iterable<String> acquired = const [],
+    Iterable<String> started = const [],
+    Iterable<String> finished = const [],
+    Iterable<String> released = const [],
+  }) {
+    final touched = <String>{};
+    for (final key in acquired) {
+      _holds[key] = (_holds[key] ?? 0) + 1;
+      touched.add(key);
+    }
+    for (final key in started) {
+      if (_holds.containsKey(key)) {
+        _runs[key] = (_runs[key] ?? 0) + 1;
+        touched.add(key);
+      }
+    }
+    for (final key in finished) {
+      _decrement(_runs, key);
+      _decrement(_holds, key);
+      touched.add(key);
+    }
+    for (final key in released) {
+      _decrement(_holds, key);
+      touched.add(key);
+    }
+    var changed = false;
+    for (final key in touched) {
+      final phase = !_holds.containsKey(key)
+          ? null
+          : _runs.containsKey(key)
+          ? DelayTestPhase.running
+          : DelayTestPhase.queued;
+      if (_phases[key] == phase) {
+        continue;
+      }
+      if (phase == null) {
+        _phases.remove(key);
+      } else {
+        _phases[key] = phase;
+      }
+      changed = true;
+    }
+    if (changed) {
+      _publish();
+    }
+  }
+
+  void clear() {
+    if (_holds.isEmpty) {
+      return;
+    }
+    _holds.clear();
+    _runs.clear();
+    _phases.clear();
+    _publish();
+  }
+
+  void _decrement(Map<String, int> counts, String key) {
+    final count = counts[key];
+    if (count == null) {
+      return;
+    }
+    if (count > 1) {
+      counts[key] = count - 1;
+    } else {
+      counts.remove(key);
+    }
+  }
+
+  // A copy per publish would make a run over n nodes O(n²). The view is live,
+  // so a dependent selects what it needs instead of keeping the map.
+  void _publish() {
+    value = UnmodifiableMapView(_phases);
+  }
+}
+
+@Riverpod(keepAlive: true)
+class DelayTestingGroups extends _$DelayTestingGroups
+    with AutoDisposeNotifierMixin {
+  @override
+  Set<String> build() {
+    return const <String>{};
+  }
+
+  bool start(String groupName) {
+    if (value.contains(groupName)) {
+      return false;
+    }
+    value = {...value, groupName};
+    return true;
+  }
+
+  void stop(String groupName) {
+    if (!value.contains(groupName)) {
+      return;
+    }
+    value = {...value}..remove(groupName);
+  }
+}
+
+@Riverpod(keepAlive: true)
+class HotKeyFailures extends _$HotKeyFailures with AutoDisposeNotifierMixin {
+  @override
+  Map<HotAction, String> build() {
+    return const {};
+  }
+}
+
+@Riverpod(keepAlive: true)
+class HotKeyRecording extends _$HotKeyRecording with AutoDisposeNotifierMixin {
+  @override
+  bool build() {
+    return false;
   }
 }
 
@@ -353,6 +555,9 @@ class Loading extends _$Loading with AutoDisposeNotifierMixin {
 
   @override
   bool build(LoadingTag tag) {
+    ref.onDispose(() {
+      _timer?.cancel();
+    });
     return false;
   }
 
@@ -400,92 +605,73 @@ class Item extends _$Item with AutoDisposeNotifierMixin {
   }
 }
 
-@riverpod
-class IsUpdating extends _$IsUpdating with AutoDisposeNotifierMixin {
+@Riverpod(keepAlive: true)
+class UpdatingKeys extends _$UpdatingKeys {
+  final _operations = <String, Set<int>>{};
+  final _scopes = <String, UpdatingScope>{};
+  int _operation = 0;
+
   @override
-  bool build(String name) {
-    return false;
+  Set<String> build() {
+    ref.listen(coreStatusProvider, (_, next) {
+      if (next != CoreStatus.connected) {
+        _discardScope(UpdatingScope.core);
+      }
+    });
+    return const <String>{};
+  }
+
+  int start(String key, {UpdatingScope scope = UpdatingScope.local}) {
+    final operation = ++_operation;
+    _operations.putIfAbsent(key, () => <int>{}).add(operation);
+    _scopes[key] = scope;
+    if (!state.contains(key)) {
+      state = {...state, key};
+    }
+    return operation;
+  }
+
+  void stop(String key, int operation) {
+    final operations = _operations[key];
+    if (operations == null) {
+      return;
+    }
+    operations.remove(operation);
+    if (operations.isNotEmpty) {
+      return;
+    }
+    _discard([key]);
+  }
+
+  void stopKeys(Iterable<String> keys) {
+    _discard(keys.toList());
+  }
+
+  UpdatingScope? scopeOf(String key) => _scopes[key];
+
+  void _discardScope(UpdatingScope scope) {
+    _discard(state.where((key) => _scopes[key] == scope).toList());
+  }
+
+  void _discard(List<String> keys) {
+    if (keys.isEmpty) {
+      return;
+    }
+    for (final key in keys) {
+      _operations.remove(key);
+      _scopes.remove(key);
+    }
+    final next = state.where((key) => !keys.contains(key)).toSet();
+    if (next.length == state.length) {
+      return;
+    }
+    state = next;
   }
 }
 
-@Riverpod(keepAlive: true)
-class NetworkDetection extends _$NetworkDetection
-    with AutoDisposeNotifierMixin {
-  static const _timeoutDisplayDelay = Duration(seconds: 2);
-
-  bool? _preIsStart;
-  CancelToken? _cancelToken;
-  Timer? _timeoutTimer;
-  int _checkVersion = 0;
-
-  @override
-  NetworkDetectionState build() {
-    ref.onDispose(() {
-      _resetCheckSession(null);
-    });
-    return const NetworkDetectionState(isLoading: true, ipInfo: null);
-  }
-
-  void startCheck() {
-    debouncer.call(FunctionTag.checkIp, () {
-      _checkIp();
-    }, duration: commonDuration);
-  }
-
-  Future<void> _checkIp() async {
-    final isInit = ref.read(initProvider);
-    if (!isInit) {
-      return;
-    }
-    final isStart = ref.read(isStartProvider);
-    if (!isStart && _preIsStart == false && state.ipInfo != null) {
-      return;
-    }
-    final cancelToken = CancelToken();
-    final version = _resetCheckSession(cancelToken);
-    commonPrint.log('checkIp start');
-    state = state.copyWith(isLoading: true, ipInfo: null);
-    _preIsStart = isStart;
-    final res = await request.checkIp(cancelToken: cancelToken);
-    commonPrint.log('checkIp res: $res');
-
-    if (!ref.mounted ||
-        version != _checkVersion ||
-        cancelToken != _cancelToken) {
-      return;
-    }
-    final ipInfo = res.data;
-    if (ipInfo == null) {
-      _delayTimeoutDisplay(version);
-      return;
-    }
-    state = state.copyWith(isLoading: false, ipInfo: ipInfo);
-  }
-
-  int _resetCheckSession(CancelToken? cancelToken) {
-    _cancelTimeoutTimer();
-    final version = ++_checkVersion;
-    final previousCancelToken = _cancelToken;
-    _cancelToken = cancelToken;
-    previousCancelToken?.cancel();
-    return version;
-  }
-
-  void _delayTimeoutDisplay(int version) {
-    _cancelTimeoutTimer();
-    _timeoutTimer = Timer(_timeoutDisplayDelay, () {
-      _timeoutTimer = null;
-      if (!ref.mounted || version != _checkVersion || state.ipInfo != null) {
-        return;
-      }
-      state = state.copyWith(isLoading: false, ipInfo: null);
-    });
-  }
-
-  void _cancelTimeoutTimer() {
-    _timeoutTimer?.cancel();
-    _timeoutTimer = null;
-  }
+@riverpod
+bool isUpdating(Ref ref, String name) {
+  return ref.watch(updatingKeysProvider).contains(name);
 }
 
 @Riverpod(keepAlive: true)
@@ -524,7 +710,8 @@ class UnlockDetection extends _$UnlockDetection
       state = state.copyWith(error: 'A proxy must be selected');
       return;
     }
-    final effectiveController = controller ?? coreController;
+    final effectiveController =
+        controller ?? ref.read<CoreController>(coreHandlerProvider);
     final version = ++_checkVersion;
     final runId = 'unlock-${DateTime.now().microsecondsSinceEpoch}-${utils.id}';
     _activeRunId = runId;
@@ -602,7 +789,8 @@ class UnlockDetection extends _$UnlockDetection
     _activeRunId = null;
     _checkVersion++;
     state = state.copyWith(isLoading: false);
-    await (controller ?? coreController).cancelUnlockTest(runId);
+    await (controller ?? ref.read<CoreController>(coreHandlerProvider))
+        .cancelUnlockTest(runId);
   }
 
   @override
@@ -675,18 +863,6 @@ UnlockTestHistoryEntry? _historyEntryFromRecord(UnlockTestRunRecord record) {
 }
 
 @Riverpod(keepAlive: true)
-class CurrentSSID extends _$CurrentSSID with AutoDisposeNotifierMixin {
-  @override
-  String? build() {
-    return null;
-  }
-}
-
-/// Raw WiFi-watch state JSON pushed by the native side via
-/// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
-/// Empty until the first push/poll lands. [WifiWatch] watches this so it can
-/// refresh on native events without a high-frequency poll.
-@Riverpod(keepAlive: true)
 class WifiWatchStateJson extends _$WifiWatchStateJson
     with AutoDisposeNotifierMixin {
   @override
@@ -706,25 +882,12 @@ class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
       return const WifiWatchState();
     }
 
-    // Reactive to suspend broadcasts (ref.watch, not ref.read, so suspend
-    // changes refresh this provider immediately).
     final androidSuspended = ref.watch(androidServiceSuspendedProvider);
-    // Reactive to native wifi-watch state pushes.
     final stateJson = ref.watch(wifiWatchStateJsonProvider);
 
-    // One-shot setup that must survive rebuilds. Riverpod keeps the same
-    // Notifier instance across rebuilds while the provider is alive, so the
-    // fields below persist; we must NOT re-run this block on every rebuild or
-    // we'd leak timers and dispose handlers (each rebuild would otherwise
-    // create a new Timer.periodic that only gets cancelled on full dispose).
     if (!_initialized) {
       _initialized = true;
-      // Kick off a single initial pull so the UI has data before the first
-      // native push arrives.
       _fetch();
-      // Low-frequency fallback poll in case a native push is missed (process
-      // death, race during service restart). Once per 10s is enough because the
-      // event channel is the primary signal.
       _fallbackTimer = Timer.periodic(
         const Duration(seconds: 10),
         (_) => _fetch(),
@@ -732,35 +895,23 @@ class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
       ref.onDispose(() {
         _fallbackTimer?.cancel();
         _fallbackTimer = null;
-        // Allow a future re-create (after full dispose) to set up again.
         _initialized = false;
       });
     }
 
-    // Build from whatever we have right now.
     return buildWifiWatchState(stateJson, androidSuspended);
   }
 
-  /// Pull-based refresh: fetch service JSON and write it to the shared
-  /// [wifiWatchStateJsonProvider]. Going through the holder means the poll
-  /// path and the native-push path both funnel through a single state holder,
-  /// so [WifiWatch] re-builds exactly once per update. Guarded against reentry
-  /// via [_initialized] so a rebuild caused by this write does not trigger
-  /// another pull.
   Future<void> _fetch() async {
     try {
       final data = await service?.getWifiWatchState();
       final currentWifiInfo = await _getCurrentWifiInfo();
       final merged = mergeServiceAndDeviceWifi(data, currentWifiInfo);
       final notifier = ref.read(wifiWatchStateJsonProvider.notifier);
-      // Only write if the value actually changed; this keeps a no-op poll
-      // (service returned identical state) from forcing an extra rebuild.
       if (ref.read(wifiWatchStateJsonProvider) != merged) {
         notifier.value = merged;
       }
     } catch (e, stack) {
-      // Keep the previous state on failure so the UI does not flicker, but
-      // log the error so malformed service JSON does not stay hidden.
       commonPrint.log('WifiWatch fetch failed: $e\n$stack');
     }
   }
@@ -780,9 +931,6 @@ class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
   }
 }
 
-/// Parses the JSON held by [wifiWatchStateJsonProvider] into a [WifiWatchState]
-/// and composes in the latest android-service-suspended flag. Top-level so it
-/// can be unit-tested without a live Riverpod container or Android platform.
 WifiWatchState buildWifiWatchState(String stateJson, bool androidSuspended) {
   if (stateJson.isEmpty) {
     return WifiWatchState(suspended: androidSuspended);
@@ -800,14 +948,6 @@ WifiWatchState buildWifiWatchState(String stateJson, bool androidSuspended) {
   }
 }
 
-/// Merges the service-side WiFi-watch JSON with device-side WiFi info. The
-/// service is authoritative for SSID/trust; device info only fills gaps (RSSI,
-/// and rawSsid/ssid when the service hasn't resolved them yet). Returns JSON
-/// suitable for [wifiWatchStateJsonProvider]. Top-level so it can be unit-
-/// tested directly.
-///
-/// Previously rawSsid was overwritten unconditionally and rssi logic was
-/// inverted (service value cleared when present); both are fixed here.
 String mergeServiceAndDeviceWifi(
   String? data,
   WifiConnectionInfo currentWifiInfo,
@@ -831,8 +971,6 @@ String mergeServiceAndDeviceWifi(
     );
     return jsonEncode(merged.toJson());
   } catch (e) {
-    // Malformed service JSON: fall back to whatever the service gave us rather
-    // than silently substituting device-only info.
     return data;
   }
 }
@@ -857,15 +995,6 @@ class BatteryOptimizationDisable extends _$BatteryOptimizationDisable
 }
 
 @Riverpod(keepAlive: true)
-class LocationPermissions extends _$LocationPermissions
-    with AutoDisposeNotifierMixin {
-  @override
-  WifiSsidPermission build() {
-    return WifiSsidPermission.denied;
-  }
-}
-
-@Riverpod(keepAlive: true)
 class BackgroundLocationPermissions extends _$BackgroundLocationPermissions
     with AutoDisposeNotifierMixin {
   @override
@@ -874,10 +1003,17 @@ class BackgroundLocationPermissions extends _$BackgroundLocationPermissions
   }
 }
 
+@Riverpod(keepAlive: true)
+class CurrentSSID extends _$CurrentSSID with AutoDisposeNotifierMixin {
+  @override
+  String? build() {
+    return null;
+  }
+}
+
 List<Override> buildAppStateOverrides(AppState appState) {
   return [
     initProvider.overrideWithBuild((_, _) => appState.isInit),
-    backBlockProvider.overrideWithBuild((_, _) => appState.backBlock),
     currentPageLabelProvider.overrideWithBuild((_, _) => appState.pageLabel),
     packagesProvider.overrideWithBuild((_, _) => appState.packages),
     sortNumProvider.overrideWithBuild((_, _) => appState.sortNum),
@@ -885,7 +1021,6 @@ List<Override> buildAppStateOverrides(AppState appState) {
     sideWidthProvider.overrideWithBuild((_, _) => appState.sideWidth),
     delayDataSourceProvider.overrideWithBuild((_, _) => appState.delayMap),
     groupsProvider.overrideWithBuild((_, _) => appState.groups),
-    checkIpNumProvider.overrideWithBuild((_, _) => appState.checkIpNum),
     systemBrightnessProvider.overrideWithBuild((_, _) => appState.brightness),
     runTimeProvider.overrideWithBuild((_, _) => appState.runTime),
     providersProvider.overrideWithBuild((_, _) => appState.providers),
@@ -895,7 +1030,9 @@ List<Override> buildAppStateOverrides(AppState appState) {
     logsProvider.overrideWithBuild((_, _) => appState.logs),
     trafficsProvider.overrideWithBuild((_, _) => appState.traffics),
     totalTrafficProvider.overrideWithBuild((_, _) => appState.totalTraffic),
-    realTunEnableProvider.overrideWithBuild((_, _) => appState.realTunEnable),
+    authorizedTunEnableProvider.overrideWithBuild(
+      (_, _) => appState.authorizedTunEnable,
+    ),
     systemUiOverlayStyleStateProvider.overrideWithBuild(
       (_, _) => appState.systemUiOverlayStyle,
     ),

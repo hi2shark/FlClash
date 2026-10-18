@@ -1,9 +1,10 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_parser.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class LocalProxyImportPage extends StatefulWidget {
   final String? initialText;
@@ -74,13 +75,13 @@ class _LocalProxyImportPageState extends State<LocalProxyImportPage> {
               heroTag: null,
               onPressed: _selected.isEmpty ? null : _import,
               label: Text(appLocalizations.importAvailableNodes),
-              icon: const Icon(Icons.download_done),
+              icon: const GlyphIcon(AppGlyphs.importFile, fill: 1),
             )
           : FloatingActionButton.extended(
               heroTag: null,
               onPressed: _parse,
               label: Text(appLocalizations.parse),
-              icon: const Icon(Icons.play_arrow),
+              icon: const GlyphIcon(AppGlyphs.findReplace, fill: 1),
             ),
       body: Padding(
         padding: const EdgeInsets.all(16).copyWith(bottom: 88),

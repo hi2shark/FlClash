@@ -1,12 +1,12 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/local_rules/pages/local_rule_list_page.dart';
 import 'package:fl_clash/local_rules/services/local_rule_reload.dart';
 import 'package:fl_clash/local_rules/services/local_rule_store.dart';
 import 'package:fl_clash/local_rules/services/local_rule_targets.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class LocalRulesView extends StatefulWidget {
   const LocalRulesView({super.key});
@@ -69,9 +69,7 @@ class _LocalRulesViewState extends State<LocalRulesView> {
       await localRuleStore.saveConfig(previous);
       await applyLocalRuleChanges();
       if (mounted) {
-        globalState.showNotifier(
-          context.appLocalizations.localRuleReloadFailed,
-        );
+        context.showNotifier(context.appLocalizations.localRuleReloadFailed);
       }
     } finally {
       _saving = false;
@@ -100,7 +98,7 @@ class _LocalRulesViewState extends State<LocalRulesView> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       CommonCard(
-                        child: ListItem.switchItem(
+                        child: ListItem.toggle(
                           title: Text(appLocalizations.localRuleMixin),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,14 +121,12 @@ class _LocalRulesViewState extends State<LocalRulesView> {
                               ),
                             ],
                           ),
-                          delegate: SwitchDelegate<bool>(
-                            value: config.enabled,
-                            onChanged: _saving
-                                ? null
-                                : (value) {
-                                    _setEnabled(value);
-                                  },
-                          ),
+                          value: config.enabled,
+                          onChanged: _saving
+                              ? null
+                              : (value) {
+                                  _setEnabled(value);
+                                },
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -150,7 +146,7 @@ class _LocalRulesViewState extends State<LocalRulesView> {
                               enabledCount,
                             ),
                           ),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: const GlyphIcon(AppGlyphs.chevronForward),
                         ),
                       ),
                     ],

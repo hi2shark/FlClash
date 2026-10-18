@@ -1,9 +1,10 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'network_test.dart';
@@ -179,7 +180,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
                             child: OutlinedButton.icon(
                               onPressed: () =>
                                   update(defaultUnlockTestTargetIds),
-                              icon: const Icon(Icons.restart_alt),
+                              icon: const GlyphIcon(AppGlyphs.reset),
                               label: Text(
                                 context.appLocalizations.unlockTestResetDefault,
                               ),
@@ -330,10 +331,9 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
     return Card(
       elevation: 0,
       color: colorScheme.surfaceContainer,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: colorScheme.outlineVariant),
-      ),
+      shape: AppShape.all(
+        24,
+      ).copyWith(side: BorderSide(color: colorScheme.outlineVariant)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -341,8 +341,8 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
           children: [
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              secondary: Icon(
-                Icons.travel_explore_rounded,
+              secondary: GlyphIcon(
+                AppGlyphs.locate,
                 color: colorScheme.primary,
               ),
               title: Text(
@@ -358,12 +358,12 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
               segments: [
                 ButtonSegment(
                   value: UnlockTestRouteMode.appRoute,
-                  icon: const Icon(Icons.alt_route_rounded),
+                  icon: const GlyphIcon(AppGlyphs.split),
                   label: Text(context.appLocalizations.unlockTestFollowRules),
                 ),
                 ButtonSegment(
                   value: UnlockTestRouteMode.proxy,
-                  icon: const Icon(Icons.dns_rounded),
+                  icon: const GlyphIcon(AppGlyphs.dns),
                   label: Text(context.appLocalizations.unlockTestSpecifiedNode),
                 ),
               ],
@@ -380,10 +380,10 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
               const SizedBox(height: 12),
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-                leading: const Icon(Icons.hub_outlined),
+                leading: const GlyphIcon(AppGlyphs.shuffle),
                 title: Text(context.appLocalizations.selectNode),
                 subtitle: Text(_proxyName),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward),
                 enabled: props.enable && !detection.isLoading,
                 onTap: _selectProxy,
               ),
@@ -395,7 +395,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
               children: [
                 OutlinedButton.icon(
                   onPressed: detection.isLoading ? null : _showTargetSelector,
-                  icon: const Icon(Icons.tune_rounded),
+                  icon: const GlyphIcon(AppGlyphs.sliders),
                   label: Text(
                     '${context.appLocalizations.unlockTestSelectTargets} ($selectedCount)',
                   ),
@@ -404,7 +404,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
                 if (detection.isLoading)
                   FilledButton.tonalIcon(
                     onPressed: _handleStopTest,
-                    icon: const Icon(Icons.stop_circle_outlined),
+                    icon: const GlyphIcon(AppGlyphs.close, fill: 1),
                     label: Text(context.appLocalizations.unlockTestStop),
                   )
                 else
@@ -415,7 +415,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
                             _selectedHistory == null
                         ? _handleStartTest
                         : null,
-                    icon: const Icon(Icons.play_arrow_rounded),
+                    icon: const GlyphIcon(AppGlyphs.bolt, fill: 1),
                     label: Text(context.appLocalizations.startTest),
                   ),
               ],
@@ -429,7 +429,6 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
                       label: '$completed of $total',
                       child: LinearProgressIndicator(
                         value: total == 0 ? null : completed / total,
-                        borderRadius: BorderRadius.circular(8),
                         minHeight: 8,
                       ),
                     ),
@@ -470,7 +469,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
           isExpanded: true,
           decoration: InputDecoration(
             labelText: context.appLocalizations.unlockTestHistory,
-            prefixIcon: const Icon(Icons.history_rounded),
+            prefixIcon: const GlyphIcon(AppGlyphs.history),
             border: const OutlineInputBorder(),
             isDense: true,
           ),
@@ -548,7 +547,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
         SearchBar(
           controller: _searchController,
           hintText: context.appLocalizations.unlockTestSearch,
-          leading: const Icon(Icons.search_rounded),
+          leading: const GlyphIcon(AppGlyphs.search),
           trailing: [
             if (_query.isNotEmpty)
               IconButton(
@@ -559,7 +558,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
                     _query = '';
                   });
                 },
-                icon: const Icon(Icons.close_rounded),
+                icon: const GlyphIcon(AppGlyphs.close),
               ),
           ],
           onChanged: (value) {
@@ -597,14 +596,14 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
   Widget _buildHistoryBanner() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: context.colorScheme.tertiaryContainer,
-        borderRadius: BorderRadius.circular(16),
+        shape: AppShape.md,
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.history_rounded,
+          GlyphIcon(
+            AppGlyphs.history,
             color: context.colorScheme.onTertiaryContainer,
           ),
           const SizedBox(width: 10),
@@ -619,7 +618,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
           IconButton(
             tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
             onPressed: () => setState(() => _selectedHistory = null),
-            icon: const Icon(Icons.close_rounded),
+            icon: const GlyphIcon(AppGlyphs.close),
           ),
         ],
       ),
@@ -632,8 +631,8 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
       alignment: Alignment.center,
       child: Column(
         children: [
-          Icon(
-            Icons.travel_explore_rounded,
+          GlyphIcon(
+            AppGlyphs.locate,
             size: 48,
             color: context.colorScheme.onSurfaceVariant,
           ),
@@ -740,8 +739,7 @@ class _StatusSummaryCard extends StatelessWidget {
         color: selected
             ? presentation.color.withValues(alpha: 0.18)
             : context.colorScheme.surfaceContainer,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+        shape: AppShape.all(18).copyWith(
           side: BorderSide(
             color: selected
                 ? presentation.color
@@ -749,7 +747,7 @@ class _StatusSummaryCard extends StatelessWidget {
           ),
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(18),
+          customBorder: AppShape.all(18),
           onTap: onPressed,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minWidth: 118, minHeight: 72),
@@ -758,7 +756,11 @@ class _StatusSummaryCard extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(presentation.icon, color: presentation.color, size: 22),
+                  GlyphIcon(
+                    presentation.glyph,
+                    color: presentation.color,
+                    size: 22,
+                  ),
                   const SizedBox(width: 9),
                   Column(
                     mainAxisSize: MainAxisSize.min,
@@ -803,10 +805,9 @@ class _UnlockServiceCard extends StatelessWidget {
         elevation: 0,
         clipBehavior: Clip.antiAlias,
         color: context.colorScheme.surfaceContainerLow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
-          side: BorderSide(color: context.colorScheme.outlineVariant),
-        ),
+        shape: AppShape.all(
+          22,
+        ).copyWith(side: BorderSide(color: context.colorScheme.outlineVariant)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -829,15 +830,15 @@ class _UnlockServiceCard extends StatelessWidget {
                       horizontal: 10,
                       vertical: 6,
                     ),
-                    decoration: BoxDecoration(
+                    decoration: ShapeDecoration(
                       color: presentation.color.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(999),
+                      shape: AppShape.full,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          presentation.icon,
+                        GlyphIcon(
+                          presentation.glyph,
                           size: 16,
                           color: presentation.color,
                         ),
@@ -873,27 +874,24 @@ class _UnlockServiceCard extends StatelessWidget {
                 children: [
                   if (item.region.isNotEmpty)
                     _MetaLabel(
-                      icon: Icons.public_rounded,
+                      glyph: AppGlyphs.cloud,
                       text:
                           '${context.appLocalizations.unlockTestRegion} ${item.region}',
                     )
                   else
                     _MetaLabel(
-                      icon: Icons.public_rounded,
+                      glyph: AppGlyphs.cloud,
                       text: _groupLabel(context, target.group),
                     ),
                   if (item.latency > 0)
                     _MetaLabel(
-                      icon: Icons.speed_rounded,
+                      glyph: AppGlyphs.speed,
                       text: '${item.latency} ms',
                     ),
                   if (outbound.isNotEmpty)
                     Tooltip(
                       message: item.outboundChains.join(' → '),
-                      child: _MetaLabel(
-                        icon: Icons.alt_route_rounded,
-                        text: outbound,
-                      ),
+                      child: _MetaLabel(glyph: AppGlyphs.split, text: outbound),
                     ),
                 ],
               ),
@@ -906,17 +904,17 @@ class _UnlockServiceCard extends StatelessWidget {
 }
 
 class _MetaLabel extends StatelessWidget {
-  final IconData icon;
+  final Glyph glyph;
   final String text;
 
-  const _MetaLabel({required this.icon, required this.text});
+  const _MetaLabel({required this.glyph, required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 15, color: context.colorScheme.onSurfaceVariant),
+        GlyphIcon(glyph, size: 15, color: context.colorScheme.onSurfaceVariant),
         const SizedBox(width: 4),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 130),
@@ -949,9 +947,9 @@ class _ServiceMonogram extends StatelessWidget {
         width: size,
         height: size,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: context.colorScheme.primaryContainer,
-          borderRadius: BorderRadius.circular(size * 0.34),
+          shape: AppShape.all(size * 0.34),
         ),
         child: Text(
           target.monogram,
@@ -968,12 +966,12 @@ class _ServiceMonogram extends StatelessWidget {
 
 class _StatusPresentation {
   final String label;
-  final IconData icon;
+  final Glyph glyph;
   final Color color;
 
   const _StatusPresentation({
     required this.label,
-    required this.icon,
+    required this.glyph,
     required this.color,
   });
 }
@@ -987,27 +985,27 @@ _StatusPresentation _statusPresentation(
   return switch (status) {
     UnlockTestStatus.unlocked => _StatusPresentation(
       label: localizations.unlocked,
-      icon: Icons.check_circle_rounded,
+      glyph: AppGlyphs.checkCircle,
       color: colors.primary,
     ),
     UnlockTestStatus.partial => _StatusPresentation(
       label: localizations.unlockTestPartial,
-      icon: Icons.adjust_rounded,
+      glyph: AppGlyphs.check,
       color: colors.tertiary,
     ),
     UnlockTestStatus.locked => _StatusPresentation(
       label: localizations.locked,
-      icon: Icons.block_rounded,
+      glyph: AppGlyphs.block,
       color: colors.error,
     ),
     UnlockTestStatus.error => _StatusPresentation(
       label: localizations.unlockTestError,
-      icon: Icons.error_rounded,
+      glyph: AppGlyphs.error,
       color: colors.error,
     ),
     UnlockTestStatus.untested => _StatusPresentation(
       label: localizations.unlockTestUntested,
-      icon: Icons.pending_outlined,
+      glyph: AppGlyphs.clock,
       color: colors.onSurfaceVariant,
     ),
   };

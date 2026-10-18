@@ -43,6 +43,7 @@ app.*.map.json
 
 # Claude Code - ignore user-specific settings only
 .claude/settings.local.json
+.claude/worktrees/
 
 # Documentation (generated/planning artifacts)
 docs/
@@ -56,6 +57,7 @@ docs/
 /android/**/build
 /android/common/**/.**/
 /android/common/local.*
+# Left in place by builds from before the gomobile Core.
 /android/core/**/includes/
 /android/core/**/cmake-build-*/
 /android/core/**/jniLibs/
@@ -68,12 +70,11 @@ docs/
 /macos/build/
 /env.json
 /core_sha256.json
-/core/*.exe
 /plugins/rust_api/.claude/
+/issue-triage/
 devtools_options.yaml
 
 # FVM Version Cache
 .fvm/
 .fvmrc
-
-.superpowers
+/coverage/lcov.info

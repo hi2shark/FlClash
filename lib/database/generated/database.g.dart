@@ -18,6 +18,15 @@ class $ProfilesTable extends Profiles
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<ProfileType, String> type =
+      GeneratedColumn<String>(
+        'type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<ProfileType>($ProfilesTable.$convertertype);
   static const VerificationMeta _labelMeta = const VerificationMeta('label');
   @override
   late final GeneratedColumn<String> label = GeneratedColumn<String>(
@@ -47,6 +56,17 @@ class $ProfilesTable extends Profiles
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _ageSecretKeyMeta = const VerificationMeta(
+    'ageSecretKey',
+  );
+  @override
+  late final GeneratedColumn<String> ageSecretKey = GeneratedColumn<String>(
+    'age_secret_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _lastUpdateDateMeta = const VerificationMeta(
     'lastUpdateDate',
   );
@@ -60,14 +80,14 @@ class $ProfilesTable extends Profiles
         requiredDuringInsert: false,
       );
   @override
-  late final GeneratedColumnWithTypeConverter<OverwriteType, String>
-  overwriteType = GeneratedColumn<String>(
-    'overwrite_type',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  ).withConverter<OverwriteType>($ProfilesTable.$converteroverwriteType);
+  late final GeneratedColumnWithTypeConverter<ExtendType, String> extendType =
+      GeneratedColumn<String>(
+        'extend_type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<ExtendType>($ProfilesTable.$converterextendType);
   static const VerificationMeta _scriptIdMeta = const VerificationMeta(
     'scriptId',
   );
@@ -77,6 +97,17 @@ class $ProfilesTable extends Profiles
     aliasedName,
     true,
     type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _matchTargetMeta = const VerificationMeta(
+    'matchTarget',
+  );
+  @override
+  late final GeneratedColumn<String> matchTarget = GeneratedColumn<String>(
+    'match_target',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
   static const VerificationMeta _autoUpdateDurationMillisMeta =
@@ -141,20 +172,33 @@ class $ProfilesTable extends Profiles
     requiredDuringInsert: false,
   );
   @override
+  late final GeneratedColumnWithTypeConverter<ProfileOverrides?, String>
+  overrides = GeneratedColumn<String>(
+    'overrides',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<ProfileOverrides?>($ProfilesTable.$converteroverrides);
+  @override
   List<GeneratedColumn> get $columns => [
     id,
+    type,
     label,
     currentGroupName,
     url,
+    ageSecretKey,
     lastUpdateDate,
-    overwriteType,
+    extendType,
     scriptId,
+    matchTarget,
     autoUpdateDurationMillis,
     subscriptionInfo,
     autoUpdate,
     selectedMap,
     unfoldSet,
     order,
+    overrides,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -196,6 +240,15 @@ class $ProfilesTable extends Profiles
     } else if (isInserting) {
       context.missing(_urlMeta);
     }
+    if (data.containsKey('age_secret_key')) {
+      context.handle(
+        _ageSecretKeyMeta,
+        ageSecretKey.isAcceptableOrUnknown(
+          data['age_secret_key']!,
+          _ageSecretKeyMeta,
+        ),
+      );
+    }
     if (data.containsKey('last_update_date')) {
       context.handle(
         _lastUpdateDateMeta,
@@ -209,6 +262,15 @@ class $ProfilesTable extends Profiles
       context.handle(
         _scriptIdMeta,
         scriptId.isAcceptableOrUnknown(data['script_id']!, _scriptIdMeta),
+      );
+    }
+    if (data.containsKey('match_target')) {
+      context.handle(
+        _matchTargetMeta,
+        matchTarget.isAcceptableOrUnknown(
+          data['match_target']!,
+          _matchTargetMeta,
+        ),
       );
     }
     if (data.containsKey('auto_update_duration_millis')) {
@@ -249,6 +311,12 @@ class $ProfilesTable extends Profiles
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      type: $ProfilesTable.$convertertype.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}type'],
+        )!,
+      ),
       label: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}label'],
@@ -261,19 +329,27 @@ class $ProfilesTable extends Profiles
         DriftSqlType.string,
         data['${effectivePrefix}url'],
       )!,
+      ageSecretKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}age_secret_key'],
+      ),
       lastUpdateDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_update_date'],
       ),
-      overwriteType: $ProfilesTable.$converteroverwriteType.fromSql(
+      extendType: $ProfilesTable.$converterextendType.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
-          data['${effectivePrefix}overwrite_type'],
+          data['${effectivePrefix}extend_type'],
         )!,
       ),
       scriptId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}script_id'],
+      ),
+      matchTarget: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}match_target'],
       ),
       autoUpdateDurationMillis: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -305,6 +381,12 @@ class $ProfilesTable extends Profiles
         DriftSqlType.int,
         data['${effectivePrefix}order'],
       ),
+      overrides: $ProfilesTable.$converteroverrides.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}overrides'],
+        ),
+      ),
     );
   }
 
@@ -313,66 +395,85 @@ class $ProfilesTable extends Profiles
     return $ProfilesTable(attachedDatabase, alias);
   }
 
-  static JsonTypeConverter2<OverwriteType, String, String>
-  $converteroverwriteType = const EnumNameConverter<OverwriteType>(
-    OverwriteType.values,
-  );
+  static JsonTypeConverter2<ProfileType, String, String> $convertertype =
+      const EnumNameConverter<ProfileType>(ProfileType.values);
+  static JsonTypeConverter2<ExtendType, String, String> $converterextendType =
+      const EnumNameConverter<ExtendType>(ExtendType.values);
   static TypeConverter<SubscriptionInfo?, String?> $convertersubscriptionInfo =
       const SubscriptionInfoConverter();
   static TypeConverter<Map<String, String>, String> $converterselectedMap =
       const StringMapConverter();
   static TypeConverter<Set<String>, String> $converterunfoldSet =
       const StringSetConverter();
+  static TypeConverter<ProfileOverrides?, String?> $converteroverrides =
+      const ProfileOverridesConverter();
 }
 
 class RawProfile extends DataClass implements Insertable<RawProfile> {
   final int id;
+  final ProfileType type;
   final String label;
   final String? currentGroupName;
   final String url;
+  final String? ageSecretKey;
   final DateTime? lastUpdateDate;
-  final OverwriteType overwriteType;
+  final ExtendType extendType;
   final int? scriptId;
+  final String? matchTarget;
   final int autoUpdateDurationMillis;
   final SubscriptionInfo? subscriptionInfo;
   final bool autoUpdate;
   final Map<String, String> selectedMap;
   final Set<String> unfoldSet;
   final int? order;
+  final ProfileOverrides? overrides;
   const RawProfile({
     required this.id,
+    required this.type,
     required this.label,
     this.currentGroupName,
     required this.url,
+    this.ageSecretKey,
     this.lastUpdateDate,
-    required this.overwriteType,
+    required this.extendType,
     this.scriptId,
+    this.matchTarget,
     required this.autoUpdateDurationMillis,
     this.subscriptionInfo,
     required this.autoUpdate,
     required this.selectedMap,
     required this.unfoldSet,
     this.order,
+    this.overrides,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    {
+      map['type'] = Variable<String>($ProfilesTable.$convertertype.toSql(type));
+    }
     map['label'] = Variable<String>(label);
     if (!nullToAbsent || currentGroupName != null) {
       map['current_group_name'] = Variable<String>(currentGroupName);
     }
     map['url'] = Variable<String>(url);
+    if (!nullToAbsent || ageSecretKey != null) {
+      map['age_secret_key'] = Variable<String>(ageSecretKey);
+    }
     if (!nullToAbsent || lastUpdateDate != null) {
       map['last_update_date'] = Variable<DateTime>(lastUpdateDate);
     }
     {
-      map['overwrite_type'] = Variable<String>(
-        $ProfilesTable.$converteroverwriteType.toSql(overwriteType),
+      map['extend_type'] = Variable<String>(
+        $ProfilesTable.$converterextendType.toSql(extendType),
       );
     }
     if (!nullToAbsent || scriptId != null) {
       map['script_id'] = Variable<int>(scriptId);
+    }
+    if (!nullToAbsent || matchTarget != null) {
+      map['match_target'] = Variable<String>(matchTarget);
     }
     map['auto_update_duration_millis'] = Variable<int>(
       autoUpdateDurationMillis,
@@ -396,24 +497,36 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     if (!nullToAbsent || order != null) {
       map['order'] = Variable<int>(order);
     }
+    if (!nullToAbsent || overrides != null) {
+      map['overrides'] = Variable<String>(
+        $ProfilesTable.$converteroverrides.toSql(overrides),
+      );
+    }
     return map;
   }
 
   ProfilesCompanion toCompanion(bool nullToAbsent) {
     return ProfilesCompanion(
       id: Value(id),
+      type: Value(type),
       label: Value(label),
       currentGroupName: currentGroupName == null && nullToAbsent
           ? const Value.absent()
           : Value(currentGroupName),
       url: Value(url),
+      ageSecretKey: ageSecretKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ageSecretKey),
       lastUpdateDate: lastUpdateDate == null && nullToAbsent
           ? const Value.absent()
           : Value(lastUpdateDate),
-      overwriteType: Value(overwriteType),
+      extendType: Value(extendType),
       scriptId: scriptId == null && nullToAbsent
           ? const Value.absent()
           : Value(scriptId),
+      matchTarget: matchTarget == null && nullToAbsent
+          ? const Value.absent()
+          : Value(matchTarget),
       autoUpdateDurationMillis: Value(autoUpdateDurationMillis),
       subscriptionInfo: subscriptionInfo == null && nullToAbsent
           ? const Value.absent()
@@ -424,6 +537,9 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
       order: order == null && nullToAbsent
           ? const Value.absent()
           : Value(order),
+      overrides: overrides == null && nullToAbsent
+          ? const Value.absent()
+          : Value(overrides),
     );
   }
 
@@ -434,14 +550,19 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return RawProfile(
       id: serializer.fromJson<int>(json['id']),
+      type: $ProfilesTable.$convertertype.fromJson(
+        serializer.fromJson<String>(json['type']),
+      ),
       label: serializer.fromJson<String>(json['label']),
       currentGroupName: serializer.fromJson<String?>(json['currentGroupName']),
       url: serializer.fromJson<String>(json['url']),
+      ageSecretKey: serializer.fromJson<String?>(json['ageSecretKey']),
       lastUpdateDate: serializer.fromJson<DateTime?>(json['lastUpdateDate']),
-      overwriteType: $ProfilesTable.$converteroverwriteType.fromJson(
-        serializer.fromJson<String>(json['overwriteType']),
+      extendType: $ProfilesTable.$converterextendType.fromJson(
+        serializer.fromJson<String>(json['extendType']),
       ),
       scriptId: serializer.fromJson<int?>(json['scriptId']),
+      matchTarget: serializer.fromJson<String?>(json['matchTarget']),
       autoUpdateDurationMillis: serializer.fromJson<int>(
         json['autoUpdateDurationMillis'],
       ),
@@ -454,6 +575,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
       ),
       unfoldSet: serializer.fromJson<Set<String>>(json['unfoldSet']),
       order: serializer.fromJson<int?>(json['order']),
+      overrides: serializer.fromJson<ProfileOverrides?>(json['overrides']),
     );
   }
   @override
@@ -461,14 +583,19 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'type': serializer.toJson<String>(
+        $ProfilesTable.$convertertype.toJson(type),
+      ),
       'label': serializer.toJson<String>(label),
       'currentGroupName': serializer.toJson<String?>(currentGroupName),
       'url': serializer.toJson<String>(url),
+      'ageSecretKey': serializer.toJson<String?>(ageSecretKey),
       'lastUpdateDate': serializer.toJson<DateTime?>(lastUpdateDate),
-      'overwriteType': serializer.toJson<String>(
-        $ProfilesTable.$converteroverwriteType.toJson(overwriteType),
+      'extendType': serializer.toJson<String>(
+        $ProfilesTable.$converterextendType.toJson(extendType),
       ),
       'scriptId': serializer.toJson<int?>(scriptId),
+      'matchTarget': serializer.toJson<String?>(matchTarget),
       'autoUpdateDurationMillis': serializer.toJson<int>(
         autoUpdateDurationMillis,
       ),
@@ -479,35 +606,43 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
       'selectedMap': serializer.toJson<Map<String, String>>(selectedMap),
       'unfoldSet': serializer.toJson<Set<String>>(unfoldSet),
       'order': serializer.toJson<int?>(order),
+      'overrides': serializer.toJson<ProfileOverrides?>(overrides),
     };
   }
 
   RawProfile copyWith({
     int? id,
+    ProfileType? type,
     String? label,
     Value<String?> currentGroupName = const Value.absent(),
     String? url,
+    Value<String?> ageSecretKey = const Value.absent(),
     Value<DateTime?> lastUpdateDate = const Value.absent(),
-    OverwriteType? overwriteType,
+    ExtendType? extendType,
     Value<int?> scriptId = const Value.absent(),
+    Value<String?> matchTarget = const Value.absent(),
     int? autoUpdateDurationMillis,
     Value<SubscriptionInfo?> subscriptionInfo = const Value.absent(),
     bool? autoUpdate,
     Map<String, String>? selectedMap,
     Set<String>? unfoldSet,
     Value<int?> order = const Value.absent(),
+    Value<ProfileOverrides?> overrides = const Value.absent(),
   }) => RawProfile(
     id: id ?? this.id,
+    type: type ?? this.type,
     label: label ?? this.label,
     currentGroupName: currentGroupName.present
         ? currentGroupName.value
         : this.currentGroupName,
     url: url ?? this.url,
+    ageSecretKey: ageSecretKey.present ? ageSecretKey.value : this.ageSecretKey,
     lastUpdateDate: lastUpdateDate.present
         ? lastUpdateDate.value
         : this.lastUpdateDate,
-    overwriteType: overwriteType ?? this.overwriteType,
+    extendType: extendType ?? this.extendType,
     scriptId: scriptId.present ? scriptId.value : this.scriptId,
+    matchTarget: matchTarget.present ? matchTarget.value : this.matchTarget,
     autoUpdateDurationMillis:
         autoUpdateDurationMillis ?? this.autoUpdateDurationMillis,
     subscriptionInfo: subscriptionInfo.present
@@ -517,22 +652,30 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     selectedMap: selectedMap ?? this.selectedMap,
     unfoldSet: unfoldSet ?? this.unfoldSet,
     order: order.present ? order.value : this.order,
+    overrides: overrides.present ? overrides.value : this.overrides,
   );
   RawProfile copyWithCompanion(ProfilesCompanion data) {
     return RawProfile(
       id: data.id.present ? data.id.value : this.id,
+      type: data.type.present ? data.type.value : this.type,
       label: data.label.present ? data.label.value : this.label,
       currentGroupName: data.currentGroupName.present
           ? data.currentGroupName.value
           : this.currentGroupName,
       url: data.url.present ? data.url.value : this.url,
+      ageSecretKey: data.ageSecretKey.present
+          ? data.ageSecretKey.value
+          : this.ageSecretKey,
       lastUpdateDate: data.lastUpdateDate.present
           ? data.lastUpdateDate.value
           : this.lastUpdateDate,
-      overwriteType: data.overwriteType.present
-          ? data.overwriteType.value
-          : this.overwriteType,
+      extendType: data.extendType.present
+          ? data.extendType.value
+          : this.extendType,
       scriptId: data.scriptId.present ? data.scriptId.value : this.scriptId,
+      matchTarget: data.matchTarget.present
+          ? data.matchTarget.value
+          : this.matchTarget,
       autoUpdateDurationMillis: data.autoUpdateDurationMillis.present
           ? data.autoUpdateDurationMillis.value
           : this.autoUpdateDurationMillis,
@@ -547,6 +690,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
           : this.selectedMap,
       unfoldSet: data.unfoldSet.present ? data.unfoldSet.value : this.unfoldSet,
       order: data.order.present ? data.order.value : this.order,
+      overrides: data.overrides.present ? data.overrides.value : this.overrides,
     );
   }
 
@@ -554,18 +698,22 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
   String toString() {
     return (StringBuffer('RawProfile(')
           ..write('id: $id, ')
+          ..write('type: $type, ')
           ..write('label: $label, ')
           ..write('currentGroupName: $currentGroupName, ')
           ..write('url: $url, ')
+          ..write('ageSecretKey: $ageSecretKey, ')
           ..write('lastUpdateDate: $lastUpdateDate, ')
-          ..write('overwriteType: $overwriteType, ')
+          ..write('extendType: $extendType, ')
           ..write('scriptId: $scriptId, ')
+          ..write('matchTarget: $matchTarget, ')
           ..write('autoUpdateDurationMillis: $autoUpdateDurationMillis, ')
           ..write('subscriptionInfo: $subscriptionInfo, ')
           ..write('autoUpdate: $autoUpdate, ')
           ..write('selectedMap: $selectedMap, ')
           ..write('unfoldSet: $unfoldSet, ')
-          ..write('order: $order')
+          ..write('order: $order, ')
+          ..write('overrides: $overrides')
           ..write(')'))
         .toString();
   }
@@ -573,111 +721,139 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
   @override
   int get hashCode => Object.hash(
     id,
+    type,
     label,
     currentGroupName,
     url,
+    ageSecretKey,
     lastUpdateDate,
-    overwriteType,
+    extendType,
     scriptId,
+    matchTarget,
     autoUpdateDurationMillis,
     subscriptionInfo,
     autoUpdate,
     selectedMap,
     unfoldSet,
     order,
+    overrides,
   );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is RawProfile &&
           other.id == this.id &&
+          other.type == this.type &&
           other.label == this.label &&
           other.currentGroupName == this.currentGroupName &&
           other.url == this.url &&
+          other.ageSecretKey == this.ageSecretKey &&
           other.lastUpdateDate == this.lastUpdateDate &&
-          other.overwriteType == this.overwriteType &&
+          other.extendType == this.extendType &&
           other.scriptId == this.scriptId &&
+          other.matchTarget == this.matchTarget &&
           other.autoUpdateDurationMillis == this.autoUpdateDurationMillis &&
           other.subscriptionInfo == this.subscriptionInfo &&
           other.autoUpdate == this.autoUpdate &&
           other.selectedMap == this.selectedMap &&
           other.unfoldSet == this.unfoldSet &&
-          other.order == this.order);
+          other.order == this.order &&
+          other.overrides == this.overrides);
 }
 
 class ProfilesCompanion extends UpdateCompanion<RawProfile> {
   final Value<int> id;
+  final Value<ProfileType> type;
   final Value<String> label;
   final Value<String?> currentGroupName;
   final Value<String> url;
+  final Value<String?> ageSecretKey;
   final Value<DateTime?> lastUpdateDate;
-  final Value<OverwriteType> overwriteType;
+  final Value<ExtendType> extendType;
   final Value<int?> scriptId;
+  final Value<String?> matchTarget;
   final Value<int> autoUpdateDurationMillis;
   final Value<SubscriptionInfo?> subscriptionInfo;
   final Value<bool> autoUpdate;
   final Value<Map<String, String>> selectedMap;
   final Value<Set<String>> unfoldSet;
   final Value<int?> order;
+  final Value<ProfileOverrides?> overrides;
   const ProfilesCompanion({
     this.id = const Value.absent(),
+    this.type = const Value.absent(),
     this.label = const Value.absent(),
     this.currentGroupName = const Value.absent(),
     this.url = const Value.absent(),
+    this.ageSecretKey = const Value.absent(),
     this.lastUpdateDate = const Value.absent(),
-    this.overwriteType = const Value.absent(),
+    this.extendType = const Value.absent(),
     this.scriptId = const Value.absent(),
+    this.matchTarget = const Value.absent(),
     this.autoUpdateDurationMillis = const Value.absent(),
     this.subscriptionInfo = const Value.absent(),
     this.autoUpdate = const Value.absent(),
     this.selectedMap = const Value.absent(),
     this.unfoldSet = const Value.absent(),
     this.order = const Value.absent(),
+    this.overrides = const Value.absent(),
   });
   ProfilesCompanion.insert({
     this.id = const Value.absent(),
+    required ProfileType type,
     required String label,
     this.currentGroupName = const Value.absent(),
     required String url,
+    this.ageSecretKey = const Value.absent(),
     this.lastUpdateDate = const Value.absent(),
-    required OverwriteType overwriteType,
+    required ExtendType extendType,
     this.scriptId = const Value.absent(),
+    this.matchTarget = const Value.absent(),
     required int autoUpdateDurationMillis,
     this.subscriptionInfo = const Value.absent(),
     required bool autoUpdate,
     required Map<String, String> selectedMap,
     required Set<String> unfoldSet,
     this.order = const Value.absent(),
-  }) : label = Value(label),
+    this.overrides = const Value.absent(),
+  }) : type = Value(type),
+       label = Value(label),
        url = Value(url),
-       overwriteType = Value(overwriteType),
+       extendType = Value(extendType),
        autoUpdateDurationMillis = Value(autoUpdateDurationMillis),
        autoUpdate = Value(autoUpdate),
        selectedMap = Value(selectedMap),
        unfoldSet = Value(unfoldSet);
   static Insertable<RawProfile> custom({
     Expression<int>? id,
+    Expression<String>? type,
     Expression<String>? label,
     Expression<String>? currentGroupName,
     Expression<String>? url,
+    Expression<String>? ageSecretKey,
     Expression<DateTime>? lastUpdateDate,
-    Expression<String>? overwriteType,
+    Expression<String>? extendType,
     Expression<int>? scriptId,
+    Expression<String>? matchTarget,
     Expression<int>? autoUpdateDurationMillis,
     Expression<String>? subscriptionInfo,
     Expression<bool>? autoUpdate,
     Expression<String>? selectedMap,
     Expression<String>? unfoldSet,
     Expression<int>? order,
+    Expression<String>? overrides,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (type != null) 'type': type,
       if (label != null) 'label': label,
       if (currentGroupName != null) 'current_group_name': currentGroupName,
       if (url != null) 'url': url,
+      if (ageSecretKey != null) 'age_secret_key': ageSecretKey,
       if (lastUpdateDate != null) 'last_update_date': lastUpdateDate,
-      if (overwriteType != null) 'overwrite_type': overwriteType,
+      if (extendType != null) 'extend_type': extendType,
       if (scriptId != null) 'script_id': scriptId,
+      if (matchTarget != null) 'match_target': matchTarget,
       if (autoUpdateDurationMillis != null)
         'auto_update_duration_millis': autoUpdateDurationMillis,
       if (subscriptionInfo != null) 'subscription_info': subscriptionInfo,
@@ -685,32 +861,40 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
       if (selectedMap != null) 'selected_map': selectedMap,
       if (unfoldSet != null) 'unfold_set': unfoldSet,
       if (order != null) 'order': order,
+      if (overrides != null) 'overrides': overrides,
     });
   }
 
   ProfilesCompanion copyWith({
     Value<int>? id,
+    Value<ProfileType>? type,
     Value<String>? label,
     Value<String?>? currentGroupName,
     Value<String>? url,
+    Value<String?>? ageSecretKey,
     Value<DateTime?>? lastUpdateDate,
-    Value<OverwriteType>? overwriteType,
+    Value<ExtendType>? extendType,
     Value<int?>? scriptId,
+    Value<String?>? matchTarget,
     Value<int>? autoUpdateDurationMillis,
     Value<SubscriptionInfo?>? subscriptionInfo,
     Value<bool>? autoUpdate,
     Value<Map<String, String>>? selectedMap,
     Value<Set<String>>? unfoldSet,
     Value<int?>? order,
+    Value<ProfileOverrides?>? overrides,
   }) {
     return ProfilesCompanion(
       id: id ?? this.id,
+      type: type ?? this.type,
       label: label ?? this.label,
       currentGroupName: currentGroupName ?? this.currentGroupName,
       url: url ?? this.url,
+      ageSecretKey: ageSecretKey ?? this.ageSecretKey,
       lastUpdateDate: lastUpdateDate ?? this.lastUpdateDate,
-      overwriteType: overwriteType ?? this.overwriteType,
+      extendType: extendType ?? this.extendType,
       scriptId: scriptId ?? this.scriptId,
+      matchTarget: matchTarget ?? this.matchTarget,
       autoUpdateDurationMillis:
           autoUpdateDurationMillis ?? this.autoUpdateDurationMillis,
       subscriptionInfo: subscriptionInfo ?? this.subscriptionInfo,
@@ -718,6 +902,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
       selectedMap: selectedMap ?? this.selectedMap,
       unfoldSet: unfoldSet ?? this.unfoldSet,
       order: order ?? this.order,
+      overrides: overrides ?? this.overrides,
     );
   }
 
@@ -726,6 +911,11 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(
+        $ProfilesTable.$convertertype.toSql(type.value),
+      );
     }
     if (label.present) {
       map['label'] = Variable<String>(label.value);
@@ -736,16 +926,22 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     if (url.present) {
       map['url'] = Variable<String>(url.value);
     }
+    if (ageSecretKey.present) {
+      map['age_secret_key'] = Variable<String>(ageSecretKey.value);
+    }
     if (lastUpdateDate.present) {
       map['last_update_date'] = Variable<DateTime>(lastUpdateDate.value);
     }
-    if (overwriteType.present) {
-      map['overwrite_type'] = Variable<String>(
-        $ProfilesTable.$converteroverwriteType.toSql(overwriteType.value),
+    if (extendType.present) {
+      map['extend_type'] = Variable<String>(
+        $ProfilesTable.$converterextendType.toSql(extendType.value),
       );
     }
     if (scriptId.present) {
       map['script_id'] = Variable<int>(scriptId.value);
+    }
+    if (matchTarget.present) {
+      map['match_target'] = Variable<String>(matchTarget.value);
     }
     if (autoUpdateDurationMillis.present) {
       map['auto_update_duration_millis'] = Variable<int>(
@@ -773,6 +969,11 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     if (order.present) {
       map['order'] = Variable<int>(order.value);
     }
+    if (overrides.present) {
+      map['overrides'] = Variable<String>(
+        $ProfilesTable.$converteroverrides.toSql(overrides.value),
+      );
+    }
     return map;
   }
 
@@ -780,18 +981,22 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
   String toString() {
     return (StringBuffer('ProfilesCompanion(')
           ..write('id: $id, ')
+          ..write('type: $type, ')
           ..write('label: $label, ')
           ..write('currentGroupName: $currentGroupName, ')
           ..write('url: $url, ')
+          ..write('ageSecretKey: $ageSecretKey, ')
           ..write('lastUpdateDate: $lastUpdateDate, ')
-          ..write('overwriteType: $overwriteType, ')
+          ..write('extendType: $extendType, ')
           ..write('scriptId: $scriptId, ')
+          ..write('matchTarget: $matchTarget, ')
           ..write('autoUpdateDurationMillis: $autoUpdateDurationMillis, ')
           ..write('subscriptionInfo: $subscriptionInfo, ')
           ..write('autoUpdate: $autoUpdate, ')
           ..write('selectedMap: $selectedMap, ')
           ..write('unfoldSet: $unfoldSet, ')
-          ..write('order: $order')
+          ..write('order: $order, ')
+          ..write('overrides: $overrides')
           ..write(')'))
         .toString();
   }
@@ -832,8 +1037,26 @@ class $ScriptsTable extends Scripts with TableInfo<$ScriptsTable, RawScript> {
         type: DriftSqlType.dateTime,
         requiredDuringInsert: true,
       );
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
   @override
-  List<GeneratedColumn> get $columns => [id, label, lastUpdateTime];
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _orderMeta = const VerificationMeta('order');
+  @override
+  late final GeneratedColumn<int> order = GeneratedColumn<int>(
+    'order',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, label, lastUpdateTime, url, order];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -868,6 +1091,18 @@ class $ScriptsTable extends Scripts with TableInfo<$ScriptsTable, RawScript> {
     } else if (isInserting) {
       context.missing(_lastUpdateTimeMeta);
     }
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    }
+    if (data.containsKey('order')) {
+      context.handle(
+        _orderMeta,
+        order.isAcceptableOrUnknown(data['order']!, _orderMeta),
+      );
+    }
     return context;
   }
 
@@ -889,6 +1124,14 @@ class $ScriptsTable extends Scripts with TableInfo<$ScriptsTable, RawScript> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_update_time'],
       )!,
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      ),
+      order: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}order'],
+      ),
     );
   }
 
@@ -902,10 +1145,14 @@ class RawScript extends DataClass implements Insertable<RawScript> {
   final int id;
   final String label;
   final DateTime lastUpdateTime;
+  final String? url;
+  final int? order;
   const RawScript({
     required this.id,
     required this.label,
     required this.lastUpdateTime,
+    this.url,
+    this.order,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -913,6 +1160,12 @@ class RawScript extends DataClass implements Insertable<RawScript> {
     map['id'] = Variable<int>(id);
     map['label'] = Variable<String>(label);
     map['last_update_time'] = Variable<DateTime>(lastUpdateTime);
+    if (!nullToAbsent || url != null) {
+      map['url'] = Variable<String>(url);
+    }
+    if (!nullToAbsent || order != null) {
+      map['order'] = Variable<int>(order);
+    }
     return map;
   }
 
@@ -921,6 +1174,10 @@ class RawScript extends DataClass implements Insertable<RawScript> {
       id: Value(id),
       label: Value(label),
       lastUpdateTime: Value(lastUpdateTime),
+      url: url == null && nullToAbsent ? const Value.absent() : Value(url),
+      order: order == null && nullToAbsent
+          ? const Value.absent()
+          : Value(order),
     );
   }
 
@@ -933,6 +1190,8 @@ class RawScript extends DataClass implements Insertable<RawScript> {
       id: serializer.fromJson<int>(json['id']),
       label: serializer.fromJson<String>(json['label']),
       lastUpdateTime: serializer.fromJson<DateTime>(json['lastUpdateTime']),
+      url: serializer.fromJson<String?>(json['url']),
+      order: serializer.fromJson<int?>(json['order']),
     );
   }
   @override
@@ -942,15 +1201,24 @@ class RawScript extends DataClass implements Insertable<RawScript> {
       'id': serializer.toJson<int>(id),
       'label': serializer.toJson<String>(label),
       'lastUpdateTime': serializer.toJson<DateTime>(lastUpdateTime),
+      'url': serializer.toJson<String?>(url),
+      'order': serializer.toJson<int?>(order),
     };
   }
 
-  RawScript copyWith({int? id, String? label, DateTime? lastUpdateTime}) =>
-      RawScript(
-        id: id ?? this.id,
-        label: label ?? this.label,
-        lastUpdateTime: lastUpdateTime ?? this.lastUpdateTime,
-      );
+  RawScript copyWith({
+    int? id,
+    String? label,
+    DateTime? lastUpdateTime,
+    Value<String?> url = const Value.absent(),
+    Value<int?> order = const Value.absent(),
+  }) => RawScript(
+    id: id ?? this.id,
+    label: label ?? this.label,
+    lastUpdateTime: lastUpdateTime ?? this.lastUpdateTime,
+    url: url.present ? url.value : this.url,
+    order: order.present ? order.value : this.order,
+  );
   RawScript copyWithCompanion(ScriptsCompanion data) {
     return RawScript(
       id: data.id.present ? data.id.value : this.id,
@@ -958,6 +1226,8 @@ class RawScript extends DataClass implements Insertable<RawScript> {
       lastUpdateTime: data.lastUpdateTime.present
           ? data.lastUpdateTime.value
           : this.lastUpdateTime,
+      url: data.url.present ? data.url.value : this.url,
+      order: data.order.present ? data.order.value : this.order,
     );
   }
 
@@ -966,46 +1236,60 @@ class RawScript extends DataClass implements Insertable<RawScript> {
     return (StringBuffer('RawScript(')
           ..write('id: $id, ')
           ..write('label: $label, ')
-          ..write('lastUpdateTime: $lastUpdateTime')
+          ..write('lastUpdateTime: $lastUpdateTime, ')
+          ..write('url: $url, ')
+          ..write('order: $order')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, label, lastUpdateTime);
+  int get hashCode => Object.hash(id, label, lastUpdateTime, url, order);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is RawScript &&
           other.id == this.id &&
           other.label == this.label &&
-          other.lastUpdateTime == this.lastUpdateTime);
+          other.lastUpdateTime == this.lastUpdateTime &&
+          other.url == this.url &&
+          other.order == this.order);
 }
 
 class ScriptsCompanion extends UpdateCompanion<RawScript> {
   final Value<int> id;
   final Value<String> label;
   final Value<DateTime> lastUpdateTime;
+  final Value<String?> url;
+  final Value<int?> order;
   const ScriptsCompanion({
     this.id = const Value.absent(),
     this.label = const Value.absent(),
     this.lastUpdateTime = const Value.absent(),
+    this.url = const Value.absent(),
+    this.order = const Value.absent(),
   });
   ScriptsCompanion.insert({
     this.id = const Value.absent(),
     required String label,
     required DateTime lastUpdateTime,
+    this.url = const Value.absent(),
+    this.order = const Value.absent(),
   }) : label = Value(label),
        lastUpdateTime = Value(lastUpdateTime);
   static Insertable<RawScript> custom({
     Expression<int>? id,
     Expression<String>? label,
     Expression<DateTime>? lastUpdateTime,
+    Expression<String>? url,
+    Expression<int>? order,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (label != null) 'label': label,
       if (lastUpdateTime != null) 'last_update_time': lastUpdateTime,
+      if (url != null) 'url': url,
+      if (order != null) 'order': order,
     });
   }
 
@@ -1013,11 +1297,15 @@ class ScriptsCompanion extends UpdateCompanion<RawScript> {
     Value<int>? id,
     Value<String>? label,
     Value<DateTime>? lastUpdateTime,
+    Value<String?>? url,
+    Value<int?>? order,
   }) {
     return ScriptsCompanion(
       id: id ?? this.id,
       label: label ?? this.label,
       lastUpdateTime: lastUpdateTime ?? this.lastUpdateTime,
+      url: url ?? this.url,
+      order: order ?? this.order,
     );
   }
 
@@ -1033,6 +1321,12 @@ class ScriptsCompanion extends UpdateCompanion<RawScript> {
     if (lastUpdateTime.present) {
       map['last_update_time'] = Variable<DateTime>(lastUpdateTime.value);
     }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (order.present) {
+      map['order'] = Variable<int>(order.value);
+    }
     return map;
   }
 
@@ -1041,7 +1335,9 @@ class ScriptsCompanion extends UpdateCompanion<RawScript> {
     return (StringBuffer('ScriptsCompanion(')
           ..write('id: $id, ')
           ..write('label: $label, ')
-          ..write('lastUpdateTime: $lastUpdateTime')
+          ..write('lastUpdateTime: $lastUpdateTime, ')
+          ..write('url: $url, ')
+          ..write('order: $order')
           ..write(')'))
         .toString();
   }
@@ -1060,6 +1356,20 @@ class $RulesTable extends Rules with TableInfo<$RulesTable, RawRule> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
+  );
+  static const VerificationMeta _profileIdMeta = const VerificationMeta(
+    'profileId',
+  );
+  @override
+  late final GeneratedColumn<int> profileId = GeneratedColumn<int>(
+    'profile_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES profiles (id) ON DELETE CASCADE',
+    ),
   );
   @override
   late final GeneratedColumnWithTypeConverter<RuleAction, String> ruleAction =
@@ -1142,9 +1452,19 @@ class $RulesTable extends Rules with TableInfo<$RulesTable, RawRule> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _orderMeta = const VerificationMeta('order');
+  @override
+  late final GeneratedColumn<String> order = GeneratedColumn<String>(
+    'order',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    profileId,
     ruleAction,
     content,
     ruleTarget,
@@ -1152,6 +1472,7 @@ class $RulesTable extends Rules with TableInfo<$RulesTable, RawRule> {
     subRule,
     noResolve,
     src,
+    order,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1167,6 +1488,12 @@ class $RulesTable extends Rules with TableInfo<$RulesTable, RawRule> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('profile_id')) {
+      context.handle(
+        _profileIdMeta,
+        profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
+      );
     }
     if (data.containsKey('content')) {
       context.handle(
@@ -1207,6 +1534,12 @@ class $RulesTable extends Rules with TableInfo<$RulesTable, RawRule> {
         src.isAcceptableOrUnknown(data['src']!, _srcMeta),
       );
     }
+    if (data.containsKey('order')) {
+      context.handle(
+        _orderMeta,
+        order.isAcceptableOrUnknown(data['order']!, _orderMeta),
+      );
+    }
     return context;
   }
 
@@ -1220,6 +1553,10 @@ class $RulesTable extends Rules with TableInfo<$RulesTable, RawRule> {
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      profileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}profile_id'],
+      ),
       ruleAction: $RulesTable.$converterruleAction.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
@@ -1250,6 +1587,10 @@ class $RulesTable extends Rules with TableInfo<$RulesTable, RawRule> {
         DriftSqlType.bool,
         data['${effectivePrefix}src'],
       )!,
+      order: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}order'],
+      ),
     );
   }
 
@@ -1264,6 +1605,7 @@ class $RulesTable extends Rules with TableInfo<$RulesTable, RawRule> {
 
 class RawRule extends DataClass implements Insertable<RawRule> {
   final int id;
+  final int? profileId;
   final RuleAction ruleAction;
   final String? content;
   final String? ruleTarget;
@@ -1271,8 +1613,10 @@ class RawRule extends DataClass implements Insertable<RawRule> {
   final String? subRule;
   final bool noResolve;
   final bool src;
+  final String? order;
   const RawRule({
     required this.id,
+    this.profileId,
     required this.ruleAction,
     this.content,
     this.ruleTarget,
@@ -1280,11 +1624,15 @@ class RawRule extends DataClass implements Insertable<RawRule> {
     this.subRule,
     required this.noResolve,
     required this.src,
+    this.order,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    if (!nullToAbsent || profileId != null) {
+      map['profile_id'] = Variable<int>(profileId);
+    }
     {
       map['rule_action'] = Variable<String>(
         $RulesTable.$converterruleAction.toSql(ruleAction),
@@ -1304,12 +1652,18 @@ class RawRule extends DataClass implements Insertable<RawRule> {
     }
     map['no_resolve'] = Variable<bool>(noResolve);
     map['src'] = Variable<bool>(src);
+    if (!nullToAbsent || order != null) {
+      map['order'] = Variable<String>(order);
+    }
     return map;
   }
 
   RulesCompanion toCompanion(bool nullToAbsent) {
     return RulesCompanion(
       id: Value(id),
+      profileId: profileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(profileId),
       ruleAction: Value(ruleAction),
       content: content == null && nullToAbsent
           ? const Value.absent()
@@ -1325,6 +1679,9 @@ class RawRule extends DataClass implements Insertable<RawRule> {
           : Value(subRule),
       noResolve: Value(noResolve),
       src: Value(src),
+      order: order == null && nullToAbsent
+          ? const Value.absent()
+          : Value(order),
     );
   }
 
@@ -1335,6 +1692,7 @@ class RawRule extends DataClass implements Insertable<RawRule> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return RawRule(
       id: serializer.fromJson<int>(json['id']),
+      profileId: serializer.fromJson<int?>(json['profileId']),
       ruleAction: $RulesTable.$converterruleAction.fromJson(
         serializer.fromJson<String>(json['ruleAction']),
       ),
@@ -1344,6 +1702,7 @@ class RawRule extends DataClass implements Insertable<RawRule> {
       subRule: serializer.fromJson<String?>(json['subRule']),
       noResolve: serializer.fromJson<bool>(json['noResolve']),
       src: serializer.fromJson<bool>(json['src']),
+      order: serializer.fromJson<String?>(json['order']),
     );
   }
   @override
@@ -1351,6 +1710,7 @@ class RawRule extends DataClass implements Insertable<RawRule> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'profileId': serializer.toJson<int?>(profileId),
       'ruleAction': serializer.toJson<String>(
         $RulesTable.$converterruleAction.toJson(ruleAction),
       ),
@@ -1360,11 +1720,13 @@ class RawRule extends DataClass implements Insertable<RawRule> {
       'subRule': serializer.toJson<String?>(subRule),
       'noResolve': serializer.toJson<bool>(noResolve),
       'src': serializer.toJson<bool>(src),
+      'order': serializer.toJson<String?>(order),
     };
   }
 
   RawRule copyWith({
     int? id,
+    Value<int?> profileId = const Value.absent(),
     RuleAction? ruleAction,
     Value<String?> content = const Value.absent(),
     Value<String?> ruleTarget = const Value.absent(),
@@ -1372,8 +1734,10 @@ class RawRule extends DataClass implements Insertable<RawRule> {
     Value<String?> subRule = const Value.absent(),
     bool? noResolve,
     bool? src,
+    Value<String?> order = const Value.absent(),
   }) => RawRule(
     id: id ?? this.id,
+    profileId: profileId.present ? profileId.value : this.profileId,
     ruleAction: ruleAction ?? this.ruleAction,
     content: content.present ? content.value : this.content,
     ruleTarget: ruleTarget.present ? ruleTarget.value : this.ruleTarget,
@@ -1381,10 +1745,12 @@ class RawRule extends DataClass implements Insertable<RawRule> {
     subRule: subRule.present ? subRule.value : this.subRule,
     noResolve: noResolve ?? this.noResolve,
     src: src ?? this.src,
+    order: order.present ? order.value : this.order,
   );
   RawRule copyWithCompanion(RulesCompanion data) {
     return RawRule(
       id: data.id.present ? data.id.value : this.id,
+      profileId: data.profileId.present ? data.profileId.value : this.profileId,
       ruleAction: data.ruleAction.present
           ? data.ruleAction.value
           : this.ruleAction,
@@ -1398,6 +1764,7 @@ class RawRule extends DataClass implements Insertable<RawRule> {
       subRule: data.subRule.present ? data.subRule.value : this.subRule,
       noResolve: data.noResolve.present ? data.noResolve.value : this.noResolve,
       src: data.src.present ? data.src.value : this.src,
+      order: data.order.present ? data.order.value : this.order,
     );
   }
 
@@ -1405,13 +1772,15 @@ class RawRule extends DataClass implements Insertable<RawRule> {
   String toString() {
     return (StringBuffer('RawRule(')
           ..write('id: $id, ')
+          ..write('profileId: $profileId, ')
           ..write('ruleAction: $ruleAction, ')
           ..write('content: $content, ')
           ..write('ruleTarget: $ruleTarget, ')
           ..write('ruleProvider: $ruleProvider, ')
           ..write('subRule: $subRule, ')
           ..write('noResolve: $noResolve, ')
-          ..write('src: $src')
+          ..write('src: $src, ')
+          ..write('order: $order')
           ..write(')'))
         .toString();
   }
@@ -1419,6 +1788,7 @@ class RawRule extends DataClass implements Insertable<RawRule> {
   @override
   int get hashCode => Object.hash(
     id,
+    profileId,
     ruleAction,
     content,
     ruleTarget,
@@ -1426,23 +1796,27 @@ class RawRule extends DataClass implements Insertable<RawRule> {
     subRule,
     noResolve,
     src,
+    order,
   );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is RawRule &&
           other.id == this.id &&
+          other.profileId == this.profileId &&
           other.ruleAction == this.ruleAction &&
           other.content == this.content &&
           other.ruleTarget == this.ruleTarget &&
           other.ruleProvider == this.ruleProvider &&
           other.subRule == this.subRule &&
           other.noResolve == this.noResolve &&
-          other.src == this.src);
+          other.src == this.src &&
+          other.order == this.order);
 }
 
 class RulesCompanion extends UpdateCompanion<RawRule> {
   final Value<int> id;
+  final Value<int?> profileId;
   final Value<RuleAction> ruleAction;
   final Value<String?> content;
   final Value<String?> ruleTarget;
@@ -1450,8 +1824,10 @@ class RulesCompanion extends UpdateCompanion<RawRule> {
   final Value<String?> subRule;
   final Value<bool> noResolve;
   final Value<bool> src;
+  final Value<String?> order;
   const RulesCompanion({
     this.id = const Value.absent(),
+    this.profileId = const Value.absent(),
     this.ruleAction = const Value.absent(),
     this.content = const Value.absent(),
     this.ruleTarget = const Value.absent(),
@@ -1459,9 +1835,11 @@ class RulesCompanion extends UpdateCompanion<RawRule> {
     this.subRule = const Value.absent(),
     this.noResolve = const Value.absent(),
     this.src = const Value.absent(),
+    this.order = const Value.absent(),
   });
   RulesCompanion.insert({
     this.id = const Value.absent(),
+    this.profileId = const Value.absent(),
     required RuleAction ruleAction,
     this.content = const Value.absent(),
     this.ruleTarget = const Value.absent(),
@@ -1469,9 +1847,11 @@ class RulesCompanion extends UpdateCompanion<RawRule> {
     this.subRule = const Value.absent(),
     this.noResolve = const Value.absent(),
     this.src = const Value.absent(),
+    this.order = const Value.absent(),
   }) : ruleAction = Value(ruleAction);
   static Insertable<RawRule> custom({
     Expression<int>? id,
+    Expression<int>? profileId,
     Expression<String>? ruleAction,
     Expression<String>? content,
     Expression<String>? ruleTarget,
@@ -1479,9 +1859,11 @@ class RulesCompanion extends UpdateCompanion<RawRule> {
     Expression<String>? subRule,
     Expression<bool>? noResolve,
     Expression<bool>? src,
+    Expression<String>? order,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (profileId != null) 'profile_id': profileId,
       if (ruleAction != null) 'rule_action': ruleAction,
       if (content != null) 'content': content,
       if (ruleTarget != null) 'rule_target': ruleTarget,
@@ -1489,11 +1871,13 @@ class RulesCompanion extends UpdateCompanion<RawRule> {
       if (subRule != null) 'sub_rule': subRule,
       if (noResolve != null) 'no_resolve': noResolve,
       if (src != null) 'src': src,
+      if (order != null) 'order': order,
     });
   }
 
   RulesCompanion copyWith({
     Value<int>? id,
+    Value<int?>? profileId,
     Value<RuleAction>? ruleAction,
     Value<String?>? content,
     Value<String?>? ruleTarget,
@@ -1501,9 +1885,11 @@ class RulesCompanion extends UpdateCompanion<RawRule> {
     Value<String?>? subRule,
     Value<bool>? noResolve,
     Value<bool>? src,
+    Value<String?>? order,
   }) {
     return RulesCompanion(
       id: id ?? this.id,
+      profileId: profileId ?? this.profileId,
       ruleAction: ruleAction ?? this.ruleAction,
       content: content ?? this.content,
       ruleTarget: ruleTarget ?? this.ruleTarget,
@@ -1511,6 +1897,7 @@ class RulesCompanion extends UpdateCompanion<RawRule> {
       subRule: subRule ?? this.subRule,
       noResolve: noResolve ?? this.noResolve,
       src: src ?? this.src,
+      order: order ?? this.order,
     );
   }
 
@@ -1519,6 +1906,9 @@ class RulesCompanion extends UpdateCompanion<RawRule> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (profileId.present) {
+      map['profile_id'] = Variable<int>(profileId.value);
     }
     if (ruleAction.present) {
       map['rule_action'] = Variable<String>(
@@ -1543,6 +1933,9 @@ class RulesCompanion extends UpdateCompanion<RawRule> {
     if (src.present) {
       map['src'] = Variable<bool>(src.value);
     }
+    if (order.present) {
+      map['order'] = Variable<String>(order.value);
+    }
     return map;
   }
 
@@ -1550,33 +1943,26 @@ class RulesCompanion extends UpdateCompanion<RawRule> {
   String toString() {
     return (StringBuffer('RulesCompanion(')
           ..write('id: $id, ')
+          ..write('profileId: $profileId, ')
           ..write('ruleAction: $ruleAction, ')
           ..write('content: $content, ')
           ..write('ruleTarget: $ruleTarget, ')
           ..write('ruleProvider: $ruleProvider, ')
           ..write('subRule: $subRule, ')
           ..write('noResolve: $noResolve, ')
-          ..write('src: $src')
+          ..write('src: $src, ')
+          ..write('order: $order')
           ..write(')'))
         .toString();
   }
 }
 
-class $ProfileRuleLinksTable extends ProfileRuleLinks
-    with TableInfo<$ProfileRuleLinksTable, RawProfileRuleLink> {
+class $DisabledRulesTable extends DisabledRules
+    with TableInfo<$DisabledRulesTable, RawDisabledRule> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ProfileRuleLinksTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
+  $DisabledRulesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _profileIdMeta = const VerificationMeta(
     'profileId',
   );
@@ -1584,9 +1970,9 @@ class $ProfileRuleLinksTable extends ProfileRuleLinks
   late final GeneratedColumn<int> profileId = GeneratedColumn<int>(
     'profile_id',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.int,
-    requiredDuringInsert: false,
+    requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES profiles (id) ON DELETE CASCADE',
     ),
@@ -1604,47 +1990,26 @@ class $ProfileRuleLinksTable extends ProfileRuleLinks
     ),
   );
   @override
-  late final GeneratedColumnWithTypeConverter<RuleScene?, String> scene =
-      GeneratedColumn<String>(
-        'scene',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<RuleScene?>($ProfileRuleLinksTable.$converterscenen);
-  static const VerificationMeta _orderMeta = const VerificationMeta('order');
-  @override
-  late final GeneratedColumn<String> order = GeneratedColumn<String>(
-    'order',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [id, profileId, ruleId, scene, order];
+  List<GeneratedColumn> get $columns => [profileId, ruleId];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'profile_rule_mapping';
+  static const String $name = 'disabled_rules';
   @override
   VerificationContext validateIntegrity(
-    Insertable<RawProfileRuleLink> instance, {
+    Insertable<RawDisabledRule> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
     if (data.containsKey('profile_id')) {
       context.handle(
         _profileIdMeta,
         profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
       );
+    } else if (isInserting) {
+      context.missing(_profileIdMeta);
     }
     if (data.containsKey('rule_id')) {
       context.handle(
@@ -1654,239 +2019,135 @@ class $ProfileRuleLinksTable extends ProfileRuleLinks
     } else if (isInserting) {
       context.missing(_ruleIdMeta);
     }
-    if (data.containsKey('order')) {
-      context.handle(
-        _orderMeta,
-        order.isAcceptableOrUnknown(data['order']!, _orderMeta),
-      );
-    }
     return context;
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {id};
+  Set<GeneratedColumn> get $primaryKey => {profileId, ruleId};
   @override
-  RawProfileRuleLink map(Map<String, dynamic> data, {String? tablePrefix}) {
+  RawDisabledRule map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return RawProfileRuleLink(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
+    return RawDisabledRule(
       profileId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}profile_id'],
-      ),
+      )!,
       ruleId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}rule_id'],
       )!,
-      scene: $ProfileRuleLinksTable.$converterscenen.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}scene'],
-        ),
-      ),
-      order: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}order'],
-      ),
     );
   }
 
   @override
-  $ProfileRuleLinksTable createAlias(String alias) {
-    return $ProfileRuleLinksTable(attachedDatabase, alias);
+  $DisabledRulesTable createAlias(String alias) {
+    return $DisabledRulesTable(attachedDatabase, alias);
   }
-
-  static JsonTypeConverter2<RuleScene, String, String> $converterscene =
-      const EnumNameConverter<RuleScene>(RuleScene.values);
-  static JsonTypeConverter2<RuleScene?, String?, String?> $converterscenen =
-      JsonTypeConverter2.asNullable($converterscene);
 }
 
-class RawProfileRuleLink extends DataClass
-    implements Insertable<RawProfileRuleLink> {
-  final String id;
-  final int? profileId;
+class RawDisabledRule extends DataClass implements Insertable<RawDisabledRule> {
+  final int profileId;
   final int ruleId;
-  final RuleScene? scene;
-  final String? order;
-  const RawProfileRuleLink({
-    required this.id,
-    this.profileId,
-    required this.ruleId,
-    this.scene,
-    this.order,
-  });
+  const RawDisabledRule({required this.profileId, required this.ruleId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    if (!nullToAbsent || profileId != null) {
-      map['profile_id'] = Variable<int>(profileId);
-    }
+    map['profile_id'] = Variable<int>(profileId);
     map['rule_id'] = Variable<int>(ruleId);
-    if (!nullToAbsent || scene != null) {
-      map['scene'] = Variable<String>(
-        $ProfileRuleLinksTable.$converterscenen.toSql(scene),
-      );
-    }
-    if (!nullToAbsent || order != null) {
-      map['order'] = Variable<String>(order);
-    }
     return map;
   }
 
-  ProfileRuleLinksCompanion toCompanion(bool nullToAbsent) {
-    return ProfileRuleLinksCompanion(
-      id: Value(id),
-      profileId: profileId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(profileId),
+  DisabledRulesCompanion toCompanion(bool nullToAbsent) {
+    return DisabledRulesCompanion(
+      profileId: Value(profileId),
       ruleId: Value(ruleId),
-      scene: scene == null && nullToAbsent
-          ? const Value.absent()
-          : Value(scene),
-      order: order == null && nullToAbsent
-          ? const Value.absent()
-          : Value(order),
     );
   }
 
-  factory RawProfileRuleLink.fromJson(
+  factory RawDisabledRule.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return RawProfileRuleLink(
-      id: serializer.fromJson<String>(json['id']),
-      profileId: serializer.fromJson<int?>(json['profileId']),
+    return RawDisabledRule(
+      profileId: serializer.fromJson<int>(json['profileId']),
       ruleId: serializer.fromJson<int>(json['ruleId']),
-      scene: $ProfileRuleLinksTable.$converterscenen.fromJson(
-        serializer.fromJson<String?>(json['scene']),
-      ),
-      order: serializer.fromJson<String?>(json['order']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'profileId': serializer.toJson<int?>(profileId),
+      'profileId': serializer.toJson<int>(profileId),
       'ruleId': serializer.toJson<int>(ruleId),
-      'scene': serializer.toJson<String?>(
-        $ProfileRuleLinksTable.$converterscenen.toJson(scene),
-      ),
-      'order': serializer.toJson<String?>(order),
     };
   }
 
-  RawProfileRuleLink copyWith({
-    String? id,
-    Value<int?> profileId = const Value.absent(),
-    int? ruleId,
-    Value<RuleScene?> scene = const Value.absent(),
-    Value<String?> order = const Value.absent(),
-  }) => RawProfileRuleLink(
-    id: id ?? this.id,
-    profileId: profileId.present ? profileId.value : this.profileId,
+  RawDisabledRule copyWith({int? profileId, int? ruleId}) => RawDisabledRule(
+    profileId: profileId ?? this.profileId,
     ruleId: ruleId ?? this.ruleId,
-    scene: scene.present ? scene.value : this.scene,
-    order: order.present ? order.value : this.order,
   );
-  RawProfileRuleLink copyWithCompanion(ProfileRuleLinksCompanion data) {
-    return RawProfileRuleLink(
-      id: data.id.present ? data.id.value : this.id,
+  RawDisabledRule copyWithCompanion(DisabledRulesCompanion data) {
+    return RawDisabledRule(
       profileId: data.profileId.present ? data.profileId.value : this.profileId,
       ruleId: data.ruleId.present ? data.ruleId.value : this.ruleId,
-      scene: data.scene.present ? data.scene.value : this.scene,
-      order: data.order.present ? data.order.value : this.order,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('RawProfileRuleLink(')
-          ..write('id: $id, ')
+    return (StringBuffer('RawDisabledRule(')
           ..write('profileId: $profileId, ')
-          ..write('ruleId: $ruleId, ')
-          ..write('scene: $scene, ')
-          ..write('order: $order')
+          ..write('ruleId: $ruleId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, profileId, ruleId, scene, order);
+  int get hashCode => Object.hash(profileId, ruleId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is RawProfileRuleLink &&
-          other.id == this.id &&
+      (other is RawDisabledRule &&
           other.profileId == this.profileId &&
-          other.ruleId == this.ruleId &&
-          other.scene == this.scene &&
-          other.order == this.order);
+          other.ruleId == this.ruleId);
 }
 
-class ProfileRuleLinksCompanion extends UpdateCompanion<RawProfileRuleLink> {
-  final Value<String> id;
-  final Value<int?> profileId;
+class DisabledRulesCompanion extends UpdateCompanion<RawDisabledRule> {
+  final Value<int> profileId;
   final Value<int> ruleId;
-  final Value<RuleScene?> scene;
-  final Value<String?> order;
   final Value<int> rowid;
-  const ProfileRuleLinksCompanion({
-    this.id = const Value.absent(),
+  const DisabledRulesCompanion({
     this.profileId = const Value.absent(),
     this.ruleId = const Value.absent(),
-    this.scene = const Value.absent(),
-    this.order = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  ProfileRuleLinksCompanion.insert({
-    required String id,
-    this.profileId = const Value.absent(),
+  DisabledRulesCompanion.insert({
+    required int profileId,
     required int ruleId,
-    this.scene = const Value.absent(),
-    this.order = const Value.absent(),
     this.rowid = const Value.absent(),
-  }) : id = Value(id),
+  }) : profileId = Value(profileId),
        ruleId = Value(ruleId);
-  static Insertable<RawProfileRuleLink> custom({
-    Expression<String>? id,
+  static Insertable<RawDisabledRule> custom({
     Expression<int>? profileId,
     Expression<int>? ruleId,
-    Expression<String>? scene,
-    Expression<String>? order,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
-      if (id != null) 'id': id,
       if (profileId != null) 'profile_id': profileId,
       if (ruleId != null) 'rule_id': ruleId,
-      if (scene != null) 'scene': scene,
-      if (order != null) 'order': order,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  ProfileRuleLinksCompanion copyWith({
-    Value<String>? id,
-    Value<int?>? profileId,
+  DisabledRulesCompanion copyWith({
+    Value<int>? profileId,
     Value<int>? ruleId,
-    Value<RuleScene?>? scene,
-    Value<String?>? order,
     Value<int>? rowid,
   }) {
-    return ProfileRuleLinksCompanion(
-      id: id ?? this.id,
+    return DisabledRulesCompanion(
       profileId: profileId ?? this.profileId,
       ruleId: ruleId ?? this.ruleId,
-      scene: scene ?? this.scene,
-      order: order ?? this.order,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1894,22 +2155,11 @@ class ProfileRuleLinksCompanion extends UpdateCompanion<RawProfileRuleLink> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
     if (profileId.present) {
       map['profile_id'] = Variable<int>(profileId.value);
     }
     if (ruleId.present) {
       map['rule_id'] = Variable<int>(ruleId.value);
-    }
-    if (scene.present) {
-      map['scene'] = Variable<String>(
-        $ProfileRuleLinksTable.$converterscenen.toSql(scene.value),
-      );
-    }
-    if (order.present) {
-      map['order'] = Variable<String>(order.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -1919,12 +2169,9 @@ class ProfileRuleLinksCompanion extends UpdateCompanion<RawProfileRuleLink> {
 
   @override
   String toString() {
-    return (StringBuffer('ProfileRuleLinksCompanion(')
-          ..write('id: $id, ')
+    return (StringBuffer('DisabledRulesCompanion(')
           ..write('profileId: $profileId, ')
           ..write('ruleId: $ruleId, ')
-          ..write('scene: $scene, ')
-          ..write('order: $order, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1953,9 +2200,9 @@ class $ProxyGroupsTable extends ProxyGroups
   late final GeneratedColumn<int> profileId = GeneratedColumn<int>(
     'profile_id',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.int,
-    requiredDuringInsert: false,
+    requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES profiles (id) ON DELETE CASCADE',
     ),
@@ -1996,177 +2243,17 @@ class $ProxyGroupsTable extends ProxyGroups
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       ).withConverter<List<String>?>($ProxyGroupsTable.$converterusen);
-  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  static const VerificationMeta _definitionMeta = const VerificationMeta(
+    'definition',
+  );
   @override
-  late final GeneratedColumn<String> url = GeneratedColumn<String>(
-    'url',
+  late final GeneratedColumn<String> definition = GeneratedColumn<String>(
+    'definition',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-  );
-  static const VerificationMeta _intervalMeta = const VerificationMeta(
-    'interval',
-  );
-  @override
-  late final GeneratedColumn<int> interval = GeneratedColumn<int>(
-    'interval',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _timeoutMeta = const VerificationMeta(
-    'timeout',
-  );
-  @override
-  late final GeneratedColumn<int> timeout = GeneratedColumn<int>(
-    'timeout',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _maxFailedTimesMeta = const VerificationMeta(
-    'maxFailedTimes',
-  );
-  @override
-  late final GeneratedColumn<int> maxFailedTimes = GeneratedColumn<int>(
-    'max_failed_times',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _lazyMeta = const VerificationMeta('lazy');
-  @override
-  late final GeneratedColumn<bool> lazy = GeneratedColumn<bool>(
-    'lazy',
-    aliasedName,
-    true,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("lazy" IN (0, 1))',
-    ),
-  );
-  static const VerificationMeta _disableUDPMeta = const VerificationMeta(
-    'disableUDP',
-  );
-  @override
-  late final GeneratedColumn<bool> disableUDP = GeneratedColumn<bool>(
-    'disable_u_d_p',
-    aliasedName,
-    true,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("disable_u_d_p" IN (0, 1))',
-    ),
-  );
-  static const VerificationMeta _filterMeta = const VerificationMeta('filter');
-  @override
-  late final GeneratedColumn<String> filter = GeneratedColumn<String>(
-    'filter',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _excludeFilterMeta = const VerificationMeta(
-    'excludeFilter',
-  );
-  @override
-  late final GeneratedColumn<String> excludeFilter = GeneratedColumn<String>(
-    'exclude_filter',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _excludeTypeMeta = const VerificationMeta(
-    'excludeType',
-  );
-  @override
-  late final GeneratedColumn<String> excludeType = GeneratedColumn<String>(
-    'exclude_type',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _expectedStatusMeta = const VerificationMeta(
-    'expectedStatus',
-  );
-  @override
-  late final GeneratedColumn<String> expectedStatus = GeneratedColumn<String>(
-    'expected_status',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _includeAllMeta = const VerificationMeta(
-    'includeAll',
-  );
-  @override
-  late final GeneratedColumn<bool> includeAll = GeneratedColumn<bool>(
-    'include_all',
-    aliasedName,
-    true,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("include_all" IN (0, 1))',
-    ),
-  );
-  static const VerificationMeta _includeAllProxiesMeta = const VerificationMeta(
-    'includeAllProxies',
-  );
-  @override
-  late final GeneratedColumn<bool> includeAllProxies = GeneratedColumn<bool>(
-    'include_all_proxies',
-    aliasedName,
-    true,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("include_all_proxies" IN (0, 1))',
-    ),
-  );
-  static const VerificationMeta _includeAllProvidersMeta =
-      const VerificationMeta('includeAllProviders');
-  @override
-  late final GeneratedColumn<bool> includeAllProviders = GeneratedColumn<bool>(
-    'include_all_providers',
-    aliasedName,
-    true,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("include_all_providers" IN (0, 1))',
-    ),
-  );
-  static const VerificationMeta _hiddenMeta = const VerificationMeta('hidden');
-  @override
-  late final GeneratedColumn<bool> hidden = GeneratedColumn<bool>(
-    'hidden',
-    aliasedName,
-    true,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("hidden" IN (0, 1))',
-    ),
-  );
-  static const VerificationMeta _iconMeta = const VerificationMeta('icon');
-  @override
-  late final GeneratedColumn<String> icon = GeneratedColumn<String>(
-    'icon',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
   );
   static const VerificationMeta _orderMeta = const VerificationMeta('order');
   @override
@@ -2185,21 +2272,7 @@ class $ProxyGroupsTable extends ProxyGroups
     type,
     proxies,
     use,
-    url,
-    interval,
-    timeout,
-    maxFailedTimes,
-    lazy,
-    disableUDP,
-    filter,
-    excludeFilter,
-    excludeType,
-    expectedStatus,
-    includeAll,
-    includeAllProxies,
-    includeAllProviders,
-    hidden,
-    icon,
+    definition,
     order,
   ];
   @override
@@ -2222,6 +2295,8 @@ class $ProxyGroupsTable extends ProxyGroups
         _profileIdMeta,
         profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
       );
+    } else if (isInserting) {
+      context.missing(_profileIdMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -2239,115 +2314,10 @@ class $ProxyGroupsTable extends ProxyGroups
     } else if (isInserting) {
       context.missing(_typeMeta);
     }
-    if (data.containsKey('url')) {
+    if (data.containsKey('definition')) {
       context.handle(
-        _urlMeta,
-        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
-      );
-    }
-    if (data.containsKey('interval')) {
-      context.handle(
-        _intervalMeta,
-        interval.isAcceptableOrUnknown(data['interval']!, _intervalMeta),
-      );
-    }
-    if (data.containsKey('timeout')) {
-      context.handle(
-        _timeoutMeta,
-        timeout.isAcceptableOrUnknown(data['timeout']!, _timeoutMeta),
-      );
-    }
-    if (data.containsKey('max_failed_times')) {
-      context.handle(
-        _maxFailedTimesMeta,
-        maxFailedTimes.isAcceptableOrUnknown(
-          data['max_failed_times']!,
-          _maxFailedTimesMeta,
-        ),
-      );
-    }
-    if (data.containsKey('lazy')) {
-      context.handle(
-        _lazyMeta,
-        lazy.isAcceptableOrUnknown(data['lazy']!, _lazyMeta),
-      );
-    }
-    if (data.containsKey('disable_u_d_p')) {
-      context.handle(
-        _disableUDPMeta,
-        disableUDP.isAcceptableOrUnknown(
-          data['disable_u_d_p']!,
-          _disableUDPMeta,
-        ),
-      );
-    }
-    if (data.containsKey('filter')) {
-      context.handle(
-        _filterMeta,
-        filter.isAcceptableOrUnknown(data['filter']!, _filterMeta),
-      );
-    }
-    if (data.containsKey('exclude_filter')) {
-      context.handle(
-        _excludeFilterMeta,
-        excludeFilter.isAcceptableOrUnknown(
-          data['exclude_filter']!,
-          _excludeFilterMeta,
-        ),
-      );
-    }
-    if (data.containsKey('exclude_type')) {
-      context.handle(
-        _excludeTypeMeta,
-        excludeType.isAcceptableOrUnknown(
-          data['exclude_type']!,
-          _excludeTypeMeta,
-        ),
-      );
-    }
-    if (data.containsKey('expected_status')) {
-      context.handle(
-        _expectedStatusMeta,
-        expectedStatus.isAcceptableOrUnknown(
-          data['expected_status']!,
-          _expectedStatusMeta,
-        ),
-      );
-    }
-    if (data.containsKey('include_all')) {
-      context.handle(
-        _includeAllMeta,
-        includeAll.isAcceptableOrUnknown(data['include_all']!, _includeAllMeta),
-      );
-    }
-    if (data.containsKey('include_all_proxies')) {
-      context.handle(
-        _includeAllProxiesMeta,
-        includeAllProxies.isAcceptableOrUnknown(
-          data['include_all_proxies']!,
-          _includeAllProxiesMeta,
-        ),
-      );
-    }
-    if (data.containsKey('include_all_providers')) {
-      context.handle(
-        _includeAllProvidersMeta,
-        includeAllProviders.isAcceptableOrUnknown(
-          data['include_all_providers']!,
-          _includeAllProvidersMeta,
-        ),
-      );
-    }
-    if (data.containsKey('hidden')) {
-      context.handle(
-        _hiddenMeta,
-        hidden.isAcceptableOrUnknown(data['hidden']!, _hiddenMeta),
-      );
-    }
-    if (data.containsKey('icon')) {
-      context.handle(
-        _iconMeta,
-        icon.isAcceptableOrUnknown(data['icon']!, _iconMeta),
+        _definitionMeta,
+        definition.isAcceptableOrUnknown(data['definition']!, _definitionMeta),
       );
     }
     if (data.containsKey('order')) {
@@ -2372,7 +2342,7 @@ class $ProxyGroupsTable extends ProxyGroups
       profileId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}profile_id'],
-      ),
+      )!,
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
@@ -2393,66 +2363,10 @@ class $ProxyGroupsTable extends ProxyGroups
           data['${effectivePrefix}use'],
         ),
       ),
-      url: attachedDatabase.typeMapping.read(
+      definition: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}url'],
-      ),
-      interval: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}interval'],
-      ),
-      timeout: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}timeout'],
-      ),
-      maxFailedTimes: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}max_failed_times'],
-      ),
-      lazy: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}lazy'],
-      ),
-      disableUDP: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}disable_u_d_p'],
-      ),
-      filter: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}filter'],
-      ),
-      excludeFilter: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}exclude_filter'],
-      ),
-      excludeType: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}exclude_type'],
-      ),
-      expectedStatus: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}expected_status'],
-      ),
-      includeAll: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}include_all'],
-      ),
-      includeAllProxies: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}include_all_proxies'],
-      ),
-      includeAllProviders: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}include_all_providers'],
-      ),
-      hidden: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}hidden'],
-      ),
-      icon: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}icon'],
-      ),
+        data['${effectivePrefix}definition'],
+      )!,
       order: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}order'],
@@ -2477,58 +2391,28 @@ class $ProxyGroupsTable extends ProxyGroups
 
 class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
   final int id;
-  final int? profileId;
+  final int profileId;
   final String name;
   final String type;
   final List<String>? proxies;
   final List<String>? use;
-  final String? url;
-  final int? interval;
-  final int? timeout;
-  final int? maxFailedTimes;
-  final bool? lazy;
-  final bool? disableUDP;
-  final String? filter;
-  final String? excludeFilter;
-  final String? excludeType;
-  final String? expectedStatus;
-  final bool? includeAll;
-  final bool? includeAllProxies;
-  final bool? includeAllProviders;
-  final bool? hidden;
-  final String? icon;
+  final String definition;
   final String? order;
   const RawProxyGroup({
     required this.id,
-    this.profileId,
+    required this.profileId,
     required this.name,
     required this.type,
     this.proxies,
     this.use,
-    this.url,
-    this.interval,
-    this.timeout,
-    this.maxFailedTimes,
-    this.lazy,
-    this.disableUDP,
-    this.filter,
-    this.excludeFilter,
-    this.excludeType,
-    this.expectedStatus,
-    this.includeAll,
-    this.includeAllProxies,
-    this.includeAllProviders,
-    this.hidden,
-    this.icon,
+    required this.definition,
     this.order,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    if (!nullToAbsent || profileId != null) {
-      map['profile_id'] = Variable<int>(profileId);
-    }
+    map['profile_id'] = Variable<int>(profileId);
     map['name'] = Variable<String>(name);
     map['type'] = Variable<String>(type);
     if (!nullToAbsent || proxies != null) {
@@ -2541,51 +2425,7 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
         $ProxyGroupsTable.$converterusen.toSql(use),
       );
     }
-    if (!nullToAbsent || url != null) {
-      map['url'] = Variable<String>(url);
-    }
-    if (!nullToAbsent || interval != null) {
-      map['interval'] = Variable<int>(interval);
-    }
-    if (!nullToAbsent || timeout != null) {
-      map['timeout'] = Variable<int>(timeout);
-    }
-    if (!nullToAbsent || maxFailedTimes != null) {
-      map['max_failed_times'] = Variable<int>(maxFailedTimes);
-    }
-    if (!nullToAbsent || lazy != null) {
-      map['lazy'] = Variable<bool>(lazy);
-    }
-    if (!nullToAbsent || disableUDP != null) {
-      map['disable_u_d_p'] = Variable<bool>(disableUDP);
-    }
-    if (!nullToAbsent || filter != null) {
-      map['filter'] = Variable<String>(filter);
-    }
-    if (!nullToAbsent || excludeFilter != null) {
-      map['exclude_filter'] = Variable<String>(excludeFilter);
-    }
-    if (!nullToAbsent || excludeType != null) {
-      map['exclude_type'] = Variable<String>(excludeType);
-    }
-    if (!nullToAbsent || expectedStatus != null) {
-      map['expected_status'] = Variable<String>(expectedStatus);
-    }
-    if (!nullToAbsent || includeAll != null) {
-      map['include_all'] = Variable<bool>(includeAll);
-    }
-    if (!nullToAbsent || includeAllProxies != null) {
-      map['include_all_proxies'] = Variable<bool>(includeAllProxies);
-    }
-    if (!nullToAbsent || includeAllProviders != null) {
-      map['include_all_providers'] = Variable<bool>(includeAllProviders);
-    }
-    if (!nullToAbsent || hidden != null) {
-      map['hidden'] = Variable<bool>(hidden);
-    }
-    if (!nullToAbsent || icon != null) {
-      map['icon'] = Variable<String>(icon);
-    }
+    map['definition'] = Variable<String>(definition);
     if (!nullToAbsent || order != null) {
       map['order'] = Variable<String>(order);
     }
@@ -2595,54 +2435,14 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
   ProxyGroupsCompanion toCompanion(bool nullToAbsent) {
     return ProxyGroupsCompanion(
       id: Value(id),
-      profileId: profileId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(profileId),
+      profileId: Value(profileId),
       name: Value(name),
       type: Value(type),
       proxies: proxies == null && nullToAbsent
           ? const Value.absent()
           : Value(proxies),
       use: use == null && nullToAbsent ? const Value.absent() : Value(use),
-      url: url == null && nullToAbsent ? const Value.absent() : Value(url),
-      interval: interval == null && nullToAbsent
-          ? const Value.absent()
-          : Value(interval),
-      timeout: timeout == null && nullToAbsent
-          ? const Value.absent()
-          : Value(timeout),
-      maxFailedTimes: maxFailedTimes == null && nullToAbsent
-          ? const Value.absent()
-          : Value(maxFailedTimes),
-      lazy: lazy == null && nullToAbsent ? const Value.absent() : Value(lazy),
-      disableUDP: disableUDP == null && nullToAbsent
-          ? const Value.absent()
-          : Value(disableUDP),
-      filter: filter == null && nullToAbsent
-          ? const Value.absent()
-          : Value(filter),
-      excludeFilter: excludeFilter == null && nullToAbsent
-          ? const Value.absent()
-          : Value(excludeFilter),
-      excludeType: excludeType == null && nullToAbsent
-          ? const Value.absent()
-          : Value(excludeType),
-      expectedStatus: expectedStatus == null && nullToAbsent
-          ? const Value.absent()
-          : Value(expectedStatus),
-      includeAll: includeAll == null && nullToAbsent
-          ? const Value.absent()
-          : Value(includeAll),
-      includeAllProxies: includeAllProxies == null && nullToAbsent
-          ? const Value.absent()
-          : Value(includeAllProxies),
-      includeAllProviders: includeAllProviders == null && nullToAbsent
-          ? const Value.absent()
-          : Value(includeAllProviders),
-      hidden: hidden == null && nullToAbsent
-          ? const Value.absent()
-          : Value(hidden),
-      icon: icon == null && nullToAbsent ? const Value.absent() : Value(icon),
+      definition: Value(definition),
       order: order == null && nullToAbsent
           ? const Value.absent()
           : Value(order),
@@ -2656,28 +2456,12 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return RawProxyGroup(
       id: serializer.fromJson<int>(json['id']),
-      profileId: serializer.fromJson<int?>(json['profileId']),
+      profileId: serializer.fromJson<int>(json['profileId']),
       name: serializer.fromJson<String>(json['name']),
       type: serializer.fromJson<String>(json['type']),
       proxies: serializer.fromJson<List<String>?>(json['proxies']),
       use: serializer.fromJson<List<String>?>(json['use']),
-      url: serializer.fromJson<String?>(json['url']),
-      interval: serializer.fromJson<int?>(json['interval']),
-      timeout: serializer.fromJson<int?>(json['timeout']),
-      maxFailedTimes: serializer.fromJson<int?>(json['maxFailedTimes']),
-      lazy: serializer.fromJson<bool?>(json['lazy']),
-      disableUDP: serializer.fromJson<bool?>(json['disableUDP']),
-      filter: serializer.fromJson<String?>(json['filter']),
-      excludeFilter: serializer.fromJson<String?>(json['excludeFilter']),
-      excludeType: serializer.fromJson<String?>(json['excludeType']),
-      expectedStatus: serializer.fromJson<String?>(json['expectedStatus']),
-      includeAll: serializer.fromJson<bool?>(json['includeAll']),
-      includeAllProxies: serializer.fromJson<bool?>(json['includeAllProxies']),
-      includeAllProviders: serializer.fromJson<bool?>(
-        json['includeAllProviders'],
-      ),
-      hidden: serializer.fromJson<bool?>(json['hidden']),
-      icon: serializer.fromJson<String?>(json['icon']),
+      definition: serializer.fromJson<String>(json['definition']),
       order: serializer.fromJson<String?>(json['order']),
     );
   }
@@ -2686,85 +2470,33 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'profileId': serializer.toJson<int?>(profileId),
+      'profileId': serializer.toJson<int>(profileId),
       'name': serializer.toJson<String>(name),
       'type': serializer.toJson<String>(type),
       'proxies': serializer.toJson<List<String>?>(proxies),
       'use': serializer.toJson<List<String>?>(use),
-      'url': serializer.toJson<String?>(url),
-      'interval': serializer.toJson<int?>(interval),
-      'timeout': serializer.toJson<int?>(timeout),
-      'maxFailedTimes': serializer.toJson<int?>(maxFailedTimes),
-      'lazy': serializer.toJson<bool?>(lazy),
-      'disableUDP': serializer.toJson<bool?>(disableUDP),
-      'filter': serializer.toJson<String?>(filter),
-      'excludeFilter': serializer.toJson<String?>(excludeFilter),
-      'excludeType': serializer.toJson<String?>(excludeType),
-      'expectedStatus': serializer.toJson<String?>(expectedStatus),
-      'includeAll': serializer.toJson<bool?>(includeAll),
-      'includeAllProxies': serializer.toJson<bool?>(includeAllProxies),
-      'includeAllProviders': serializer.toJson<bool?>(includeAllProviders),
-      'hidden': serializer.toJson<bool?>(hidden),
-      'icon': serializer.toJson<String?>(icon),
+      'definition': serializer.toJson<String>(definition),
       'order': serializer.toJson<String?>(order),
     };
   }
 
   RawProxyGroup copyWith({
     int? id,
-    Value<int?> profileId = const Value.absent(),
+    int? profileId,
     String? name,
     String? type,
     Value<List<String>?> proxies = const Value.absent(),
     Value<List<String>?> use = const Value.absent(),
-    Value<String?> url = const Value.absent(),
-    Value<int?> interval = const Value.absent(),
-    Value<int?> timeout = const Value.absent(),
-    Value<int?> maxFailedTimes = const Value.absent(),
-    Value<bool?> lazy = const Value.absent(),
-    Value<bool?> disableUDP = const Value.absent(),
-    Value<String?> filter = const Value.absent(),
-    Value<String?> excludeFilter = const Value.absent(),
-    Value<String?> excludeType = const Value.absent(),
-    Value<String?> expectedStatus = const Value.absent(),
-    Value<bool?> includeAll = const Value.absent(),
-    Value<bool?> includeAllProxies = const Value.absent(),
-    Value<bool?> includeAllProviders = const Value.absent(),
-    Value<bool?> hidden = const Value.absent(),
-    Value<String?> icon = const Value.absent(),
+    String? definition,
     Value<String?> order = const Value.absent(),
   }) => RawProxyGroup(
     id: id ?? this.id,
-    profileId: profileId.present ? profileId.value : this.profileId,
+    profileId: profileId ?? this.profileId,
     name: name ?? this.name,
     type: type ?? this.type,
     proxies: proxies.present ? proxies.value : this.proxies,
     use: use.present ? use.value : this.use,
-    url: url.present ? url.value : this.url,
-    interval: interval.present ? interval.value : this.interval,
-    timeout: timeout.present ? timeout.value : this.timeout,
-    maxFailedTimes: maxFailedTimes.present
-        ? maxFailedTimes.value
-        : this.maxFailedTimes,
-    lazy: lazy.present ? lazy.value : this.lazy,
-    disableUDP: disableUDP.present ? disableUDP.value : this.disableUDP,
-    filter: filter.present ? filter.value : this.filter,
-    excludeFilter: excludeFilter.present
-        ? excludeFilter.value
-        : this.excludeFilter,
-    excludeType: excludeType.present ? excludeType.value : this.excludeType,
-    expectedStatus: expectedStatus.present
-        ? expectedStatus.value
-        : this.expectedStatus,
-    includeAll: includeAll.present ? includeAll.value : this.includeAll,
-    includeAllProxies: includeAllProxies.present
-        ? includeAllProxies.value
-        : this.includeAllProxies,
-    includeAllProviders: includeAllProviders.present
-        ? includeAllProviders.value
-        : this.includeAllProviders,
-    hidden: hidden.present ? hidden.value : this.hidden,
-    icon: icon.present ? icon.value : this.icon,
+    definition: definition ?? this.definition,
     order: order.present ? order.value : this.order,
   );
   RawProxyGroup copyWithCompanion(ProxyGroupsCompanion data) {
@@ -2775,37 +2507,9 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
       type: data.type.present ? data.type.value : this.type,
       proxies: data.proxies.present ? data.proxies.value : this.proxies,
       use: data.use.present ? data.use.value : this.use,
-      url: data.url.present ? data.url.value : this.url,
-      interval: data.interval.present ? data.interval.value : this.interval,
-      timeout: data.timeout.present ? data.timeout.value : this.timeout,
-      maxFailedTimes: data.maxFailedTimes.present
-          ? data.maxFailedTimes.value
-          : this.maxFailedTimes,
-      lazy: data.lazy.present ? data.lazy.value : this.lazy,
-      disableUDP: data.disableUDP.present
-          ? data.disableUDP.value
-          : this.disableUDP,
-      filter: data.filter.present ? data.filter.value : this.filter,
-      excludeFilter: data.excludeFilter.present
-          ? data.excludeFilter.value
-          : this.excludeFilter,
-      excludeType: data.excludeType.present
-          ? data.excludeType.value
-          : this.excludeType,
-      expectedStatus: data.expectedStatus.present
-          ? data.expectedStatus.value
-          : this.expectedStatus,
-      includeAll: data.includeAll.present
-          ? data.includeAll.value
-          : this.includeAll,
-      includeAllProxies: data.includeAllProxies.present
-          ? data.includeAllProxies.value
-          : this.includeAllProxies,
-      includeAllProviders: data.includeAllProviders.present
-          ? data.includeAllProviders.value
-          : this.includeAllProviders,
-      hidden: data.hidden.present ? data.hidden.value : this.hidden,
-      icon: data.icon.present ? data.icon.value : this.icon,
+      definition: data.definition.present
+          ? data.definition.value
+          : this.definition,
       order: data.order.present ? data.order.value : this.order,
     );
   }
@@ -2819,51 +2523,15 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
           ..write('type: $type, ')
           ..write('proxies: $proxies, ')
           ..write('use: $use, ')
-          ..write('url: $url, ')
-          ..write('interval: $interval, ')
-          ..write('timeout: $timeout, ')
-          ..write('maxFailedTimes: $maxFailedTimes, ')
-          ..write('lazy: $lazy, ')
-          ..write('disableUDP: $disableUDP, ')
-          ..write('filter: $filter, ')
-          ..write('excludeFilter: $excludeFilter, ')
-          ..write('excludeType: $excludeType, ')
-          ..write('expectedStatus: $expectedStatus, ')
-          ..write('includeAll: $includeAll, ')
-          ..write('includeAllProxies: $includeAllProxies, ')
-          ..write('includeAllProviders: $includeAllProviders, ')
-          ..write('hidden: $hidden, ')
-          ..write('icon: $icon, ')
+          ..write('definition: $definition, ')
           ..write('order: $order')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hashAll([
-    id,
-    profileId,
-    name,
-    type,
-    proxies,
-    use,
-    url,
-    interval,
-    timeout,
-    maxFailedTimes,
-    lazy,
-    disableUDP,
-    filter,
-    excludeFilter,
-    excludeType,
-    expectedStatus,
-    includeAll,
-    includeAllProxies,
-    includeAllProviders,
-    hidden,
-    icon,
-    order,
-  ]);
+  int get hashCode =>
+      Object.hash(id, profileId, name, type, proxies, use, definition, order);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2874,46 +2542,18 @@ class RawProxyGroup extends DataClass implements Insertable<RawProxyGroup> {
           other.type == this.type &&
           other.proxies == this.proxies &&
           other.use == this.use &&
-          other.url == this.url &&
-          other.interval == this.interval &&
-          other.timeout == this.timeout &&
-          other.maxFailedTimes == this.maxFailedTimes &&
-          other.lazy == this.lazy &&
-          other.disableUDP == this.disableUDP &&
-          other.filter == this.filter &&
-          other.excludeFilter == this.excludeFilter &&
-          other.excludeType == this.excludeType &&
-          other.expectedStatus == this.expectedStatus &&
-          other.includeAll == this.includeAll &&
-          other.includeAllProxies == this.includeAllProxies &&
-          other.includeAllProviders == this.includeAllProviders &&
-          other.hidden == this.hidden &&
-          other.icon == this.icon &&
+          other.definition == this.definition &&
           other.order == this.order);
 }
 
 class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
   final Value<int> id;
-  final Value<int?> profileId;
+  final Value<int> profileId;
   final Value<String> name;
   final Value<String> type;
   final Value<List<String>?> proxies;
   final Value<List<String>?> use;
-  final Value<String?> url;
-  final Value<int?> interval;
-  final Value<int?> timeout;
-  final Value<int?> maxFailedTimes;
-  final Value<bool?> lazy;
-  final Value<bool?> disableUDP;
-  final Value<String?> filter;
-  final Value<String?> excludeFilter;
-  final Value<String?> excludeType;
-  final Value<String?> expectedStatus;
-  final Value<bool?> includeAll;
-  final Value<bool?> includeAllProxies;
-  final Value<bool?> includeAllProviders;
-  final Value<bool?> hidden;
-  final Value<String?> icon;
+  final Value<String> definition;
   final Value<String?> order;
   const ProxyGroupsCompanion({
     this.id = const Value.absent(),
@@ -2922,47 +2562,20 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     this.type = const Value.absent(),
     this.proxies = const Value.absent(),
     this.use = const Value.absent(),
-    this.url = const Value.absent(),
-    this.interval = const Value.absent(),
-    this.timeout = const Value.absent(),
-    this.maxFailedTimes = const Value.absent(),
-    this.lazy = const Value.absent(),
-    this.disableUDP = const Value.absent(),
-    this.filter = const Value.absent(),
-    this.excludeFilter = const Value.absent(),
-    this.excludeType = const Value.absent(),
-    this.expectedStatus = const Value.absent(),
-    this.includeAll = const Value.absent(),
-    this.includeAllProxies = const Value.absent(),
-    this.includeAllProviders = const Value.absent(),
-    this.hidden = const Value.absent(),
-    this.icon = const Value.absent(),
+    this.definition = const Value.absent(),
     this.order = const Value.absent(),
   });
   ProxyGroupsCompanion.insert({
     this.id = const Value.absent(),
-    this.profileId = const Value.absent(),
+    required int profileId,
     required String name,
     required String type,
     this.proxies = const Value.absent(),
     this.use = const Value.absent(),
-    this.url = const Value.absent(),
-    this.interval = const Value.absent(),
-    this.timeout = const Value.absent(),
-    this.maxFailedTimes = const Value.absent(),
-    this.lazy = const Value.absent(),
-    this.disableUDP = const Value.absent(),
-    this.filter = const Value.absent(),
-    this.excludeFilter = const Value.absent(),
-    this.excludeType = const Value.absent(),
-    this.expectedStatus = const Value.absent(),
-    this.includeAll = const Value.absent(),
-    this.includeAllProxies = const Value.absent(),
-    this.includeAllProviders = const Value.absent(),
-    this.hidden = const Value.absent(),
-    this.icon = const Value.absent(),
+    this.definition = const Value.absent(),
     this.order = const Value.absent(),
-  }) : name = Value(name),
+  }) : profileId = Value(profileId),
+       name = Value(name),
        type = Value(type);
   static Insertable<RawProxyGroup> custom({
     Expression<int>? id,
@@ -2971,21 +2584,7 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
     Expression<String>? type,
     Expression<String>? proxies,
     Expression<String>? use,
-    Expression<String>? url,
-    Expression<int>? interval,
-    Expression<int>? timeout,
-    Expression<int>? maxFailedTimes,
-    Expression<bool>? lazy,
-    Expression<bool>? disableUDP,
-    Expression<String>? filter,
-    Expression<String>? excludeFilter,
-    Expression<String>? excludeType,
-    Expression<String>? expectedStatus,
-    Expression<bool>? includeAll,
-    Expression<bool>? includeAllProxies,
-    Expression<bool>? includeAllProviders,
-    Expression<bool>? hidden,
-    Expression<String>? icon,
+    Expression<String>? definition,
     Expression<String>? order,
   }) {
     return RawValuesInsertable({
@@ -2995,48 +2594,19 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
       if (type != null) 'type': type,
       if (proxies != null) 'proxies': proxies,
       if (use != null) 'use': use,
-      if (url != null) 'url': url,
-      if (interval != null) 'interval': interval,
-      if (timeout != null) 'timeout': timeout,
-      if (maxFailedTimes != null) 'max_failed_times': maxFailedTimes,
-      if (lazy != null) 'lazy': lazy,
-      if (disableUDP != null) 'disable_u_d_p': disableUDP,
-      if (filter != null) 'filter': filter,
-      if (excludeFilter != null) 'exclude_filter': excludeFilter,
-      if (excludeType != null) 'exclude_type': excludeType,
-      if (expectedStatus != null) 'expected_status': expectedStatus,
-      if (includeAll != null) 'include_all': includeAll,
-      if (includeAllProxies != null) 'include_all_proxies': includeAllProxies,
-      if (includeAllProviders != null)
-        'include_all_providers': includeAllProviders,
-      if (hidden != null) 'hidden': hidden,
-      if (icon != null) 'icon': icon,
+      if (definition != null) 'definition': definition,
       if (order != null) 'order': order,
     });
   }
 
   ProxyGroupsCompanion copyWith({
     Value<int>? id,
-    Value<int?>? profileId,
+    Value<int>? profileId,
     Value<String>? name,
     Value<String>? type,
     Value<List<String>?>? proxies,
     Value<List<String>?>? use,
-    Value<String?>? url,
-    Value<int?>? interval,
-    Value<int?>? timeout,
-    Value<int?>? maxFailedTimes,
-    Value<bool?>? lazy,
-    Value<bool?>? disableUDP,
-    Value<String?>? filter,
-    Value<String?>? excludeFilter,
-    Value<String?>? excludeType,
-    Value<String?>? expectedStatus,
-    Value<bool?>? includeAll,
-    Value<bool?>? includeAllProxies,
-    Value<bool?>? includeAllProviders,
-    Value<bool?>? hidden,
-    Value<String?>? icon,
+    Value<String>? definition,
     Value<String?>? order,
   }) {
     return ProxyGroupsCompanion(
@@ -3046,21 +2616,7 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
       type: type ?? this.type,
       proxies: proxies ?? this.proxies,
       use: use ?? this.use,
-      url: url ?? this.url,
-      interval: interval ?? this.interval,
-      timeout: timeout ?? this.timeout,
-      maxFailedTimes: maxFailedTimes ?? this.maxFailedTimes,
-      lazy: lazy ?? this.lazy,
-      disableUDP: disableUDP ?? this.disableUDP,
-      filter: filter ?? this.filter,
-      excludeFilter: excludeFilter ?? this.excludeFilter,
-      excludeType: excludeType ?? this.excludeType,
-      expectedStatus: expectedStatus ?? this.expectedStatus,
-      includeAll: includeAll ?? this.includeAll,
-      includeAllProxies: includeAllProxies ?? this.includeAllProxies,
-      includeAllProviders: includeAllProviders ?? this.includeAllProviders,
-      hidden: hidden ?? this.hidden,
-      icon: icon ?? this.icon,
+      definition: definition ?? this.definition,
       order: order ?? this.order,
     );
   }
@@ -3090,50 +2646,8 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
         $ProxyGroupsTable.$converterusen.toSql(use.value),
       );
     }
-    if (url.present) {
-      map['url'] = Variable<String>(url.value);
-    }
-    if (interval.present) {
-      map['interval'] = Variable<int>(interval.value);
-    }
-    if (timeout.present) {
-      map['timeout'] = Variable<int>(timeout.value);
-    }
-    if (maxFailedTimes.present) {
-      map['max_failed_times'] = Variable<int>(maxFailedTimes.value);
-    }
-    if (lazy.present) {
-      map['lazy'] = Variable<bool>(lazy.value);
-    }
-    if (disableUDP.present) {
-      map['disable_u_d_p'] = Variable<bool>(disableUDP.value);
-    }
-    if (filter.present) {
-      map['filter'] = Variable<String>(filter.value);
-    }
-    if (excludeFilter.present) {
-      map['exclude_filter'] = Variable<String>(excludeFilter.value);
-    }
-    if (excludeType.present) {
-      map['exclude_type'] = Variable<String>(excludeType.value);
-    }
-    if (expectedStatus.present) {
-      map['expected_status'] = Variable<String>(expectedStatus.value);
-    }
-    if (includeAll.present) {
-      map['include_all'] = Variable<bool>(includeAll.value);
-    }
-    if (includeAllProxies.present) {
-      map['include_all_proxies'] = Variable<bool>(includeAllProxies.value);
-    }
-    if (includeAllProviders.present) {
-      map['include_all_providers'] = Variable<bool>(includeAllProviders.value);
-    }
-    if (hidden.present) {
-      map['hidden'] = Variable<bool>(hidden.value);
-    }
-    if (icon.present) {
-      map['icon'] = Variable<String>(icon.value);
+    if (definition.present) {
+      map['definition'] = Variable<String>(definition.value);
     }
     if (order.present) {
       map['order'] = Variable<String>(order.value);
@@ -3150,21 +2664,7 @@ class ProxyGroupsCompanion extends UpdateCompanion<RawProxyGroup> {
           ..write('type: $type, ')
           ..write('proxies: $proxies, ')
           ..write('use: $use, ')
-          ..write('url: $url, ')
-          ..write('interval: $interval, ')
-          ..write('timeout: $timeout, ')
-          ..write('maxFailedTimes: $maxFailedTimes, ')
-          ..write('lazy: $lazy, ')
-          ..write('disableUDP: $disableUDP, ')
-          ..write('filter: $filter, ')
-          ..write('excludeFilter: $excludeFilter, ')
-          ..write('excludeType: $excludeType, ')
-          ..write('expectedStatus: $expectedStatus, ')
-          ..write('includeAll: $includeAll, ')
-          ..write('includeAllProxies: $includeAllProxies, ')
-          ..write('includeAllProviders: $includeAllProviders, ')
-          ..write('hidden: $hidden, ')
-          ..write('icon: $icon, ')
+          ..write('definition: $definition, ')
           ..write('order: $order')
           ..write(')'))
         .toString();
@@ -3391,8 +2891,1449 @@ class IconRecordsCompanion extends UpdateCompanion<IconRecord> {
   }
 }
 
+class $IconSetsTable extends IconSets
+    with TableInfo<$IconSetsTable, RawIconSet> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $IconSetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<List<IconSetIcon>, String> icons =
+      GeneratedColumn<String>(
+        'icons',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<List<IconSetIcon>>($IconSetsTable.$convertericons);
+  static const VerificationMeta _lastUpdateTimeMeta = const VerificationMeta(
+    'lastUpdateTime',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastUpdateTime =
+      GeneratedColumn<DateTime>(
+        'last_update_time',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _orderMeta = const VerificationMeta('order');
+  @override
+  late final GeneratedColumn<int> order = GeneratedColumn<int>(
+    'order',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    url,
+    icons,
+    lastUpdateTime,
+    order,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'icon_sets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RawIconSet> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_urlMeta);
+    }
+    if (data.containsKey('last_update_time')) {
+      context.handle(
+        _lastUpdateTimeMeta,
+        lastUpdateTime.isAcceptableOrUnknown(
+          data['last_update_time']!,
+          _lastUpdateTimeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('order')) {
+      context.handle(
+        _orderMeta,
+        order.isAcceptableOrUnknown(data['order']!, _orderMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RawIconSet map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RawIconSet(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      )!,
+      icons: $IconSetsTable.$convertericons.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}icons'],
+        )!,
+      ),
+      lastUpdateTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_update_time'],
+      ),
+      order: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}order'],
+      ),
+    );
+  }
+
+  @override
+  $IconSetsTable createAlias(String alias) {
+    return $IconSetsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<List<IconSetIcon>, String> $convertericons =
+      const IconSetIconsConverter();
+}
+
+class RawIconSet extends DataClass implements Insertable<RawIconSet> {
+  final int id;
+  final String name;
+  final String url;
+  final List<IconSetIcon> icons;
+  final DateTime? lastUpdateTime;
+  final int? order;
+  const RawIconSet({
+    required this.id,
+    required this.name,
+    required this.url,
+    required this.icons,
+    this.lastUpdateTime,
+    this.order,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['url'] = Variable<String>(url);
+    {
+      map['icons'] = Variable<String>(
+        $IconSetsTable.$convertericons.toSql(icons),
+      );
+    }
+    if (!nullToAbsent || lastUpdateTime != null) {
+      map['last_update_time'] = Variable<DateTime>(lastUpdateTime);
+    }
+    if (!nullToAbsent || order != null) {
+      map['order'] = Variable<int>(order);
+    }
+    return map;
+  }
+
+  IconSetsCompanion toCompanion(bool nullToAbsent) {
+    return IconSetsCompanion(
+      id: Value(id),
+      name: Value(name),
+      url: Value(url),
+      icons: Value(icons),
+      lastUpdateTime: lastUpdateTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastUpdateTime),
+      order: order == null && nullToAbsent
+          ? const Value.absent()
+          : Value(order),
+    );
+  }
+
+  factory RawIconSet.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RawIconSet(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      url: serializer.fromJson<String>(json['url']),
+      icons: serializer.fromJson<List<IconSetIcon>>(json['icons']),
+      lastUpdateTime: serializer.fromJson<DateTime?>(json['lastUpdateTime']),
+      order: serializer.fromJson<int?>(json['order']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'url': serializer.toJson<String>(url),
+      'icons': serializer.toJson<List<IconSetIcon>>(icons),
+      'lastUpdateTime': serializer.toJson<DateTime?>(lastUpdateTime),
+      'order': serializer.toJson<int?>(order),
+    };
+  }
+
+  RawIconSet copyWith({
+    int? id,
+    String? name,
+    String? url,
+    List<IconSetIcon>? icons,
+    Value<DateTime?> lastUpdateTime = const Value.absent(),
+    Value<int?> order = const Value.absent(),
+  }) => RawIconSet(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    url: url ?? this.url,
+    icons: icons ?? this.icons,
+    lastUpdateTime: lastUpdateTime.present
+        ? lastUpdateTime.value
+        : this.lastUpdateTime,
+    order: order.present ? order.value : this.order,
+  );
+  RawIconSet copyWithCompanion(IconSetsCompanion data) {
+    return RawIconSet(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      url: data.url.present ? data.url.value : this.url,
+      icons: data.icons.present ? data.icons.value : this.icons,
+      lastUpdateTime: data.lastUpdateTime.present
+          ? data.lastUpdateTime.value
+          : this.lastUpdateTime,
+      order: data.order.present ? data.order.value : this.order,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RawIconSet(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('url: $url, ')
+          ..write('icons: $icons, ')
+          ..write('lastUpdateTime: $lastUpdateTime, ')
+          ..write('order: $order')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, url, icons, lastUpdateTime, order);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RawIconSet &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.url == this.url &&
+          other.icons == this.icons &&
+          other.lastUpdateTime == this.lastUpdateTime &&
+          other.order == this.order);
+}
+
+class IconSetsCompanion extends UpdateCompanion<RawIconSet> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> url;
+  final Value<List<IconSetIcon>> icons;
+  final Value<DateTime?> lastUpdateTime;
+  final Value<int?> order;
+  const IconSetsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.url = const Value.absent(),
+    this.icons = const Value.absent(),
+    this.lastUpdateTime = const Value.absent(),
+    this.order = const Value.absent(),
+  });
+  IconSetsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String url,
+    required List<IconSetIcon> icons,
+    this.lastUpdateTime = const Value.absent(),
+    this.order = const Value.absent(),
+  }) : name = Value(name),
+       url = Value(url),
+       icons = Value(icons);
+  static Insertable<RawIconSet> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? url,
+    Expression<String>? icons,
+    Expression<DateTime>? lastUpdateTime,
+    Expression<int>? order,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (url != null) 'url': url,
+      if (icons != null) 'icons': icons,
+      if (lastUpdateTime != null) 'last_update_time': lastUpdateTime,
+      if (order != null) 'order': order,
+    });
+  }
+
+  IconSetsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? url,
+    Value<List<IconSetIcon>>? icons,
+    Value<DateTime?>? lastUpdateTime,
+    Value<int?>? order,
+  }) {
+    return IconSetsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      url: url ?? this.url,
+      icons: icons ?? this.icons,
+      lastUpdateTime: lastUpdateTime ?? this.lastUpdateTime,
+      order: order ?? this.order,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (icons.present) {
+      map['icons'] = Variable<String>(
+        $IconSetsTable.$convertericons.toSql(icons.value),
+      );
+    }
+    if (lastUpdateTime.present) {
+      map['last_update_time'] = Variable<DateTime>(lastUpdateTime.value);
+    }
+    if (order.present) {
+      map['order'] = Variable<int>(order.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('IconSetsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('url: $url, ')
+          ..write('icons: $icons, ')
+          ..write('lastUpdateTime: $lastUpdateTime, ')
+          ..write('order: $order')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ClashProvidersTable extends ClashProviders
+    with TableInfo<$ClashProvidersTable, RawClashProvider> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ClashProvidersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<ProviderKind, String> kind =
+      GeneratedColumn<String>(
+        'kind',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<ProviderKind>($ClashProvidersTable.$converterkind);
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<RuleProviderBehavior?, String>
+  behavior =
+      GeneratedColumn<String>(
+        'behavior',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<RuleProviderBehavior?>(
+        $ClashProvidersTable.$converterbehaviorn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<RuleProviderFormat?, String>
+  format = GeneratedColumn<String>(
+    'format',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<RuleProviderFormat?>($ClashProvidersTable.$converterformatn);
+  static const VerificationMeta _orderMeta = const VerificationMeta('order');
+  @override
+  late final GeneratedColumn<int> order = GeneratedColumn<int>(
+    'order',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    kind,
+    label,
+    url,
+    behavior,
+    format,
+    order,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'clash_providers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RawClashProvider> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_urlMeta);
+    }
+    if (data.containsKey('order')) {
+      context.handle(
+        _orderMeta,
+        order.isAcceptableOrUnknown(data['order']!, _orderMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RawClashProvider map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RawClashProvider(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      kind: $ClashProvidersTable.$converterkind.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}kind'],
+        )!,
+      ),
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      )!,
+      behavior: $ClashProvidersTable.$converterbehaviorn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}behavior'],
+        ),
+      ),
+      format: $ClashProvidersTable.$converterformatn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}format'],
+        ),
+      ),
+      order: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}order'],
+      ),
+    );
+  }
+
+  @override
+  $ClashProvidersTable createAlias(String alias) {
+    return $ClashProvidersTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<ProviderKind, String, String> $converterkind =
+      const EnumNameConverter<ProviderKind>(ProviderKind.values);
+  static JsonTypeConverter2<RuleProviderBehavior, String, String>
+  $converterbehavior = const EnumNameConverter<RuleProviderBehavior>(
+    RuleProviderBehavior.values,
+  );
+  static JsonTypeConverter2<RuleProviderBehavior?, String?, String?>
+  $converterbehaviorn = JsonTypeConverter2.asNullable($converterbehavior);
+  static JsonTypeConverter2<RuleProviderFormat, String, String>
+  $converterformat = const EnumNameConverter<RuleProviderFormat>(
+    RuleProviderFormat.values,
+  );
+  static JsonTypeConverter2<RuleProviderFormat?, String?, String?>
+  $converterformatn = JsonTypeConverter2.asNullable($converterformat);
+}
+
+class RawClashProvider extends DataClass
+    implements Insertable<RawClashProvider> {
+  final int id;
+  final ProviderKind kind;
+  final String label;
+  final String url;
+  final RuleProviderBehavior? behavior;
+  final RuleProviderFormat? format;
+  final int? order;
+  const RawClashProvider({
+    required this.id,
+    required this.kind,
+    required this.label,
+    required this.url,
+    this.behavior,
+    this.format,
+    this.order,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    {
+      map['kind'] = Variable<String>(
+        $ClashProvidersTable.$converterkind.toSql(kind),
+      );
+    }
+    map['label'] = Variable<String>(label);
+    map['url'] = Variable<String>(url);
+    if (!nullToAbsent || behavior != null) {
+      map['behavior'] = Variable<String>(
+        $ClashProvidersTable.$converterbehaviorn.toSql(behavior),
+      );
+    }
+    if (!nullToAbsent || format != null) {
+      map['format'] = Variable<String>(
+        $ClashProvidersTable.$converterformatn.toSql(format),
+      );
+    }
+    if (!nullToAbsent || order != null) {
+      map['order'] = Variable<int>(order);
+    }
+    return map;
+  }
+
+  ClashProvidersCompanion toCompanion(bool nullToAbsent) {
+    return ClashProvidersCompanion(
+      id: Value(id),
+      kind: Value(kind),
+      label: Value(label),
+      url: Value(url),
+      behavior: behavior == null && nullToAbsent
+          ? const Value.absent()
+          : Value(behavior),
+      format: format == null && nullToAbsent
+          ? const Value.absent()
+          : Value(format),
+      order: order == null && nullToAbsent
+          ? const Value.absent()
+          : Value(order),
+    );
+  }
+
+  factory RawClashProvider.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RawClashProvider(
+      id: serializer.fromJson<int>(json['id']),
+      kind: $ClashProvidersTable.$converterkind.fromJson(
+        serializer.fromJson<String>(json['kind']),
+      ),
+      label: serializer.fromJson<String>(json['label']),
+      url: serializer.fromJson<String>(json['url']),
+      behavior: $ClashProvidersTable.$converterbehaviorn.fromJson(
+        serializer.fromJson<String?>(json['behavior']),
+      ),
+      format: $ClashProvidersTable.$converterformatn.fromJson(
+        serializer.fromJson<String?>(json['format']),
+      ),
+      order: serializer.fromJson<int?>(json['order']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'kind': serializer.toJson<String>(
+        $ClashProvidersTable.$converterkind.toJson(kind),
+      ),
+      'label': serializer.toJson<String>(label),
+      'url': serializer.toJson<String>(url),
+      'behavior': serializer.toJson<String?>(
+        $ClashProvidersTable.$converterbehaviorn.toJson(behavior),
+      ),
+      'format': serializer.toJson<String?>(
+        $ClashProvidersTable.$converterformatn.toJson(format),
+      ),
+      'order': serializer.toJson<int?>(order),
+    };
+  }
+
+  RawClashProvider copyWith({
+    int? id,
+    ProviderKind? kind,
+    String? label,
+    String? url,
+    Value<RuleProviderBehavior?> behavior = const Value.absent(),
+    Value<RuleProviderFormat?> format = const Value.absent(),
+    Value<int?> order = const Value.absent(),
+  }) => RawClashProvider(
+    id: id ?? this.id,
+    kind: kind ?? this.kind,
+    label: label ?? this.label,
+    url: url ?? this.url,
+    behavior: behavior.present ? behavior.value : this.behavior,
+    format: format.present ? format.value : this.format,
+    order: order.present ? order.value : this.order,
+  );
+  RawClashProvider copyWithCompanion(ClashProvidersCompanion data) {
+    return RawClashProvider(
+      id: data.id.present ? data.id.value : this.id,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      label: data.label.present ? data.label.value : this.label,
+      url: data.url.present ? data.url.value : this.url,
+      behavior: data.behavior.present ? data.behavior.value : this.behavior,
+      format: data.format.present ? data.format.value : this.format,
+      order: data.order.present ? data.order.value : this.order,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RawClashProvider(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('label: $label, ')
+          ..write('url: $url, ')
+          ..write('behavior: $behavior, ')
+          ..write('format: $format, ')
+          ..write('order: $order')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, kind, label, url, behavior, format, order);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RawClashProvider &&
+          other.id == this.id &&
+          other.kind == this.kind &&
+          other.label == this.label &&
+          other.url == this.url &&
+          other.behavior == this.behavior &&
+          other.format == this.format &&
+          other.order == this.order);
+}
+
+class ClashProvidersCompanion extends UpdateCompanion<RawClashProvider> {
+  final Value<int> id;
+  final Value<ProviderKind> kind;
+  final Value<String> label;
+  final Value<String> url;
+  final Value<RuleProviderBehavior?> behavior;
+  final Value<RuleProviderFormat?> format;
+  final Value<int?> order;
+  const ClashProvidersCompanion({
+    this.id = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.label = const Value.absent(),
+    this.url = const Value.absent(),
+    this.behavior = const Value.absent(),
+    this.format = const Value.absent(),
+    this.order = const Value.absent(),
+  });
+  ClashProvidersCompanion.insert({
+    this.id = const Value.absent(),
+    required ProviderKind kind,
+    required String label,
+    required String url,
+    this.behavior = const Value.absent(),
+    this.format = const Value.absent(),
+    this.order = const Value.absent(),
+  }) : kind = Value(kind),
+       label = Value(label),
+       url = Value(url);
+  static Insertable<RawClashProvider> custom({
+    Expression<int>? id,
+    Expression<String>? kind,
+    Expression<String>? label,
+    Expression<String>? url,
+    Expression<String>? behavior,
+    Expression<String>? format,
+    Expression<int>? order,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (kind != null) 'kind': kind,
+      if (label != null) 'label': label,
+      if (url != null) 'url': url,
+      if (behavior != null) 'behavior': behavior,
+      if (format != null) 'format': format,
+      if (order != null) 'order': order,
+    });
+  }
+
+  ClashProvidersCompanion copyWith({
+    Value<int>? id,
+    Value<ProviderKind>? kind,
+    Value<String>? label,
+    Value<String>? url,
+    Value<RuleProviderBehavior?>? behavior,
+    Value<RuleProviderFormat?>? format,
+    Value<int?>? order,
+  }) {
+    return ClashProvidersCompanion(
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      label: label ?? this.label,
+      url: url ?? this.url,
+      behavior: behavior ?? this.behavior,
+      format: format ?? this.format,
+      order: order ?? this.order,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(
+        $ClashProvidersTable.$converterkind.toSql(kind.value),
+      );
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (behavior.present) {
+      map['behavior'] = Variable<String>(
+        $ClashProvidersTable.$converterbehaviorn.toSql(behavior.value),
+      );
+    }
+    if (format.present) {
+      map['format'] = Variable<String>(
+        $ClashProvidersTable.$converterformatn.toSql(format.value),
+      );
+    }
+    if (order.present) {
+      map['order'] = Variable<int>(order.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClashProvidersCompanion(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('label: $label, ')
+          ..write('url: $url, ')
+          ..write('behavior: $behavior, ')
+          ..write('format: $format, ')
+          ..write('order: $order')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CustomProxiesTable extends CustomProxies
+    with TableInfo<$CustomProxiesTable, RawCustomProxy> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CustomProxiesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Map<String, dynamic>, String>
+  definition =
+      GeneratedColumn<String>(
+        'definition',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Map<String, dynamic>>(
+        $CustomProxiesTable.$converterdefinition,
+      );
+  static const VerificationMeta _orderMeta = const VerificationMeta('order');
+  @override
+  late final GeneratedColumn<String> order = GeneratedColumn<String>(
+    'order',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Set<String>?, String>
+  emptyOptions = GeneratedColumn<String>(
+    'empty_options',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<Set<String>?>($CustomProxiesTable.$converteremptyOptionsn);
+  @override
+  List<GeneratedColumn> get $columns => [id, definition, order, emptyOptions];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'custom_proxies';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RawCustomProxy> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('order')) {
+      context.handle(
+        _orderMeta,
+        order.isAcceptableOrUnknown(data['order']!, _orderMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RawCustomProxy map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RawCustomProxy(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      definition: $CustomProxiesTable.$converterdefinition.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}definition'],
+        )!,
+      ),
+      order: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}order'],
+      ),
+      emptyOptions: $CustomProxiesTable.$converteremptyOptionsn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}empty_options'],
+        ),
+      ),
+    );
+  }
+
+  @override
+  $CustomProxiesTable createAlias(String alias) {
+    return $CustomProxiesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Map<String, dynamic>, String> $converterdefinition =
+      const JsonMapConverter();
+  static TypeConverter<Set<String>, String> $converteremptyOptions =
+      const StringSetConverter();
+  static TypeConverter<Set<String>?, String?> $converteremptyOptionsn =
+      NullAwareTypeConverter.wrap($converteremptyOptions);
+}
+
+class RawCustomProxy extends DataClass implements Insertable<RawCustomProxy> {
+  final int id;
+  final Map<String, dynamic> definition;
+  final String? order;
+  final Set<String>? emptyOptions;
+  const RawCustomProxy({
+    required this.id,
+    required this.definition,
+    this.order,
+    this.emptyOptions,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    {
+      map['definition'] = Variable<String>(
+        $CustomProxiesTable.$converterdefinition.toSql(definition),
+      );
+    }
+    if (!nullToAbsent || order != null) {
+      map['order'] = Variable<String>(order);
+    }
+    if (!nullToAbsent || emptyOptions != null) {
+      map['empty_options'] = Variable<String>(
+        $CustomProxiesTable.$converteremptyOptionsn.toSql(emptyOptions),
+      );
+    }
+    return map;
+  }
+
+  CustomProxiesCompanion toCompanion(bool nullToAbsent) {
+    return CustomProxiesCompanion(
+      id: Value(id),
+      definition: Value(definition),
+      order: order == null && nullToAbsent
+          ? const Value.absent()
+          : Value(order),
+      emptyOptions: emptyOptions == null && nullToAbsent
+          ? const Value.absent()
+          : Value(emptyOptions),
+    );
+  }
+
+  factory RawCustomProxy.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RawCustomProxy(
+      id: serializer.fromJson<int>(json['id']),
+      definition: serializer.fromJson<Map<String, dynamic>>(json['definition']),
+      order: serializer.fromJson<String?>(json['order']),
+      emptyOptions: serializer.fromJson<Set<String>?>(json['emptyOptions']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'definition': serializer.toJson<Map<String, dynamic>>(definition),
+      'order': serializer.toJson<String?>(order),
+      'emptyOptions': serializer.toJson<Set<String>?>(emptyOptions),
+    };
+  }
+
+  RawCustomProxy copyWith({
+    int? id,
+    Map<String, dynamic>? definition,
+    Value<String?> order = const Value.absent(),
+    Value<Set<String>?> emptyOptions = const Value.absent(),
+  }) => RawCustomProxy(
+    id: id ?? this.id,
+    definition: definition ?? this.definition,
+    order: order.present ? order.value : this.order,
+    emptyOptions: emptyOptions.present ? emptyOptions.value : this.emptyOptions,
+  );
+  RawCustomProxy copyWithCompanion(CustomProxiesCompanion data) {
+    return RawCustomProxy(
+      id: data.id.present ? data.id.value : this.id,
+      definition: data.definition.present
+          ? data.definition.value
+          : this.definition,
+      order: data.order.present ? data.order.value : this.order,
+      emptyOptions: data.emptyOptions.present
+          ? data.emptyOptions.value
+          : this.emptyOptions,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RawCustomProxy(')
+          ..write('id: $id, ')
+          ..write('definition: $definition, ')
+          ..write('order: $order, ')
+          ..write('emptyOptions: $emptyOptions')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, definition, order, emptyOptions);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RawCustomProxy &&
+          other.id == this.id &&
+          other.definition == this.definition &&
+          other.order == this.order &&
+          other.emptyOptions == this.emptyOptions);
+}
+
+class CustomProxiesCompanion extends UpdateCompanion<RawCustomProxy> {
+  final Value<int> id;
+  final Value<Map<String, dynamic>> definition;
+  final Value<String?> order;
+  final Value<Set<String>?> emptyOptions;
+  const CustomProxiesCompanion({
+    this.id = const Value.absent(),
+    this.definition = const Value.absent(),
+    this.order = const Value.absent(),
+    this.emptyOptions = const Value.absent(),
+  });
+  CustomProxiesCompanion.insert({
+    this.id = const Value.absent(),
+    required Map<String, dynamic> definition,
+    this.order = const Value.absent(),
+    this.emptyOptions = const Value.absent(),
+  }) : definition = Value(definition);
+  static Insertable<RawCustomProxy> custom({
+    Expression<int>? id,
+    Expression<String>? definition,
+    Expression<String>? order,
+    Expression<String>? emptyOptions,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (definition != null) 'definition': definition,
+      if (order != null) 'order': order,
+      if (emptyOptions != null) 'empty_options': emptyOptions,
+    });
+  }
+
+  CustomProxiesCompanion copyWith({
+    Value<int>? id,
+    Value<Map<String, dynamic>>? definition,
+    Value<String?>? order,
+    Value<Set<String>?>? emptyOptions,
+  }) {
+    return CustomProxiesCompanion(
+      id: id ?? this.id,
+      definition: definition ?? this.definition,
+      order: order ?? this.order,
+      emptyOptions: emptyOptions ?? this.emptyOptions,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (definition.present) {
+      map['definition'] = Variable<String>(
+        $CustomProxiesTable.$converterdefinition.toSql(definition.value),
+      );
+    }
+    if (order.present) {
+      map['order'] = Variable<String>(order.value);
+    }
+    if (emptyOptions.present) {
+      map['empty_options'] = Variable<String>(
+        $CustomProxiesTable.$converteremptyOptionsn.toSql(emptyOptions.value),
+      );
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CustomProxiesCompanion(')
+          ..write('id: $id, ')
+          ..write('definition: $definition, ')
+          ..write('order: $order, ')
+          ..write('emptyOptions: $emptyOptions')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ProxyDialersTable extends ProxyDialers
+    with TableInfo<$ProxyDialersTable, RawProxyDialer> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProxyDialersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _profileIdMeta = const VerificationMeta(
+    'profileId',
+  );
+  @override
+  late final GeneratedColumn<int> profileId = GeneratedColumn<int>(
+    'profile_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES profiles (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _proxyIdMeta = const VerificationMeta(
+    'proxyId',
+  );
+  @override
+  late final GeneratedColumn<int> proxyId = GeneratedColumn<int>(
+    'proxy_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES custom_proxies (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _targetMeta = const VerificationMeta('target');
+  @override
+  late final GeneratedColumn<String> target = GeneratedColumn<String>(
+    'target',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [profileId, proxyId, target];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'proxy_dialers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RawProxyDialer> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('profile_id')) {
+      context.handle(
+        _profileIdMeta,
+        profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_profileIdMeta);
+    }
+    if (data.containsKey('proxy_id')) {
+      context.handle(
+        _proxyIdMeta,
+        proxyId.isAcceptableOrUnknown(data['proxy_id']!, _proxyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_proxyIdMeta);
+    }
+    if (data.containsKey('target')) {
+      context.handle(
+        _targetMeta,
+        target.isAcceptableOrUnknown(data['target']!, _targetMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_targetMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {profileId, proxyId};
+  @override
+  RawProxyDialer map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RawProxyDialer(
+      profileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}profile_id'],
+      )!,
+      proxyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}proxy_id'],
+      )!,
+      target: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target'],
+      )!,
+    );
+  }
+
+  @override
+  $ProxyDialersTable createAlias(String alias) {
+    return $ProxyDialersTable(attachedDatabase, alias);
+  }
+}
+
+class RawProxyDialer extends DataClass implements Insertable<RawProxyDialer> {
+  final int profileId;
+  final int proxyId;
+  final String target;
+  const RawProxyDialer({
+    required this.profileId,
+    required this.proxyId,
+    required this.target,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['profile_id'] = Variable<int>(profileId);
+    map['proxy_id'] = Variable<int>(proxyId);
+    map['target'] = Variable<String>(target);
+    return map;
+  }
+
+  ProxyDialersCompanion toCompanion(bool nullToAbsent) {
+    return ProxyDialersCompanion(
+      profileId: Value(profileId),
+      proxyId: Value(proxyId),
+      target: Value(target),
+    );
+  }
+
+  factory RawProxyDialer.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RawProxyDialer(
+      profileId: serializer.fromJson<int>(json['profileId']),
+      proxyId: serializer.fromJson<int>(json['proxyId']),
+      target: serializer.fromJson<String>(json['target']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'profileId': serializer.toJson<int>(profileId),
+      'proxyId': serializer.toJson<int>(proxyId),
+      'target': serializer.toJson<String>(target),
+    };
+  }
+
+  RawProxyDialer copyWith({int? profileId, int? proxyId, String? target}) =>
+      RawProxyDialer(
+        profileId: profileId ?? this.profileId,
+        proxyId: proxyId ?? this.proxyId,
+        target: target ?? this.target,
+      );
+  RawProxyDialer copyWithCompanion(ProxyDialersCompanion data) {
+    return RawProxyDialer(
+      profileId: data.profileId.present ? data.profileId.value : this.profileId,
+      proxyId: data.proxyId.present ? data.proxyId.value : this.proxyId,
+      target: data.target.present ? data.target.value : this.target,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RawProxyDialer(')
+          ..write('profileId: $profileId, ')
+          ..write('proxyId: $proxyId, ')
+          ..write('target: $target')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(profileId, proxyId, target);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RawProxyDialer &&
+          other.profileId == this.profileId &&
+          other.proxyId == this.proxyId &&
+          other.target == this.target);
+}
+
+class ProxyDialersCompanion extends UpdateCompanion<RawProxyDialer> {
+  final Value<int> profileId;
+  final Value<int> proxyId;
+  final Value<String> target;
+  final Value<int> rowid;
+  const ProxyDialersCompanion({
+    this.profileId = const Value.absent(),
+    this.proxyId = const Value.absent(),
+    this.target = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ProxyDialersCompanion.insert({
+    required int profileId,
+    required int proxyId,
+    required String target,
+    this.rowid = const Value.absent(),
+  }) : profileId = Value(profileId),
+       proxyId = Value(proxyId),
+       target = Value(target);
+  static Insertable<RawProxyDialer> custom({
+    Expression<int>? profileId,
+    Expression<int>? proxyId,
+    Expression<String>? target,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (profileId != null) 'profile_id': profileId,
+      if (proxyId != null) 'proxy_id': proxyId,
+      if (target != null) 'target': target,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ProxyDialersCompanion copyWith({
+    Value<int>? profileId,
+    Value<int>? proxyId,
+    Value<String>? target,
+    Value<int>? rowid,
+  }) {
+    return ProxyDialersCompanion(
+      profileId: profileId ?? this.profileId,
+      proxyId: proxyId ?? this.proxyId,
+      target: target ?? this.target,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (profileId.present) {
+      map['profile_id'] = Variable<int>(profileId.value);
+    }
+    if (proxyId.present) {
+      map['proxy_id'] = Variable<int>(proxyId.value);
+    }
+    if (target.present) {
+      map['target'] = Variable<String>(target.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProxyDialersCompanion(')
+          ..write('profileId: $profileId, ')
+          ..write('proxyId: $proxyId, ')
+          ..write('target: $target, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $UnlockTestRunsTable extends UnlockTestRuns
-    with TableInfo<$UnlockTestRunsTable, UnlockTestRun> {
+    with TableInfo<$UnlockTestRunsTable, RawUnlockTestRun> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -3489,7 +4430,7 @@ class $UnlockTestRunsTable extends UnlockTestRuns
   static const String $name = 'unlock_test_runs';
   @override
   VerificationContext validateIntegrity(
-    Insertable<UnlockTestRun> instance, {
+    Insertable<RawUnlockTestRun> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -3560,9 +4501,9 @@ class $UnlockTestRunsTable extends UnlockTestRuns
   @override
   Set<GeneratedColumn> get $primaryKey => {runId};
   @override
-  UnlockTestRun map(Map<String, dynamic> data, {String? tablePrefix}) {
+  RawUnlockTestRun map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return UnlockTestRun(
+    return RawUnlockTestRun(
       runId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}run_id'],
@@ -3600,7 +4541,8 @@ class $UnlockTestRunsTable extends UnlockTestRuns
   }
 }
 
-class UnlockTestRun extends DataClass implements Insertable<UnlockTestRun> {
+class RawUnlockTestRun extends DataClass
+    implements Insertable<RawUnlockTestRun> {
   final String runId;
   final int createdAt;
   final int durationMs;
@@ -3608,7 +4550,7 @@ class UnlockTestRun extends DataClass implements Insertable<UnlockTestRun> {
   final String? proxyName;
   final int catalogVersion;
   final String resultsJson;
-  const UnlockTestRun({
+  const RawUnlockTestRun({
     required this.runId,
     required this.createdAt,
     required this.durationMs,
@@ -3646,12 +4588,12 @@ class UnlockTestRun extends DataClass implements Insertable<UnlockTestRun> {
     );
   }
 
-  factory UnlockTestRun.fromJson(
+  factory RawUnlockTestRun.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return UnlockTestRun(
+    return RawUnlockTestRun(
       runId: serializer.fromJson<String>(json['runId']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
       durationMs: serializer.fromJson<int>(json['durationMs']),
@@ -3675,7 +4617,7 @@ class UnlockTestRun extends DataClass implements Insertable<UnlockTestRun> {
     };
   }
 
-  UnlockTestRun copyWith({
+  RawUnlockTestRun copyWith({
     String? runId,
     int? createdAt,
     int? durationMs,
@@ -3683,7 +4625,7 @@ class UnlockTestRun extends DataClass implements Insertable<UnlockTestRun> {
     Value<String?> proxyName = const Value.absent(),
     int? catalogVersion,
     String? resultsJson,
-  }) => UnlockTestRun(
+  }) => RawUnlockTestRun(
     runId: runId ?? this.runId,
     createdAt: createdAt ?? this.createdAt,
     durationMs: durationMs ?? this.durationMs,
@@ -3692,8 +4634,8 @@ class UnlockTestRun extends DataClass implements Insertable<UnlockTestRun> {
     catalogVersion: catalogVersion ?? this.catalogVersion,
     resultsJson: resultsJson ?? this.resultsJson,
   );
-  UnlockTestRun copyWithCompanion(UnlockTestRunsCompanion data) {
-    return UnlockTestRun(
+  RawUnlockTestRun copyWithCompanion(UnlockTestRunsCompanion data) {
+    return RawUnlockTestRun(
       runId: data.runId.present ? data.runId.value : this.runId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       durationMs: data.durationMs.present
@@ -3712,7 +4654,7 @@ class UnlockTestRun extends DataClass implements Insertable<UnlockTestRun> {
 
   @override
   String toString() {
-    return (StringBuffer('UnlockTestRun(')
+    return (StringBuffer('RawUnlockTestRun(')
           ..write('runId: $runId, ')
           ..write('createdAt: $createdAt, ')
           ..write('durationMs: $durationMs, ')
@@ -3737,7 +4679,7 @@ class UnlockTestRun extends DataClass implements Insertable<UnlockTestRun> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is UnlockTestRun &&
+      (other is RawUnlockTestRun &&
           other.runId == this.runId &&
           other.createdAt == this.createdAt &&
           other.durationMs == this.durationMs &&
@@ -3747,7 +4689,7 @@ class UnlockTestRun extends DataClass implements Insertable<UnlockTestRun> {
           other.resultsJson == this.resultsJson);
 }
 
-class UnlockTestRunsCompanion extends UpdateCompanion<UnlockTestRun> {
+class UnlockTestRunsCompanion extends UpdateCompanion<RawUnlockTestRun> {
   final Value<String> runId;
   final Value<int> createdAt;
   final Value<int> durationMs;
@@ -3781,7 +4723,7 @@ class UnlockTestRunsCompanion extends UpdateCompanion<UnlockTestRun> {
        routeMode = Value(routeMode),
        catalogVersion = Value(catalogVersion),
        resultsJson = Value(resultsJson);
-  static Insertable<UnlockTestRun> custom({
+  static Insertable<RawUnlockTestRun> custom({
     Expression<String>? runId,
     Expression<int>? createdAt,
     Expression<int>? durationMs,
@@ -3877,33 +4819,49 @@ abstract class _$Database extends GeneratedDatabase {
   late final $ProfilesTable profiles = $ProfilesTable(this);
   late final $ScriptsTable scripts = $ScriptsTable(this);
   late final $RulesTable rules = $RulesTable(this);
-  late final $ProfileRuleLinksTable profileRuleLinks = $ProfileRuleLinksTable(
-    this,
-  );
+  late final $DisabledRulesTable disabledRules = $DisabledRulesTable(this);
   late final $ProxyGroupsTable proxyGroups = $ProxyGroupsTable(this);
   late final $IconRecordsTable iconRecords = $IconRecordsTable(this);
+  late final $IconSetsTable iconSets = $IconSetsTable(this);
+  late final $ClashProvidersTable clashProviders = $ClashProvidersTable(this);
+  late final $CustomProxiesTable customProxies = $CustomProxiesTable(this);
+  late final $ProxyDialersTable proxyDialers = $ProxyDialersTable(this);
   late final $UnlockTestRunsTable unlockTestRuns = $UnlockTestRunsTable(this);
   late final Index idxRuleTarget = Index(
     'idx_rule_target',
     'CREATE INDEX idx_rule_target ON rules (rule_target)',
   );
-  late final Index idxProfileSceneOrder = Index(
-    'idx_profile_scene_order',
-    'CREATE INDEX idx_profile_scene_order ON profile_rule_mapping (profile_id, scene, "order")',
+  late final Index idxRulesProfileOrder = Index(
+    'idx_rules_profile_order',
+    'CREATE INDEX idx_rules_profile_order ON rules (profile_id, "order")',
   );
-  late final Index idxProfileNameOrder = Index(
-    'idx_profile_name_order',
-    'CREATE INDEX idx_profile_name_order ON proxy_groups (profile_id, name, "order")',
+  late final Index idxProxyGroupsProfileOrder = Index(
+    'idx_proxy_groups_profile_order',
+    'CREATE INDEX idx_proxy_groups_profile_order ON proxy_groups (profile_id, "order")',
   );
   late final Index lastAccessedUrl = Index(
     'last_accessed_url',
     'CREATE INDEX last_accessed_url ON icon_records (last_accessed, url)',
+  );
+  late final Index unlockTestRunsCreatedAt = Index(
+    'unlock_test_runs_created_at',
+    'CREATE INDEX unlock_test_runs_created_at ON unlock_test_runs (created_at DESC)',
   );
   late final ProfilesDao profilesDao = ProfilesDao(this as Database);
   late final ScriptsDao scriptsDao = ScriptsDao(this as Database);
   late final RulesDao rulesDao = RulesDao(this as Database);
   late final ProxyGroupsDao proxyGroupsDao = ProxyGroupsDao(this as Database);
   late final IconRecordsDao iconRecordsDao = IconRecordsDao(this as Database);
+  late final IconSetsDao iconSetsDao = IconSetsDao(this as Database);
+  late final ClashProvidersDao clashProvidersDao = ClashProvidersDao(
+    this as Database,
+  );
+  late final CustomProxiesDao customProxiesDao = CustomProxiesDao(
+    this as Database,
+  );
+  late final ProxyDialersDao proxyDialersDao = ProxyDialersDao(
+    this as Database,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3912,14 +4870,19 @@ abstract class _$Database extends GeneratedDatabase {
     profiles,
     scripts,
     rules,
-    profileRuleLinks,
+    disabledRules,
     proxyGroups,
     iconRecords,
+    iconSets,
+    clashProviders,
+    customProxies,
+    proxyDialers,
     unlockTestRuns,
     idxRuleTarget,
-    idxProfileSceneOrder,
-    idxProfileNameOrder,
+    idxRulesProfileOrder,
+    idxProxyGroupsProfileOrder,
     lastAccessedUrl,
+    unlockTestRunsCreatedAt,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3928,14 +4891,21 @@ abstract class _$Database extends GeneratedDatabase {
         'profiles',
         limitUpdateKind: UpdateKind.delete,
       ),
-      result: [TableUpdate('profile_rule_mapping', kind: UpdateKind.delete)],
+      result: [TableUpdate('rules', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'profiles',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('disabled_rules', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
         'rules',
         limitUpdateKind: UpdateKind.delete,
       ),
-      result: [TableUpdate('profile_rule_mapping', kind: UpdateKind.delete)],
+      result: [TableUpdate('disabled_rules', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -3944,64 +4914,100 @@ abstract class _$Database extends GeneratedDatabase {
       ),
       result: [TableUpdate('proxy_groups', kind: UpdateKind.delete)],
     ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'profiles',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('proxy_dialers', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'custom_proxies',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('proxy_dialers', kind: UpdateKind.delete)],
+    ),
   ]);
 }
 
 typedef $$ProfilesTableCreateCompanionBuilder =
     ProfilesCompanion Function({
       Value<int> id,
+      required ProfileType type,
       required String label,
       Value<String?> currentGroupName,
       required String url,
+      Value<String?> ageSecretKey,
       Value<DateTime?> lastUpdateDate,
-      required OverwriteType overwriteType,
+      required ExtendType extendType,
       Value<int?> scriptId,
+      Value<String?> matchTarget,
       required int autoUpdateDurationMillis,
       Value<SubscriptionInfo?> subscriptionInfo,
       required bool autoUpdate,
       required Map<String, String> selectedMap,
       required Set<String> unfoldSet,
       Value<int?> order,
+      Value<ProfileOverrides?> overrides,
     });
 typedef $$ProfilesTableUpdateCompanionBuilder =
     ProfilesCompanion Function({
       Value<int> id,
+      Value<ProfileType> type,
       Value<String> label,
       Value<String?> currentGroupName,
       Value<String> url,
+      Value<String?> ageSecretKey,
       Value<DateTime?> lastUpdateDate,
-      Value<OverwriteType> overwriteType,
+      Value<ExtendType> extendType,
       Value<int?> scriptId,
+      Value<String?> matchTarget,
       Value<int> autoUpdateDurationMillis,
       Value<SubscriptionInfo?> subscriptionInfo,
       Value<bool> autoUpdate,
       Value<Map<String, String>> selectedMap,
       Value<Set<String>> unfoldSet,
       Value<int?> order,
+      Value<ProfileOverrides?> overrides,
     });
 
 final class $$ProfilesTableReferences
     extends BaseReferences<_$Database, $ProfilesTable, RawProfile> {
   $$ProfilesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static MultiTypedResultKey<$ProfileRuleLinksTable, List<RawProfileRuleLink>>
-  _profileRuleLinksRefsTable(_$Database db) => MultiTypedResultKey.fromTable(
-    db.profileRuleLinks,
-    aliasName: $_aliasNameGenerator(
-      db.profiles.id,
-      db.profileRuleLinks.profileId,
-    ),
+  static MultiTypedResultKey<$RulesTable, List<RawRule>> _rulesRefsTable(
+    _$Database db,
+  ) => MultiTypedResultKey.fromTable(
+    db.rules,
+    aliasName: 'profiles__id__rules__profile_id',
   );
 
-  $$ProfileRuleLinksTableProcessedTableManager get profileRuleLinksRefs {
-    final manager = $$ProfileRuleLinksTableTableManager(
+  $$RulesTableProcessedTableManager get rulesRefs {
+    final manager = $$RulesTableTableManager(
       $_db,
-      $_db.profileRuleLinks,
+      $_db.rules,
     ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<int>('id')!));
 
-    final cache = $_typedResult.readTableOrNull(
-      _profileRuleLinksRefsTable($_db),
+    final cache = $_typedResult.readTableOrNull(_rulesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
     );
+  }
+
+  static MultiTypedResultKey<$DisabledRulesTable, List<RawDisabledRule>>
+  _disabledRulesRefsTable(_$Database db) => MultiTypedResultKey.fromTable(
+    db.disabledRules,
+    aliasName: 'profiles__id__disabled_rules__profile_id',
+  );
+
+  $$DisabledRulesTableProcessedTableManager get disabledRulesRefs {
+    final manager = $$DisabledRulesTableTableManager(
+      $_db,
+      $_db.disabledRules,
+    ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_disabledRulesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4010,7 +5016,7 @@ final class $$ProfilesTableReferences
   static MultiTypedResultKey<$ProxyGroupsTable, List<RawProxyGroup>>
   _proxyGroupsRefsTable(_$Database db) => MultiTypedResultKey.fromTable(
     db.proxyGroups,
-    aliasName: $_aliasNameGenerator(db.profiles.id, db.proxyGroups.profileId),
+    aliasName: 'profiles__id__proxy_groups__profile_id',
   );
 
   $$ProxyGroupsTableProcessedTableManager get proxyGroupsRefs {
@@ -4020,6 +5026,24 @@ final class $$ProfilesTableReferences
     ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_proxyGroupsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ProxyDialersTable, List<RawProxyDialer>>
+  _proxyDialersRefsTable(_$Database db) => MultiTypedResultKey.fromTable(
+    db.proxyDialers,
+    aliasName: 'profiles__id__proxy_dialers__profile_id',
+  );
+
+  $$ProxyDialersTableProcessedTableManager get proxyDialersRefs {
+    final manager = $$ProxyDialersTableTableManager(
+      $_db,
+      $_db.proxyDialers,
+    ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_proxyDialersRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4040,6 +5064,12 @@ class $$ProfilesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnWithTypeConverterFilters<ProfileType, ProfileType, String> get type =>
+      $composableBuilder(
+        column: $table.type,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
   ColumnFilters<String> get label => $composableBuilder(
     column: $table.label,
     builder: (column) => ColumnFilters(column),
@@ -4055,19 +5085,29 @@ class $$ProfilesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get ageSecretKey => $composableBuilder(
+    column: $table.ageSecretKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<DateTime> get lastUpdateDate => $composableBuilder(
     column: $table.lastUpdateDate,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<OverwriteType, OverwriteType, String>
-  get overwriteType => $composableBuilder(
-    column: $table.overwriteType,
+  ColumnWithTypeConverterFilters<ExtendType, ExtendType, String>
+  get extendType => $composableBuilder(
+    column: $table.extendType,
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<int> get scriptId => $composableBuilder(
     column: $table.scriptId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get matchTarget => $composableBuilder(
+    column: $table.matchTarget,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4108,22 +5148,53 @@ class $$ProfilesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  Expression<bool> profileRuleLinksRefs(
-    Expression<bool> Function($$ProfileRuleLinksTableFilterComposer f) f,
+  ColumnWithTypeConverterFilters<ProfileOverrides?, ProfileOverrides, String>
+  get overrides => $composableBuilder(
+    column: $table.overrides,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  Expression<bool> rulesRefs(
+    Expression<bool> Function($$RulesTableFilterComposer f) f,
   ) {
-    final $$ProfileRuleLinksTableFilterComposer composer = $composerBuilder(
+    final $$RulesTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.profileRuleLinks,
+      referencedTable: $db.rules,
       getReferencedColumn: (t) => t.profileId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ProfileRuleLinksTableFilterComposer(
+          }) => $$RulesTableFilterComposer(
             $db: $db,
-            $table: $db.profileRuleLinks,
+            $table: $db.rules,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> disabledRulesRefs(
+    Expression<bool> Function($$DisabledRulesTableFilterComposer f) f,
+  ) {
+    final $$DisabledRulesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.disabledRules,
+      getReferencedColumn: (t) => t.profileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DisabledRulesTableFilterComposer(
+            $db: $db,
+            $table: $db.disabledRules,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4157,6 +5228,31 @@ class $$ProfilesTableFilterComposer
     );
     return f(composer);
   }
+
+  Expression<bool> proxyDialersRefs(
+    Expression<bool> Function($$ProxyDialersTableFilterComposer f) f,
+  ) {
+    final $$ProxyDialersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.proxyDialers,
+      getReferencedColumn: (t) => t.profileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProxyDialersTableFilterComposer(
+            $db: $db,
+            $table: $db.proxyDialers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ProfilesTableOrderingComposer
@@ -4170,6 +5266,11 @@ class $$ProfilesTableOrderingComposer
   });
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4188,18 +5289,28 @@ class $$ProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get ageSecretKey => $composableBuilder(
+    column: $table.ageSecretKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get lastUpdateDate => $composableBuilder(
     column: $table.lastUpdateDate,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get overwriteType => $composableBuilder(
-    column: $table.overwriteType,
+  ColumnOrderings<String> get extendType => $composableBuilder(
+    column: $table.extendType,
     builder: (column) => ColumnOrderings(column),
   );
 
   ColumnOrderings<int> get scriptId => $composableBuilder(
     column: $table.scriptId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get matchTarget => $composableBuilder(
+    column: $table.matchTarget,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4232,6 +5343,11 @@ class $$ProfilesTableOrderingComposer
     column: $table.order,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get overrides => $composableBuilder(
+    column: $table.overrides,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProfilesTableAnnotationComposer
@@ -4246,6 +5362,9 @@ class $$ProfilesTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
+  GeneratedColumnWithTypeConverter<ProfileType, String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
   GeneratedColumn<String> get label =>
       $composableBuilder(column: $table.label, builder: (column) => column);
 
@@ -4257,19 +5376,29 @@ class $$ProfilesTableAnnotationComposer
   GeneratedColumn<String> get url =>
       $composableBuilder(column: $table.url, builder: (column) => column);
 
+  GeneratedColumn<String> get ageSecretKey => $composableBuilder(
+    column: $table.ageSecretKey,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get lastUpdateDate => $composableBuilder(
     column: $table.lastUpdateDate,
     builder: (column) => column,
   );
 
-  GeneratedColumnWithTypeConverter<OverwriteType, String> get overwriteType =>
+  GeneratedColumnWithTypeConverter<ExtendType, String> get extendType =>
       $composableBuilder(
-        column: $table.overwriteType,
+        column: $table.extendType,
         builder: (column) => column,
       );
 
   GeneratedColumn<int> get scriptId =>
       $composableBuilder(column: $table.scriptId, builder: (column) => column);
+
+  GeneratedColumn<String> get matchTarget => $composableBuilder(
+    column: $table.matchTarget,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get autoUpdateDurationMillis => $composableBuilder(
     column: $table.autoUpdateDurationMillis,
@@ -4299,22 +5428,50 @@ class $$ProfilesTableAnnotationComposer
   GeneratedColumn<int> get order =>
       $composableBuilder(column: $table.order, builder: (column) => column);
 
-  Expression<T> profileRuleLinksRefs<T extends Object>(
-    Expression<T> Function($$ProfileRuleLinksTableAnnotationComposer a) f,
+  GeneratedColumnWithTypeConverter<ProfileOverrides?, String> get overrides =>
+      $composableBuilder(column: $table.overrides, builder: (column) => column);
+
+  Expression<T> rulesRefs<T extends Object>(
+    Expression<T> Function($$RulesTableAnnotationComposer a) f,
   ) {
-    final $$ProfileRuleLinksTableAnnotationComposer composer = $composerBuilder(
+    final $$RulesTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.profileRuleLinks,
+      referencedTable: $db.rules,
       getReferencedColumn: (t) => t.profileId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ProfileRuleLinksTableAnnotationComposer(
+          }) => $$RulesTableAnnotationComposer(
             $db: $db,
-            $table: $db.profileRuleLinks,
+            $table: $db.rules,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> disabledRulesRefs<T extends Object>(
+    Expression<T> Function($$DisabledRulesTableAnnotationComposer a) f,
+  ) {
+    final $$DisabledRulesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.disabledRules,
+      getReferencedColumn: (t) => t.profileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DisabledRulesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.disabledRules,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4348,6 +5505,31 @@ class $$ProfilesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> proxyDialersRefs<T extends Object>(
+    Expression<T> Function($$ProxyDialersTableAnnotationComposer a) f,
+  ) {
+    final $$ProxyDialersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.proxyDialers,
+      getReferencedColumn: (t) => t.profileId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProxyDialersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.proxyDialers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ProfilesTableTableManager
@@ -4364,8 +5546,10 @@ class $$ProfilesTableTableManager
           (RawProfile, $$ProfilesTableReferences),
           RawProfile,
           PrefetchHooks Function({
-            bool profileRuleLinksRefs,
+            bool rulesRefs,
+            bool disabledRulesRefs,
             bool proxyGroupsRefs,
+            bool proxyDialersRefs,
           })
         > {
   $$ProfilesTableTableManager(_$Database db, $ProfilesTable table)
@@ -4382,12 +5566,15 @@ class $$ProfilesTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<ProfileType> type = const Value.absent(),
                 Value<String> label = const Value.absent(),
                 Value<String?> currentGroupName = const Value.absent(),
                 Value<String> url = const Value.absent(),
+                Value<String?> ageSecretKey = const Value.absent(),
                 Value<DateTime?> lastUpdateDate = const Value.absent(),
-                Value<OverwriteType> overwriteType = const Value.absent(),
+                Value<ExtendType> extendType = const Value.absent(),
                 Value<int?> scriptId = const Value.absent(),
+                Value<String?> matchTarget = const Value.absent(),
                 Value<int> autoUpdateDurationMillis = const Value.absent(),
                 Value<SubscriptionInfo?> subscriptionInfo =
                     const Value.absent(),
@@ -4395,30 +5582,38 @@ class $$ProfilesTableTableManager
                 Value<Map<String, String>> selectedMap = const Value.absent(),
                 Value<Set<String>> unfoldSet = const Value.absent(),
                 Value<int?> order = const Value.absent(),
+                Value<ProfileOverrides?> overrides = const Value.absent(),
               }) => ProfilesCompanion(
                 id: id,
+                type: type,
                 label: label,
                 currentGroupName: currentGroupName,
                 url: url,
+                ageSecretKey: ageSecretKey,
                 lastUpdateDate: lastUpdateDate,
-                overwriteType: overwriteType,
+                extendType: extendType,
                 scriptId: scriptId,
+                matchTarget: matchTarget,
                 autoUpdateDurationMillis: autoUpdateDurationMillis,
                 subscriptionInfo: subscriptionInfo,
                 autoUpdate: autoUpdate,
                 selectedMap: selectedMap,
                 unfoldSet: unfoldSet,
                 order: order,
+                overrides: overrides,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                required ProfileType type,
                 required String label,
                 Value<String?> currentGroupName = const Value.absent(),
                 required String url,
+                Value<String?> ageSecretKey = const Value.absent(),
                 Value<DateTime?> lastUpdateDate = const Value.absent(),
-                required OverwriteType overwriteType,
+                required ExtendType extendType,
                 Value<int?> scriptId = const Value.absent(),
+                Value<String?> matchTarget = const Value.absent(),
                 required int autoUpdateDurationMillis,
                 Value<SubscriptionInfo?> subscriptionInfo =
                     const Value.absent(),
@@ -4426,55 +5621,88 @@ class $$ProfilesTableTableManager
                 required Map<String, String> selectedMap,
                 required Set<String> unfoldSet,
                 Value<int?> order = const Value.absent(),
+                Value<ProfileOverrides?> overrides = const Value.absent(),
               }) => ProfilesCompanion.insert(
                 id: id,
+                type: type,
                 label: label,
                 currentGroupName: currentGroupName,
                 url: url,
+                ageSecretKey: ageSecretKey,
                 lastUpdateDate: lastUpdateDate,
-                overwriteType: overwriteType,
+                extendType: extendType,
                 scriptId: scriptId,
+                matchTarget: matchTarget,
                 autoUpdateDurationMillis: autoUpdateDurationMillis,
                 subscriptionInfo: subscriptionInfo,
                 autoUpdate: autoUpdate,
                 selectedMap: selectedMap,
                 unfoldSet: unfoldSet,
                 order: order,
+                overrides: overrides,
               ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ProfilesTable, RawProfile>(table),
                   $$ProfilesTableReferences(db, table, e),
                 ),
               )
               .toList(),
           prefetchHooksCallback:
-              ({profileRuleLinksRefs = false, proxyGroupsRefs = false}) {
+              ({
+                rulesRefs = false,
+                disabledRulesRefs = false,
+                proxyGroupsRefs = false,
+                proxyDialersRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
-                    if (profileRuleLinksRefs) db.profileRuleLinks,
+                    if (rulesRefs) db.rules,
+                    if (disabledRulesRefs) db.disabledRules,
                     if (proxyGroupsRefs) db.proxyGroups,
+                    if (proxyDialersRefs) db.proxyDialers,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
                     return [
-                      if (profileRuleLinksRefs)
+                      if (rulesRefs)
                         await $_getPrefetchedData<
                           RawProfile,
                           $ProfilesTable,
-                          RawProfileRuleLink
+                          RawRule
                         >(
                           currentTable: table,
                           referencedTable: $$ProfilesTableReferences
-                              ._profileRuleLinksRefsTable(db),
+                              ._rulesRefsTable(db),
                           managerFromTypedResult: (p0) =>
                               $$ProfilesTableReferences(
                                 db,
                                 table,
                                 p0,
-                              ).profileRuleLinksRefs,
+                              ).rulesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.profileId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (disabledRulesRefs)
+                        await $_getPrefetchedData<
+                          RawProfile,
+                          $ProfilesTable,
+                          RawDisabledRule
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProfilesTableReferences
+                              ._disabledRulesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProfilesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).disabledRulesRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.profileId == item.id,
@@ -4502,6 +5730,27 @@ class $$ProfilesTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (proxyDialersRefs)
+                        await $_getPrefetchedData<
+                          RawProfile,
+                          $ProfilesTable,
+                          RawProxyDialer
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProfilesTableReferences
+                              ._proxyDialersRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProfilesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).proxyDialersRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.profileId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4522,19 +5771,28 @@ typedef $$ProfilesTableProcessedTableManager =
       $$ProfilesTableUpdateCompanionBuilder,
       (RawProfile, $$ProfilesTableReferences),
       RawProfile,
-      PrefetchHooks Function({bool profileRuleLinksRefs, bool proxyGroupsRefs})
+      PrefetchHooks Function({
+        bool rulesRefs,
+        bool disabledRulesRefs,
+        bool proxyGroupsRefs,
+        bool proxyDialersRefs,
+      })
     >;
 typedef $$ScriptsTableCreateCompanionBuilder =
     ScriptsCompanion Function({
       Value<int> id,
       required String label,
       required DateTime lastUpdateTime,
+      Value<String?> url,
+      Value<int?> order,
     });
 typedef $$ScriptsTableUpdateCompanionBuilder =
     ScriptsCompanion Function({
       Value<int> id,
       Value<String> label,
       Value<DateTime> lastUpdateTime,
+      Value<String?> url,
+      Value<int?> order,
     });
 
 class $$ScriptsTableFilterComposer extends Composer<_$Database, $ScriptsTable> {
@@ -4557,6 +5815,16 @@ class $$ScriptsTableFilterComposer extends Composer<_$Database, $ScriptsTable> {
 
   ColumnFilters<DateTime> get lastUpdateTime => $composableBuilder(
     column: $table.lastUpdateTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get order => $composableBuilder(
+    column: $table.order,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4584,6 +5852,16 @@ class $$ScriptsTableOrderingComposer
     column: $table.lastUpdateTime,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ScriptsTableAnnotationComposer
@@ -4605,6 +5883,12 @@ class $$ScriptsTableAnnotationComposer
     column: $table.lastUpdateTime,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<int> get order =>
+      $composableBuilder(column: $table.order, builder: (column) => column);
 }
 
 class $$ScriptsTableTableManager
@@ -4638,23 +5922,40 @@ class $$ScriptsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> label = const Value.absent(),
                 Value<DateTime> lastUpdateTime = const Value.absent(),
+                Value<String?> url = const Value.absent(),
+                Value<int?> order = const Value.absent(),
               }) => ScriptsCompanion(
                 id: id,
                 label: label,
                 lastUpdateTime: lastUpdateTime,
+                url: url,
+                order: order,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String label,
                 required DateTime lastUpdateTime,
+                Value<String?> url = const Value.absent(),
+                Value<int?> order = const Value.absent(),
               }) => ScriptsCompanion.insert(
                 id: id,
                 label: label,
                 lastUpdateTime: lastUpdateTime,
+                url: url,
+                order: order,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$ScriptsTable, RawScript>(table),
+                  BaseReferences<_$Database, $ScriptsTable, RawScript>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4678,6 +5979,7 @@ typedef $$ScriptsTableProcessedTableManager =
 typedef $$RulesTableCreateCompanionBuilder =
     RulesCompanion Function({
       Value<int> id,
+      Value<int?> profileId,
       required RuleAction ruleAction,
       Value<String?> content,
       Value<String?> ruleTarget,
@@ -4685,10 +5987,12 @@ typedef $$RulesTableCreateCompanionBuilder =
       Value<String?> subRule,
       Value<bool> noResolve,
       Value<bool> src,
+      Value<String?> order,
     });
 typedef $$RulesTableUpdateCompanionBuilder =
     RulesCompanion Function({
       Value<int> id,
+      Value<int?> profileId,
       Value<RuleAction> ruleAction,
       Value<String?> content,
       Value<String?> ruleTarget,
@@ -4696,27 +6000,43 @@ typedef $$RulesTableUpdateCompanionBuilder =
       Value<String?> subRule,
       Value<bool> noResolve,
       Value<bool> src,
+      Value<String?> order,
     });
 
 final class $$RulesTableReferences
     extends BaseReferences<_$Database, $RulesTable, RawRule> {
   $$RulesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static MultiTypedResultKey<$ProfileRuleLinksTable, List<RawProfileRuleLink>>
-  _profileRuleLinksRefsTable(_$Database db) => MultiTypedResultKey.fromTable(
-    db.profileRuleLinks,
-    aliasName: $_aliasNameGenerator(db.rules.id, db.profileRuleLinks.ruleId),
+  static $ProfilesTable _profileIdTable(_$Database db) =>
+      db.profiles.createAlias('rules__profile_id__profiles__id');
+
+  $$ProfilesTableProcessedTableManager? get profileId {
+    final $_column = $_itemColumn<int>('profile_id');
+    if ($_column == null) return null;
+    final manager = $$ProfilesTableTableManager(
+      $_db,
+      $_db.profiles,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_profileIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$DisabledRulesTable, List<RawDisabledRule>>
+  _disabledRulesRefsTable(_$Database db) => MultiTypedResultKey.fromTable(
+    db.disabledRules,
+    aliasName: 'rules__id__disabled_rules__rule_id',
   );
 
-  $$ProfileRuleLinksTableProcessedTableManager get profileRuleLinksRefs {
-    final manager = $$ProfileRuleLinksTableTableManager(
+  $$DisabledRulesTableProcessedTableManager get disabledRulesRefs {
+    final manager = $$DisabledRulesTableTableManager(
       $_db,
-      $_db.profileRuleLinks,
+      $_db.disabledRules,
     ).filter((f) => f.ruleId.id.sqlEquals($_itemColumn<int>('id')!));
 
-    final cache = $_typedResult.readTableOrNull(
-      _profileRuleLinksRefsTable($_db),
-    );
+    final cache = $_typedResult.readTableOrNull(_disabledRulesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4772,22 +6092,50 @@ class $$RulesTableFilterComposer extends Composer<_$Database, $RulesTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  Expression<bool> profileRuleLinksRefs(
-    Expression<bool> Function($$ProfileRuleLinksTableFilterComposer f) f,
+  ColumnFilters<String> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ProfilesTableFilterComposer get profileId {
+    final $$ProfilesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableFilterComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> disabledRulesRefs(
+    Expression<bool> Function($$DisabledRulesTableFilterComposer f) f,
   ) {
-    final $$ProfileRuleLinksTableFilterComposer composer = $composerBuilder(
+    final $$DisabledRulesTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.profileRuleLinks,
+      referencedTable: $db.disabledRules,
       getReferencedColumn: (t) => t.ruleId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ProfileRuleLinksTableFilterComposer(
+          }) => $$DisabledRulesTableFilterComposer(
             $db: $db,
-            $table: $db.profileRuleLinks,
+            $table: $db.disabledRules,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4845,6 +6193,34 @@ class $$RulesTableOrderingComposer extends Composer<_$Database, $RulesTable> {
     column: $table.src,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ProfilesTableOrderingComposer get profileId {
+    final $$ProfilesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableOrderingComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$RulesTableAnnotationComposer extends Composer<_$Database, $RulesTable> {
@@ -4886,22 +6262,48 @@ class $$RulesTableAnnotationComposer extends Composer<_$Database, $RulesTable> {
   GeneratedColumn<bool> get src =>
       $composableBuilder(column: $table.src, builder: (column) => column);
 
-  Expression<T> profileRuleLinksRefs<T extends Object>(
-    Expression<T> Function($$ProfileRuleLinksTableAnnotationComposer a) f,
+  GeneratedColumn<String> get order =>
+      $composableBuilder(column: $table.order, builder: (column) => column);
+
+  $$ProfilesTableAnnotationComposer get profileId {
+    final $$ProfilesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> disabledRulesRefs<T extends Object>(
+    Expression<T> Function($$DisabledRulesTableAnnotationComposer a) f,
   ) {
-    final $$ProfileRuleLinksTableAnnotationComposer composer = $composerBuilder(
+    final $$DisabledRulesTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.profileRuleLinks,
+      referencedTable: $db.disabledRules,
       getReferencedColumn: (t) => t.ruleId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$ProfileRuleLinksTableAnnotationComposer(
+          }) => $$DisabledRulesTableAnnotationComposer(
             $db: $db,
-            $table: $db.profileRuleLinks,
+            $table: $db.disabledRules,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4925,7 +6327,7 @@ class $$RulesTableTableManager
           $$RulesTableUpdateCompanionBuilder,
           (RawRule, $$RulesTableReferences),
           RawRule,
-          PrefetchHooks Function({bool profileRuleLinksRefs})
+          PrefetchHooks Function({bool profileId, bool disabledRulesRefs})
         > {
   $$RulesTableTableManager(_$Database db, $RulesTable table)
     : super(
@@ -4941,6 +6343,7 @@ class $$RulesTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<int?> profileId = const Value.absent(),
                 Value<RuleAction> ruleAction = const Value.absent(),
                 Value<String?> content = const Value.absent(),
                 Value<String?> ruleTarget = const Value.absent(),
@@ -4948,8 +6351,10 @@ class $$RulesTableTableManager
                 Value<String?> subRule = const Value.absent(),
                 Value<bool> noResolve = const Value.absent(),
                 Value<bool> src = const Value.absent(),
+                Value<String?> order = const Value.absent(),
               }) => RulesCompanion(
                 id: id,
+                profileId: profileId,
                 ruleAction: ruleAction,
                 content: content,
                 ruleTarget: ruleTarget,
@@ -4957,10 +6362,12 @@ class $$RulesTableTableManager
                 subRule: subRule,
                 noResolve: noResolve,
                 src: src,
+                order: order,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<int?> profileId = const Value.absent(),
                 required RuleAction ruleAction,
                 Value<String?> content = const Value.absent(),
                 Value<String?> ruleTarget = const Value.absent(),
@@ -4968,8 +6375,10 @@ class $$RulesTableTableManager
                 Value<String?> subRule = const Value.absent(),
                 Value<bool> noResolve = const Value.absent(),
                 Value<bool> src = const Value.absent(),
+                Value<String?> order = const Value.absent(),
               }) => RulesCompanion.insert(
                 id: id,
+                profileId: profileId,
                 ruleAction: ruleAction,
                 content: content,
                 ruleTarget: ruleTarget,
@@ -4977,44 +6386,82 @@ class $$RulesTableTableManager
                 subRule: subRule,
                 noResolve: noResolve,
                 src: src,
+                order: order,
               ),
           withReferenceMapper: (p0) => p0
               .map(
-                (e) =>
-                    (e.readTable(table), $$RulesTableReferences(db, table, e)),
+                (e) => (
+                  e.readTable<$RulesTable, RawRule>(table),
+                  $$RulesTableReferences(db, table, e),
+                ),
               )
               .toList(),
-          prefetchHooksCallback: ({profileRuleLinksRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (profileRuleLinksRefs) db.profileRuleLinks,
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (profileRuleLinksRefs)
-                    await $_getPrefetchedData<
-                      RawRule,
-                      $RulesTable,
-                      RawProfileRuleLink
-                    >(
-                      currentTable: table,
-                      referencedTable: $$RulesTableReferences
-                          ._profileRuleLinksRefsTable(db),
-                      managerFromTypedResult: (p0) => $$RulesTableReferences(
-                        db,
-                        table,
-                        p0,
-                      ).profileRuleLinksRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.ruleId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({profileId = false, disabledRulesRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (disabledRulesRefs) db.disabledRules,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (profileId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.profileId,
+                                    referencedTable: $$RulesTableReferences
+                                        ._profileIdTable(db),
+                                    referencedColumn: $$RulesTableReferences
+                                        ._profileIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (disabledRulesRefs)
+                        await $_getPrefetchedData<
+                          RawRule,
+                          $RulesTable,
+                          RawDisabledRule
+                        >(
+                          currentTable: table,
+                          referencedTable: $$RulesTableReferences
+                              ._disabledRulesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$RulesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).disabledRulesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.ruleId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -5031,44 +6478,35 @@ typedef $$RulesTableProcessedTableManager =
       $$RulesTableUpdateCompanionBuilder,
       (RawRule, $$RulesTableReferences),
       RawRule,
-      PrefetchHooks Function({bool profileRuleLinksRefs})
+      PrefetchHooks Function({bool profileId, bool disabledRulesRefs})
     >;
-typedef $$ProfileRuleLinksTableCreateCompanionBuilder =
-    ProfileRuleLinksCompanion Function({
-      required String id,
-      Value<int?> profileId,
+typedef $$DisabledRulesTableCreateCompanionBuilder =
+    DisabledRulesCompanion Function({
+      required int profileId,
       required int ruleId,
-      Value<RuleScene?> scene,
-      Value<String?> order,
       Value<int> rowid,
     });
-typedef $$ProfileRuleLinksTableUpdateCompanionBuilder =
-    ProfileRuleLinksCompanion Function({
-      Value<String> id,
-      Value<int?> profileId,
+typedef $$DisabledRulesTableUpdateCompanionBuilder =
+    DisabledRulesCompanion Function({
+      Value<int> profileId,
       Value<int> ruleId,
-      Value<RuleScene?> scene,
-      Value<String?> order,
       Value<int> rowid,
     });
 
-final class $$ProfileRuleLinksTableReferences
-    extends
-        BaseReferences<_$Database, $ProfileRuleLinksTable, RawProfileRuleLink> {
-  $$ProfileRuleLinksTableReferences(
+final class $$DisabledRulesTableReferences
+    extends BaseReferences<_$Database, $DisabledRulesTable, RawDisabledRule> {
+  $$DisabledRulesTableReferences(
     super.$_db,
     super.$_table,
     super.$_typedResult,
   );
 
   static $ProfilesTable _profileIdTable(_$Database db) =>
-      db.profiles.createAlias(
-        $_aliasNameGenerator(db.profileRuleLinks.profileId, db.profiles.id),
-      );
+      db.profiles.createAlias('disabled_rules__profile_id__profiles__id');
 
-  $$ProfilesTableProcessedTableManager? get profileId {
-    final $_column = $_itemColumn<int>('profile_id');
-    if ($_column == null) return null;
+  $$ProfilesTableProcessedTableManager get profileId {
+    final $_column = $_itemColumn<int>('profile_id')!;
+
     final manager = $$ProfilesTableTableManager(
       $_db,
       $_db.profiles,
@@ -5080,9 +6518,8 @@ final class $$ProfileRuleLinksTableReferences
     );
   }
 
-  static $RulesTable _ruleIdTable(_$Database db) => db.rules.createAlias(
-    $_aliasNameGenerator(db.profileRuleLinks.ruleId, db.rules.id),
-  );
+  static $RulesTable _ruleIdTable(_$Database db) =>
+      db.rules.createAlias('disabled_rules__rule_id__rules__id');
 
   $$RulesTableProcessedTableManager get ruleId {
     final $_column = $_itemColumn<int>('rule_id')!;
@@ -5099,31 +6536,15 @@ final class $$ProfileRuleLinksTableReferences
   }
 }
 
-class $$ProfileRuleLinksTableFilterComposer
-    extends Composer<_$Database, $ProfileRuleLinksTable> {
-  $$ProfileRuleLinksTableFilterComposer({
+class $$DisabledRulesTableFilterComposer
+    extends Composer<_$Database, $DisabledRulesTable> {
+  $$DisabledRulesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<RuleScene?, RuleScene, String> get scene =>
-      $composableBuilder(
-        column: $table.scene,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<String> get order => $composableBuilder(
-    column: $table.order,
-    builder: (column) => ColumnFilters(column),
-  );
-
   $$ProfilesTableFilterComposer get profileId {
     final $$ProfilesTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -5171,30 +6592,15 @@ class $$ProfileRuleLinksTableFilterComposer
   }
 }
 
-class $$ProfileRuleLinksTableOrderingComposer
-    extends Composer<_$Database, $ProfileRuleLinksTable> {
-  $$ProfileRuleLinksTableOrderingComposer({
+class $$DisabledRulesTableOrderingComposer
+    extends Composer<_$Database, $DisabledRulesTable> {
+  $$DisabledRulesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get scene => $composableBuilder(
-    column: $table.scene,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get order => $composableBuilder(
-    column: $table.order,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   $$ProfilesTableOrderingComposer get profileId {
     final $$ProfilesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -5242,24 +6648,15 @@ class $$ProfileRuleLinksTableOrderingComposer
   }
 }
 
-class $$ProfileRuleLinksTableAnnotationComposer
-    extends Composer<_$Database, $ProfileRuleLinksTable> {
-  $$ProfileRuleLinksTableAnnotationComposer({
+class $$DisabledRulesTableAnnotationComposer
+    extends Composer<_$Database, $DisabledRulesTable> {
+  $$DisabledRulesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<RuleScene?, String> get scene =>
-      $composableBuilder(column: $table.scene, builder: (column) => column);
-
-  GeneratedColumn<String> get order =>
-      $composableBuilder(column: $table.order, builder: (column) => column);
-
   $$ProfilesTableAnnotationComposer get profileId {
     final $$ProfilesTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -5307,71 +6704,57 @@ class $$ProfileRuleLinksTableAnnotationComposer
   }
 }
 
-class $$ProfileRuleLinksTableTableManager
+class $$DisabledRulesTableTableManager
     extends
         RootTableManager<
           _$Database,
-          $ProfileRuleLinksTable,
-          RawProfileRuleLink,
-          $$ProfileRuleLinksTableFilterComposer,
-          $$ProfileRuleLinksTableOrderingComposer,
-          $$ProfileRuleLinksTableAnnotationComposer,
-          $$ProfileRuleLinksTableCreateCompanionBuilder,
-          $$ProfileRuleLinksTableUpdateCompanionBuilder,
-          (RawProfileRuleLink, $$ProfileRuleLinksTableReferences),
-          RawProfileRuleLink,
+          $DisabledRulesTable,
+          RawDisabledRule,
+          $$DisabledRulesTableFilterComposer,
+          $$DisabledRulesTableOrderingComposer,
+          $$DisabledRulesTableAnnotationComposer,
+          $$DisabledRulesTableCreateCompanionBuilder,
+          $$DisabledRulesTableUpdateCompanionBuilder,
+          (RawDisabledRule, $$DisabledRulesTableReferences),
+          RawDisabledRule,
           PrefetchHooks Function({bool profileId, bool ruleId})
         > {
-  $$ProfileRuleLinksTableTableManager(
-    _$Database db,
-    $ProfileRuleLinksTable table,
-  ) : super(
+  $$DisabledRulesTableTableManager(_$Database db, $DisabledRulesTable table)
+    : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$ProfileRuleLinksTableFilterComposer($db: db, $table: table),
+              $$DisabledRulesTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$ProfileRuleLinksTableOrderingComposer($db: db, $table: table),
+              $$DisabledRulesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$ProfileRuleLinksTableAnnotationComposer($db: db, $table: table),
+              $$DisabledRulesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> id = const Value.absent(),
-                Value<int?> profileId = const Value.absent(),
+                Value<int> profileId = const Value.absent(),
                 Value<int> ruleId = const Value.absent(),
-                Value<RuleScene?> scene = const Value.absent(),
-                Value<String?> order = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => ProfileRuleLinksCompanion(
-                id: id,
+              }) => DisabledRulesCompanion(
                 profileId: profileId,
                 ruleId: ruleId,
-                scene: scene,
-                order: order,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String id,
-                Value<int?> profileId = const Value.absent(),
+                required int profileId,
                 required int ruleId,
-                Value<RuleScene?> scene = const Value.absent(),
-                Value<String?> order = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => ProfileRuleLinksCompanion.insert(
-                id: id,
+              }) => DisabledRulesCompanion.insert(
                 profileId: profileId,
                 ruleId: ruleId,
-                scene: scene,
-                order: order,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
-                  $$ProfileRuleLinksTableReferences(db, table, e),
+                  e.readTable<$DisabledRulesTable, RawDisabledRule>(table),
+                  $$DisabledRulesTableReferences(db, table, e),
                 ),
               )
               .toList(),
@@ -5400,13 +6783,11 @@ class $$ProfileRuleLinksTableTableManager
                           state.withJoin(
                                 currentTable: table,
                                 currentColumn: table.profileId,
-                                referencedTable:
-                                    $$ProfileRuleLinksTableReferences
-                                        ._profileIdTable(db),
-                                referencedColumn:
-                                    $$ProfileRuleLinksTableReferences
-                                        ._profileIdTable(db)
-                                        .id,
+                                referencedTable: $$DisabledRulesTableReferences
+                                    ._profileIdTable(db),
+                                referencedColumn: $$DisabledRulesTableReferences
+                                    ._profileIdTable(db)
+                                    .id,
                               )
                               as T;
                     }
@@ -5415,13 +6796,11 @@ class $$ProfileRuleLinksTableTableManager
                           state.withJoin(
                                 currentTable: table,
                                 currentColumn: table.ruleId,
-                                referencedTable:
-                                    $$ProfileRuleLinksTableReferences
-                                        ._ruleIdTable(db),
-                                referencedColumn:
-                                    $$ProfileRuleLinksTableReferences
-                                        ._ruleIdTable(db)
-                                        .id,
+                                referencedTable: $$DisabledRulesTableReferences
+                                    ._ruleIdTable(db),
+                                referencedColumn: $$DisabledRulesTableReferences
+                                    ._ruleIdTable(db)
+                                    .id,
                               )
                               as T;
                     }
@@ -5437,68 +6816,40 @@ class $$ProfileRuleLinksTableTableManager
       );
 }
 
-typedef $$ProfileRuleLinksTableProcessedTableManager =
+typedef $$DisabledRulesTableProcessedTableManager =
     ProcessedTableManager<
       _$Database,
-      $ProfileRuleLinksTable,
-      RawProfileRuleLink,
-      $$ProfileRuleLinksTableFilterComposer,
-      $$ProfileRuleLinksTableOrderingComposer,
-      $$ProfileRuleLinksTableAnnotationComposer,
-      $$ProfileRuleLinksTableCreateCompanionBuilder,
-      $$ProfileRuleLinksTableUpdateCompanionBuilder,
-      (RawProfileRuleLink, $$ProfileRuleLinksTableReferences),
-      RawProfileRuleLink,
+      $DisabledRulesTable,
+      RawDisabledRule,
+      $$DisabledRulesTableFilterComposer,
+      $$DisabledRulesTableOrderingComposer,
+      $$DisabledRulesTableAnnotationComposer,
+      $$DisabledRulesTableCreateCompanionBuilder,
+      $$DisabledRulesTableUpdateCompanionBuilder,
+      (RawDisabledRule, $$DisabledRulesTableReferences),
+      RawDisabledRule,
       PrefetchHooks Function({bool profileId, bool ruleId})
     >;
 typedef $$ProxyGroupsTableCreateCompanionBuilder =
     ProxyGroupsCompanion Function({
       Value<int> id,
-      Value<int?> profileId,
+      required int profileId,
       required String name,
       required String type,
       Value<List<String>?> proxies,
       Value<List<String>?> use,
-      Value<String?> url,
-      Value<int?> interval,
-      Value<int?> timeout,
-      Value<int?> maxFailedTimes,
-      Value<bool?> lazy,
-      Value<bool?> disableUDP,
-      Value<String?> filter,
-      Value<String?> excludeFilter,
-      Value<String?> excludeType,
-      Value<String?> expectedStatus,
-      Value<bool?> includeAll,
-      Value<bool?> includeAllProxies,
-      Value<bool?> includeAllProviders,
-      Value<bool?> hidden,
-      Value<String?> icon,
+      Value<String> definition,
       Value<String?> order,
     });
 typedef $$ProxyGroupsTableUpdateCompanionBuilder =
     ProxyGroupsCompanion Function({
       Value<int> id,
-      Value<int?> profileId,
+      Value<int> profileId,
       Value<String> name,
       Value<String> type,
       Value<List<String>?> proxies,
       Value<List<String>?> use,
-      Value<String?> url,
-      Value<int?> interval,
-      Value<int?> timeout,
-      Value<int?> maxFailedTimes,
-      Value<bool?> lazy,
-      Value<bool?> disableUDP,
-      Value<String?> filter,
-      Value<String?> excludeFilter,
-      Value<String?> excludeType,
-      Value<String?> expectedStatus,
-      Value<bool?> includeAll,
-      Value<bool?> includeAllProxies,
-      Value<bool?> includeAllProviders,
-      Value<bool?> hidden,
-      Value<String?> icon,
+      Value<String> definition,
       Value<String?> order,
     });
 
@@ -5507,13 +6858,11 @@ final class $$ProxyGroupsTableReferences
   $$ProxyGroupsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $ProfilesTable _profileIdTable(_$Database db) =>
-      db.profiles.createAlias(
-        $_aliasNameGenerator(db.proxyGroups.profileId, db.profiles.id),
-      );
+      db.profiles.createAlias('proxy_groups__profile_id__profiles__id');
 
-  $$ProfilesTableProcessedTableManager? get profileId {
-    final $_column = $_itemColumn<int>('profile_id');
-    if ($_column == null) return null;
+  $$ProfilesTableProcessedTableManager get profileId {
+    final $_column = $_itemColumn<int>('profile_id')!;
+
     final manager = $$ProfilesTableTableManager(
       $_db,
       $_db.profiles,
@@ -5562,78 +6911,8 @@ class $$ProxyGroupsTableFilterComposer
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
 
-  ColumnFilters<String> get url => $composableBuilder(
-    column: $table.url,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get interval => $composableBuilder(
-    column: $table.interval,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get timeout => $composableBuilder(
-    column: $table.timeout,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get maxFailedTimes => $composableBuilder(
-    column: $table.maxFailedTimes,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get lazy => $composableBuilder(
-    column: $table.lazy,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get disableUDP => $composableBuilder(
-    column: $table.disableUDP,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get filter => $composableBuilder(
-    column: $table.filter,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get excludeFilter => $composableBuilder(
-    column: $table.excludeFilter,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get excludeType => $composableBuilder(
-    column: $table.excludeType,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get expectedStatus => $composableBuilder(
-    column: $table.expectedStatus,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get includeAll => $composableBuilder(
-    column: $table.includeAll,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get includeAllProxies => $composableBuilder(
-    column: $table.includeAllProxies,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get includeAllProviders => $composableBuilder(
-    column: $table.includeAllProviders,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get hidden => $composableBuilder(
-    column: $table.hidden,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get icon => $composableBuilder(
-    column: $table.icon,
+  ColumnFilters<String> get definition => $composableBuilder(
+    column: $table.definition,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5700,78 +6979,8 @@ class $$ProxyGroupsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get url => $composableBuilder(
-    column: $table.url,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get interval => $composableBuilder(
-    column: $table.interval,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get timeout => $composableBuilder(
-    column: $table.timeout,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get maxFailedTimes => $composableBuilder(
-    column: $table.maxFailedTimes,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get lazy => $composableBuilder(
-    column: $table.lazy,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get disableUDP => $composableBuilder(
-    column: $table.disableUDP,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get filter => $composableBuilder(
-    column: $table.filter,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get excludeFilter => $composableBuilder(
-    column: $table.excludeFilter,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get excludeType => $composableBuilder(
-    column: $table.excludeType,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get expectedStatus => $composableBuilder(
-    column: $table.expectedStatus,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get includeAll => $composableBuilder(
-    column: $table.includeAll,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get includeAllProxies => $composableBuilder(
-    column: $table.includeAllProxies,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get includeAllProviders => $composableBuilder(
-    column: $table.includeAllProviders,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get hidden => $composableBuilder(
-    column: $table.hidden,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get icon => $composableBuilder(
-    column: $table.icon,
+  ColumnOrderings<String> get definition => $composableBuilder(
+    column: $table.definition,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -5828,66 +7037,10 @@ class $$ProxyGroupsTableAnnotationComposer
   GeneratedColumnWithTypeConverter<List<String>?, String> get use =>
       $composableBuilder(column: $table.use, builder: (column) => column);
 
-  GeneratedColumn<String> get url =>
-      $composableBuilder(column: $table.url, builder: (column) => column);
-
-  GeneratedColumn<int> get interval =>
-      $composableBuilder(column: $table.interval, builder: (column) => column);
-
-  GeneratedColumn<int> get timeout =>
-      $composableBuilder(column: $table.timeout, builder: (column) => column);
-
-  GeneratedColumn<int> get maxFailedTimes => $composableBuilder(
-    column: $table.maxFailedTimes,
+  GeneratedColumn<String> get definition => $composableBuilder(
+    column: $table.definition,
     builder: (column) => column,
   );
-
-  GeneratedColumn<bool> get lazy =>
-      $composableBuilder(column: $table.lazy, builder: (column) => column);
-
-  GeneratedColumn<bool> get disableUDP => $composableBuilder(
-    column: $table.disableUDP,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get filter =>
-      $composableBuilder(column: $table.filter, builder: (column) => column);
-
-  GeneratedColumn<String> get excludeFilter => $composableBuilder(
-    column: $table.excludeFilter,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get excludeType => $composableBuilder(
-    column: $table.excludeType,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get expectedStatus => $composableBuilder(
-    column: $table.expectedStatus,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get includeAll => $composableBuilder(
-    column: $table.includeAll,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get includeAllProxies => $composableBuilder(
-    column: $table.includeAllProxies,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get includeAllProviders => $composableBuilder(
-    column: $table.includeAllProviders,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get hidden =>
-      $composableBuilder(column: $table.hidden, builder: (column) => column);
-
-  GeneratedColumn<String> get icon =>
-      $composableBuilder(column: $table.icon, builder: (column) => column);
 
   GeneratedColumn<String> get order =>
       $composableBuilder(column: $table.order, builder: (column) => column);
@@ -5945,26 +7098,12 @@ class $$ProxyGroupsTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<int?> profileId = const Value.absent(),
+                Value<int> profileId = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<List<String>?> proxies = const Value.absent(),
                 Value<List<String>?> use = const Value.absent(),
-                Value<String?> url = const Value.absent(),
-                Value<int?> interval = const Value.absent(),
-                Value<int?> timeout = const Value.absent(),
-                Value<int?> maxFailedTimes = const Value.absent(),
-                Value<bool?> lazy = const Value.absent(),
-                Value<bool?> disableUDP = const Value.absent(),
-                Value<String?> filter = const Value.absent(),
-                Value<String?> excludeFilter = const Value.absent(),
-                Value<String?> excludeType = const Value.absent(),
-                Value<String?> expectedStatus = const Value.absent(),
-                Value<bool?> includeAll = const Value.absent(),
-                Value<bool?> includeAllProxies = const Value.absent(),
-                Value<bool?> includeAllProviders = const Value.absent(),
-                Value<bool?> hidden = const Value.absent(),
-                Value<String?> icon = const Value.absent(),
+                Value<String> definition = const Value.absent(),
                 Value<String?> order = const Value.absent(),
               }) => ProxyGroupsCompanion(
                 id: id,
@@ -5973,46 +7112,18 @@ class $$ProxyGroupsTableTableManager
                 type: type,
                 proxies: proxies,
                 use: use,
-                url: url,
-                interval: interval,
-                timeout: timeout,
-                maxFailedTimes: maxFailedTimes,
-                lazy: lazy,
-                disableUDP: disableUDP,
-                filter: filter,
-                excludeFilter: excludeFilter,
-                excludeType: excludeType,
-                expectedStatus: expectedStatus,
-                includeAll: includeAll,
-                includeAllProxies: includeAllProxies,
-                includeAllProviders: includeAllProviders,
-                hidden: hidden,
-                icon: icon,
+                definition: definition,
                 order: order,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<int?> profileId = const Value.absent(),
+                required int profileId,
                 required String name,
                 required String type,
                 Value<List<String>?> proxies = const Value.absent(),
                 Value<List<String>?> use = const Value.absent(),
-                Value<String?> url = const Value.absent(),
-                Value<int?> interval = const Value.absent(),
-                Value<int?> timeout = const Value.absent(),
-                Value<int?> maxFailedTimes = const Value.absent(),
-                Value<bool?> lazy = const Value.absent(),
-                Value<bool?> disableUDP = const Value.absent(),
-                Value<String?> filter = const Value.absent(),
-                Value<String?> excludeFilter = const Value.absent(),
-                Value<String?> excludeType = const Value.absent(),
-                Value<String?> expectedStatus = const Value.absent(),
-                Value<bool?> includeAll = const Value.absent(),
-                Value<bool?> includeAllProxies = const Value.absent(),
-                Value<bool?> includeAllProviders = const Value.absent(),
-                Value<bool?> hidden = const Value.absent(),
-                Value<String?> icon = const Value.absent(),
+                Value<String> definition = const Value.absent(),
                 Value<String?> order = const Value.absent(),
               }) => ProxyGroupsCompanion.insert(
                 id: id,
@@ -6021,27 +7132,13 @@ class $$ProxyGroupsTableTableManager
                 type: type,
                 proxies: proxies,
                 use: use,
-                url: url,
-                interval: interval,
-                timeout: timeout,
-                maxFailedTimes: maxFailedTimes,
-                lazy: lazy,
-                disableUDP: disableUDP,
-                filter: filter,
-                excludeFilter: excludeFilter,
-                excludeType: excludeType,
-                expectedStatus: expectedStatus,
-                includeAll: includeAll,
-                includeAllProxies: includeAllProxies,
-                includeAllProviders: includeAllProviders,
-                hidden: hidden,
-                icon: icon,
+                definition: definition,
                 order: order,
               ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$ProxyGroupsTable, RawProxyGroup>(table),
                   $$ProxyGroupsTableReferences(db, table, e),
                 ),
               )
@@ -6226,7 +7323,16 @@ class $$IconRecordsTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$IconRecordsTable, IconRecord>(table),
+                  BaseReferences<_$Database, $IconRecordsTable, IconRecord>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -6246,6 +7352,1135 @@ typedef $$IconRecordsTableProcessedTableManager =
       (IconRecord, BaseReferences<_$Database, $IconRecordsTable, IconRecord>),
       IconRecord,
       PrefetchHooks Function()
+    >;
+typedef $$IconSetsTableCreateCompanionBuilder =
+    IconSetsCompanion Function({
+      Value<int> id,
+      required String name,
+      required String url,
+      required List<IconSetIcon> icons,
+      Value<DateTime?> lastUpdateTime,
+      Value<int?> order,
+    });
+typedef $$IconSetsTableUpdateCompanionBuilder =
+    IconSetsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String> url,
+      Value<List<IconSetIcon>> icons,
+      Value<DateTime?> lastUpdateTime,
+      Value<int?> order,
+    });
+
+class $$IconSetsTableFilterComposer
+    extends Composer<_$Database, $IconSetsTable> {
+  $$IconSetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<List<IconSetIcon>, List<IconSetIcon>, String>
+  get icons => $composableBuilder(
+    column: $table.icons,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastUpdateTime => $composableBuilder(
+    column: $table.lastUpdateTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$IconSetsTableOrderingComposer
+    extends Composer<_$Database, $IconSetsTable> {
+  $$IconSetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get icons => $composableBuilder(
+    column: $table.icons,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastUpdateTime => $composableBuilder(
+    column: $table.lastUpdateTime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$IconSetsTableAnnotationComposer
+    extends Composer<_$Database, $IconSetsTable> {
+  $$IconSetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<List<IconSetIcon>, String> get icons =>
+      $composableBuilder(column: $table.icons, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastUpdateTime => $composableBuilder(
+    column: $table.lastUpdateTime,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get order =>
+      $composableBuilder(column: $table.order, builder: (column) => column);
+}
+
+class $$IconSetsTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $IconSetsTable,
+          RawIconSet,
+          $$IconSetsTableFilterComposer,
+          $$IconSetsTableOrderingComposer,
+          $$IconSetsTableAnnotationComposer,
+          $$IconSetsTableCreateCompanionBuilder,
+          $$IconSetsTableUpdateCompanionBuilder,
+          (RawIconSet, BaseReferences<_$Database, $IconSetsTable, RawIconSet>),
+          RawIconSet,
+          PrefetchHooks Function()
+        > {
+  $$IconSetsTableTableManager(_$Database db, $IconSetsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$IconSetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$IconSetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$IconSetsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> url = const Value.absent(),
+                Value<List<IconSetIcon>> icons = const Value.absent(),
+                Value<DateTime?> lastUpdateTime = const Value.absent(),
+                Value<int?> order = const Value.absent(),
+              }) => IconSetsCompanion(
+                id: id,
+                name: name,
+                url: url,
+                icons: icons,
+                lastUpdateTime: lastUpdateTime,
+                order: order,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required String url,
+                required List<IconSetIcon> icons,
+                Value<DateTime?> lastUpdateTime = const Value.absent(),
+                Value<int?> order = const Value.absent(),
+              }) => IconSetsCompanion.insert(
+                id: id,
+                name: name,
+                url: url,
+                icons: icons,
+                lastUpdateTime: lastUpdateTime,
+                order: order,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$IconSetsTable, RawIconSet>(table),
+                  BaseReferences<_$Database, $IconSetsTable, RawIconSet>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$IconSetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $IconSetsTable,
+      RawIconSet,
+      $$IconSetsTableFilterComposer,
+      $$IconSetsTableOrderingComposer,
+      $$IconSetsTableAnnotationComposer,
+      $$IconSetsTableCreateCompanionBuilder,
+      $$IconSetsTableUpdateCompanionBuilder,
+      (RawIconSet, BaseReferences<_$Database, $IconSetsTable, RawIconSet>),
+      RawIconSet,
+      PrefetchHooks Function()
+    >;
+typedef $$ClashProvidersTableCreateCompanionBuilder =
+    ClashProvidersCompanion Function({
+      Value<int> id,
+      required ProviderKind kind,
+      required String label,
+      required String url,
+      Value<RuleProviderBehavior?> behavior,
+      Value<RuleProviderFormat?> format,
+      Value<int?> order,
+    });
+typedef $$ClashProvidersTableUpdateCompanionBuilder =
+    ClashProvidersCompanion Function({
+      Value<int> id,
+      Value<ProviderKind> kind,
+      Value<String> label,
+      Value<String> url,
+      Value<RuleProviderBehavior?> behavior,
+      Value<RuleProviderFormat?> format,
+      Value<int?> order,
+    });
+
+class $$ClashProvidersTableFilterComposer
+    extends Composer<_$Database, $ClashProvidersTable> {
+  $$ClashProvidersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<ProviderKind, ProviderKind, String> get kind =>
+      $composableBuilder(
+        column: $table.kind,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<
+    RuleProviderBehavior?,
+    RuleProviderBehavior,
+    String
+  >
+  get behavior => $composableBuilder(
+    column: $table.behavior,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<
+    RuleProviderFormat?,
+    RuleProviderFormat,
+    String
+  >
+  get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ClashProvidersTableOrderingComposer
+    extends Composer<_$Database, $ClashProvidersTable> {
+  $$ClashProvidersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get behavior => $composableBuilder(
+    column: $table.behavior,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ClashProvidersTableAnnotationComposer
+    extends Composer<_$Database, $ClashProvidersTable> {
+  $$ClashProvidersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<ProviderKind, String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<RuleProviderBehavior?, String>
+  get behavior =>
+      $composableBuilder(column: $table.behavior, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<RuleProviderFormat?, String> get format =>
+      $composableBuilder(column: $table.format, builder: (column) => column);
+
+  GeneratedColumn<int> get order =>
+      $composableBuilder(column: $table.order, builder: (column) => column);
+}
+
+class $$ClashProvidersTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $ClashProvidersTable,
+          RawClashProvider,
+          $$ClashProvidersTableFilterComposer,
+          $$ClashProvidersTableOrderingComposer,
+          $$ClashProvidersTableAnnotationComposer,
+          $$ClashProvidersTableCreateCompanionBuilder,
+          $$ClashProvidersTableUpdateCompanionBuilder,
+          (
+            RawClashProvider,
+            BaseReferences<_$Database, $ClashProvidersTable, RawClashProvider>,
+          ),
+          RawClashProvider,
+          PrefetchHooks Function()
+        > {
+  $$ClashProvidersTableTableManager(_$Database db, $ClashProvidersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ClashProvidersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ClashProvidersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ClashProvidersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<ProviderKind> kind = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<String> url = const Value.absent(),
+                Value<RuleProviderBehavior?> behavior = const Value.absent(),
+                Value<RuleProviderFormat?> format = const Value.absent(),
+                Value<int?> order = const Value.absent(),
+              }) => ClashProvidersCompanion(
+                id: id,
+                kind: kind,
+                label: label,
+                url: url,
+                behavior: behavior,
+                format: format,
+                order: order,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required ProviderKind kind,
+                required String label,
+                required String url,
+                Value<RuleProviderBehavior?> behavior = const Value.absent(),
+                Value<RuleProviderFormat?> format = const Value.absent(),
+                Value<int?> order = const Value.absent(),
+              }) => ClashProvidersCompanion.insert(
+                id: id,
+                kind: kind,
+                label: label,
+                url: url,
+                behavior: behavior,
+                format: format,
+                order: order,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ClashProvidersTable, RawClashProvider>(table),
+                  BaseReferences<
+                    _$Database,
+                    $ClashProvidersTable,
+                    RawClashProvider
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ClashProvidersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $ClashProvidersTable,
+      RawClashProvider,
+      $$ClashProvidersTableFilterComposer,
+      $$ClashProvidersTableOrderingComposer,
+      $$ClashProvidersTableAnnotationComposer,
+      $$ClashProvidersTableCreateCompanionBuilder,
+      $$ClashProvidersTableUpdateCompanionBuilder,
+      (
+        RawClashProvider,
+        BaseReferences<_$Database, $ClashProvidersTable, RawClashProvider>,
+      ),
+      RawClashProvider,
+      PrefetchHooks Function()
+    >;
+typedef $$CustomProxiesTableCreateCompanionBuilder =
+    CustomProxiesCompanion Function({
+      Value<int> id,
+      required Map<String, dynamic> definition,
+      Value<String?> order,
+      Value<Set<String>?> emptyOptions,
+    });
+typedef $$CustomProxiesTableUpdateCompanionBuilder =
+    CustomProxiesCompanion Function({
+      Value<int> id,
+      Value<Map<String, dynamic>> definition,
+      Value<String?> order,
+      Value<Set<String>?> emptyOptions,
+    });
+
+final class $$CustomProxiesTableReferences
+    extends BaseReferences<_$Database, $CustomProxiesTable, RawCustomProxy> {
+  $$CustomProxiesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$ProxyDialersTable, List<RawProxyDialer>>
+  _proxyDialersRefsTable(_$Database db) => MultiTypedResultKey.fromTable(
+    db.proxyDialers,
+    aliasName: 'custom_proxies__id__proxy_dialers__proxy_id',
+  );
+
+  $$ProxyDialersTableProcessedTableManager get proxyDialersRefs {
+    final manager = $$ProxyDialersTableTableManager(
+      $_db,
+      $_db.proxyDialers,
+    ).filter((f) => f.proxyId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_proxyDialersRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$CustomProxiesTableFilterComposer
+    extends Composer<_$Database, $CustomProxiesTable> {
+  $$CustomProxiesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<
+    Map<String, dynamic>,
+    Map<String, dynamic>,
+    String
+  >
+  get definition => $composableBuilder(
+    column: $table.definition,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Set<String>?, Set<String>, String>
+  get emptyOptions => $composableBuilder(
+    column: $table.emptyOptions,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  Expression<bool> proxyDialersRefs(
+    Expression<bool> Function($$ProxyDialersTableFilterComposer f) f,
+  ) {
+    final $$ProxyDialersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.proxyDialers,
+      getReferencedColumn: (t) => t.proxyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProxyDialersTableFilterComposer(
+            $db: $db,
+            $table: $db.proxyDialers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CustomProxiesTableOrderingComposer
+    extends Composer<_$Database, $CustomProxiesTable> {
+  $$CustomProxiesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get definition => $composableBuilder(
+    column: $table.definition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get order => $composableBuilder(
+    column: $table.order,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get emptyOptions => $composableBuilder(
+    column: $table.emptyOptions,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CustomProxiesTableAnnotationComposer
+    extends Composer<_$Database, $CustomProxiesTable> {
+  $$CustomProxiesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Map<String, dynamic>, String>
+  get definition => $composableBuilder(
+    column: $table.definition,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get order =>
+      $composableBuilder(column: $table.order, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Set<String>?, String> get emptyOptions =>
+      $composableBuilder(
+        column: $table.emptyOptions,
+        builder: (column) => column,
+      );
+
+  Expression<T> proxyDialersRefs<T extends Object>(
+    Expression<T> Function($$ProxyDialersTableAnnotationComposer a) f,
+  ) {
+    final $$ProxyDialersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.proxyDialers,
+      getReferencedColumn: (t) => t.proxyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProxyDialersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.proxyDialers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CustomProxiesTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $CustomProxiesTable,
+          RawCustomProxy,
+          $$CustomProxiesTableFilterComposer,
+          $$CustomProxiesTableOrderingComposer,
+          $$CustomProxiesTableAnnotationComposer,
+          $$CustomProxiesTableCreateCompanionBuilder,
+          $$CustomProxiesTableUpdateCompanionBuilder,
+          (RawCustomProxy, $$CustomProxiesTableReferences),
+          RawCustomProxy,
+          PrefetchHooks Function({bool proxyDialersRefs})
+        > {
+  $$CustomProxiesTableTableManager(_$Database db, $CustomProxiesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CustomProxiesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CustomProxiesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CustomProxiesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<Map<String, dynamic>> definition = const Value.absent(),
+                Value<String?> order = const Value.absent(),
+                Value<Set<String>?> emptyOptions = const Value.absent(),
+              }) => CustomProxiesCompanion(
+                id: id,
+                definition: definition,
+                order: order,
+                emptyOptions: emptyOptions,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required Map<String, dynamic> definition,
+                Value<String?> order = const Value.absent(),
+                Value<Set<String>?> emptyOptions = const Value.absent(),
+              }) => CustomProxiesCompanion.insert(
+                id: id,
+                definition: definition,
+                order: order,
+                emptyOptions: emptyOptions,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CustomProxiesTable, RawCustomProxy>(table),
+                  $$CustomProxiesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({proxyDialersRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (proxyDialersRefs) db.proxyDialers],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (proxyDialersRefs)
+                    await $_getPrefetchedData<
+                      RawCustomProxy,
+                      $CustomProxiesTable,
+                      RawProxyDialer
+                    >(
+                      currentTable: table,
+                      referencedTable: $$CustomProxiesTableReferences
+                          ._proxyDialersRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$CustomProxiesTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).proxyDialersRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.proxyId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CustomProxiesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $CustomProxiesTable,
+      RawCustomProxy,
+      $$CustomProxiesTableFilterComposer,
+      $$CustomProxiesTableOrderingComposer,
+      $$CustomProxiesTableAnnotationComposer,
+      $$CustomProxiesTableCreateCompanionBuilder,
+      $$CustomProxiesTableUpdateCompanionBuilder,
+      (RawCustomProxy, $$CustomProxiesTableReferences),
+      RawCustomProxy,
+      PrefetchHooks Function({bool proxyDialersRefs})
+    >;
+typedef $$ProxyDialersTableCreateCompanionBuilder =
+    ProxyDialersCompanion Function({
+      required int profileId,
+      required int proxyId,
+      required String target,
+      Value<int> rowid,
+    });
+typedef $$ProxyDialersTableUpdateCompanionBuilder =
+    ProxyDialersCompanion Function({
+      Value<int> profileId,
+      Value<int> proxyId,
+      Value<String> target,
+      Value<int> rowid,
+    });
+
+final class $$ProxyDialersTableReferences
+    extends BaseReferences<_$Database, $ProxyDialersTable, RawProxyDialer> {
+  $$ProxyDialersTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ProfilesTable _profileIdTable(_$Database db) =>
+      db.profiles.createAlias('proxy_dialers__profile_id__profiles__id');
+
+  $$ProfilesTableProcessedTableManager get profileId {
+    final $_column = $_itemColumn<int>('profile_id')!;
+
+    final manager = $$ProfilesTableTableManager(
+      $_db,
+      $_db.profiles,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_profileIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $CustomProxiesTable _proxyIdTable(_$Database db) => db.customProxies
+      .createAlias('proxy_dialers__proxy_id__custom_proxies__id');
+
+  $$CustomProxiesTableProcessedTableManager get proxyId {
+    final $_column = $_itemColumn<int>('proxy_id')!;
+
+    final manager = $$CustomProxiesTableTableManager(
+      $_db,
+      $_db.customProxies,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_proxyIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ProxyDialersTableFilterComposer
+    extends Composer<_$Database, $ProxyDialersTable> {
+  $$ProxyDialersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get target => $composableBuilder(
+    column: $table.target,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ProfilesTableFilterComposer get profileId {
+    final $$ProfilesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableFilterComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CustomProxiesTableFilterComposer get proxyId {
+    final $$CustomProxiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.proxyId,
+      referencedTable: $db.customProxies,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomProxiesTableFilterComposer(
+            $db: $db,
+            $table: $db.customProxies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProxyDialersTableOrderingComposer
+    extends Composer<_$Database, $ProxyDialersTable> {
+  $$ProxyDialersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get target => $composableBuilder(
+    column: $table.target,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ProfilesTableOrderingComposer get profileId {
+    final $$ProfilesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableOrderingComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CustomProxiesTableOrderingComposer get proxyId {
+    final $$CustomProxiesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.proxyId,
+      referencedTable: $db.customProxies,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomProxiesTableOrderingComposer(
+            $db: $db,
+            $table: $db.customProxies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProxyDialersTableAnnotationComposer
+    extends Composer<_$Database, $ProxyDialersTable> {
+  $$ProxyDialersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get target =>
+      $composableBuilder(column: $table.target, builder: (column) => column);
+
+  $$ProfilesTableAnnotationComposer get profileId {
+    final $$ProfilesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.profileId,
+      referencedTable: $db.profiles,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfilesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$CustomProxiesTableAnnotationComposer get proxyId {
+    final $$CustomProxiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.proxyId,
+      referencedTable: $db.customProxies,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomProxiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.customProxies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProxyDialersTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $ProxyDialersTable,
+          RawProxyDialer,
+          $$ProxyDialersTableFilterComposer,
+          $$ProxyDialersTableOrderingComposer,
+          $$ProxyDialersTableAnnotationComposer,
+          $$ProxyDialersTableCreateCompanionBuilder,
+          $$ProxyDialersTableUpdateCompanionBuilder,
+          (RawProxyDialer, $$ProxyDialersTableReferences),
+          RawProxyDialer,
+          PrefetchHooks Function({bool profileId, bool proxyId})
+        > {
+  $$ProxyDialersTableTableManager(_$Database db, $ProxyDialersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProxyDialersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProxyDialersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProxyDialersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> profileId = const Value.absent(),
+                Value<int> proxyId = const Value.absent(),
+                Value<String> target = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ProxyDialersCompanion(
+                profileId: profileId,
+                proxyId: proxyId,
+                target: target,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int profileId,
+                required int proxyId,
+                required String target,
+                Value<int> rowid = const Value.absent(),
+              }) => ProxyDialersCompanion.insert(
+                profileId: profileId,
+                proxyId: proxyId,
+                target: target,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ProxyDialersTable, RawProxyDialer>(table),
+                  $$ProxyDialersTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({profileId = false, proxyId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (profileId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.profileId,
+                                referencedTable: $$ProxyDialersTableReferences
+                                    ._profileIdTable(db),
+                                referencedColumn: $$ProxyDialersTableReferences
+                                    ._profileIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (proxyId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.proxyId,
+                                referencedTable: $$ProxyDialersTableReferences
+                                    ._proxyIdTable(db),
+                                referencedColumn: $$ProxyDialersTableReferences
+                                    ._proxyIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ProxyDialersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $ProxyDialersTable,
+      RawProxyDialer,
+      $$ProxyDialersTableFilterComposer,
+      $$ProxyDialersTableOrderingComposer,
+      $$ProxyDialersTableAnnotationComposer,
+      $$ProxyDialersTableCreateCompanionBuilder,
+      $$ProxyDialersTableUpdateCompanionBuilder,
+      (RawProxyDialer, $$ProxyDialersTableReferences),
+      RawProxyDialer,
+      PrefetchHooks Function({bool profileId, bool proxyId})
     >;
 typedef $$UnlockTestRunsTableCreateCompanionBuilder =
     UnlockTestRunsCompanion Function({
@@ -6402,17 +8637,17 @@ class $$UnlockTestRunsTableTableManager
         RootTableManager<
           _$Database,
           $UnlockTestRunsTable,
-          UnlockTestRun,
+          RawUnlockTestRun,
           $$UnlockTestRunsTableFilterComposer,
           $$UnlockTestRunsTableOrderingComposer,
           $$UnlockTestRunsTableAnnotationComposer,
           $$UnlockTestRunsTableCreateCompanionBuilder,
           $$UnlockTestRunsTableUpdateCompanionBuilder,
           (
-            UnlockTestRun,
-            BaseReferences<_$Database, $UnlockTestRunsTable, UnlockTestRun>,
+            RawUnlockTestRun,
+            BaseReferences<_$Database, $UnlockTestRunsTable, RawUnlockTestRun>,
           ),
-          UnlockTestRun,
+          RawUnlockTestRun,
           PrefetchHooks Function()
         > {
   $$UnlockTestRunsTableTableManager(_$Database db, $UnlockTestRunsTable table)
@@ -6467,7 +8702,16 @@ class $$UnlockTestRunsTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$UnlockTestRunsTable, RawUnlockTestRun>(table),
+                  BaseReferences<
+                    _$Database,
+                    $UnlockTestRunsTable,
+                    RawUnlockTestRun
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -6478,17 +8722,17 @@ typedef $$UnlockTestRunsTableProcessedTableManager =
     ProcessedTableManager<
       _$Database,
       $UnlockTestRunsTable,
-      UnlockTestRun,
+      RawUnlockTestRun,
       $$UnlockTestRunsTableFilterComposer,
       $$UnlockTestRunsTableOrderingComposer,
       $$UnlockTestRunsTableAnnotationComposer,
       $$UnlockTestRunsTableCreateCompanionBuilder,
       $$UnlockTestRunsTableUpdateCompanionBuilder,
       (
-        UnlockTestRun,
-        BaseReferences<_$Database, $UnlockTestRunsTable, UnlockTestRun>,
+        RawUnlockTestRun,
+        BaseReferences<_$Database, $UnlockTestRunsTable, RawUnlockTestRun>,
       ),
-      UnlockTestRun,
+      RawUnlockTestRun,
       PrefetchHooks Function()
     >;
 
@@ -6501,12 +8745,20 @@ class $DatabaseManager {
       $$ScriptsTableTableManager(_db, _db.scripts);
   $$RulesTableTableManager get rules =>
       $$RulesTableTableManager(_db, _db.rules);
-  $$ProfileRuleLinksTableTableManager get profileRuleLinks =>
-      $$ProfileRuleLinksTableTableManager(_db, _db.profileRuleLinks);
+  $$DisabledRulesTableTableManager get disabledRules =>
+      $$DisabledRulesTableTableManager(_db, _db.disabledRules);
   $$ProxyGroupsTableTableManager get proxyGroups =>
       $$ProxyGroupsTableTableManager(_db, _db.proxyGroups);
   $$IconRecordsTableTableManager get iconRecords =>
       $$IconRecordsTableTableManager(_db, _db.iconRecords);
+  $$IconSetsTableTableManager get iconSets =>
+      $$IconSetsTableTableManager(_db, _db.iconSets);
+  $$ClashProvidersTableTableManager get clashProviders =>
+      $$ClashProvidersTableTableManager(_db, _db.clashProviders);
+  $$CustomProxiesTableTableManager get customProxies =>
+      $$CustomProxiesTableTableManager(_db, _db.customProxies);
+  $$ProxyDialersTableTableManager get proxyDialers =>
+      $$ProxyDialersTableTableManager(_db, _db.proxyDialers);
   $$UnlockTestRunsTableTableManager get unlockTestRuns =>
       $$UnlockTestRunsTableTableManager(_db, _db.unlockTestRuns);
 }
@@ -6536,25 +8788,21 @@ class ScriptsDaoManager {
 }
 
 mixin _$RulesDaoMixin on DatabaseAccessor<Database> {
-  $RulesTable get rules => attachedDatabase.rules;
   $ProfilesTable get profiles => attachedDatabase.profiles;
-  $ProfileRuleLinksTable get profileRuleLinks =>
-      attachedDatabase.profileRuleLinks;
+  $RulesTable get rules => attachedDatabase.rules;
+  $DisabledRulesTable get disabledRules => attachedDatabase.disabledRules;
   RulesDaoManager get managers => RulesDaoManager(this);
 }
 
 class RulesDaoManager {
   final _$RulesDaoMixin _db;
   RulesDaoManager(this._db);
-  $$RulesTableTableManager get rules =>
-      $$RulesTableTableManager(_db.attachedDatabase, _db.rules);
   $$ProfilesTableTableManager get profiles =>
       $$ProfilesTableTableManager(_db.attachedDatabase, _db.profiles);
-  $$ProfileRuleLinksTableTableManager get profileRuleLinks =>
-      $$ProfileRuleLinksTableTableManager(
-        _db.attachedDatabase,
-        _db.profileRuleLinks,
-      );
+  $$RulesTableTableManager get rules =>
+      $$RulesTableTableManager(_db.attachedDatabase, _db.rules);
+  $$DisabledRulesTableTableManager get disabledRules =>
+      $$DisabledRulesTableTableManager(_db.attachedDatabase, _db.disabledRules);
 }
 
 mixin _$ProxyGroupsDaoMixin on DatabaseAccessor<Database> {
@@ -6582,4 +8830,61 @@ class IconRecordsDaoManager {
   IconRecordsDaoManager(this._db);
   $$IconRecordsTableTableManager get iconRecords =>
       $$IconRecordsTableTableManager(_db.attachedDatabase, _db.iconRecords);
+}
+
+mixin _$IconSetsDaoMixin on DatabaseAccessor<Database> {
+  $IconSetsTable get iconSets => attachedDatabase.iconSets;
+  IconSetsDaoManager get managers => IconSetsDaoManager(this);
+}
+
+class IconSetsDaoManager {
+  final _$IconSetsDaoMixin _db;
+  IconSetsDaoManager(this._db);
+  $$IconSetsTableTableManager get iconSets =>
+      $$IconSetsTableTableManager(_db.attachedDatabase, _db.iconSets);
+}
+
+mixin _$ClashProvidersDaoMixin on DatabaseAccessor<Database> {
+  $ClashProvidersTable get clashProviders => attachedDatabase.clashProviders;
+  ClashProvidersDaoManager get managers => ClashProvidersDaoManager(this);
+}
+
+class ClashProvidersDaoManager {
+  final _$ClashProvidersDaoMixin _db;
+  ClashProvidersDaoManager(this._db);
+  $$ClashProvidersTableTableManager get clashProviders =>
+      $$ClashProvidersTableTableManager(
+        _db.attachedDatabase,
+        _db.clashProviders,
+      );
+}
+
+mixin _$CustomProxiesDaoMixin on DatabaseAccessor<Database> {
+  $CustomProxiesTable get customProxies => attachedDatabase.customProxies;
+  CustomProxiesDaoManager get managers => CustomProxiesDaoManager(this);
+}
+
+class CustomProxiesDaoManager {
+  final _$CustomProxiesDaoMixin _db;
+  CustomProxiesDaoManager(this._db);
+  $$CustomProxiesTableTableManager get customProxies =>
+      $$CustomProxiesTableTableManager(_db.attachedDatabase, _db.customProxies);
+}
+
+mixin _$ProxyDialersDaoMixin on DatabaseAccessor<Database> {
+  $ProfilesTable get profiles => attachedDatabase.profiles;
+  $CustomProxiesTable get customProxies => attachedDatabase.customProxies;
+  $ProxyDialersTable get proxyDialers => attachedDatabase.proxyDialers;
+  ProxyDialersDaoManager get managers => ProxyDialersDaoManager(this);
+}
+
+class ProxyDialersDaoManager {
+  final _$ProxyDialersDaoMixin _db;
+  ProxyDialersDaoManager(this._db);
+  $$ProfilesTableTableManager get profiles =>
+      $$ProfilesTableTableManager(_db.attachedDatabase, _db.profiles);
+  $$CustomProxiesTableTableManager get customProxies =>
+      $$CustomProxiesTableTableManager(_db.attachedDatabase, _db.customProxies);
+  $$ProxyDialersTableTableManager get proxyDialers =>
+      $$ProxyDialersTableTableManager(_db.attachedDatabase, _db.proxyDialers);
 }

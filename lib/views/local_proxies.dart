@@ -1,11 +1,12 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_list_page.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_mixin_settings_page.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class LocalProxiesView extends ConsumerStatefulWidget {
@@ -101,7 +102,7 @@ class _LocalProxiesViewState extends ConsumerState<LocalProxiesView> {
                               enabledCount,
                             ),
                           ),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: const GlyphIcon(AppGlyphs.chevronForward),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -114,7 +115,7 @@ class _LocalProxiesViewState extends ConsumerState<LocalProxiesView> {
                                 ? appLocalizations.localMixinEnabled
                                 : appLocalizations.localMixinDisabled,
                           ),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: const GlyphIcon(AppGlyphs.chevronForward),
                         ),
                       ),
                     ],

@@ -1,12 +1,12 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/local_rules/pages/local_rule_edit_page.dart';
 import 'package:fl_clash/local_rules/services/local_rule_reload.dart';
 import 'package:fl_clash/local_rules/services/local_rule_store.dart';
 import 'package:fl_clash/local_rules/services/local_rule_targets.dart';
 import 'package:fl_clash/models/local_rule.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class LocalRuleListPage extends StatefulWidget {
   const LocalRuleListPage({super.key});
@@ -56,9 +56,7 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
     try {
       await previous;
     } catch (error, stackTrace) {
-      commonPrint.log(
-        'Previous local rule toggle failed: $error\n$stackTrace',
-      );
+      commonPrint.log('Previous local rule toggle failed: $error\n$stackTrace');
     }
 
     try {
@@ -71,6 +69,7 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
   }
 
   Future<void> _toggleAndReload(int id) async {
+    final appLocalizations = context.appLocalizations;
     final original = _findRule(id);
     if (original == null) return;
 
@@ -94,7 +93,7 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
       );
     }
     if (mounted) {
-      globalState.showNotifier(context.appLocalizations.localRuleReloadFailed);
+      context.showNotifier(appLocalizations.localRuleReloadFailed);
     }
   }
 
@@ -124,7 +123,7 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
 
   Future<void> _handleDelete(LocalRule rule) async {
     final appLocalizations = context.appLocalizations;
-    final res = await globalState.showMessage(
+    final res = await dialogs.showMessage(
       title: appLocalizations.tip,
       message: TextSpan(
         text: appLocalizations.deleteTip(appLocalizations.rule),
@@ -138,11 +137,12 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
     await localRuleStore.replaceAll(rules: previous);
     await applyLocalRuleChanges();
     if (mounted) {
-      globalState.showNotifier(context.appLocalizations.localRuleReloadFailed);
+      context.showNotifier(appLocalizations.localRuleReloadFailed);
     }
   }
 
   Future<void> _handleReorder(int oldIndex, int newIndex) async {
+    final appLocalizations = context.appLocalizations;
     final previous = localRuleStore.rules;
     await localRuleStore.reorder(oldIndex, newIndex);
     final success = await applyLocalRuleChanges();
@@ -150,7 +150,7 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
     await localRuleStore.replaceAll(rules: previous);
     await applyLocalRuleChanges();
     if (mounted) {
-      globalState.showNotifier(context.appLocalizations.localRuleReloadFailed);
+      context.showNotifier(appLocalizations.localRuleReloadFailed);
     }
   }
 
@@ -179,13 +179,15 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
                 child: rules.isEmpty
                     ? NullStatus(
                         label: appLocalizations.noLocalRule,
-                        illustration: const RuleEmptyIllustration(),
+                        illustration: NullStatusIllustration.rules,
                       )
                     : ReorderableListView.builder(
                         padding: const EdgeInsets.all(16).copyWith(bottom: 88),
                         buildDefaultDragHandles: false,
                         itemCount: rules.length,
                         onReorderItem: _handleReorder,
+                        proxyDecorator: (child, index, animation) =>
+                            commonProxyDecorator(child, index, animation),
                         itemBuilder: (context, index) {
                           final rule = rules[index];
                           return Padding(
@@ -215,7 +217,7 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
         heroTag: null,
         onPressed: () => _handleAddOrEdit(),
         label: Text(appLocalizations.add),
-        icon: const Icon(Icons.add),
+        icon: const GlyphIcon(AppGlyphs.add, fill: 1),
       ),
     );
   }
@@ -258,8 +260,8 @@ class _RuleCard extends StatelessWidget {
                     if (invalid)
                       Padding(
                         padding: const EdgeInsets.only(right: 4),
-                        child: Icon(
-                          Icons.info,
+                        child: GlyphIcon(
+                          AppGlyphs.info,
                           size: 16,
                           color: context.colorScheme.error,
                         ),
@@ -305,11 +307,13 @@ class _RuleCard extends StatelessWidget {
                 children: [
                   Switch(value: rule.enabled, onChanged: (_) => onToggle()),
                   IconButton(
-                    icon: const Icon(Icons.edit_outlined),
+                    icon: const GlyphIcon(AppGlyphs.edit),
+                    tooltip: appLocalizations.edit,
                     onPressed: onEdit,
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete_outlined),
+                    icon: const GlyphIcon(AppGlyphs.delete),
+                    tooltip: appLocalizations.delete,
                     onPressed: onDelete,
                   ),
                 ],

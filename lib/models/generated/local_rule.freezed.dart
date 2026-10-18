@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of '../local_rule.dart';
@@ -9,6 +9,7 @@ part of '../local_rule.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $LocalRuleCopyWith<LocalRule> get copyWith => _$LocalRuleCopyWithImpl<LocalRule>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LocalRule&&(identical(other.id, id) || other.id == id)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.ruleAction, ruleAction) || other.ruleAction == ruleAction)&&(identical(other.content, content) || other.content == content)&&(identical(other.ruleTarget, ruleTarget) || other.ruleTarget == ruleTarget)&&(identical(other.noResolve, noResolve) || other.noResolve == noResolve)&&(identical(other.src, src) || other.src == src)&&(identical(other.sortIndex, sortIndex) || other.sortIndex == sortIndex));
+  final _this = this as LocalRule;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LocalRule&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.enabled, _this.enabled) || other.enabled == _this.enabled)&&(identical(other.ruleAction, _this.ruleAction) || other.ruleAction == _this.ruleAction)&&(identical(other.content, _this.content) || other.content == _this.content)&&(identical(other.ruleTarget, _this.ruleTarget) || other.ruleTarget == _this.ruleTarget)&&(identical(other.noResolve, _this.noResolve) || other.noResolve == _this.noResolve)&&(identical(other.src, _this.src) || other.src == _this.src)&&(identical(other.sortIndex, _this.sortIndex) || other.sortIndex == _this.sortIndex));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,enabled,ruleAction,content,ruleTarget,noResolve,src,sortIndex);
+int get hashCode {
+  final _this = this as LocalRule;
+  return Object.hash(runtimeType,_this.id,_this.enabled,_this.ruleAction,_this.content,_this.ruleTarget,_this.noResolve,_this.src,_this.sortIndex);
+}
 
 @override
 String toString() {
-  return 'LocalRule(id: $id, enabled: $enabled, ruleAction: $ruleAction, content: $content, ruleTarget: $ruleTarget, noResolve: $noResolve, src: $src, sortIndex: $sortIndex)';
+  final _this = this as LocalRule;
+  return 'LocalRule(id: ${_this.id}, enabled: ${_this.enabled}, ruleAction: ${_this.ruleAction}, content: ${_this.content}, ruleTarget: ${_this.ruleTarget}, noResolve: ${_this.noResolve}, src: ${_this.src}, sortIndex: ${_this.sortIndex})';
 }
 
 
@@ -66,7 +72,7 @@ class _$LocalRuleCopyWithImpl<$Res>
 /// Create a copy of LocalRule
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? enabled = null,Object? ruleAction = null,Object? content = freezed,Object? ruleTarget = freezed,Object? noResolve = null,Object? src = null,Object? sortIndex = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(LocalRule(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
 as bool,ruleAction: null == ruleAction ? _self.ruleAction : ruleAction // ignore: cast_nullable_to_non_nullable
@@ -241,16 +247,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LocalRule&&(identical(other.id, id) || other.id == id)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.ruleAction, ruleAction) || other.ruleAction == ruleAction)&&(identical(other.content, content) || other.content == content)&&(identical(other.ruleTarget, ruleTarget) || other.ruleTarget == ruleTarget)&&(identical(other.noResolve, noResolve) || other.noResolve == noResolve)&&(identical(other.src, src) || other.src == src)&&(identical(other.sortIndex, sortIndex) || other.sortIndex == sortIndex));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LocalRule&&(identical(other.id, id) || other.id == id)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.ruleAction, ruleAction) || other.ruleAction == ruleAction)&&(identical(other.content, content) || other.content == content)&&(identical(other.ruleTarget, ruleTarget) || other.ruleTarget == ruleTarget)&&(identical(other.noResolve, noResolve) || other.noResolve == noResolve)&&(identical(other.src, src) || other.src == src)&&(identical(other.sortIndex, sortIndex) || other.sortIndex == sortIndex));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,enabled,ruleAction,content,ruleTarget,noResolve,src,sortIndex);
+int get hashCode {
+    return Object.hash(runtimeType,id,enabled,ruleAction,content,ruleTarget,noResolve,src,sortIndex);
+}
 
 @override
 String toString() {
-  return 'LocalRule(id: $id, enabled: $enabled, ruleAction: $ruleAction, content: $content, ruleTarget: $ruleTarget, noResolve: $noResolve, src: $src, sortIndex: $sortIndex)';
+    return 'LocalRule(id: $id, enabled: $enabled, ruleAction: $ruleAction, content: $content, ruleTarget: $ruleTarget, noResolve: $noResolve, src: $src, sortIndex: $sortIndex)';
 }
 
 

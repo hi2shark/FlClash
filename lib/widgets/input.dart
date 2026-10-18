@@ -1,20 +1,22 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/common.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/dialog.dart';
 import 'package:fl_clash/widgets/inherited.dart';
 import 'package:fl_clash/widgets/null_status.dart';
 import 'package:fl_clash/widgets/pop_scope.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'effect.dart';
 import 'list.dart';
 import 'theme.dart';
+part 'edit_view.dart';
 
 class OptionsDialog<T> extends StatelessWidget {
   final String title;
@@ -34,7 +36,15 @@ class OptionsDialog<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return CommonDialog(
       title: title,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text(context.appLocalizations.cancel),
+        ),
+      ],
       child: RadioGroup(
         onChanged: (value) {
           Navigator.of(context).pop(value);
@@ -51,12 +61,10 @@ class OptionsDialog<T> extends StatelessWidget {
                     });
                   }
                   return ListItem.radio(
-                    delegate: RadioDelegate(
-                      value: option,
-                      onTab: () {
-                        Navigator.of(context).pop(option);
-                      },
-                    ),
+                    value: option,
+                    onTap: () {
+                      Navigator.of(context).pop(option);
+                    },
                     title: Text(textBuilder(option)),
                   );
                 },
@@ -85,9 +93,325 @@ class CommonCheckBox extends StatelessWidget {
     return Checkbox(
       materialTapTargetSize: MaterialTapTargetSize.padded,
       visualDensity: VisualDensity.standard,
-      shape: isCircle ? const CircleBorder() : null,
+      shape: isCircle ? AppShape.circle : null,
       value: value,
       onChanged: onChanged,
+    );
+  }
+}
+
+typedef NamedUrl = ({String label, String url, String ageSecretKey});
+
+/// The url below the name holds the focus, as the one field that must be filled.
+/// Pops a list so a single url and a batch return through the same path.
+class NamedUrlDialog extends StatefulWidget {
+  final String title;
+  final String label;
+  final String url;
+  final String? urlLabel;
+  final String? batchTip;
+  final FormFieldValidator<String>? labelValidator;
+  final FormFieldValidator<String>? urlValidator;
+  final bool batch;
+  final Set<String> existingUrls;
+  final bool withAgeSecretKey;
+
+  const NamedUrlDialog({
+    super.key,
+    required this.title,
+    this.label = '',
+    this.url = '',
+    this.urlLabel,
+    this.batchTip,
+    this.labelValidator,
+    this.urlValidator,
+    this.batch = false,
+    this.existingUrls = const {},
+    this.withAgeSecretKey = false,
+  });
+
+  @override
+  State<NamedUrlDialog> createState() => _NamedUrlDialogState();
+}
+
+class _NamedUrlDialogState extends State<NamedUrlDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _urlFocusNode = FocusNode();
+  final _ageSecretKeyFocusNode = FocusNode();
+  late final TextEditingController _labelController;
+  late final TextEditingController _urlController;
+  final _ageSecretKeyController = TextEditingController();
+  final _batchController = TextEditingController();
+  bool _isBatch = false;
+  ParsedInput<String>? _parsed;
+
+  bool get _canSubmit {
+    if (!_isBatch) {
+      return true;
+    }
+    final parsed = _parsed;
+    return parsed != null && parsed.isValid && parsed.entries.isNotEmpty;
+  }
+
+  String get _urlLabel => widget.urlLabel ?? context.appLocalizations.url;
+
+  BatchInput<String> get _batchInput {
+    final appLocalizations = context.appLocalizations;
+    return BatchInput(
+      label: _urlLabel,
+      formatTip: widget.batchTip ?? appLocalizations.batchUrlInputTip,
+      parse: (text) => parseUrlInput(
+        text,
+        isValid: (url) => _validateBatchUrl(url) == null,
+        existing: widget.existingUrls,
+      ),
+      issueMessage: (issue) => _validateBatchUrl(issue.raw)!,
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _labelController = TextEditingController(text: widget.label);
+    _urlController = TextEditingController(text: widget.url);
+  }
+
+  @override
+  void dispose() {
+    _urlFocusNode.dispose();
+    _ageSecretKeyFocusNode.dispose();
+    _labelController.dispose();
+    _urlController.dispose();
+    _ageSecretKeyController.dispose();
+    _batchController.dispose();
+    super.dispose();
+  }
+
+  String? _validateUrl(String? value) {
+    final validator = widget.urlValidator;
+    if (validator != null) {
+      return validator(value);
+    }
+    final appLocalizations = context.appLocalizations;
+    final url = value?.trim() ?? '';
+    if (url.isEmpty) {
+      return appLocalizations.emptyTip(_urlLabel);
+    }
+    if (!url.isUrl) {
+      return appLocalizations.urlTip(_urlLabel);
+    }
+    return null;
+  }
+
+  String? _validateBatchUrl(String url) {
+    if (url.length > TextInputLimits.url) {
+      final appLocalizations = context.appLocalizations;
+      return appLocalizations.maxLengthTip(_urlLabel, TextInputLimits.url);
+    }
+    return _validateUrl(url);
+  }
+
+  void _toggleBatch() {
+    setState(() {
+      _isBatch = !_isBatch;
+      if (_isBatch && _batchController.text.isEmpty) {
+        _batchController.text = _urlController.text.trim();
+      }
+      if (_isBatch) {
+        _parsed = _batchInput.parse(_batchController.text);
+      }
+    });
+  }
+
+  void _handleBatchChanged(String text) {
+    setState(() {
+      _parsed = _batchInput.parse(text);
+    });
+  }
+
+  void _handleSubmit() {
+    if (!_canSubmit) {
+      return;
+    }
+    if (_isBatch) {
+      Navigator.of(context).pop<List<NamedUrl>>([
+        for (final url in _parsed!.entries)
+          (label: '', url: url, ageSecretKey: ''),
+      ]);
+      return;
+    }
+    if (_formKey.currentState?.validate() == false) {
+      return;
+    }
+    Navigator.of(context).pop<List<NamedUrl>>([
+      (
+        label: _labelController.text.trim(),
+        url: _urlController.text.trim(),
+        ageSecretKey: _ageSecretKeyController.text.trim(),
+      ),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return CommonDialog(
+      title: _isBatch ? appLocalizations.batchImport : widget.title,
+      trailing: widget.batch
+          ? _BatchToggle(
+              isBatch: _isBatch,
+              tooltip: _isBatch
+                  ? appLocalizations.singleImport
+                  : appLocalizations.batchImport,
+              onPressed: _toggleBatch,
+            )
+          : null,
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text(appLocalizations.cancel),
+        ),
+        TextButton(
+          onPressed: _canSubmit ? _handleSubmit : null,
+          child: Text(appLocalizations.submit),
+        ),
+      ],
+      child: _isBatch
+          ? _BatchInputField(
+              batch: _batchInput,
+              controller: _batchController,
+              parsed: _parsed,
+              onChanged: _handleBatchChanged,
+            )
+          : _buildForm(appLocalizations),
+    );
+  }
+
+  Widget _buildForm(AppLocalizations appLocalizations) {
+    return Form(
+      key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Wrap(
+        runSpacing: 16,
+        children: [
+          TextFormField(
+            controller: _labelController,
+            validator: widget.labelValidator,
+            textInputAction: TextInputAction.next,
+            inputFormatters: TextInputLimits.limit(TextInputLimits.name),
+            onFieldSubmitted: (_) {
+              _urlFocusNode.requestFocus();
+            },
+            decoration: InputDecoration(
+              labelText: appLocalizations.name,
+              helperText: appLocalizations.optional,
+            ),
+          ),
+          TextFormField(
+            autofocus: true,
+            focusNode: _urlFocusNode,
+            controller: _urlController,
+            validator: _validateUrl,
+            keyboardType: TextInputType.url,
+            minLines: 1,
+            maxLines: 5,
+            textInputAction: widget.withAgeSecretKey
+                ? TextInputAction.next
+                : TextInputAction.done,
+            inputFormatters: TextInputLimits.limit(TextInputLimits.url),
+            onFieldSubmitted: (_) {
+              if (widget.withAgeSecretKey) {
+                _ageSecretKeyFocusNode.requestFocus();
+              } else {
+                _handleSubmit();
+              }
+            },
+            decoration: InputDecoration(labelText: _urlLabel),
+          ),
+          if (widget.withAgeSecretKey)
+            SecretTextFormField(
+              focusNode: _ageSecretKeyFocusNode,
+              controller: _ageSecretKeyController,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) {
+                _handleSubmit();
+              },
+              decoration: InputDecoration(
+                labelText: appLocalizations.ageSecretKey,
+                helperText: appLocalizations.optional,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Single-line while hidden: Flutter cannot obscure more than one line.
+class SecretTextFormField extends StatefulWidget {
+  final TextEditingController controller;
+  final FocusNode? focusNode;
+  final InputDecoration decoration;
+  final int maxLines;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
+  final FormFieldValidator<String>? validator;
+  final bool autofocus;
+
+  const SecretTextFormField({
+    super.key,
+    required this.controller,
+    this.focusNode,
+    this.decoration = const InputDecoration(),
+    this.maxLines = 1,
+    this.maxLength,
+    this.inputFormatters,
+    this.textInputAction,
+    this.onFieldSubmitted,
+    this.validator,
+    this.autofocus = false,
+  });
+
+  @override
+  State<SecretTextFormField> createState() => _SecretTextFormFieldState();
+}
+
+class _SecretTextFormFieldState extends State<SecretTextFormField> {
+  bool _obscure = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return TextFormField(
+      autofocus: widget.autofocus,
+      focusNode: widget.focusNode,
+      controller: widget.controller,
+      obscureText: _obscure,
+      keyboardType: TextInputType.visiblePassword,
+      maxLines: _obscure ? 1 : widget.maxLines,
+      minLines: 1,
+      maxLength: widget.maxLength,
+      inputFormatters: widget.inputFormatters,
+      textInputAction: widget.textInputAction,
+      onFieldSubmitted: widget.onFieldSubmitted,
+      validator: widget.validator,
+      decoration: widget.decoration.copyWith(
+        suffixIcon: IconButton(
+          tooltip: _obscure
+              ? appLocalizations.showPassword
+              : appLocalizations.hidePassword,
+          icon: GlyphIcon(_obscure ? AppGlyphs.eye : AppGlyphs.eyeOff),
+          onPressed: () {
+            setState(() {
+              _obscure = !_obscure;
+            });
+          },
+        ),
+      ),
     );
   }
 }
@@ -105,6 +429,7 @@ class InputDialog extends StatefulWidget {
   final int? maxLength;
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? keyboardType;
+  final bool selectAll;
 
   const InputDialog({
     super.key,
@@ -119,6 +444,7 @@ class InputDialog extends StatefulWidget {
     this.maxLength,
     this.inputFormatters,
     this.keyboardType,
+    this.selectAll = false,
     this.autovalidateMode = AutovalidateMode.onUserInteraction,
   });
 
@@ -141,6 +467,12 @@ class _InputDialogState extends State<InputDialog> {
   void initState() {
     super.initState();
     _textController = TextEditingController(text: value);
+    if (widget.selectAll) {
+      _textController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: value.length,
+      );
+    }
   }
 
   Future<void> _handleUpdate() async {
@@ -165,6 +497,11 @@ class _InputDialogState extends State<InputDialog> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
+    final decoration = InputDecoration(
+      suffixText: suffixText,
+      hintText: widget.hintText,
+      labelText: widget.labelText,
+    );
     return CommonDialog(
       title: title,
       actions: [
@@ -192,25 +529,34 @@ class _InputDialogState extends State<InputDialog> {
         child: Wrap(
           runSpacing: 16,
           children: [
-            TextFormField(
-              maxLength: widget.maxLength,
-              inputFormatters: widget.inputFormatters,
-              obscureText: widget.obscureText ?? false,
-              keyboardType: widget.keyboardType ?? TextInputType.url,
-              maxLines: widget.obscureText == true ? 1 : 5,
-              minLines: 1,
-              controller: _textController,
-              onFieldSubmitted: (_) {
-                _handleUpdate();
-              },
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                suffixText: suffixText,
-                hintText: widget.hintText,
-                labelText: widget.labelText,
+            if (widget.obscureText == true)
+              SecretTextFormField(
+                autofocus: widget.selectAll,
+                maxLength: widget.maxLength,
+                inputFormatters: widget.inputFormatters,
+                maxLines: 5,
+                controller: _textController,
+                onFieldSubmitted: (_) {
+                  _handleUpdate();
+                },
+                decoration: decoration,
+                validator: widget.validator,
+              )
+            else
+              TextFormField(
+                autofocus: widget.selectAll,
+                maxLength: widget.maxLength,
+                inputFormatters: widget.inputFormatters,
+                keyboardType: widget.keyboardType ?? TextInputType.url,
+                maxLines: 5,
+                minLines: 1,
+                controller: _textController,
+                onFieldSubmitted: (_) {
+                  _handleUpdate();
+                },
+                decoration: decoration,
+                validator: widget.validator,
               ),
-              validator: widget.validator,
-            ),
           ],
         ),
       ),
@@ -218,528 +564,64 @@ class _InputDialogState extends State<InputDialog> {
   }
 }
 
-class ListInputPage extends ConsumerStatefulWidget {
-  final String title;
-  final List<String> items;
-  final Widget Function(String item) titleBuilder;
-  final Widget Function(String item)? subtitleBuilder;
-  final Widget Function(String item)? leadingBuilder;
-  final String? valueLabel;
-  final int? itemMaxLength;
+class BatchInput<T> {
+  final String label;
+  final String formatTip;
+  final ParsedInput<T> Function(String text) parse;
+  final String Function(InputIssue issue) issueMessage;
 
-  const ListInputPage({
-    super.key,
-    required this.title,
-    required this.items,
-    required this.titleBuilder,
-    this.leadingBuilder,
-    this.valueLabel,
-    this.subtitleBuilder,
-    this.itemMaxLength,
+  const BatchInput({
+    required this.label,
+    required this.formatTip,
+    required this.parse,
+    required this.issueMessage,
   });
-
-  @override
-  ConsumerState createState() => _ListInputPageState();
 }
 
-class _ListInputPageState extends ConsumerState<ListInputPage> {
-  List<String> _items = [];
-  late List<String> _originItems;
-  final _key = utils.id;
-
-  @override
-  void initState() {
-    super.initState();
-    _items = widget.items;
-    _originItems = List<String>.from(_items);
-  }
-
-  void _handleReorder(int oldIndex, newIndex) {
-    _items = _items.copyAndReorder(oldIndex, newIndex);
-    setState(() {});
-  }
-
-  void _handleSelected(String value) {
-    ref.read(itemsProvider(_key).notifier).update((state) {
-      final newState = Set<String>.from(state)..addOrRemove(value);
-      return newState;
-    });
-  }
-
-  void _handleSelectAll() {
-    final ids = _items.toSet();
-    ref.read(itemsProvider(_key).notifier).update((selected) {
-      return selected.containsAll(ids) ? {} : ids;
-    });
-  }
-
-  Future<void> _handleAddOrEdit([String? item]) async {
-    final appLocalizations = context.appLocalizations;
-    String? uniqueValidator(String? value) {
-      final index = _items.indexWhere((entry) {
-        return entry == value;
-      });
-      final current = item == value;
-      if (index != -1 && !current) {
-        return appLocalizations.existsTip(appLocalizations.value);
-      }
-      return null;
-    }
-
-    final value = await globalState.showCommonDialog<String>(
-      child: AddDialog(
-        valueField: Field(
-          label: widget.valueLabel ?? appLocalizations.value,
-          value: item ?? '',
-          validator: uniqueValidator,
-        ),
-        valueMaxLength: widget.itemMaxLength,
-        title: item != null ? appLocalizations.edit : appLocalizations.add,
-      ),
-    );
-
-    if (value == null) return;
-    final index = _items.indexWhere((entry) {
-      return entry == item;
-    });
-    final nextItems = List<String>.from(_items);
-    if (item != null) {
-      nextItems[index] = value;
-    } else {
-      nextItems.add(value);
-    }
-    _items = nextItems;
-    setState(() {});
-  }
-
-  void _handleDelete() {
-    final selectedItems = ref.read(itemsProvider(_key));
-    final newItems = _items
-        .where((item) => !selectedItems.contains(item))
-        .toList();
-    _items = newItems;
-    ref.read(itemsProvider(_key).notifier).value = {};
-    setState(() {});
-  }
-
-  Future<void> _handleReset() async {
-    final res = await globalState.showMessage(
-      message: TextSpan(text: context.appLocalizations.resetPageChangesTip),
-    );
-    if (res != true) {
-      return;
-    }
-    _items = _originItems;
-    setState(() {});
-  }
-
-  Widget _buildItem({
-    required String value,
-    required int index,
-    required int length,
-    required bool isSelected,
-    required bool isEditing,
-  }) {
-    final position = ItemPosition.get(index, length);
-    return ReorderableDelayedDragStartListener(
-      key: ValueKey(value),
-      index: index,
-      child: ItemPositionProvider(
-        position: position,
-        child: SelectedDecorationListItem(
-          title: widget.titleBuilder(value),
-          isSelected: isSelected,
-          isEditing: isEditing,
-          onSelected: () {
-            _handleSelected(value);
-          },
-          onPressed: () {
-            _handleAddOrEdit(value);
-          },
-          leading: widget.leadingBuilder != null
-              ? widget.leadingBuilder!(value)
-              : null,
-          subtitle: widget.subtitleBuilder != null
-              ? widget.subtitleBuilder!(value)
-              : null,
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    final selectedItems = ref.watch(itemsProvider(_key));
-    return CommonPopScope(
-      onPop: (_) {
-        if (selectedItems.isNotEmpty) {
-          ref.read(itemsProvider(_key).notifier).value = {};
-          return false;
-        }
-        Navigator.of(context).pop(_items);
-        return false;
-      },
-      child: CommonScaffold(
-        title: widget.title,
-        actions: [
-          if (selectedItems.isNotEmpty) ...[
-            CommonMinIconButtonTheme(
-              child: IconButton.filledTonal(
-                onPressed: _handleDelete,
-                icon: const Icon(Icons.delete),
-              ),
-            ),
-            const SizedBox(width: 2),
-          ] else if (!stringListEquality.equals(_items, _originItems)) ...[
-            CommonMinIconButtonTheme(
-              child: IconButton.filledTonal(
-                onPressed: _handleReset,
-                icon: const Icon(Icons.replay),
-              ),
-            ),
-            const SizedBox(width: 2),
-          ],
-          CommonMinFilledButtonTheme(
-            child: selectedItems.isNotEmpty
-                ? FilledButton(
-                    onPressed: _handleSelectAll,
-                    child: Text(appLocalizations.selectAll),
-                  )
-                : FilledButton.tonal(
-                    onPressed: () {
-                      _handleAddOrEdit();
-                    },
-                    child: Text(appLocalizations.add),
-                  ),
-          ),
-          const SizedBox(width: 8),
-        ],
-        body: _items.isEmpty
-            ? NullStatus(label: appLocalizations.noData)
-            : ReorderableListView.builder(
-                padding: const EdgeInsets.only(
-                  bottom: 16 + 64,
-                  top: 16,
-                  left: 16,
-                  right: 16,
-                ),
-                buildDefaultDragHandles: false,
-                itemCount: _items.length,
-                itemBuilder: (context, index) {
-                  final value = _items[index];
-                  return _buildItem(
-                    value: value,
-                    index: index,
-                    length: _items.length,
-                    isSelected: selectedItems.contains(value),
-                    isEditing: selectedItems.isNotEmpty,
-                  );
-                },
-                proxyDecorator: (child, index, animation) {
-                  final value = _items[index];
-                  return commonProxyDecorator(
-                    _buildItem(
-                      value: value,
-                      index: index,
-                      length: _items.length,
-                      isSelected: selectedItems.contains(value),
-                      isEditing: selectedItems.isNotEmpty,
-                    ),
-                    index,
-                    animation,
-                  );
-                },
-                onReorderItem: _handleReorder,
-              ),
-      ),
-    );
-  }
-}
-
-class MapInputPage extends ConsumerStatefulWidget {
-  final String title;
-  final Map<String, String> map;
-  final Widget Function(MapEntry<String, String> item) titleBuilder;
-  final Widget Function(MapEntry<String, String> item)? subtitleBuilder;
-  final Widget Function(MapEntry<String, String> item)? leadingBuilder;
-  final String? keyLabel;
-  final String? valueLabel;
-  final int? keyMaxLength;
-  final int? valueMaxLength;
-
-  const MapInputPage({
-    super.key,
-    required this.title,
-    required this.map,
-    required this.titleBuilder,
-    this.leadingBuilder,
-    this.keyLabel,
-    this.valueLabel,
-    this.subtitleBuilder,
-    this.keyMaxLength,
-    this.valueMaxLength,
-  });
-
-  @override
-  ConsumerState<MapInputPage> createState() => _MapInputPageState();
-}
-
-class _MapInputPageState extends ConsumerState<MapInputPage> {
-  List<MapEntry<String, String>> _items = [];
-  late final List<MapEntry<String, String>> _originItems;
-  final _key = utils.id;
-
-  @override
-  void initState() {
-    super.initState();
-    _items = List<MapEntry<String, String>>.from(widget.map.entries);
-    _originItems = List<MapEntry<String, String>>.from(_items);
-  }
-
-  void _handleReorder(int oldIndex, newIndex) {
-    _items = _items.copyAndReorder(oldIndex, newIndex);
-    setState(() {});
-  }
-
-  void _handleSelected(MapEntry<String, String> value) {
-    ref.read(itemsProvider(_key).notifier).update((state) {
-      final newState = Set<String>.from(state)..addOrRemove(value.key);
-      return newState;
-    });
-  }
-
-  void _handleSelectAll() {
-    final ids = _items.map((item) => item.key).toSet();
-    ref.read(itemsProvider(_key).notifier).update((selected) {
-      return selected.containsAll(ids) ? {} : ids;
-    });
-  }
-
-  Future<void> _handleAddOrEdit([MapEntry<String, String>? item]) async {
-    final appLocalizations = context.appLocalizations;
-    String? uniqueValidator(String? value) {
-      final index = _items.indexWhere((entry) {
-        return entry.key == value;
-      });
-      final current = item?.key == value;
-      if (index != -1 && !current) {
-        return appLocalizations.existsTip(appLocalizations.key);
-      }
-      return null;
-    }
-
-    final keyField = Field(
-      label: widget.keyLabel ?? appLocalizations.key,
-      value: item == null ? '' : item.key,
-      validator: uniqueValidator,
-    );
-
-    final valueField = Field(
-      label: widget.valueLabel ?? appLocalizations.value,
-      value: item == null ? '' : item.value,
-    );
-
-    final value = await globalState.showCommonDialog<MapEntry<String, String>>(
-      child: AddDialog(
-        keyField: keyField,
-        valueField: valueField,
-        keyMaxLength: widget.keyMaxLength,
-        valueMaxLength: widget.valueMaxLength,
-        title: item != null ? appLocalizations.edit : appLocalizations.add,
-      ),
-    );
-    if (value == null) return;
-    final index = _items.indexWhere((entry) {
-      return entry.key == item?.key;
-    });
-
-    final nextItems = List<MapEntry<String, String>>.from(_items);
-    if (item != null) {
-      nextItems[index] = value;
-    } else {
-      nextItems.add(value);
-    }
-    _items = nextItems;
-    setState(() {});
-  }
-
-  void _handleDelete() {
-    final selectedItems = ref.read(itemsProvider(_key));
-    final newItems = _items
-        .where((item) => !selectedItems.contains(item.key))
-        .toList();
-    _items = newItems;
-    ref.read(itemsProvider(_key).notifier).value = {};
-    setState(() {});
-  }
-
-  Future<void> _handleReset() async {
-    final res = await globalState.showMessage(
-      message: TextSpan(text: context.appLocalizations.resetPageChangesTip),
-    );
-    if (res != true) {
-      return;
-    }
-    _items = _originItems;
-    setState(() {});
-  }
-
-  Widget _buildItem({
-    required MapEntry<String, String> value,
-    required int index,
-    required int length,
-    required bool isSelected,
-    required bool isEditing,
-  }) {
-    final position = ItemPosition.get(index, length);
-    return ReorderableDelayedDragStartListener(
-      key: ValueKey(value),
-      index: index,
-      child: ItemPositionProvider(
-        position: position,
-        child: SelectedDecorationListItem(
-          title: widget.titleBuilder(value),
-          leading: widget.leadingBuilder != null
-              ? widget.leadingBuilder!(value)
-              : null,
-          subtitle: widget.subtitleBuilder != null
-              ? widget.subtitleBuilder!(value)
-              : null,
-          isSelected: isSelected,
-          isEditing: isEditing,
-          onSelected: () {
-            _handleSelected(value);
-          },
-          onPressed: () {
-            _handleAddOrEdit(value);
-          },
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    final selectedItems = ref.watch(itemsProvider(_key));
-    return CommonPopScope(
-      onPop: (_) {
-        if (selectedItems.isNotEmpty) {
-          ref.read(itemsProvider(_key).notifier).value = {};
-          return false;
-        }
-        Navigator.of(context).pop(Map<String, String>.fromEntries(_items));
-        return false;
-      },
-      child: CommonScaffold(
-        title: widget.title,
-        actions: [
-          if (selectedItems.isNotEmpty) ...[
-            CommonMinIconButtonTheme(
-              child: IconButton.filledTonal(
-                onPressed: _handleDelete,
-                icon: const Icon(Icons.delete),
-              ),
-            ),
-            const SizedBox(width: 2),
-          ] else if (!stringAndStringMapEntryListEquality.equals(
-            _items,
-            _originItems,
-          )) ...[
-            CommonMinIconButtonTheme(
-              child: IconButton.filledTonal(
-                onPressed: _handleReset,
-                icon: const Icon(Icons.replay),
-              ),
-            ),
-            const SizedBox(width: 2),
-          ],
-          CommonMinFilledButtonTheme(
-            child: selectedItems.isNotEmpty
-                ? FilledButton(
-                    onPressed: _handleSelectAll,
-                    child: Text(appLocalizations.selectAll),
-                  )
-                : FilledButton.tonal(
-                    onPressed: () {
-                      _handleAddOrEdit();
-                    },
-                    child: Text(appLocalizations.add),
-                  ),
-          ),
-          const SizedBox(width: 8),
-        ],
-        body: _items.isEmpty
-            ? NullStatus(label: appLocalizations.noData)
-            : ReorderableListView.builder(
-                padding: const EdgeInsets.only(
-                  bottom: 16 + 64,
-                  top: 16,
-                  left: 16,
-                  right: 16,
-                ),
-                buildDefaultDragHandles: false,
-                itemCount: _items.length,
-                itemBuilder: (context, index) {
-                  final value = _items[index];
-                  return _buildItem(
-                    value: value,
-                    index: index,
-                    length: _items.length,
-                    isSelected: selectedItems.contains(value.key),
-                    isEditing: selectedItems.isNotEmpty,
-                  );
-                },
-                proxyDecorator: (child, index, animation) {
-                  final value = _items[index];
-                  return commonProxyDecorator(
-                    _buildItem(
-                      value: value,
-                      index: index,
-                      length: _items.length,
-                      isSelected: selectedItems.contains(value.key),
-                      isEditing: selectedItems.isNotEmpty,
-                    ),
-                    index,
-                    animation,
-                  );
-                },
-                onReorderItem: _handleReorder,
-              ),
-      ),
-    );
-  }
-}
-
-class AddDialog extends StatefulWidget {
+/// Pops a list so a single entry and a batch return through the same path.
+class EntryDialog<T> extends StatefulWidget {
   final String title;
   final Field? keyField;
   final Field valueField;
   final int? keyMaxLength;
   final int? valueMaxLength;
+  final T Function(String? key, String value) toEntry;
+  final BatchInput<T>? batch;
 
-  const AddDialog({
+  const EntryDialog({
     super.key,
     required this.title,
     this.keyField,
     required this.valueField,
     this.keyMaxLength,
     this.valueMaxLength,
+    required this.toEntry,
+    this.batch,
   });
 
   @override
-  State<AddDialog> createState() => _AddDialogState();
+  State<EntryDialog<T>> createState() => _EntryDialogState<T>();
 }
 
-class _AddDialogState extends State<AddDialog> {
+class _EntryDialogState<T> extends State<EntryDialog<T>> {
   TextEditingController? _keyController;
-  late TextEditingController _valueController;
+  late final TextEditingController _valueController;
+  final _batchController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  bool _isBatch = false;
+  ParsedInput<T>? _parsed;
 
   Field? get keyField => widget.keyField;
 
   Field get valueField => widget.valueField;
+
+  bool get _canSubmit {
+    if (!_isBatch) {
+      return true;
+    }
+    final parsed = _parsed;
+    return parsed != null && parsed.isValid && parsed.entries.isNotEmpty;
+  }
 
   @override
   void initState() {
@@ -750,95 +632,224 @@ class _AddDialogState extends State<AddDialog> {
     _valueController = TextEditingController(text: valueField.value);
   }
 
+  void _toggleBatch() {
+    setState(() {
+      _isBatch = !_isBatch;
+      if (_isBatch && _batchController.text.isEmpty) {
+        _batchController.text = [_keyController?.text, _valueController.text]
+            .nonNulls
+            .map((text) => text.trim())
+            .where((t) => t.isNotEmpty)
+            .join(' ');
+      }
+      if (_isBatch) {
+        _parsed = widget.batch!.parse(_batchController.text);
+      }
+    });
+  }
+
+  void _handleBatchChanged(String text) {
+    setState(() {
+      _parsed = widget.batch!.parse(text);
+    });
+  }
+
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-    if (keyField != null) {
-      Navigator.of(context).pop<MapEntry<String, String>>(
-        MapEntry(_keyController!.text, _valueController.text),
-      );
-    } else {
-      Navigator.of(context).pop<String>(_valueController.text);
+    if (!_canSubmit) return;
+    if (_isBatch) {
+      Navigator.of(context).pop<List<T>>(_parsed!.entries);
+      return;
     }
+    if (!_formKey.currentState!.validate()) return;
+    Navigator.of(context).pop<List<T>>([
+      widget.toEntry(_keyController?.text, _valueController.text),
+    ]);
   }
 
   @override
   void dispose() {
     _keyController?.dispose();
     _valueController.dispose();
+    _batchController.dispose();
     super.dispose();
+  }
+
+  Widget _buildForm(AppLocalizations appLocalizations) {
+    return Form(
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      key: _formKey,
+      child: Wrap(
+        runSpacing: 16,
+        children: [
+          if (keyField != null)
+            TextFormField(
+              maxLines: 3,
+              minLines: 1,
+              inputFormatters: widget.keyMaxLength == null
+                  ? null
+                  : TextInputLimits.limit(widget.keyMaxLength!),
+              controller: _keyController,
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(labelText: keyField!.label),
+              validator: (String? value) {
+                String? res;
+                if (keyField!.validator != null) {
+                  res = keyField!.validator!(value);
+                }
+                if (res != null) {
+                  return res;
+                }
+                if (value == null || value.isEmpty) {
+                  return appLocalizations.emptyTip(appLocalizations.key);
+                }
+                return null;
+              },
+            ),
+          TextFormField(
+            maxLines: 3,
+            minLines: 1,
+            inputFormatters: widget.valueMaxLength == null
+                ? null
+                : TextInputLimits.limit(widget.valueMaxLength!),
+            keyboardType: TextInputType.text,
+            controller: _valueController,
+            decoration: InputDecoration(labelText: valueField.label),
+            onFieldSubmitted: (_) {
+              _submit();
+            },
+            validator: (String? value) {
+              String? res;
+              if (valueField.validator != null) {
+                res = valueField.validator!(value);
+              }
+              if (res != null) {
+                return res;
+              }
+              if (value == null || value.isEmpty) {
+                return appLocalizations.emptyTip(appLocalizations.value);
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return CommonDialog(
-      title: widget.title,
-      actions: [
-        TextButton(onPressed: _submit, child: Text(appLocalizations.confirm)),
-      ],
-      child: Form(
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        key: _formKey,
-        child: Wrap(
-          runSpacing: 16,
-          children: [
-            if (keyField != null)
-              TextFormField(
-                maxLines: 3,
-                minLines: 1,
-                inputFormatters: widget.keyMaxLength == null
-                    ? null
-                    : TextInputLimits.limit(widget.keyMaxLength!),
-                controller: _keyController,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: keyField!.label,
-                ),
-                validator: (String? value) {
-                  String? res;
-                  if (keyField!.validator != null) {
-                    res = keyField!.validator!(value);
-                  }
-                  if (res != null) {
-                    return res;
-                  }
-                  if (value == null || value.isEmpty) {
-                    return appLocalizations.emptyTip(appLocalizations.key);
-                  }
-                  return null;
-                },
-              ),
-            TextFormField(
-              maxLines: 3,
-              minLines: 1,
-              inputFormatters: widget.valueMaxLength == null
-                  ? null
-                  : TextInputLimits.limit(widget.valueMaxLength!),
-              keyboardType: TextInputType.text,
-              controller: _valueController,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: valueField.label,
-              ),
-              onFieldSubmitted: (_) {
-                _submit();
-              },
-              validator: (String? value) {
-                String? res;
-                if (valueField.validator != null) {
-                  res = valueField.validator!(value);
-                }
-                if (res != null) {
-                  return res;
-                }
-                if (value == null || value.isEmpty) {
-                  return appLocalizations.emptyTip(appLocalizations.value);
-                }
-                return null;
-              },
+      title: _isBatch ? appLocalizations.batchAdd : widget.title,
+      trailing: widget.batch == null
+          ? null
+          : _BatchToggle(
+              isBatch: _isBatch,
+              tooltip: _isBatch
+                  ? appLocalizations.singleAdd
+                  : appLocalizations.batchAdd,
+              onPressed: _toggleBatch,
             ),
-          ],
+      actions: [
+        TextButton(
+          onPressed: _canSubmit ? _submit : null,
+          child: Text(appLocalizations.confirm),
         ),
+      ],
+      child: _isBatch
+          ? _BatchInputField(
+              batch: widget.batch!,
+              controller: _batchController,
+              parsed: _parsed,
+              onChanged: _handleBatchChanged,
+            )
+          : _buildForm(appLocalizations),
+    );
+  }
+}
+
+class _BatchToggle extends StatelessWidget {
+  final bool isBatch;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _BatchToggle({
+    required this.isBatch,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonMinIconButtonTheme(
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: GlyphIcon(isBatch ? AppGlyphs.textShort : AppGlyphs.listAdd),
+      ),
+    );
+  }
+}
+
+class _BatchInputField<T> extends StatelessWidget {
+  static const _maxShownIssues = 3;
+
+  final BatchInput<T> batch;
+  final TextEditingController controller;
+  final ParsedInput<T>? parsed;
+  final ValueChanged<String> onChanged;
+
+  const _BatchInputField({
+    required this.batch,
+    required this.controller,
+    required this.parsed,
+    required this.onChanged,
+  });
+
+  String? _errorText(AppLocalizations appLocalizations) {
+    final parsed = this.parsed;
+    if (parsed == null || parsed.isValid) {
+      return null;
+    }
+    return parsed.issues
+        .take(_maxShownIssues)
+        .map(
+          (issue) => appLocalizations.lineIssueTip(
+            issue.line,
+            batch.issueMessage(issue),
+          ),
+        )
+        .join('\n');
+  }
+
+  String _helperText(AppLocalizations appLocalizations) {
+    final parsed = this.parsed;
+    if (parsed == null || controller.text.trim().isEmpty) {
+      return batch.formatTip;
+    }
+    return appLocalizations.batchPreviewTip(
+      parsed.entries.length,
+      parsed.skippedExisting,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return TextField(
+      controller: controller,
+      autofocus: true,
+      minLines: 4,
+      maxLines: 10,
+      keyboardType: TextInputType.multiline,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: batch.label,
+        alignLabelWithHint: true,
+        helperText: _helperText(appLocalizations),
+        helperMaxLines: 2,
+        errorText: _errorText(appLocalizations),
+        errorMaxLines: _maxShownIssues + 1,
       ),
     );
   }

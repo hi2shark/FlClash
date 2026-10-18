@@ -166,7 +166,9 @@ class LocalProxyProviderGenerator {
     final effectiveInitial = backoffInitial == null || backoffInitial == 0
         ? 1
         : backoffInitial;
-    final effectiveMax = backoffMax == null || backoffMax == 0 ? 30 : backoffMax;
+    final effectiveMax = backoffMax == null || backoffMax == 0
+        ? 30
+        : backoffMax;
     if (effectiveInitial > effectiveMax) {
       _invalidNowhere(
         proxy,

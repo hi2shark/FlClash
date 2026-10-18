@@ -1,9 +1,11 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/unlock_test.dart';
+import 'package:fl_clash/views/dashboard/widget_metrics.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 typedef UnlockTestAppRouteHistoryLoader =
@@ -49,7 +51,7 @@ class _UnlockDetectionState extends ConsumerState<UnlockDetection> {
     );
     final detection = ref.watch(unlockDetectionProvider);
     return SizedBox(
-      height: getWidgetHeight(2),
+      height: DashboardWidgetMetrics.heightOf(context, 2),
       child: CommonCard(
         onPressed: () {
           BaseNavigator.push(context, const UnlockTestView());
@@ -67,7 +69,7 @@ class _UnlockDetectionState extends ConsumerState<UnlockDetection> {
               Expanded(
                 child: !enabled
                     ? _EmptyDashboard(
-                        icon: Icons.power_settings_new_rounded,
+                        glyph: AppGlyphs.toggle,
                         message: context.appLocalizations.unlockTestDisabledTip,
                       )
                     : FutureBuilder<UnlockTestHistoryEntry?>(
@@ -87,7 +89,7 @@ class _UnlockDetectionState extends ConsumerState<UnlockDetection> {
                                 };
                           if (results.isEmpty) {
                             return _EmptyDashboard(
-                              icon: Icons.fact_check_outlined,
+                              glyph: AppGlyphs.checkDouble,
                               message:
                                   context.appLocalizations.unlockTestNoResults,
                             );
@@ -128,8 +130,8 @@ class _DashboardHeader extends StatelessWidget {
       height: 30,
       child: Row(
         children: [
-          Icon(
-            Icons.travel_explore_rounded,
+          GlyphIcon(
+            AppGlyphs.locate,
             size: 20,
             color: context.colorScheme.primary,
           ),
@@ -149,8 +151,8 @@ class _DashboardHeader extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.alt_route_rounded,
+                  GlyphIcon(
+                    AppGlyphs.split,
                     size: 14,
                     color: context.colorScheme.onSurfaceVariant,
                   ),
@@ -181,10 +183,10 @@ class _DashboardHeader extends StatelessWidget {
                     dimension: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.refresh_rounded, size: 19),
+                : const GlyphIcon(AppGlyphs.refresh, size: 19),
           ),
-          Icon(
-            Icons.chevron_right_rounded,
+          GlyphIcon(
+            AppGlyphs.chevronForward,
             size: 18,
             color: context.colorScheme.onSurfaceVariant,
           ),
@@ -195,10 +197,10 @@ class _DashboardHeader extends StatelessWidget {
 }
 
 class _EmptyDashboard extends StatelessWidget {
-  final IconData icon;
+  final Glyph glyph;
   final String message;
 
-  const _EmptyDashboard({required this.icon, required this.message});
+  const _EmptyDashboard({required this.glyph, required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +208,11 @@ class _EmptyDashboard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 22, color: context.colorScheme.onSurfaceVariant),
+          GlyphIcon(
+            glyph,
+            size: 22,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
@@ -329,7 +335,7 @@ class _CompactStatus extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(_statusIcon(status), size: 13, color: color),
+          GlyphIcon(_statusIcon(status), size: 13, color: color),
           const SizedBox(width: 2),
           Text(
             '$count',
@@ -354,10 +360,11 @@ class _ServiceTile extends StatelessWidget {
     final monogram =
         target?.monogram ?? (name.isEmpty ? '?' : name.characters.first);
     return DecoratedBox(
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: statusColor.withValues(alpha: 0.09),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: statusColor.withValues(alpha: 0.2)),
+        shape: AppShape.all(
+          10,
+        ).copyWith(side: BorderSide(color: statusColor.withValues(alpha: 0.2))),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
@@ -367,9 +374,9 @@ class _ServiceTile extends StatelessWidget {
               width: 24,
               height: 24,
               alignment: Alignment.center,
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: statusColor.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(8),
+                shape: AppShape.sm,
               ),
               child: Text(
                 monogram,
@@ -424,13 +431,13 @@ int _statusPriority(UnlockTestStatus status) {
   };
 }
 
-IconData _statusIcon(UnlockTestStatus status) {
+Glyph _statusIcon(UnlockTestStatus status) {
   return switch (status) {
-    UnlockTestStatus.unlocked => Icons.check_circle_rounded,
-    UnlockTestStatus.partial => Icons.adjust_rounded,
-    UnlockTestStatus.locked => Icons.block_rounded,
-    UnlockTestStatus.error => Icons.error_rounded,
-    UnlockTestStatus.untested => Icons.help_rounded,
+    UnlockTestStatus.unlocked => AppGlyphs.checkCircle,
+    UnlockTestStatus.partial => AppGlyphs.check,
+    UnlockTestStatus.locked => AppGlyphs.block,
+    UnlockTestStatus.error => AppGlyphs.error,
+    UnlockTestStatus.untested => AppGlyphs.clock,
   };
 }
 

@@ -1,21 +1,22 @@
 package com.hi2shark.flclash_nw.models
 
-import com.google.gson.annotations.SerializedName
 import com.hi2shark.flclash_nw.service.models.VpnOptions
+import com.google.gson.annotations.SerializedName
 
 data class SharedState(
     val startTip: String = "Starting VPN...",
     val stopTip: String = "Stopping VPN...",
+    val localNetworkTip: String =
+        "Local network permission denied: using the gvisor stack, LAN is unreachable.",
     val crashlytics: Boolean = true,
     val currentProfileName: String = "FlClash",
     val stopText: String = "Stop",
     val suspendedText: String = "Suspended...",
     val onlyStatisticsProxy: Boolean = false,
-    val showNotificationStopAction: Boolean = true,
+    val showStopAction: Boolean = true,
+    val suspendOnWifiSsids: List<String> = emptyList(),
     val vpnOptions: VpnOptions? = null,
     val setupParams: SetupParams? = null,
-    @SerializedName(value = "suspendOnWifiSsids", alternate = ["excludeSSIDs"])
-    val suspendOnWifiSsids: List<String> = emptyList(),
 )
 
 data class SetupParams(
@@ -23,4 +24,6 @@ data class SetupParams(
     val testUrl: String,
     @SerializedName("selected-map")
     val selectedMap: Map<String, String>,
+    @SerializedName("skip-cert-verify")
+    val skipCertVerify: Boolean = false,
 )

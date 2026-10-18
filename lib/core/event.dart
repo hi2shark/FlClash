@@ -1,8 +1,25 @@
 import 'dart:async';
 
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
+
+List<CoreEvent> coreEventsFromData(Object? data) {
+  final items = data is List ? data : [data];
+  final events = <CoreEvent>[];
+  for (final item in items.whereType<Map>()) {
+    try {
+      events.add(CoreEvent.fromJson(Map<String, Object?>.from(item)));
+    } catch (error) {
+      commonPrint.log(
+        'Unable to parse Core event: $error',
+        logLevel: LogLevel.error,
+      );
+    }
+  }
+  return events;
+}
 
 abstract mixin class CoreEventListener {
   void onLog(Log log) {}
@@ -10,6 +27,8 @@ abstract mixin class CoreEventListener {
   void onDelay(Delay delay) {}
 
   void onRequest(TrackerInfo connection) {}
+
+  void onDns(DnsQuery dnsQuery) {}
 
   void onLoaded(String providerName) {}
 
@@ -23,6 +42,10 @@ abstract mixin class CoreEventListener {
     bool skipped,
     String? error,
   ) {}
+
+  void onRouteChanged(RouteSnapshot snapshot) {}
+
+  void onDialerLoop(String proxyName) {}
 }
 
 class CoreEventManager {
@@ -30,39 +53,57 @@ class CoreEventManager {
 
   CoreEventManager._() {
     _controller.stream.listen((event) {
-      for (final CoreEventListener listener in _listeners) {
-        switch (event.type) {
-          case CoreEventType.log:
-            listener.onLog(Log.fromJson(event.data));
-            break;
-          case CoreEventType.delay:
-            listener.onDelay(Delay.fromJson(event.data));
-            break;
-          case CoreEventType.request:
-            listener.onRequest(TrackerInfo.fromJson(event.data));
-            break;
-          case CoreEventType.loaded:
-            listener.onLoaded(event.data);
-            break;
-          case CoreEventType.unlockTestProgress:
-            listener.onUnlockTestProgress(
-              UnlockTestProgress.fromJson(
-                Map<String, dynamic>.from(event.data as Map),
-              ),
-            );
-            break;
-          case CoreEventType.crash:
-            listener.onCrash(event.data);
-            break;
-          case CoreEventType.geoUpdate:
-            final data = event.data as Map<String, dynamic>;
-            listener.onGeoUpdate(
-              data['type'] as String,
-              data['updating'] as bool,
-              data['skipped'] as bool? ?? false,
-              data['error'] as String?,
-            );
-            break;
+      for (final CoreEventListener listener in List.of(_listeners)) {
+        try {
+          switch (event.type) {
+            case CoreEventType.log:
+              listener.onLog(Log.fromJson(event.data));
+              break;
+            case CoreEventType.delay:
+              listener.onDelay(Delay.fromJson(event.data));
+              break;
+            case CoreEventType.request:
+              listener.onRequest(TrackerInfo.fromJson(event.data));
+              break;
+            case CoreEventType.dns:
+              listener.onDns(DnsQuery.fromJson(event.data));
+              break;
+            case CoreEventType.loaded:
+              listener.onLoaded(event.data);
+              break;
+            case CoreEventType.unlockTestProgress:
+              listener.onUnlockTestProgress(
+                UnlockTestProgress.fromJson(
+                  Map<String, dynamic>.from(event.data as Map),
+                ),
+              );
+              break;
+            case CoreEventType.crash:
+              listener.onCrash(event.data);
+              break;
+            case CoreEventType.geoUpdate:
+              final data = event.data as Map<String, dynamic>;
+              listener.onGeoUpdate(
+                data['type'] as String,
+                data['updating'] as bool,
+                data['skipped'] as bool? ?? false,
+                data['error'] as String?,
+              );
+              break;
+            case CoreEventType.routeChanged:
+              listener.onRouteChanged(
+                RouteSnapshot.fromJson(Map<String, Object?>.from(event.data)),
+              );
+              break;
+            case CoreEventType.dialerLoop:
+              listener.onDialerLoop(event.data as String);
+              break;
+          }
+        } catch (error) {
+          commonPrint.log(
+            'Unable to dispatch Core event ${event.type.name}: $error',
+            logLevel: LogLevel.error,
+          );
         }
       }
     });

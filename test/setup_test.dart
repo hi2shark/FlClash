@@ -11,14 +11,18 @@ void main() {
       expect(results.rest, ['android']);
     });
 
-    test('parses --repository option', () {
+    test('accepts dev application environment', () {
       final results = setup.createSetupArgParser().parse([
         'android',
-        '--repository',
-        'owner/repo',
+        '--env',
+        'dev',
       ]);
 
-      expect(results['repository'], 'owner/repo');
+      expect(results['env'], 'dev');
+    });
+
+    test('Flutter build environment does not depend on Core SHA256', () {
+      expect(setup.createBuildEnvironment('dev'), {'APP_ENV': 'dev'});
     });
 
     test('omits verbose from flutter build args by default', () {
@@ -43,39 +47,29 @@ void main() {
       ]);
     });
 
-    test('resolveRepository prefers CLI value', () {
-      expect(
-        setup.resolveRepository(
-          'hi2shark/FlClash',
-          environment: const {'GITHUB_REPOSITORY': 'environment/repo'},
-        ),
-        'hi2shark/FlClash',
-      );
+    test('refuses to package while a native build hook is skipped', () {
+      const pubspec = '''
+hooks:
+  user_defines:
+    setup:
+      build_assets: false
+    rust_api:
+      build_assets: true
+''';
+
+      expect(setup.packagesNotBuildingAssets(pubspec), ['setup']);
+      expect(setup.packagesNotBuildingAssets('name: x\n'), isEmpty);
     });
 
-    test('resolveRepository falls back to environment', () {
-      expect(
-        setup.resolveRepository(
-          null,
-          environment: const {'GITHUB_REPOSITORY': 'hi2shark/FlClash'},
-        ),
-        'hi2shark/FlClash',
-      );
+    test('packages every Linux format on every architecture', () {
+      expect(setup.createPackageTargets('linux', null), 'deb,appimage,rpm');
+      expect(setup.createPackageTargets('linux', 'deb'), 'deb');
+      expect(setup.createPackageTargets('macos', null), 'dmg');
     });
 
-    test('resolveRepository falls back to default', () {
-      expect(
-        setup.resolveRepository(null, environment: const {}),
-        'chen08209/FlClash',
-      );
-      expect(
-        setup.resolveRepository('', environment: const {}),
-        'chen08209/FlClash',
-      );
-      expect(
-        setup.resolveRepository('  ', environment: const {}),
-        'chen08209/FlClash',
-      );
+    test('downloads the appimagetool build matching the host', () {
+      expect(setup.appImageToolArch('arm64'), 'aarch64');
+      expect(setup.appImageToolArch('amd64'), 'x86_64');
     });
   });
 }

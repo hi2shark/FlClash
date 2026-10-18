@@ -1,3 +1,4 @@
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
@@ -15,20 +16,19 @@ val localProperties = Properties().apply {
     }
 }
 
-val mStoreFile: File = file("keystore.jks")
-val mStorePassword: String? = localProperties.getProperty("storePassword")
-val mKeyAlias: String? = localProperties.getProperty("keyAlias")
-val mKeyPassword: String? = localProperties.getProperty("keyPassword")
-val isRelease =
-    mStoreFile.exists() && mStorePassword != null && mKeyAlias != null && mKeyPassword != null
-
+val releaseStoreFile = file("keystore.jks")
+val releaseStorePassword = localProperties.getProperty("storePassword")
+val releaseKeyAlias = localProperties.getProperty("keyAlias")
+val releaseKeyPassword = localProperties.getProperty("keyPassword")
+val hasReleaseSigning = releaseStoreFile.exists() &&
+    releaseStorePassword != null &&
+    releaseKeyAlias != null &&
+    releaseKeyPassword != null
 
 android {
     namespace = "com.hi2shark.flclash_nw"
     compileSdk = libs.versions.compileSdk.get().toInt()
     ndkVersion = libs.versions.ndkVersion.get()
-
-
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -44,12 +44,12 @@ android {
     }
 
     signingConfigs {
-        if (isRelease) {
+        if (hasReleaseSigning) {
             create("release") {
-                storeFile = mStoreFile
-                storePassword = mStorePassword
-                keyAlias = mKeyAlias
-                keyPassword = mKeyPassword
+                storeFile = releaseStoreFile
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
             }
         }
     }
@@ -69,7 +69,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            if (isRelease) {
+            if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
                 signingConfig = signingConfigs.getByName("debug")
@@ -77,9 +77,19 @@ android {
             }
 
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
             )
+
+            configure<CrashlyticsExtension> {
+                nativeSymbolUploadEnabled = hasReleaseSigning
+            }
         }
+    }
+
+    sourceSets {
+        // Unit tests live under android/tests/ instead of each module's src/test.
+        getByName("test").java.setSrcDirs(listOf("../tests/app"))
     }
 }
 
@@ -93,10 +103,17 @@ flutter {
     source = "../.."
 }
 
+// The Crashlytics plugin finalizes R8 with the mapping upload but leaves the native symbol upload to the caller.
+if (hasReleaseSigning) {
+    tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
+        finalizedBy("uploadCrashlyticsSymbolFileRelease")
+    }
+}
 
 dependencies {
     implementation(project(":service"))
     implementation(project(":common"))
+    implementation(project(":core"))
     implementation(libs.core.splashscreen)
     implementation(libs.gson)
     implementation(libs.smali.dexlib2) {
@@ -105,4 +122,6 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics.ndk)
     implementation(libs.firebase.analytics)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

@@ -1,10 +1,8 @@
 package com.hi2shark.flclash_nw.plugins
 
-import com.hi2shark.flclash_nw.RunState
-import com.hi2shark.flclash_nw.Service
-import com.hi2shark.flclash_nw.State
+import com.hi2shark.flclash_nw.ServiceController
+import com.hi2shark.flclash_nw.ServiceState
 import com.hi2shark.flclash_nw.common.Components
-import com.hi2shark.flclash_nw.invokeMethodOnMainThread
 import com.hi2shark.flclash_nw.models.SharedState
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -13,162 +11,143 @@ import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 
-class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
-    CoroutineScope by CoroutineScope(SupervisorJob() + Dispatchers.Default) {
-    private lateinit var flutterMethodChannel: MethodChannel
+class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
+    private lateinit var channel: MethodChannel
+    private lateinit var scope: CoroutineScope
+    private val gson = Gson()
+    private var commandRevision = 0
 
-    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        flutterMethodChannel = MethodChannel(
-            flutterPluginBinding.binaryMessenger, "${Components.PACKAGE_NAME}/service"
-        )
-        flutterMethodChannel.setMethodCallHandler(this)
+    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        channel = MethodChannel(binding.binaryMessenger, "${Components.PACKAGE_NAME}/service")
+        channel.setMethodCallHandler(this)
     }
 
-    override fun onDetachedFromEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        flutterMethodChannel.setMethodCallHandler(null)
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        channel.setMethodCallHandler(null)
+        scope.cancel()
+        ServiceController.setEventListener(null)
     }
 
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) = when (call.method) {
-        "init" -> {
-            handleInit(result)
-        }
-
-        "shutdown" -> {
-            handleShutdown(result)
-        }
-
-        "invokeAction" -> {
-            handleInvokeAction(call, result)
-        }
-
-        "getRunTime" -> {
-            handleGetRunTime(result)
-        }
-
-        "syncState" -> {
-            handleSyncState(call, result)
-        }
-
-        "start" -> {
-            handleStart(result)
-        }
-
-        "stop" -> {
-            handleStop(result)
-        }
-
-        "setSuspended" -> {
-            handleSetSuspended(call, result)
-        }
-
-        "getWifiWatchState" -> {
-            handleGetWifiWatchState(result)
-        }
-
-        else -> {
-            result.notImplemented()
+    override fun onMethodCall(call: MethodCall, rawResult: MethodChannel.Result) {
+        // Most handlers below reply from a scope worker on Dispatchers.Default,
+        // but a MethodChannel.Result has to be answered on the platform thread.
+        // Wrapping once here covers every branch, including notImplemented.
+        val result = MainThreadResult(rawResult)
+        when (call.method) {
+            "init" -> initialize(result)
+            "shutdown" -> shutdown(result)
+            "invokeMethod" -> invokeMethod(call, result)
+            "getRunTime" -> getRunTime(result)
+            "syncState" -> syncState(call, result)
+            "start" -> start(call, result)
+            "stop" -> stop(call, result)
+            "setSuspended" -> setSuspended(call, result)
+            "getWifiWatchState" -> getWifiWatchState(result)
+            else -> result.notImplemented()
         }
     }
 
-    private fun handleInvokeAction(call: MethodCall, result: MethodChannel.Result) {
-        launch {
-            val data = call.arguments<String>()!!
-            Service.invokeAction(data) {
-                result.success(it)
-            }
-        }
+    private fun initialize(result: MethodChannel.Result) {
+        ServiceController.setEventListener(::sendEvent)
+            .onSuccess { result.success("") }
+            .onFailure { error -> result.success(error.message.orEmpty()) }
     }
 
-    private fun handleShutdown(result: MethodChannel.Result) {
-        Service.unbind()
+    private fun shutdown(result: MethodChannel.Result) {
+        ServiceController.setEventListener(null)
         result.success(true)
     }
 
-    private fun handleStart(result: MethodChannel.Result) {
-        launch {
-            result.success(State.handleStartService())
+    private fun invokeMethod(call: MethodCall, result: MethodChannel.Result) {
+        val data = call.arguments as? String
+        if (data == null) {
+            result.error("INVALID_ARGUMENT", "Method call payload must be a string", null)
+            return
+        }
+        // Inline rather than a coroutine per call, which could swap two: watchRoute
+        // keeps the latest intent by the order calls reach the Core
+        // (dispatchMethodCall in core/method.go), and this only hands data over.
+        ServiceController.invokeMethod(data) { response ->
+            result.success(response)
+        }.onFailure { error ->
+            result.error("CORE_ERROR", error.message, null)
         }
     }
 
-    private fun handleStop(result: MethodChannel.Result) {
-        launch {
-            result.success(State.handleStopService())
+    private fun getRunTime(result: MethodChannel.Result) {
+        scope.launch {
+            result.success(ServiceState.awaitRunTime())
         }
     }
 
-    private fun handleSetSuspended(call: MethodCall, result: MethodChannel.Result) {
-        launch {
-            val suspended = call.arguments<Boolean>() == true
-            result.success(Service.setSuspended(suspended) != 0L)
+    private fun syncState(call: MethodCall, result: MethodChannel.Result) {
+        val data = call.arguments as? String
+        val state = runCatching {
+            gson.fromJson(data, SharedState::class.java)
+        }.getOrNull()
+        if (state == null) {
+            result.success("Invalid shared state")
+            return
         }
-    }
-
-    val semaphore = Semaphore(10)
-
-    fun handleSendEvent(value: String?) {
-        launch(Dispatchers.Main) {
-            semaphore.withPermit {
-                flutterMethodChannel.invokeMethod("event", value)
-            }
-        }
-    }
-
-    fun handleSuspended(suspended: Boolean) {
-        flutterMethodChannel.invokeMethodOnMainThread<Any>("suspended", suspended)
-    }
-
-    fun handleWifiWatchState(stateJson: String) {
-        flutterMethodChannel.invokeMethodOnMainThread<Any>("wifiWatchState", stateJson)
-    }
-
-    private fun onServiceDisconnected(message: String) {
-        State.runTime = 0
-        State.runStateFlow.tryEmit(RunState.STOP)
-        State.handleServiceSuspendedChanged(false)
-        flutterMethodChannel.invokeMethodOnMainThread<Any>("crash", message)
-    }
-
-    private fun handleSyncState(call: MethodCall, result: MethodChannel.Result) {
-        val data = call.arguments<String>()!!
-        State.sharedState = Gson().fromJson(data, SharedState::class.java)
-        launch {
-            State.syncState()
+        scope.launch {
+            ServiceState.syncSharedState(state)
             result.success("")
         }
     }
 
+    private fun start(call: MethodCall, result: MethodChannel.Result) {
+        commandRevision = call.arguments as? Int ?: commandRevision
+        ServiceState.requestStart()
+        result.success(true)
+    }
 
-    fun handleInit(result: MethodChannel.Result) {
-        Service.bind()
-        launch {
-            Service.setEventListener {
-                handleSendEvent(it)
-            }.onSuccess {
-                State.handleSyncState()
-                handleSuspended(State.serviceSuspended)
-                result.success("")
-            }.onFailure {
-                result.success(it.message)
+    private fun stop(call: MethodCall, result: MethodChannel.Result) {
+        commandRevision = call.arguments as? Int ?: commandRevision
+        ServiceState.requestStop()
+        result.success(true)
+    }
+
+    private fun setSuspended(call: MethodCall, result: MethodChannel.Result) {
+        val suspended = call.arguments as? Boolean ?: false
+        scope.launch {
+            result.success(ServiceController.setSuspended(suspended))
+        }
+    }
+
+    private fun getWifiWatchState(result: MethodChannel.Result) {
+        scope.launch {
+            result.success(ServiceController.getWifiWatchState())
+        }
+    }
+
+    // Read on the platform thread, where start and stop arrive: revision and intent are one instant.
+    fun notifyStopped() {
+        scope.launch(Dispatchers.Main) {
+            if (!ServiceState.isRunRequested) {
+                channel.invokeMethod("stopped", commandRevision)
             }
-
-        }
-        Service.onServiceDisconnected = ::onServiceDisconnected
-    }
-
-    private fun handleGetRunTime(result: MethodChannel.Result) {
-        launch {
-            State.handleSyncState()
-            result.success(State.runTime)
         }
     }
 
-    private fun handleGetWifiWatchState(result: MethodChannel.Result) {
-        launch {
-            result.success(Service.getWifiWatchState())
+    fun notifySuspended(suspended: Boolean) {
+        scope.launch(Dispatchers.Main) {
+            channel.invokeMethod("suspended", suspended)
+        }
+    }
+
+    fun notifyWifiWatchState(stateJson: String) {
+        scope.launch(Dispatchers.Main) {
+            channel.invokeMethod("wifiWatchState", stateJson)
+        }
+    }
+
+    private fun sendEvent(value: String?) {
+        scope.launch(Dispatchers.Main) {
+            channel.invokeMethod("event", value)
         }
     }
 }

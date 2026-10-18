@@ -1,135 +1,114 @@
 package com.hi2shark.flclash_nw.service
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.ProxyInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import android.os.Parcel
-import android.os.RemoteException
-import android.util.Log
 import androidx.core.content.getSystemService
-import com.google.gson.Gson
-import com.hi2shark.flclash_nw.service.WifiWatchState
 import com.hi2shark.flclash_nw.common.AccessControlMode
 import com.hi2shark.flclash_nw.common.GlobalState
+import com.hi2shark.flclash_nw.common.R as CommonR
 import com.hi2shark.flclash_nw.core.Core
+import com.hi2shark.flclash_nw.service.models.CIDR
 import com.hi2shark.flclash_nw.service.models.VpnOptions
 import com.hi2shark.flclash_nw.service.models.getIpv4RouteAddress
 import com.hi2shark.flclash_nw.service.models.getIpv6RouteAddress
 import com.hi2shark.flclash_nw.service.models.toCIDR
-import com.hi2shark.flclash_nw.service.modules.NetworkObserveModule
-import com.hi2shark.flclash_nw.service.modules.NotificationModule
-import com.hi2shark.flclash_nw.service.modules.WifiWatchModule
-import com.hi2shark.flclash_nw.service.modules.moduleLoader
-import com.hi2shark.flclash_nw.service.modules.startForegroundWithNotification
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.hi2shark.flclash_nw.service.models.tunMtu
+import com.hi2shark.flclash_nw.service.models.tunOptions
+import com.hi2shark.flclash_nw.service.modules.ServiceModules
+import com.google.gson.Gson
 import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentHashMap
 import android.net.VpnService as SystemVpnService
 
-class VpnService : SystemVpnService(), IBaseService,
-    CoroutineScope by CoroutineScope(Dispatchers.Default) {
-
-    private val self: VpnService
-        get() = this
-
-    private val loader = moduleLoader {
-        install(NetworkObserveModule(self))
-        install(NotificationModule(self))
-        // Assign the field before install(): install() runs onInstall()
-        // synchronously, which can register the network callback and fire the
-        // first onStateChanged() before this block continues. If the field
-        // were assigned after install(), getWifiWatchStateJson() would read
-        // wifiWatchModule == null and drop SSID/RSSI from the first push.
-        val wifiWatchModule = WifiWatchModule(self) {
-            notifyWifiWatchStateChanged(getWifiWatchStateJson())
-        }
-        this@VpnService.wifiWatchModule = wifiWatchModule
-        install(wifiWatchModule)
-    }
+class VpnService : SystemVpnService(), ManagedService {
+    private val modules = ServiceModules(this)
+    private val binder = LocalBinder()
+    private val tunLock = Any()
+    private var tunRunning = false
 
     @Volatile
-    private var wifiWatchModule: WifiWatchModule? = null
+    private var running = false
 
-    override fun getWifiWatchStateJson(): String {
-        val state = wifiWatchModule?.currentState(isSuspended) ?: WifiWatchState(
-            ssid = null,
-            rssi = null,
-            validated = false,
-            wifiPresent = false,
-            suspended = isSuspended,
-            pendingSuspendDeadline = null,
-        )
-        return Gson().toJson(state)
-    }
-
-    override var isRunning: Boolean = false
-        private set
-
-    override var isSuspended: Boolean = false
-        private set
+    private val suspensionController = SuspensionController(
+        serviceName = "VPN service",
+        isRunning = { running },
+        applySuspended = {
+            VpnSuspendController(
+                currentOptions = { ServiceConfig.vpnOptions },
+                stopTun = { stopTunLocked() },
+                startTun = { handleStart(it) },
+            ).setSuspended(it)
+        },
+        onSuspendedChanged = { notifySuspendedChanged(it) },
+    )
 
     override val isVpn: Boolean = true
 
-    override val wifiSuspended: Boolean
-        get() = suspensionReasons.wifiSuspended
+    override val isSuspended: Boolean
+        get() = suspensionController.isSuspended
 
-    private val suspensionReasons = ServiceSuspensionReasons()
+    override fun setSuspended(suspended: Boolean): ServiceStartResult =
+        suspensionController.setExternalSuspended(suspended)
 
-    // Serializes start / stop / applySuspended so WifiWatch cannot race with
-    // user-initiated stop (establish / stopTun overlapping stopSelf).
-    private val lifecycleLock = Any()
+    override fun setWifiSuspended(suspended: Boolean): ServiceStartResult =
+        suspensionController.setWifiSuspended(suspended)
 
-    private val suspendController = VpnSuspendController(
-        currentOptions = { State.options },
-        stopTun = Core::stopTun,
-        startTun = ::handleStart,
-        isSuspended = { isSuspended },
+    override fun setIdleSuspended(suspended: Boolean): ServiceStartResult =
+        suspensionController.setIdleSuspended(suspended)
+
+    override fun getWifiWatchStateJson(): String = Gson().toJson(
+        modules.wifiWatchModule?.currentState(isSuspended)
+            ?: WifiWatchState(
+                ssid = null,
+                rssi = null,
+                validated = false,
+                wifiPresent = false,
+                suspended = isSuspended,
+                pendingSuspendDeadline = null,
+            ),
     )
 
-    override fun onCreate() {
-        super.onCreate()
-        handleCreate()
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForegroundWithNotification()
-        return START_NOT_STICKY
-    }
-
     override fun onDestroy() {
-        handleDestroy()
-        super.onDestroy()
+        try {
+            cleanup()
+        } finally {
+            super.onDestroy()
+        }
     }
 
     private val connectivity by lazy {
         getSystemService<ConnectivityManager>()
     }
-    private val uidPageNameMap = mutableMapOf<Int, String>()
+    private val uidPackageNameMap = ConcurrentHashMap<Int, String>()
 
-    private fun resolverProcess(
+    private fun resolveUid(
         protocol: Int,
         source: InetSocketAddress,
         target: InetSocketAddress,
-        uid: Int,
-    ): String {
-        val nextUid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            connectivity?.getConnectionOwnerUid(protocol, source, target) ?: -1
-        } else {
-            uid
+    ): Int {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return -1
         }
-        if (nextUid == -1) {
-            return ""
-        }
-        if (!uidPageNameMap.containsKey(nextUid)) {
-            uidPageNameMap[nextUid] = this.packageManager?.getPackagesForUid(nextUid)?.first() ?: ""
-        }
-        return uidPageNameMap[nextUid] ?: ""
+        return connectivity?.getConnectionOwnerUid(protocol, source, target) ?: -1
     }
 
-    val VpnOptions.address
+    private fun resolvePackage(uid: Int): String {
+        val cached = uidPackageNameMap[uid]
+        if (cached != null) return cached
+        val packageName = packageManager
+            .getPackagesForUid(uid)
+            ?.firstOrNull()
+            ?.takeIf { it.isNotEmpty() }
+            .orEmpty()
+        return uidPackageNameMap.putIfAbsent(uid, packageName) ?: packageName
+    }
+
+    private val VpnOptions.tunAddress
         get(): String = buildString {
             append(IPV4_ADDRESS)
             if (ipv6) {
@@ -138,7 +117,7 @@ class VpnService : SystemVpnService(), IBaseService,
             }
         }
 
-    val VpnOptions.dns
+    private val VpnOptions.tunDns
         get(): String {
             if (!dnsEnable) {
                 return ""
@@ -155,283 +134,230 @@ class VpnService : SystemVpnService(), IBaseService,
             }
         }
 
-
     override fun onLowMemory() {
         Core.forceGC()
         super.onLowMemory()
     }
 
     override fun onTrimMemory(level: Int) {
-        if (memoryTrimPolicy.shouldForceGc(level)) {
-            Core.forceGC()
-        }
+        trimCoreMemory(level)
         super.onTrimMemory(level)
     }
 
-    private val memoryTrimPolicy = MemoryTrimPolicy()
-
-    private val binder = LocalBinder()
-
     inner class LocalBinder : Binder() {
-        fun getService(): VpnService = this@VpnService
-
-        override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
-            try {
-                val isSuccess = super.onTransact(code, data, reply, flags)
-                if (!isSuccess) {
-                    GlobalState.log("VpnService disconnected")
-                    handleDestroy()
-                }
-                return isSuccess
-            } catch (e: RemoteException) {
-                GlobalState.log("VpnService onTransact $e")
-                return false
-            }
-        }
+        val service: VpnService
+            get() = this@VpnService
     }
 
-    override fun onBind(intent: Intent): IBinder {
-        return binder
+    override fun onBind(intent: Intent): IBinder? =
+        if (intent.action == SystemVpnService.SERVICE_INTERFACE) {
+            super.onBind(intent)
+        } else {
+            binder
+        }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Android starts always-on VPN through this callback instead of FlClash's bound-service
+        // path. Notify the app layer so it can restore Core and fully initialize the VPN service.
+        notifyVpnStartRequested()
+        return super.onStartCommand(intent, flags, startId)
     }
 
-    private fun Builder.establishWithRetry(
-        maxAttempts: Int = 3,
-        retryDelayMillis: Long = 300,
-    ): Int {
-        repeat(maxAttempts) { attempt ->
-            if (attempt > 0) {
-                // The system may still be tearing down a previous VPN
-                // interface (rapid stop/start, core restart); give it a
-                // moment before retrying instead of failing immediately.
-                Thread.sleep(retryDelayMillis)
-            }
-            val fd = try {
-                establish()?.detachFd()
-            } catch (e: Exception) {
-                GlobalState.log("VpnService establish attempt ${attempt + 1} exception $e")
-                null
-            }
-            if (fd != null) {
-                return fd
-            }
-            GlobalState.log("VpnService establish attempt ${attempt + 1} rejected by system")
-        }
-        throw NullPointerException("Establish VPN rejected by system")
+    override fun onRevoke() {
+        stop()
+        notifyVpnRevoked()
     }
 
     private fun handleStart(options: VpnOptions) {
         val fd = with(Builder()) {
-            val cidr = IPV4_ADDRESS.toCIDR()
-            addAddress(cidr.address, cidr.prefixLength)
-            Log.d(
-                "addAddress", "address: ${cidr.address} prefixLength:${cidr.prefixLength}"
-            )
-            val routeAddress = options.getIpv4RouteAddress()
-            if (routeAddress.isNotEmpty()) {
-                try {
-                    routeAddress.forEach { i ->
-                        Log.d(
-                            "addRoute4", "address: ${i.address} prefixLength:${i.prefixLength}"
-                        )
-                        addRoute(i.address, i.prefixLength)
-                    }
-                } catch (_: Exception) {
-                    addRoute(NET_ANY, 0)
-                }
-            } else {
-                addRoute(NET_ANY, 0)
-            }
-            if (options.ipv6) {
-                try {
-                    val cidr = IPV6_ADDRESS.toCIDR()
-                    Log.d(
-                        "addAddress6", "address: ${cidr.address} prefixLength:${cidr.prefixLength}"
-                    )
-                    addAddress(cidr.address, cidr.prefixLength)
-                } catch (_: Exception) {
-                    Log.d(
-                        "addAddress6", "IPv6 is not supported."
-                    )
-                }
-
-                try {
-                    val routeAddress = options.getIpv6RouteAddress()
-                    if (routeAddress.isNotEmpty()) {
-                        try {
-                            routeAddress.forEach { i ->
-                                Log.d(
-                                    "addRoute6",
-                                    "address: ${i.address} prefixLength:${i.prefixLength}"
-                                )
-                                addRoute(i.address, i.prefixLength)
-                            }
-                        } catch (_: Exception) {
-                            addRoute("::", 0)
-                        }
-                    } else {
-                        addRoute(NET_ANY6, 0)
-                    }
-                } catch (_: Exception) {
-                    addRoute(NET_ANY6, 0)
-                }
-            }
-            if (options.dnsEnable) {
-                addDnsServer(DNS)
-                if (options.ipv6) {
-                    addDnsServer(DNS6)
-                }
-            }
-            setMtu(9000)
-            options.accessControlProps.let { accessControl ->
-                if (accessControl.enable) {
-                    when (accessControl.mode) {
-                        AccessControlMode.ACCEPT_SELECTED -> {
-                            (accessControl.acceptList + packageName).forEach {
-                                addAllowedApplication(it)
-                            }
-                        }
-
-                        AccessControlMode.REJECT_SELECTED -> {
-                            (accessControl.rejectList - packageName).forEach {
-                                addDisallowedApplication(it)
-                            }
-                        }
-                    }
-                }
-            }
-            setSession("FlClash")
+            addAddressAndRoutes(options)
+            addDnsServers(options)
+            setMtu(options.tunMtu)
+            configureAccessControl(options)
+            setSession(getString(CommonR.string.app_name))
             setBlocking(false)
-            if (Build.VERSION.SDK_INT >= 29) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 setMetered(false)
             }
             if (options.allowBypass) {
                 allowBypass()
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && options.systemProxy) {
-                GlobalState.log("Open http proxy")
+                GlobalState.log("Enable VPN HTTP proxy")
                 setHttpProxy(
                     ProxyInfo.buildDirectProxy(
-                        "127.0.0.1", options.port, options.bypassDomain
-                    )
+                        LOCAL_HOST,
+                        options.port,
+                        options.bypassDomain,
+                    ),
                 )
             }
-            establishWithRetry()
+            establish()?.detachFd()
+                ?: error("VPN establishment was rejected by the system")
         }
-        Core.startTun(
-            fd,
-            protect = this::protect,
-            resolverProcess = this::resolverProcess,
-            options.stack,
-            options.address,
-            options.dns
+        synchronized(tunLock) {
+            tunRunning = true
+            try {
+                // A Core that fails to take the descriptor leaves the system
+                // routes pointing at an interface nothing reads, and it no
+                // longer keeps its own sockets out of them: every connection
+                // then hangs until it times out. Tear the VPN down instead of
+                // reporting a start that only looks successful.
+                check(
+                    Core.startTun(
+                        fd = fd,
+                        protect = this::protect,
+                        resolveUid = this::resolveUid,
+                        resolvePackage = this::resolvePackage,
+                        stack = options.stack,
+                        address = options.tunAddress,
+                        dns = options.tunDns,
+                        options = options.tunOptions,
+                    ),
+                ) { "Core rejected the tun file descriptor" }
+            } catch (error: Exception) {
+                stopTunLocked()
+                throw error
+            }
+        }
+    }
+
+    private fun Builder.addAddressAndRoutes(options: VpnOptions) {
+        val ipv4Address = IPV4_ADDRESS.toCIDR()
+        addAddress(ipv4Address.address, ipv4Address.prefixLength)
+        addRoutes(
+            routes = options::getIpv4RouteAddress,
+            fallbackAddress = NET_ANY,
+            routeAll = options.routeAddress.isEmpty(),
         )
+
+        if (options.ipv6) {
+            try {
+                val ipv6Address = IPV6_ADDRESS.toCIDR()
+                addAddress(ipv6Address.address, ipv6Address.prefixLength)
+            } catch (_: Exception) {
+                GlobalState.log("IPv6 VPN address is not supported")
+            }
+            addRoutes(
+                routes = options::getIpv6RouteAddress,
+                fallbackAddress = NET_ANY6,
+                routeAll = options.routeAddress.isEmpty(),
+            )
+        }
     }
 
-    override fun start(): ServiceStartResult {
-        synchronized(lifecycleLock) {
-            return try {
-                startForegroundWithNotification()
-                loader.load()
-                State.options?.let {
-                    handleStart(it)
-                } ?: return ServiceStartResult.failure("VPN options empty")
-                isRunning = true
-                isSuspended = false
-                suspensionReasons.reset()
-                notifySuspendedChanged(false)
-                ServiceStartResult.success()
-            } catch (e: Exception) {
-                GlobalState.log("VpnService start failed $e")
-                stopLocked()
-                ServiceStartResult.failure(e.message ?: "VPN service start failed")
+    // Flutter lists every family it routes, so a family missing from a
+    // non-empty list is one whose routes were all excluded.
+    private fun Builder.addRoutes(
+        routes: () -> List<CIDR>,
+        fallbackAddress: String,
+        routeAll: Boolean,
+    ) {
+        val routeList = runCatching(routes).getOrNull()
+        if (routeAll || routeList == null) {
+            addRoute(fallbackAddress, 0)
+            return
+        }
+        try {
+            routeList.forEach { route ->
+                addRoute(route.address, route.prefixLength)
+            }
+        } catch (_: Exception) {
+            addRoute(fallbackAddress, 0)
+        }
+    }
+
+    private fun Builder.addDnsServers(options: VpnOptions) {
+        if (!options.dnsEnable) return
+        addDnsServer(DNS)
+        if (options.ipv6) {
+            addDnsServer(DNS6)
+        }
+    }
+
+    private fun Builder.configureAccessControl(options: VpnOptions) {
+        val accessControl = options.accessControlProps
+        if (!accessControl.enable) return
+        when (accessControl.mode) {
+            AccessControlMode.ACCEPT_SELECTED -> {
+                (accessControl.acceptList + packageName).forEach { name ->
+                    addApplication(name, ::addAllowedApplication)
+                }
+            }
+
+            AccessControlMode.REJECT_SELECTED -> {
+                (accessControl.rejectList - packageName).forEach { name ->
+                    addApplication(name, ::addDisallowedApplication)
+                }
             }
         }
     }
 
-    override fun setSuspended(suspended: Boolean): ServiceStartResult {
-        synchronized(lifecycleLock) {
-            val previous = suspensionReasons.externalSuspended
-            suspensionReasons.setExternalSuspended(suspended)
-            val result = applyDesiredSuspendedLocked()
-            if (!result.success) {
-                suspensionReasons.setExternalSuspended(previous)
-            }
-            return result
+    // A selected package that was uninstalled since must not veto the whole tunnel.
+    private fun addApplication(name: String, add: (String) -> Builder) {
+        try {
+            add(name)
+        } catch (_: PackageManager.NameNotFoundException) {
+            GlobalState.log("Access control skipped an uninstalled package: $name")
         }
     }
 
-    override fun setWifiSuspended(suspended: Boolean): ServiceStartResult {
-        synchronized(lifecycleLock) {
-            val previous = suspensionReasons.wifiSuspended
-            suspensionReasons.setWifiSuspended(suspended)
-            val result = applyDesiredSuspendedLocked()
-            if (!result.success) {
-                suspensionReasons.setWifiSuspended(previous)
-            }
-            return result
-        }
-    }
-
-    override fun setIdleSuspended(suspended: Boolean): ServiceStartResult {
-        synchronized(lifecycleLock) {
-            val previous = suspensionReasons.idleSuspended
-            suspensionReasons.setIdleSuspended(suspended)
-            val result = applyDesiredSuspendedLocked()
-            if (!result.success) {
-                suspensionReasons.setIdleSuspended(previous)
-            }
-            return result
-        }
-    }
-
-    private fun applyDesiredSuspendedLocked(): ServiceStartResult {
-        return applySuspendedLocked(suspensionReasons.shouldSuspend)
-    }
-
-    private fun applySuspendedLocked(suspended: Boolean): ServiceStartResult {
-        if (!isRunning) {
-            return ServiceStartResult.failure("VPN service is not running")
-        }
-        if (isSuspended == suspended) {
-            return ServiceStartResult.success()
-        }
-        return try {
-            val suspendResult = suspendController.setSuspended(suspended)
-            if (!suspendResult.success) return suspendResult
-            isSuspended = suspended
-            notifySuspendedChanged(suspended)
-            ServiceStartResult.success()
-        } catch (e: Exception) {
-            GlobalState.log("VpnService suspend update failed $e")
-            ServiceStartResult.failure(e.message ?: "VPN suspend update failed")
+    override fun start() {
+        try {
+            modules.start()
+            handleStart(requireNotNull(ServiceConfig.vpnOptions) { "VPN options are missing" })
+            running = true
+            // runtimeState gates setSuspended on isRunning, so it must lead.
+            ServiceConfig.runtimeState.markStarted()
+            suspensionController.reset()
+            notifySuspendedChanged(false)
+        } catch (error: Exception) {
+            stop()
+            ServiceConfig.runtimeState.markStartFailed()
+            throw error
         }
     }
 
     override fun stop() {
-        synchronized(lifecycleLock) {
-            stopLocked()
+        try {
+            running = false
+            suspensionController.reset()
+            notifySuspendedChanged(false)
+            ServiceConfig.runtimeState.markStopped()
+            cleanup()
+        } finally {
+            stopSelf()
         }
     }
 
-    private fun stopLocked() {
-        isRunning = false
-        isSuspended = false
-        suspensionReasons.reset()
-        notifySuspendedChanged(false)
-        // Uninstall WifiWatch (and other modules) before stopTun so a pending
-        // delayed suspend / force-resume cannot call establish after we tear down.
-        loader.cancelAndJoin()
-        wifiWatchModule = null
-        Core.stopTun()
-        stopSelf()
+    private fun cleanup() {
+        try {
+            modules.stop()
+        } finally {
+            stopTun()
+        }
+    }
+
+    private fun stopTun() = synchronized(tunLock) {
+        stopTunLocked()
+    }
+
+    private fun stopTunLocked() {
+        if (tunRunning) {
+            Core.stopTun()
+            tunRunning = false
+        }
     }
 
     companion object {
-        private const val IPV4_ADDRESS = "172.19.0.1/30"
+        // mihomo's own TUN default: 198.18.0.0/15 is benchmarking space no LAN
+        // uses, and its fake-ip pool starts at .4, past this /30.
+        private const val IPV4_ADDRESS = "198.18.0.1/30"
         private const val IPV6_ADDRESS = "fdfe:dcba:9876::1/126"
-        private const val DNS = "172.19.0.2"
+        private const val DNS = "198.18.0.2"
         private const val DNS6 = "fdfe:dcba:9876::2"
         private const val NET_ANY = "0.0.0.0"
         private const val NET_ANY6 = "::"
+        private const val LOCAL_HOST = "127.0.0.1"
     }
 }

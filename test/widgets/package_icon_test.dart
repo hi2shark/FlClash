@@ -1,6 +1,6 @@
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/widgets/package_icon.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -10,9 +10,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(
-          body: PackageIcon(packageName: ''),
-        ),
+        home: Scaffold(body: PackageIcon(packageName: '')),
       ),
     );
 

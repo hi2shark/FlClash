@@ -49,5 +49,62 @@ TEST(ProxyPlugin, StartProxyRejectsMissingArguments) {
   EXPECT_EQ(error_code, "bad_args");
 }
 
+TEST(ProxyPlugin, StartProxyRejectsInvalidPort) {
+  ProxyPlugin plugin;
+  std::string error_code;
+  EncodableMap arguments = {
+      {EncodableValue("port"), EncodableValue(70000)},
+      {EncodableValue("bypassDomain"), EncodableValue(EncodableList())}};
+
+  plugin.HandleMethodCall(
+      MethodCall(
+          "StartProxy",
+          std::make_unique<EncodableValue>(std::move(arguments))),
+      std::make_unique<MethodResultFunctions<>>(
+          nullptr,
+          [&error_code](
+              const std::string& code,
+              const std::string& message,
+              const EncodableValue* details) { error_code = code; },
+          nullptr));
+
+  EXPECT_EQ(error_code, "bad_args");
+}
+
+TEST(ProxyPlugin, StartProxyRejectsNonStringBypassDomain) {
+  ProxyPlugin plugin;
+  std::string error_code;
+  EncodableList bypass_domain = {
+      EncodableValue("localhost"),
+      EncodableValue(1)};
+  EncodableMap arguments = {
+      {EncodableValue("port"), EncodableValue(7890)},
+      {EncodableValue("bypassDomain"),
+       EncodableValue(std::move(bypass_domain))}};
+
+  plugin.HandleMethodCall(
+      MethodCall(
+          "StartProxy",
+          std::make_unique<EncodableValue>(std::move(arguments))),
+      std::make_unique<MethodResultFunctions<>>(
+          nullptr,
+          [&error_code](
+              const std::string& code,
+              const std::string& message,
+              const EncodableValue* details) { error_code = code; },
+          nullptr));
+
+  EXPECT_EQ(error_code, "bad_args");
+}
+
+TEST(ProxyPlugin, RestoresTheSystemProxyOnlyWhenTheSessionReallyEnds) {
+  EXPECT_TRUE(ProxyPlugin::IsSessionEnding(WM_ENDSESSION, TRUE));
+  // A cancelled shutdown reports itself through the same message, and acting on
+  // it would strip the proxy from a session that goes on running.
+  EXPECT_FALSE(ProxyPlugin::IsSessionEnding(WM_ENDSESSION, FALSE));
+  EXPECT_FALSE(ProxyPlugin::IsSessionEnding(WM_QUERYENDSESSION, TRUE));
+  EXPECT_FALSE(ProxyPlugin::IsSessionEnding(WM_CLOSE, TRUE));
+}
+
 }  // namespace test
 }  // namespace proxy

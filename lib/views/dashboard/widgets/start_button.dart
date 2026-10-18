@@ -1,24 +1,20 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:fl_clash/widgets/widgets.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _threeDigitHourThreshold = 100 * 60 * 60 * 1000;
 const _widthAnimationDuration = Duration(milliseconds: 200);
 const _buttonHeight = 56.0;
+const _iconMorphDuration = Duration(milliseconds: 450);
 
 TextStyle? _runTimeTextStyle(BuildContext context) {
   return context.textTheme.titleMedium?.toSoftBold.copyWith(
     color: context.colorScheme.onPrimaryContainer,
-  );
-}
-
-TextStyle? _hundredsTextStyle(BuildContext context) {
-  return context.textTheme.titleMedium?.toSoftBold.copyWith(
-    color: context.colorScheme.primary,
-    fontWeight: FontWeight.w600,
+    fontFeatures: const [FontFeature.tabularFigures()],
   );
 }
 
@@ -26,16 +22,11 @@ double _computeRunTimeTextWidth(
   BuildContext context, {
   required bool hasThreeDigitHours,
 }) {
-  final regularWidth = globalState.measure
-      .computeTextSize(Text('99:99:99', style: _runTimeTextStyle(context)))
-      .width;
-  if (!hasThreeDigitHours) {
-    return regularWidth + 16;
-  }
-  final hundredsWidth = globalState.measure
-      .computeTextSize(Text('9', style: _hundredsTextStyle(context)))
-      .width;
-  return hundredsWidth + regularWidth + 16;
+  final sample = hasThreeDigitHours ? '999:99:99' : '99:99:99';
+  return globalState.measure
+          .computeTextSize(Text(sample, style: _runTimeTextStyle(context)))
+          .width +
+      16;
 }
 
 class RunTimeText extends StatelessWidget {
@@ -45,21 +36,12 @@ class RunTimeText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = utils.getTimeText(timeStamp);
-    final style = _runTimeTextStyle(context);
-    final textWidget = text.length < 9
-        ? Text(text, maxLines: 1, overflow: TextOverflow.visible, style: style)
-        : Text.rich(
-            TextSpan(
-              text: text.substring(0, 1),
-              style: _hundredsTextStyle(context),
-              children: [TextSpan(text: text.substring(1), style: style)],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.visible,
-            style: style,
-          );
-    return textWidget;
+    return Text(
+      getTimeText(timeStamp),
+      maxLines: 1,
+      overflow: TextOverflow.visible,
+      style: _runTimeTextStyle(context),
+    );
   }
 }
 
@@ -74,7 +56,6 @@ class _StartButtonState extends ConsumerState<StartButton>
     with SingleTickerProviderStateMixin {
   AnimationController? _controller;
   late Animation<double> _animation;
-  bool isStart = false;
   double? _twoDigitTextWidth;
   double? _threeDigitTextWidth;
   double? _suspendedTextWidth;
@@ -83,7 +64,7 @@ class _StartButtonState extends ConsumerState<StartButton>
   @override
   void initState() {
     super.initState();
-    isStart = ref.read(isStartProvider);
+    final isStart = ref.read(isStartProvider);
     _displayRunTime = ref.read(runTimeProvider);
     _controller = AnimationController(
       vsync: this,
@@ -98,10 +79,7 @@ class _StartButtonState extends ConsumerState<StartButton>
       _updateDisplayRunTime(next);
     });
     ref.listenManual(isStartProvider, (prev, next) {
-      if (next != isStart) {
-        isStart = next;
-        updateController();
-      }
+      updateController(next);
     }, fireImmediately: true);
   }
 
@@ -121,15 +99,7 @@ class _StartButtonState extends ConsumerState<StartButton>
   }
 
   void handleSwitchStart() {
-    // Do not flip isStart optimistically: during on-demand suspend/resume the
-    // service may still be mutating TUN state. Wait for isStartProvider (via
-    // updateStatus) so the FAB stays aligned with the real run state.
-    final next = !ref.read(isStartProvider);
-    debouncer.call(FunctionTag.updateStatus, () {
-      globalState.container
-          .read(setupActionProvider.notifier)
-          .updateStatus(next, isInit: !ref.read(initProvider));
-    }, duration: commonDuration);
+    ref.read(commonActionProvider.notifier).toggleRunning();
   }
 
   void _updateDisplayRunTime(int? runTime) {
@@ -143,7 +113,7 @@ class _StartButtonState extends ConsumerState<StartButton>
     });
   }
 
-  void updateController() {
+  void updateController(bool isStart) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -152,7 +122,7 @@ class _StartButtonState extends ConsumerState<StartButton>
       if (controller == null) {
         return;
       }
-      if (isStart && mounted) {
+      if (isStart) {
         controller.forward();
         return;
       }
@@ -190,6 +160,25 @@ class _StartButtonState extends ConsumerState<StartButton>
         24;
   }
 
+  Widget _buildIcon(bool isStart, {required bool suspended}) {
+    return AnimatedSwitcher(
+      duration: context.motionDuration(commonDuration),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(scale: animation, child: child),
+      ),
+      child: suspended
+          ? const GlyphIcon(AppGlyphs.wifiOff, fill: 1)
+          : TweenAnimationBuilder<double>(
+              tween: Tween(end: isStart ? 1 : 0),
+              duration: _iconMorphDuration,
+              curve: Curves.easeOutBack,
+              builder: (_, progress, _) =>
+                  GlyphIcon(AppGlyphs.playPause(progress), fill: 1),
+            ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasProfile = ref.watch(
@@ -198,13 +187,21 @@ class _StartButtonState extends ConsumerState<StartButton>
     if (!hasProfile) {
       return Container();
     }
-    final suspend = system.isAndroid
-        ? ref.watch(androidServiceSuspendedProvider)
-        : ref.watch(suspendProvider);
+    final isStart = ref.watch(isStartProvider);
+    final suspend = ref.watch(suspendProvider);
+    final appLocalizations = context.appLocalizations;
+    final suspended = isStart && suspend;
+    if (NavigationDock.isDocked(context)) {
+      return FloatingActionButton(
+        heroTag: null,
+        tooltip: suspended ? appLocalizations.suspended : null,
+        onPressed: handleSwitchStart,
+        child: _buildIcon(isStart, suspended: suspended),
+      );
+    }
     final hasThreeDigitHours =
         (_displayRunTime ?? 0) >= _threeDigitHourThreshold;
     final theme = Theme.of(context);
-    final appLocalizations = context.appLocalizations;
     final textWidth = suspend
         ? _getSuspendedTextWidth(context, appLocalizations.suspended)
         : _getRunTimeTextWidth(context, hasThreeDigitHours: hasThreeDigitHours);
@@ -220,56 +217,55 @@ class _StartButtonState extends ConsumerState<StartButton>
             ),
           ),
         ),
-        child: FloatingActionButton(
-          clipBehavior: Clip.antiAlias,
-          materialTapTargetSize: MaterialTapTargetSize.padded,
-          heroTag: null,
-          onPressed: () {
-            handleSwitchStart();
-          },
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedBuilder(
-                animation: _animation,
-                builder: (_, child) {
-                  return Container(
-                    height: _buttonHeight,
-                    padding: EdgeInsets.only(
-                      left: 16,
-                      right: 16 - 8 * _animation.value,
-                    ),
-                    alignment: Alignment.centerLeft,
-                    child: child,
-                  );
-                },
-                child: AnimatedIcon(
-                  icon: AnimatedIcons.play_pause,
-                  progress: _animation,
+        child: ElasticButton(
+          child: FloatingActionButton(
+            clipBehavior: Clip.antiAlias,
+            materialTapTargetSize: MaterialTapTargetSize.padded,
+            heroTag: null,
+            onPressed: () {
+              handleSwitchStart();
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedBuilder(
+                  animation: _animation,
+                  builder: (_, child) {
+                    return Container(
+                      height: _buttonHeight,
+                      padding: EdgeInsets.only(
+                        left: 16,
+                        right: 16 - 8 * _animation.value,
+                      ),
+                      alignment: Alignment.centerLeft,
+                      child: child,
+                    );
+                  },
+                  child: _buildIcon(isStart, suspended: suspended),
                 ),
-              ),
-              SizeTransition(
-                axis: Axis.horizontal,
-                alignment: Alignment.centerLeft,
-                sizeFactor: _animation,
-                child: AnimatedContainer(
-                  width: textWidth,
-                  duration: _widthAnimationDuration,
-                  curve: Curves.easeOut,
-                  child: suspend
-                      ? Text(
-                          appLocalizations.suspended,
-                          maxLines: 1,
-                          overflow: TextOverflow.visible,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: context.colorScheme.onPrimaryContainer,
-                              ),
-                        )
-                      : RunTimeText(timeStamp: _displayRunTime),
+                SizeTransition(
+                  axis: Axis.horizontal,
+                  alignment: Alignment.centerLeft,
+                  sizeFactor: _animation,
+                  child: AnimatedContainer(
+                    width: textWidth,
+                    duration: _widthAnimationDuration,
+                    curve: Curves.easeOut,
+                    child: suspend
+                        ? Text(
+                            appLocalizations.suspended,
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: context.colorScheme.onPrimaryContainer,
+                                ),
+                          )
+                        : RunTimeText(timeStamp: _displayRunTime),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

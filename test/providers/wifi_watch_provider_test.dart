@@ -30,8 +30,7 @@ void main() {
   });
 
   group('WifiWatch provider on non-Android', () {
-    // system.isAndroid is false in the test host, so WifiWatch.build()
-    // short-circuits to the empty default and never watches the JSON holder.
+    // The test host is not Android, so the provider short-circuits to its default.
     test('returns empty state regardless of pushed JSON', () {
       container.read(wifiWatchStateJsonProvider.notifier).value =
           '{"ssid":"Home"}';
@@ -58,9 +57,7 @@ void main() {
     });
 
     test('service suspended=false keeps wifiSuspended-driven suspension', () {
-      // The native wifi-watch can drive suspended=true via setWifiSuspended;
-      // androidServiceSuspended is a separate reason and should OR in, not
-      // override. Here service says suspended=true, android says false.
+      // Service and Android suspension are independent reasons; either one holds.
       const json = '{"ssid":"Home","suspended":true}';
       final state = buildWifiWatchState(json, false);
       expect(state.suspended, true);
@@ -75,8 +72,6 @@ void main() {
 
   group('mergeServiceAndDeviceWifi', () {
     test('service rssi wins over device rssi (regression: was inverted)', () {
-      // Previous bug: rssi was set to null when service had a value, clearing
-      // the strong signal. Service value must be kept.
       final serviceJson = jsonEncode(
         const WifiWatchState(
           ssid: 'Home',
@@ -111,9 +106,6 @@ void main() {
     test(
       'rawSsid mirrors service ssid, not device ssid (regression: was overwritten)',
       () {
-        // Previous bug: rawSsid was always set to the device SSID, which could
-        // differ from the service-resolved SSID while a self-VPN tunnel was
-        // active and confuse the copy-to-clipboard action.
         final serviceJson = jsonEncode(
           const WifiWatchState(
             ssid: 'ServiceHome',
@@ -150,8 +142,7 @@ void main() {
     test('malformed service json is passed through, not replaced', () {
       const deviceInfo = WifiConnectionInfo(ssid: 'Home', rssi: -55);
       const badJson = 'not json';
-      // We keep the service's raw payload rather than silently substituting
-      // device-only info — the parse error will be logged downstream.
+      // A malformed payload passes through so the parse error surfaces downstream.
       expect(mergeServiceAndDeviceWifi(badJson, deviceInfo), badJson);
     });
 
@@ -160,7 +151,6 @@ void main() {
         const WifiWatchState(
           ssid: 'Home',
           validated: true,
-          // service says no wifi present
           wifiPresent: false,
         ).toJson(),
       );

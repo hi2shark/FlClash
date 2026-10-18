@@ -2,6 +2,11 @@ display_name: FlClash
 
 icon: ./assets/images/icon.png
 
+supported_mime_type:
+  - x-scheme-handler/clash
+  - x-scheme-handler/clashmeta
+  - x-scheme-handler/flclash
+
 keywords:
   - FlClash
   - Clash
@@ -14,5 +19,7 @@ categories:
   - Network
 
 startup_notify: true
+
+startup_wm_class: com.hi2shark.flclash_nw
 
 include: []

@@ -1,8 +1,11 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 @visibleForTesting
 class NetworkTestSpeedPreset {
@@ -82,16 +85,16 @@ bool isNetworkTestableProxy(Proxy proxy) =>
 List<Proxy> filterNetworkTestProxies(Iterable<Proxy> proxies) =>
     proxies.where(isNetworkTestableProxy).toList();
 
-class NetworkTestView extends StatefulWidget {
+class NetworkTestView extends ConsumerStatefulWidget {
   final CoreController? controller;
 
   const NetworkTestView({super.key, this.controller});
 
   @override
-  State<NetworkTestView> createState() => _NetworkTestViewState();
+  ConsumerState<NetworkTestView> createState() => _NetworkTestViewState();
 }
 
-class _NetworkTestViewState extends State<NetworkTestView> {
+class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
   String _proxyName = 'DIRECT';
   NetworkTestSpeedPreset _speedTestPreset = _defaultSpeedTestPreset;
   bool _useCustomSpeedTestUrl = false;
@@ -110,7 +113,8 @@ class _NetworkTestViewState extends State<NetworkTestView> {
   int? _activeSpeedTestGeneration;
   int? _activeQuicTestGeneration;
 
-  CoreController get _controller => widget.controller ?? coreController;
+  CoreController get _controller =>
+      widget.controller ?? ref.read<CoreController>(coreHandlerProvider);
 
   @override
   void initState() {
@@ -659,7 +663,7 @@ class _NetworkTestViewState extends State<NetworkTestView> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.play_arrow),
+                    : const GlyphIcon(AppGlyphs.bolt, fill: 1),
                 label: Text(
                   isTesting
                       ? appLocalizations.testing
@@ -686,24 +690,22 @@ class _NetworkTestViewState extends State<NetworkTestView> {
             title: appLocalizations.selectNode,
             items: [
               ListItem<dynamic>.open(
-                leading: const Icon(Icons.dns),
+                leading: const GlyphIcon(AppGlyphs.dns),
                 title: Text(appLocalizations.selectNode),
                 subtitle: Text(_proxyName),
-                delegate: OpenDelegate<dynamic>(
-                  widget: NodeSelectionView(
-                    currentName: _proxyName,
-                    controller: widget.controller,
-                  ),
-                  onChanged: (name) {
-                    if (name is String && name != _proxyName) {
-                      setState(() {
-                        _proxyName = name;
-                        _clearSpeedTestResult();
-                        _clearQuicTestResult();
-                      });
-                    }
-                  },
+                widget: NodeSelectionView(
+                  currentName: _proxyName,
+                  controller: widget.controller,
                 ),
+                onChanged: (name) {
+                  if (name is String && name != _proxyName) {
+                    setState(() {
+                      _proxyName = name;
+                      _clearSpeedTestResult();
+                      _clearQuicTestResult();
+                    });
+                  }
+                },
               ),
             ],
           ),
@@ -737,7 +739,7 @@ class _NetworkTestViewState extends State<NetworkTestView> {
   }
 }
 
-class NodeSelectionView extends StatefulWidget {
+class NodeSelectionView extends ConsumerStatefulWidget {
   final String currentName;
   final CoreController? controller;
 
@@ -748,21 +750,22 @@ class NodeSelectionView extends StatefulWidget {
   });
 
   @override
-  State<NodeSelectionView> createState() => _NodeSelectionViewState();
+  ConsumerState<NodeSelectionView> createState() => _NodeSelectionViewState();
 }
 
-class _NodeSelectionViewState extends State<NodeSelectionView> {
+class _NodeSelectionViewState extends ConsumerState<NodeSelectionView> {
   static const _localNodeNames = ['DIRECT', 'COMPATIBLE'];
 
   late final Future<List<Proxy>> _proxiesFuture =
-      (widget.controller ?? coreController).getAllProxies();
+      (widget.controller ?? ref.read<CoreController>(coreHandlerProvider))
+          .getAllProxies();
 
   Widget _buildProxyItem(Proxy proxy) {
     return ListItem(
       title: Text(proxy.name),
       subtitle: Text(proxy.type),
       trailing: proxy.name == widget.currentName
-          ? const Icon(Icons.check)
+          ? const GlyphIcon(AppGlyphs.check)
           : null,
       onTap: () {
         Navigator.of(context).pop<String>(proxy.name);

@@ -36,8 +36,9 @@ class WifiWatchState {
       validated: toBool(json['validated']),
       wifiPresent: toBool(json['wifiPresent']),
       suspended: toBool(json['suspended']),
-      pendingSuspendDeadline:
-          deadline == null ? null : DateTime.fromMillisecondsSinceEpoch(deadline),
+      pendingSuspendDeadline: deadline == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(deadline),
     );
   }
 

@@ -2,147 +2,126 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/features.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:super_sliver_list/super_sliver_list.dart';
-
-import 'item.dart';
 
 /// UI render cap for connections list (core snapshot remains full).
 const int connectionsDisplayLimit = 500;
 
 class ConnectionsView extends ConsumerStatefulWidget {
-  const ConnectionsView({super.key});
+  final ScrollController? scrollController;
+  final Future<List<TrackerInfo>> Function()? connectionsReader;
+
+  const ConnectionsView({
+    super.key,
+    this.scrollController,
+    @visibleForTesting this.connectionsReader,
+  });
 
   @override
   ConsumerState<ConnectionsView> createState() => _ConnectionsViewState();
 }
 
 class _ConnectionsViewState extends ConsumerState<ConnectionsView>
-    with WidgetsBindingObserver {
-  final _connectionsStateNotifier = ValueNotifier<TrackerInfosState>(
-    const TrackerInfosState(),
-  );
-  final ScrollController _scrollController = ScrollController();
+    with
+        WidgetsBindingObserver,
+        ActivePollingMixin<ConnectionsView>,
+        RouteMotionHoldMixin<ConnectionsView> {
+  CoreController get _core => ref.read(coreHandlerProvider);
+
   bool _showAll = false;
-  bool _appActive = true;
-  bool _pageActive = true;
 
-  Timer? timer;
+  final _listController = TrackerInfoListController();
+  final _speedRanker = TrackerSpeedRanker();
+  late final ScrollController _scrollController;
 
-  bool get _shouldPoll => _appActive && _pageActive;
+  @override
+  void initState() {
+    super.initState();
+    _scrollController =
+        widget.scrollController ?? sheetScrollController(context);
+  }
 
-  List<Widget> _buildActions() {
+  @override
+  Duration get pollInterval => const Duration(seconds: 1);
+
+  List<IconButtonData> _buildActions() {
     final appLocalizations = context.appLocalizations;
     return [
-      IconButton(
+      IconButtonData(
+        glyph: _showAll ? AppGlyphs.filter : AppGlyphs.arrowDown,
         tooltip: _showAll
             ? appLocalizations.connectionsLimitDisplay
             : appLocalizations.connectionsShowAll,
+        isSelected: _showAll,
         onPressed: () {
           setState(() {
             _showAll = !_showAll;
           });
         },
-        icon: Icon(_showAll ? Icons.filter_list : Icons.unfold_more),
       ),
-      IconButton(
+      IconButtonData(
+        glyph: AppGlyphs.clearAll,
+        tooltip: appLocalizations.closeConnections,
         onPressed: () async {
-          coreController.closeConnections();
-          await _updateConnections();
+          unawaited(_core.closeConnections());
+          await _refreshConnections();
         },
-        icon: const Icon(Icons.delete_sweep_outlined),
       ),
     ];
   }
 
-  void _onSearch(String value) {
-    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
-      query: value,
-    );
-  }
-
-  void _onKeywordsUpdate(List<String> keywords) {
-    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
-      keywords: keywords,
-    );
-  }
-
-  Future<void> _updateConnectionsTask() async {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted || !_shouldPoll) {
-        return;
-      }
-      await _updateConnections();
-      if (!mounted || !_shouldPoll) {
-        return;
-      }
-      timer = Timer(const Duration(seconds: 1), () async {
-        if (mounted && _shouldPoll) {
-          await _updateConnectionsTask();
-        }
-      });
-    });
-  }
-
-  void _syncPolling() {
-    timer?.cancel();
-    timer = null;
-    if (_shouldPoll) {
-      _updateConnectionsTask();
-    }
-  }
-
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _updateConnectionsTask();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final pageActive = PageActivityScope.of(context);
-    if (pageActive == _pageActive) {
+  Future<void> poll(PollGuard isCurrent) async {
+    final trackerInfos = await _readConnections();
+    if (!isCurrent()) {
       return;
     }
-    _pageActive = pageActive;
-    _syncPolling();
+    updateWhenRouteSettled(() => _applyConnections(trackerInfos));
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    final active =
-        state != AppLifecycleState.paused &&
-        state != AppLifecycleState.inactive &&
-        state != AppLifecycleState.detached &&
-        state != AppLifecycleState.hidden;
-    if (active == _appActive) {
-      return;
-    }
-    _appActive = active;
-    _syncPolling();
-  }
-
-  Future<void> _updateConnections() async {
+  Future<void> _refreshConnections() async {
+    final trackerInfos = await _readConnections();
     if (!mounted) {
       return;
     }
-    final connections = await coreController.getConnections();
-    if (!mounted) {
+    _applyConnections(trackerInfos);
+  }
+
+  Future<List<TrackerInfo>?> _readConnections() async {
+    try {
+      final connectionsReader = widget.connectionsReader;
+      return connectionsReader != null
+          ? await connectionsReader()
+          : await _core.getConnections();
+    } catch (error) {
+      commonPrint.log(
+        'updateConnections error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+      return null;
+    }
+  }
+
+  void _applyConnections(List<TrackerInfo>? trackerInfos) {
+    if (trackerInfos == null) {
       return;
     }
-    _connectionsStateNotifier.value = _connectionsStateNotifier.value.copyWith(
-      trackerInfos: connections,
+    _listController.setTrackerInfos(
+      _speedRanker.rank(trackerInfos, DateTime.now()),
     );
   }
 
   Future<void> _handleBlockConnection(String id) async {
-    await coreController.closeConnection(id);
-    await _updateConnections();
+    await _core.closeConnection(id);
+    await _refreshConnections();
   }
 
   List<TrackerInfo> _visibleConnections(List<TrackerInfo> connections) {
@@ -154,11 +133,10 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    timer?.cancel();
-    _connectionsStateNotifier.dispose();
-    _scrollController.dispose();
-    timer = null;
+    _listController.dispose();
+    if (widget.scrollController == null) {
+      _scrollController.dispose();
+    }
     super.dispose();
   }
 
@@ -166,49 +144,71 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     return CommonScaffold(
-      title: appLocalizations.connections,
-      onKeywordsUpdate: _onKeywordsUpdate,
-      searchState: AppBarSearchState(onSearch: _onSearch),
-      actions: _buildActions(),
+      title: PageLabel.connections.label,
+      onKeywordsUpdate: _listController.updateKeywords,
+      searchState: AppBarSearchState(onSearch: _listController.search),
+      iconActions: _buildActions(),
       body: ValueListenableBuilder<TrackerInfosState>(
-        valueListenable: _connectionsStateNotifier,
+        valueListenable: _listController,
         builder: (context, state, _) {
           final connections = state.list;
-          if (connections.isEmpty) {
-            return NullStatus(
+          return NullStatusSwitcher(
+            isEmpty: connections.isEmpty,
+            isSearching: state.isSearching,
+            holdsArrival: true,
+            nullStatus: NullStatus(
               label: appLocalizations.nullTip(appLocalizations.connections),
-              illustration: const ConnectionEmptyIllustration(),
-            );
-          }
-          final visible = _visibleConnections(connections);
-          return SuperListView.separated(
-            controller: _scrollController,
-            itemBuilder: (context, index) {
-              final trackerInfo = visible[index];
-              return TrackerInfoItem(
-                key: Key(trackerInfo.id),
-                trackerInfo: trackerInfo,
-                onClickKeyword: (value) {
-                  context.commonScaffoldState?.addKeyword(value);
+              illustration: NullStatusIllustration.connections,
+            ),
+            child: TrackerInfoAnimatedList(
+              controller: _scrollController,
+              padding: EdgeInsets.only(
+                top: context.contentTopPadding,
+                bottom: 16 + BottomInsetScope.of(context),
+              ),
+              trackerInfos: _visibleConnections(connections),
+              detailTitle: appLocalizations.details(
+                appLocalizations.connection,
+              ),
+              actionBuilder: (trackerInfo) => _BlockConnectionButton(
+                onPressed: () {
+                  _handleBlockConnection(trackerInfo.id);
                 },
-                trailing: IconButton(
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  style: IconButton.styleFrom(minimumSize: Size.zero),
-                  icon: const Icon(Icons.block),
-                  onPressed: () {
-                    _handleBlockConnection(trackerInfo.id);
-                  },
-                ),
-                detailTitle: appLocalizations.details(
-                  appLocalizations.connection,
-                ),
-              );
-            },
-            separatorBuilder: (_, _) => const Divider(height: 0),
-            itemCount: visible.length,
+              ),
+            ),
           );
         },
+      ),
+    );
+  }
+}
+
+// One per live row: an IconButton would add a theme animation to each.
+class _BlockConnectionButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _BlockConnectionButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: context.appLocalizations.blockConnection,
+      child: Semantics(
+        button: true,
+        child: InkResponse(
+          onTap: onPressed,
+          radius: 14,
+          child: SizedBox.square(
+            dimension: 28,
+            child: Center(
+              child: GlyphIcon(
+                AppGlyphs.block,
+                size: 16,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

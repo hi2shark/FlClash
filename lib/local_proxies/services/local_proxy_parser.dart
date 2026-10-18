@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:fl_clash/models/local_proxy.dart';
 
 class LocalProxyParseResult {

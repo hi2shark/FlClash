@@ -1,11 +1,11 @@
 import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 const manualProxyTypes = [
   'ss',
@@ -1558,7 +1558,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   Future<void> _handleSave() async {
     final error = _validateCommon();
     if (error != null) {
-      globalState.showNotifier(error);
+      context.showNotifier(error);
       return;
     }
     final name = _nameController.text.trim();
@@ -1670,9 +1670,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return ListItem.switchItem(
+    return ListItem.toggle(
       title: Text(title),
-      delegate: SwitchDelegate<bool>(value: value, onChanged: onChanged),
+      value: value,
+      onChanged: onChanged,
     );
   }
 
@@ -1981,20 +1982,16 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListItem.switchItem(
+          ListItem.toggle(
             title: Text(appLocalizations.tls),
-            delegate: SwitchDelegate<bool>(
-              value: _tls,
-              onChanged: (value) => setState(() => _tls = value),
-            ),
+            value: _tls,
+            onChanged: (value) => setState(() => _tls = value),
           ),
           if (_tls) ...[
-            ListItem.switchItem(
+            ListItem.toggle(
               title: Text(appLocalizations.skipCertVerify),
-              delegate: SwitchDelegate<bool>(
-                value: _skipCertVerify,
-                onChanged: (value) => setState(() => _skipCertVerify = value),
-              ),
+              value: _skipCertVerify,
+              onChanged: (value) => setState(() => _skipCertVerify = value),
             ),
             const SizedBox(height: 16),
             _buildTextField(
@@ -2111,12 +2108,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               _fingerprintController,
               appLocalizations.fingerprint,
             ),
-            ListItem.switchItem(
+            ListItem.toggle(
               title: Text(appLocalizations.skipCertVerify),
-              delegate: SwitchDelegate<bool>(
-                value: _skipCertVerify,
-                onChanged: (value) => setState(() => _skipCertVerify = value),
-              ),
+              value: _skipCertVerify,
+              onChanged: (value) => setState(() => _skipCertVerify = value),
             ),
           ],
           if (_security == 'reality') ...[
@@ -2132,13 +2127,11 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               _realityShortIdController,
               appLocalizations.realityShortId,
             ),
-            ListItem.switchItem(
+            ListItem.toggle(
               title: Text(appLocalizations.supportX25519Mlkem768),
-              delegate: SwitchDelegate<bool>(
-                value: _supportX25519Mlkem768,
-                onChanged: (value) =>
-                    setState(() => _supportX25519Mlkem768 = value),
-              ),
+              value: _supportX25519Mlkem768,
+              onChanged: (value) =>
+                  setState(() => _supportX25519Mlkem768 = value),
             ),
           ],
           if (_network == 'ws' || _network == 'httpupgrade') ...[
@@ -2158,21 +2151,16 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               appLocalizations.earlyDataHeaderName,
             ),
             if (_network == 'ws')
-              ListItem.switchItem(
+              ListItem.toggle(
                 title: const Text('v2ray-http-upgrade'),
-                delegate: SwitchDelegate<bool>(
-                  value: _v2rayHttpUpgrade,
-                  onChanged: (value) =>
-                      setState(() => _v2rayHttpUpgrade = value),
-                ),
+                value: _v2rayHttpUpgrade,
+                onChanged: (value) => setState(() => _v2rayHttpUpgrade = value),
               ),
-            ListItem.switchItem(
+            ListItem.toggle(
               title: const Text('v2ray-http-upgrade-fast-open'),
-              delegate: SwitchDelegate<bool>(
-                value: _v2rayHttpUpgradeFastOpen,
-                onChanged: (value) =>
-                    setState(() => _v2rayHttpUpgradeFastOpen = value),
-              ),
+              value: _v2rayHttpUpgradeFastOpen,
+              onChanged: (value) =>
+                  setState(() => _v2rayHttpUpgradeFastOpen = value),
             ),
           ],
           if (_network == 'grpc') ...[
@@ -2322,21 +2310,17 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             ),
           if (!_isNowhere3 && (_up != 'udp' || _down != 'udp')) ...[
             const SizedBox(height: 8),
-            ListItem.switchItem(
+            ListItem.toggle(
               title: Text(appLocalizations.mux),
-              delegate: SwitchDelegate<bool>(
-                value: _muxEnabled,
-                onChanged: (value) => setState(() => _muxEnabled = value),
-              ),
+              value: _muxEnabled,
+              onChanged: (value) => setState(() => _muxEnabled = value),
             ),
           ],
           const SizedBox(height: 8),
-          ListItem.switchItem(
+          ListItem.toggle(
             title: Text(appLocalizations.morph),
-            delegate: SwitchDelegate<bool>(
-              value: _morph,
-              onChanged: (value) => setState(() => _morph = value),
-            ),
+            value: _morph,
+            onChanged: (value) => setState(() => _morph = value),
           ),
           if (!_isNowhere3 && _dedicatedTcpTcp) ...[
             const SizedBox(height: 16),
@@ -2348,12 +2332,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           ],
           const SizedBox(height: 16),
           _buildTextField(_sniController, appLocalizations.sni),
-          ListItem.switchItem(
+          ListItem.toggle(
             title: Text(appLocalizations.skipCertVerify),
-            delegate: SwitchDelegate<bool>(
-              value: _skipCertVerify,
-              onChanged: (value) => setState(() => _skipCertVerify = value),
-            ),
+            value: _skipCertVerify,
+            onChanged: (value) => setState(() => _skipCertVerify = value),
           ),
         ],
         if (_type == 'hysteria2') ...[
@@ -2480,12 +2462,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ListItem.switchItem(
+        ListItem.toggle(
           title: Text(appLocalizations.ech),
-          delegate: SwitchDelegate<bool>(
-            value: _echEnabled,
-            onChanged: (value) => setState(() => _echEnabled = value),
-          ),
+          value: _echEnabled,
+          onChanged: (value) => setState(() => _echEnabled = value),
         ),
         if (_echEnabled) ...[
           const SizedBox(height: 12),
@@ -2509,15 +2489,13 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     final appLocalizations = context.appLocalizations;
     return Column(
       children: [
-        ListItem.switchItem(
+        ListItem.toggle(
           title: Text(appLocalizations.udp),
-          delegate: SwitchDelegate<bool>(
-            value: _udp,
-            onChanged: (value) => setState(() {
-              _udp = value;
-              _udpTouched = true;
-            }),
-          ),
+          value: _udp,
+          onChanged: (value) => setState(() {
+            _udp = value;
+            _udpTouched = true;
+          }),
         ),
         if (_type == 'easytier') ...[
           const SizedBox(height: 8),
@@ -2540,12 +2518,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           ),
         ],
         if (_type == 'trojan' || _type == 'anytls' || _type == 'hysteria2')
-          ListItem.switchItem(
+          ListItem.toggle(
             title: Text(appLocalizations.skipCertVerify),
-            delegate: SwitchDelegate<bool>(
-              value: _skipCertVerify,
-              onChanged: (value) => setState(() => _skipCertVerify = value),
-            ),
+            value: _skipCertVerify,
+            onChanged: (value) => setState(() => _skipCertVerify = value),
           ),
         if (_type == 'anytls' || _type == 'nowhere') ...[
           const SizedBox(height: 16),
@@ -2582,12 +2558,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       'nowhere' => Column(
         children: [
           if (!_isNowhere3) ...[
-            ListItem.switchItem(
+            ListItem.toggle(
               title: Text(appLocalizations.prewarmOnStart),
-              delegate: SwitchDelegate<bool>(
-                value: _prewarmOnStart,
-                onChanged: (value) => setState(() => _prewarmOnStart = value),
-              ),
+              value: _prewarmOnStart,
+              onChanged: (value) => setState(() => _prewarmOnStart = value),
             ),
             const SizedBox(height: 16),
             _buildTextField(
@@ -2609,10 +2583,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             ),
             const SizedBox(height: 16),
           ],
-          _buildTextField(
-            _dialerProxyController,
-            appLocalizations.dialerProxy,
-          ),
+          _buildTextField(_dialerProxyController, appLocalizations.dialerProxy),
           const SizedBox(height: 16),
           _buildTextField(
             _congestionControllerController,
@@ -2644,7 +2615,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.info_outline, size: 48),
+                const GlyphIcon(AppGlyphs.info, size: 48),
                 const SizedBox(height: 16),
                 Text(
                   '${_type.toUpperCase()}: '
@@ -2666,7 +2637,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         heroTag: null,
         onPressed: _handleSave,
         label: Text(appLocalizations.save),
-        icon: const Icon(Icons.save),
+        icon: const GlyphIcon(AppGlyphs.save, fill: 1),
       ),
       body: Form(
         key: _formKey,
@@ -2676,7 +2647,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             Align(
               alignment: Alignment.centerLeft,
               child: Chip(
-                avatar: const Icon(Icons.shield_outlined, size: 18),
+                avatar: const GlyphIcon(AppGlyphs.lock, size: 18),
                 label: Text(_protocolLabel()),
               ),
             ),

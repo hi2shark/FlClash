@@ -1,12 +1,13 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
 import 'package:fl_clash/models/local_proxy_provider_config.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class LocalProxyMixinSettingsPage extends StatefulWidget {
   final int profileId;
@@ -88,7 +89,7 @@ class _LocalProxyMixinSettingsPageState
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
-      globalState.showNotifier(e.toString());
+      context.showNotifier(e.toString());
     }
   }
 
@@ -114,7 +115,7 @@ class _LocalProxyMixinSettingsPageState
     if (_saving) return;
     final appLocalizations = context.appLocalizations;
     if (_config.enabled && _config.targetGroups.isEmpty) {
-      globalState.showMessage(
+      await dialogs.showMessage(
         title: appLocalizations.cannotSaveLocalMixin,
         message: TextSpan(text: appLocalizations.selectTargetGroups),
       );
@@ -125,7 +126,7 @@ class _LocalProxyMixinSettingsPageState
           .where((name) => !_groups.any((g) => g.name == name))
           .toList();
       if (missing.isNotEmpty) {
-        globalState.showMessage(
+        await dialogs.showMessage(
           title: appLocalizations.cannotSaveLocalMixin,
           message: TextSpan(
             text: appLocalizations.localMixinMissingGroups(
@@ -152,7 +153,7 @@ class _LocalProxyMixinSettingsPageState
             interval <= 0 ||
             timeout == null ||
             timeout <= 0)) {
-      globalState.showMessage(
+      await dialogs.showMessage(
         title: appLocalizations.cannotSaveLocalMixin,
         message: TextSpan(text: appLocalizations.localProxyHealthCheckInvalid),
       );
@@ -189,7 +190,7 @@ class _LocalProxyMixinSettingsPageState
       if (!success) {
         await _restorePreviousConfig(previous);
         if (mounted) {
-          globalState.showNotifier(appLocalizations.localProxyReloadFailed);
+          context.showNotifier(appLocalizations.localProxyReloadFailed);
         }
         return;
       }
@@ -232,10 +233,11 @@ class _LocalProxyMixinSettingsPageState
     final healthEnabled = _config.enabled && _config.healthCheckEnabled;
     return CommonScaffold(
       title: appLocalizations.localProxyMixin,
-      floatingActionButton: CommonFloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: _handleSave,
-        icon: const Icon(Icons.save),
-        label: appLocalizations.saveAndReload,
+        label: Text(appLocalizations.saveAndReload),
+        icon: const GlyphIcon(AppGlyphs.save, fill: 1),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -243,12 +245,10 @@ class _LocalProxyMixinSettingsPageState
               padding: const EdgeInsets.all(16).copyWith(bottom: 88),
               children: [
                 CommonCard(
-                  child: ListItem.switchItem(
+                  child: ListItem.toggle(
                     title: Text(appLocalizations.enableLocalProxyMixin),
-                    delegate: SwitchDelegate<bool>(
-                      value: _config.enabled,
-                      onChanged: _setEnabled,
-                    ),
+                    value: _config.enabled,
+                    onChanged: _setEnabled,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -304,14 +304,12 @@ class _LocalProxyMixinSettingsPageState
                           ListItem.checkbox(
                             title: Text(_groups[i].name),
                             subtitle: Text(_groups[i].type),
-                            delegate: CheckboxDelegate(
-                              value: _config.targetGroups.contains(
-                                _groups[i].name,
-                              ),
-                              onChanged: _config.enabled
-                                  ? (_) => _toggleGroup(_groups[i].name)
-                                  : null,
+                            value: _config.targetGroups.contains(
+                              _groups[i].name,
                             ),
+                            onChanged: _config.enabled
+                                ? (_) => _toggleGroup(_groups[i].name)
+                                : null,
                           ),
                         ],
                       ],
@@ -323,20 +321,18 @@ class _LocalProxyMixinSettingsPageState
                 CommonCard(
                   child: Column(
                     children: [
-                      ListItem.switchItem(
+                      ListItem.toggle(
                         title: Text(appLocalizations.enableHealthCheck),
-                        delegate: SwitchDelegate<bool>(
-                          value: _config.healthCheckEnabled,
-                          onChanged: _config.enabled
-                              ? (value) {
-                                  setState(() {
-                                    _config = _config.copyWith(
-                                      healthCheckEnabled: value,
-                                    );
-                                  });
-                                }
-                              : null,
-                        ),
+                        value: _config.healthCheckEnabled,
+                        onChanged: _config.enabled
+                            ? (value) {
+                                setState(() {
+                                  _config = _config.copyWith(
+                                    healthCheckEnabled: value,
+                                  );
+                                });
+                              }
+                            : null,
                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),

@@ -29,8 +29,10 @@ void main() {
         true,
       );
       expect(
-        const WifiWatchState(ssid: 'Home', wifiPresent: true)
-            .prioritizeActionStatus,
+        const WifiWatchState(
+          ssid: 'Home',
+          wifiPresent: true,
+        ).prioritizeActionStatus,
         false,
       );
     });
