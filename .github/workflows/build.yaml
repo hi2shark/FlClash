@@ -61,8 +61,15 @@ jobs:
         run: |
           yq -i '.hooks.user_defines.setup.build_assets = false' pubspec.yaml
 
+      # The changelog is derived from the tagged history of the repository that
+      # owns it: the frozen window opens at v0.8.96 and every release tag has to
+      # be recorded in changelog.json. A fork keeps its own tag set, so the
+      # derivation cannot resolve and the step dies on an ambiguous revision
+      # instead of returning a verdict. Releases are gated the same way.
       - name: Verify changelog
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+        if: >-
+          github.repository == 'chen08209/FlClash' &&
+          (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
         run: dart run tool/changelog.dart verify
 
       - name: Run tests
