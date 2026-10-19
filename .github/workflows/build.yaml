@@ -418,6 +418,21 @@ jobs:
           add-to-path: true
           link-to-sdk: true
 
+      # Fork-specific: keep during upstream merges. The tag owns the version so
+      # artifact names, platform metadata and PackageInfo agree with the release.
+      - name: Align version with tag
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          build_number="$(sed -n 's/^version: [^+]*+\([0-9][0-9]*\)$/\1/p' pubspec.yaml)"
+          if [[ -z "$build_number" ]]; then
+            echo "pubspec.yaml version has no +build suffix" >&2
+            exit 1
+          fi
+          sed -i.bak "s/^version: .*/version: ${version}+${build_number}/" pubspec.yaml
+          rm -f pubspec.yaml.bak
+          grep '^version:' pubspec.yaml
+
       - name: Get Flutter Dependency
         run: |
           flutter --version
@@ -466,6 +481,17 @@ jobs:
           pattern: artifact-*
           merge-multiple: true
 
+      - name: Verify asset names match the tag
+        if: ${{ env.IS_STABLE == 'true' }}
+        shell: bash
+        run: |
+          shopt -s nullglob
+          matches=(dist/FlClash-"${GITHUB_REF_NAME#v}"-*)
+          if (( ${#matches[@]} == 0 )); then
+            echo "No asset name starts with FlClash-${GITHUB_REF_NAME#v}-" >&2
+            exit 1
+          fi
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -479,6 +505,14 @@ jobs:
       - name: Skip native build hooks
         run: |
           yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
+
+      - name: Align version with tag
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          build_number="$(sed -n 's/^version: [^+]*+\([0-9][0-9]*\)$/\1/p' pubspec.yaml)"
+          sed -i.bak "s/^version: .*/version: ${version}+${build_number}/" pubspec.yaml
+          rm -f pubspec.yaml.bak
 
       - name: Generate release notes
         shell: bash

@@ -278,14 +278,36 @@ branch fail on an unrelated release.
 
 Prerelease tags (`v0.8.96-pre.N`) skip the release commit, and CI renders their notes with `build --unreleased` for the
 Telegram post. They publish no GitHub release, so the update dialog never sees them. `build --unreleased` reads the
-version from `pubspec.yaml` rather than the tag, so the patch has to be bumped before the first `-pre.N` of a cycle:
-while `v<pubspec version>` is still tagged it refuses to collect anything and the release job fails.
+version from `pubspec.yaml` rather than the tag; the upload job aligns that file with the pushed tag first, so a
+`vX.Y.Z-pre.N` tag collects the `X.Y.Z` section without a manual pubspec bump. A tag whose base `vX.Y.Z` is already
+stable still refuses to collect anything, as it should.
 
 This repository publishes its own releases. `build` runs for both the upstream owner and `hi2shark`, so the download
 URLs resolve against whichever repository hosts the tag, while the Telegram, Homebrew and F-Droid pushes stay with
 `chen08209`, whose secrets and destination repositories they name. The `telegram-bot-api` service container exits when
 its credentials are absent, so the fork keeps it alive with placeholder values that only the gated upstream push step
 would ever talk to.
+
+### Fork Versioning
+
+This fork tags releases as `v0.9.000N` while upstream keeps the app version in `pubspec.yaml`. Tag builds therefore
+rewrite `pubspec.yaml` in the runner before packaging: `version: <tag without v>+<build number>`. The build job does it
+before `flutter pub get`; the upload job does it before rendering prerelease notes. The working tree is never written
+back.
+
+Everything that reads the version follows the tag:
+
+- `flutter_distributor` names artifacts `FlClash-<tag version>-...`, which is what `.github/release_template.md` links to.
+- Android `versionName`, macOS `CFBundleShortVersionString`, the Windows version resource and Linux `version.json` are
+  derived by Flutter from the rewritten pubspec.
+- `packageInfo.version` therefore matches the tag in the about page, the user agent and `checkForUpdate()`.
+
+The `+<build number>` suffix still comes from pubspec; run `tool/bump_version.sh` when a release needs a larger Android
+`versionCode`. The upload job fails before publishing if no downloaded asset is named `FlClash-<tag version>-*`.
+
+When merging upstream, keep both `Align version with tag` steps and the `Verify asset names match the tag` guard in
+`.github/workflows/build.yaml`. Upstream's flow assumes pubspec already names the release; dropping these steps
+publishes `FlClash-0.9.0-*` assets under a `v0.9.000N` tag and leaves the release download links broken.
 
 ### Website
 

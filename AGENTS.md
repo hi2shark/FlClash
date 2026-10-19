@@ -47,6 +47,10 @@ Read these only when the task touches their area:
 - Use `flutter test`, not `dart test`, because models pull in Flutter types.
 - Run code generation after modifying models, providers, or database schema.
 - Do not manually edit generated files.
+- Release tags own the app version. The `Align version with tag` steps in `.github/workflows/build.yaml` rewrite
+  `pubspec.yaml` to `<tag without v>+<build number>` before packaging, so artifact names, platform version metadata and
+  in-app `PackageInfo.version` all match the tag. Preserve those steps and the `Verify asset names match the tag` guard
+  when merging upstream; see the Fork Versioning section of [.agents/commands.md](.agents/commands.md).
 - Preserve lifecycle ownership: desktop Core process convergence belongs to `lib/core/desktop/`; Android service intent
   arbitration belongs to `ServiceState`. UI/provider code may request a transition but must not become a second source of
   truth.
