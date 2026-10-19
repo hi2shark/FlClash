@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.9.0002 (2026-10-19)
+
+**Bug Fixes**
+
+- **dart** Local proxies, local rules and network test pages no longer sit under the floating top bar (b33a8c4)
+
 ## v0.9.0001 (2026-10-18)
 
 **Breaking Changes**
