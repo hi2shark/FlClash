@@ -259,52 +259,57 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
         builder: (_, proxies, child) {
           final filtered = _filter(proxies);
           final enabledCount = proxies.where((p) => p.enabled).length;
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (value) => setState(() => _query = value.trim()),
-                  decoration: InputDecoration(
-                    prefixIcon: const GlyphIcon(AppGlyphs.search),
-                    hintText: appLocalizations.searchLocalProxy,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    appLocalizations.localProxyCount(
-                      proxies.length,
-                      enabledCount,
+          return AppBarClearance(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) => setState(() => _query = value.trim()),
+                    decoration: InputDecoration(
+                      prefixIcon: const GlyphIcon(AppGlyphs.search),
+                      hintText: appLocalizations.searchLocalProxy,
                     ),
-                    style: context.textTheme.labelLarge,
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: filtered.isEmpty
-                    ? NullStatus(label: appLocalizations.noLocalProxy)
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(16).copyWith(bottom: 88),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final proxy = filtered[index];
-                          return _ProxyCard(
-                            proxy: proxy,
-                            onEdit: () => _handleEdit(proxy),
-                            onToggle: () => _handleToggle(proxy),
-                            onDelete: () => _handleDelete(proxy),
-                          );
-                        },
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      appLocalizations.localProxyCount(
+                        proxies.length,
+                        enabledCount,
                       ),
-              ),
-            ],
+                      style: context.textTheme.labelLarge,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: filtered.isEmpty
+                      ? NullStatus(label: appLocalizations.noLocalProxy)
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(
+                            16,
+                          ).copyWith(bottom: 88),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final proxy = filtered[index];
+                            return _ProxyCard(
+                              proxy: proxy,
+                              onEdit: () => _handleEdit(proxy),
+                              onToggle: () => _handleToggle(proxy),
+                              onDelete: () => _handleDelete(proxy),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           );
         },
       ),

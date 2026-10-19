@@ -82,7 +82,9 @@ class _LocalRulesViewState extends State<LocalRulesView> {
     return CommonScaffold(
       title: appLocalizations.localRules,
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(
+          16,
+        ).copyWith(top: context.contentTopPadding),
         children: [
           ValueListenableBuilder<LocalRuleMixinConfig>(
             valueListenable: localRuleStore.configNotifier,

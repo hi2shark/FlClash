@@ -41,7 +41,9 @@ class _LocalProxiesViewState extends ConsumerState<LocalProxiesView> {
     return CommonScaffold(
       title: appLocalizations.localProxies,
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(
+          16,
+        ).copyWith(top: context.contentTopPadding),
         children: [
           ValueListenableBuilder<LocalProxyProviderConfig?>(
             valueListenable: localProxyStore.configNotifier,

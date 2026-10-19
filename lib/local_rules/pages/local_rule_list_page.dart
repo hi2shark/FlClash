@@ -163,53 +163,60 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
         valueListenable: localRuleStore.rulesNotifier,
         builder: (_, rules, child) {
           final enabledCount = rules.where((rule) => rule.enabled).length;
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    appLocalizations.localRuleCount(rules.length, enabledCount),
-                    style: context.textTheme.labelLarge,
+          return AppBarClearance(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      appLocalizations.localRuleCount(
+                        rules.length,
+                        enabledCount,
+                      ),
+                      style: context.textTheme.labelLarge,
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: rules.isEmpty
-                    ? NullStatus(
-                        label: appLocalizations.noLocalRule,
-                        illustration: NullStatusIllustration.rules,
-                      )
-                    : ReorderableListView.builder(
-                        padding: const EdgeInsets.all(16).copyWith(bottom: 88),
-                        buildDefaultDragHandles: false,
-                        itemCount: rules.length,
-                        onReorderItem: _handleReorder,
-                        proxyDecorator: (child, index, animation) =>
-                            commonProxyDecorator(child, index, animation),
-                        itemBuilder: (context, index) {
-                          final rule = rules[index];
-                          return Padding(
-                            key: ValueKey(rule.id),
-                            padding: EdgeInsets.only(
-                              bottom: index == rules.length - 1 ? 0 : 12,
-                            ),
-                            child: ReorderableDelayedDragStartListener(
-                              index: index,
-                              child: _RuleCard(
-                                rule: rule,
-                                invalid: _isInvalid(rule),
-                                onEdit: () => _handleAddOrEdit(rule: rule),
-                                onToggle: () => _handleToggle(rule),
-                                onDelete: () => _handleDelete(rule),
+                Expanded(
+                  child: rules.isEmpty
+                      ? NullStatus(
+                          label: appLocalizations.noLocalRule,
+                          illustration: NullStatusIllustration.rules,
+                        )
+                      : ReorderableListView.builder(
+                          padding: const EdgeInsets.all(
+                            16,
+                          ).copyWith(bottom: 88),
+                          buildDefaultDragHandles: false,
+                          itemCount: rules.length,
+                          onReorderItem: _handleReorder,
+                          proxyDecorator: (child, index, animation) =>
+                              commonProxyDecorator(child, index, animation),
+                          itemBuilder: (context, index) {
+                            final rule = rules[index];
+                            return Padding(
+                              key: ValueKey(rule.id),
+                              padding: EdgeInsets.only(
+                                bottom: index == rules.length - 1 ? 0 : 12,
                               ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
+                              child: ReorderableDelayedDragStartListener(
+                                index: index,
+                                child: _RuleCard(
+                                  rule: rule,
+                                  invalid: _isInvalid(rule),
+                                  onEdit: () => _handleAddOrEdit(rule: rule),
+                                  onToggle: () => _handleToggle(rule),
+                                  onDelete: () => _handleDelete(rule),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           );
         },
       ),

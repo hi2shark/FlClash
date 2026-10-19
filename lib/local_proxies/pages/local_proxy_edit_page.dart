@@ -2609,21 +2609,23 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     if (!isManualEditable) {
       return CommonScaffold(
         title: appLocalizations.editLocalProxy,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const GlyphIcon(AppGlyphs.info, size: 48),
-                const SizedBox(height: 16),
-                Text(
-                  '${_type.toUpperCase()}: '
-                  '${appLocalizations.localProxyProtocolReimportOnly}',
-                  textAlign: TextAlign.center,
-                  style: context.textTheme.bodyLarge,
-                ),
-              ],
+        body: AppBarClearance(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const GlyphIcon(AppGlyphs.info, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    '${_type.toUpperCase()}: '
+                    '${appLocalizations.localProxyProtocolReimportOnly}',
+                    textAlign: TextAlign.center,
+                    style: context.textTheme.bodyLarge,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -2642,7 +2644,9 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16).copyWith(bottom: 88),
+          padding: const EdgeInsets.all(
+            16,
+          ).copyWith(top: context.contentTopPadding, bottom: 88),
           children: [
             Align(
               alignment: Alignment.centerLeft,

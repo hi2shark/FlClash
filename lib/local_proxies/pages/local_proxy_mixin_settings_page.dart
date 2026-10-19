@@ -242,7 +242,9 @@ class _LocalProxyMixinSettingsPageState
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16).copyWith(bottom: 88),
+              padding: const EdgeInsets.all(
+                16,
+              ).copyWith(top: context.contentTopPadding, bottom: 88),
               children: [
                 CommonCard(
                   child: ListItem.toggle(

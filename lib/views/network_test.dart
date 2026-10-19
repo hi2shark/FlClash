@@ -684,7 +684,7 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
     return CommonScaffold(
       title: appLocalizations.networkTest,
       body: ListView(
-        padding: const EdgeInsets.only(bottom: 20),
+        padding: EdgeInsets.only(top: context.appBarInset, bottom: 20),
         children: [
           ...generateSection(
             title: appLocalizations.selectNode,
@@ -803,7 +803,7 @@ class _NodeSelectionViewState extends ConsumerState<NodeSelectionView> {
                   .toList()
                 ..sort((a, b) => a.name.compareTo(b.name));
           return ListView(
-            padding: const EdgeInsets.only(bottom: 20),
+            padding: EdgeInsets.only(top: context.appBarInset, bottom: 20),
             children: [
               ...generateSection(
                 title: appLocalizations.localNodes,

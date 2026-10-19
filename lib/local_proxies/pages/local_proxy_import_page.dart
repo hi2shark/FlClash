@@ -84,7 +84,9 @@ class _LocalProxyImportPageState extends State<LocalProxyImportPage> {
               icon: const GlyphIcon(AppGlyphs.findReplace, fill: 1),
             ),
       body: Padding(
-        padding: const EdgeInsets.all(16).copyWith(bottom: 88),
+        padding: const EdgeInsets.all(
+          16,
+        ).copyWith(top: context.contentTopPadding, bottom: 88),
         child: _parsed ? _buildResultView() : _buildInputView(),
       ),
     );

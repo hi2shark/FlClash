@@ -127,7 +127,9 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16).copyWith(bottom: 88),
+          padding: const EdgeInsets.all(
+            16,
+          ).copyWith(top: context.contentTopPadding, bottom: 88),
           children: [
             CommonCard(
               child: ListItem(
@@ -247,7 +249,9 @@ class LocalRuleTargetPage extends StatelessWidget {
     return CommonScaffold(
       title: appLocalizations.splitStrategy,
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(
+          16,
+        ).copyWith(top: context.contentTopPadding),
         children: [
           InfoHeader(info: Info(label: appLocalizations.basicStrategy)),
           const SizedBox(height: 8),
