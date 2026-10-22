@@ -664,6 +664,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "customProfileResourcesDesc": MessageLookupByLibrary.simpleMessage(
       "Los recursos de perfil personalizado incluyen proxies, proveedores de reglas, filtros y conjuntos de iconos.",
     ),
+    "customTable": MessageLookupByLibrary.simpleMessage("Tabla personalizada"),
+    "customTables": MessageLookupByLibrary.simpleMessage(
+      "Tablas personalizadas",
+    ),
     "cut": MessageLookupByLibrary.simpleMessage("Cortar"),
     "cwnd": MessageLookupByLibrary.simpleMessage("CWND"),
     "dark": MessageLookupByLibrary.simpleMessage("Oscuro"),
@@ -901,6 +905,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "enableLocalProxyMixin": MessageLookupByLibrary.simpleMessage(
       "Activar el mix-in de proxy local",
     ),
+    "enablePureDownlink": MessageLookupByLibrary.simpleMessage(
+      "Enlace descendente puro",
+    ),
     "enableQuicProxy": MessageLookupByLibrary.simpleMessage(
       "Activar proxy QUIC",
     ),
@@ -1102,6 +1109,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("horas"),
     "hoursAgo": m33,
     "hoursAgoShort": m34,
+    "httpMask": MessageLookupByLibrary.simpleMessage("Máscara HTTP"),
+    "httpMaskHost": MessageLookupByLibrary.simpleMessage(
+      "Host de máscara HTTP",
+    ),
+    "httpMaskMode": MessageLookupByLibrary.simpleMessage(
+      "Modo de máscara HTTP",
+    ),
     "httpMethod": MessageLookupByLibrary.simpleMessage("Método HTTP"),
     "hue": MessageLookupByLibrary.simpleMessage("Tono"),
     "hysteria2": MessageLookupByLibrary.simpleMessage("Hysteria2"),
@@ -1422,6 +1436,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxySshPassphraseWithoutKey": MessageLookupByLibrary.simpleMessage(
       "Se requiere una clave privada cuando se usa una frase de contraseña",
     ),
+    "localProxySudokuKeyEmpty": MessageLookupByLibrary.simpleMessage(
+      "Se requiere la clave Sudoku",
+    ),
     "localProxyTlsKeyPairRequired": MessageLookupByLibrary.simpleMessage(
       "El certificado y la clave privada deben proporcionarse juntos",
     ),
@@ -1558,6 +1575,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "more": MessageLookupByLibrary.simpleMessage("Más"),
     "morph": MessageLookupByLibrary.simpleMessage("Morph"),
     "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
+    "multiplex": MessageLookupByLibrary.simpleMessage("Multiplexación"),
     "mux": MessageLookupByLibrary.simpleMessage("Mux TLS"),
     "name": MessageLookupByLibrary.simpleMessage("Nombre"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage(
@@ -1697,6 +1715,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "packetEncoding": MessageLookupByLibrary.simpleMessage(
       "Codificación de paquetes",
     ),
+    "paddingMax": MessageLookupByLibrary.simpleMessage("Relleno máx."),
+    "paddingMin": MessageLookupByLibrary.simpleMessage("Relleno mín."),
     "parse": MessageLookupByLibrary.simpleMessage("Analizar"),
     "parseFailed": MessageLookupByLibrary.simpleMessage("Error al analizar"),
     "parsePureIp": MessageLookupByLibrary.simpleMessage("Analizar IP pura"),
@@ -1712,6 +1732,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pasteShareLink": MessageLookupByLibrary.simpleMessage(
       "Pegar enlace de compartir",
     ),
+    "pathRoot": MessageLookupByLibrary.simpleMessage("Raíz de ruta"),
     "peers": MessageLookupByLibrary.simpleMessage("Pares"),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Elegir del álbum"),
     "pin": MessageLookupByLibrary.simpleMessage("Fijado de certificado"),
@@ -2307,6 +2328,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "sudoPasswordTitle": MessageLookupByLibrary.simpleMessage(
       "Introduce tu contraseña para sudo",
     ),
+    "sudoku": MessageLookupByLibrary.simpleMessage("Sudoku"),
+    "sudokuKey": MessageLookupByLibrary.simpleMessage("Clave Sudoku"),
     "supportX25519Mlkem768": MessageLookupByLibrary.simpleMessage(
       "Compatibilidad con X25519MLKEM768",
     ),
@@ -2326,6 +2349,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tabAnimationDesc": MessageLookupByLibrary.simpleMessage(
       "Solo tiene efecto en la vista móvil",
     ),
+    "tableType": MessageLookupByLibrary.simpleMessage("Tipo de tabla"),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage(
       "Toca el icono para reintentar",
     ),

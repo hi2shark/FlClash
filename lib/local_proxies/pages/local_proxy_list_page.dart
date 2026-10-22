@@ -186,6 +186,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
       'trojan' => l10n.trojan,
       'anytls' => l10n.anytls,
       'nowhere' => l10n.nowhere,
+      'sudoku' => l10n.sudoku,
       'hysteria2' => l10n.hysteria2,
       'easytier' => l10n.easytier,
       'socks5' => l10n.socks5,
@@ -223,7 +224,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                 ),
                 const Divider(height: 1),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -235,15 +236,46 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                     ),
                   ),
                 ),
-                for (final type in manualProxyTypes)
-                  ListTile(
-                    leading: const GlyphIcon(AppGlyphs.edit),
-                    title: Text(_protocolLabel(type)),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      _handleAddManual(type);
-                    },
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < manualProxyTypes.length; i += 2)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _ProtocolTile(
+                                  label: _protocolLabel(manualProxyTypes[i]),
+                                  onTap: () {
+                                    Navigator.of(context).pop();
+                                    _handleAddManual(manualProxyTypes[i]);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: i + 1 < manualProxyTypes.length
+                                    ? _ProtocolTile(
+                                        label: _protocolLabel(
+                                          manualProxyTypes[i + 1],
+                                        ),
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          _handleAddManual(
+                                            manualProxyTypes[i + 1],
+                                          );
+                                        },
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
+                ),
               ],
             ),
           ),
@@ -392,6 +424,31 @@ class _ProxyCard extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProtocolTile extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _ProtocolTile({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonCard(
+      radius: AppCorner.sm,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      onPressed: onTap,
+      child: Row(
+        children: [
+          const GlyphIcon(AppGlyphs.edit),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
           ),
         ],
       ),

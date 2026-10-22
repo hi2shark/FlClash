@@ -10096,6 +10096,106 @@ class AppLocalizations {
   String get ruleAction {
     return Intl.message('Rule action', name: 'ruleAction', desc: '', args: []);
   }
+
+  /// `Sudoku`
+  String get sudoku {
+    return Intl.message('Sudoku', name: 'sudoku', desc: '', args: []);
+  }
+
+  /// `Sudoku key`
+  String get sudokuKey {
+    return Intl.message('Sudoku key', name: 'sudokuKey', desc: '', args: []);
+  }
+
+  /// `Sudoku key is required`
+  String get localProxySudokuKeyEmpty {
+    return Intl.message(
+      'Sudoku key is required',
+      name: 'localProxySudokuKeyEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Table type`
+  String get tableType {
+    return Intl.message('Table type', name: 'tableType', desc: '', args: []);
+  }
+
+  /// `Custom table`
+  String get customTable {
+    return Intl.message(
+      'Custom table',
+      name: 'customTable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Custom tables`
+  String get customTables {
+    return Intl.message(
+      'Custom tables',
+      name: 'customTables',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Padding min`
+  String get paddingMin {
+    return Intl.message('Padding min', name: 'paddingMin', desc: '', args: []);
+  }
+
+  /// `Padding max`
+  String get paddingMax {
+    return Intl.message('Padding max', name: 'paddingMax', desc: '', args: []);
+  }
+
+  /// `Pure downlink`
+  String get enablePureDownlink {
+    return Intl.message(
+      'Pure downlink',
+      name: 'enablePureDownlink',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Multiplex`
+  String get multiplex {
+    return Intl.message('Multiplex', name: 'multiplex', desc: '', args: []);
+  }
+
+  /// `HTTP mask`
+  String get httpMask {
+    return Intl.message('HTTP mask', name: 'httpMask', desc: '', args: []);
+  }
+
+  /// `HTTP mask mode`
+  String get httpMaskMode {
+    return Intl.message(
+      'HTTP mask mode',
+      name: 'httpMaskMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP mask host`
+  String get httpMaskHost {
+    return Intl.message(
+      'HTTP mask host',
+      name: 'httpMaskHost',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Path root`
+  String get pathRoot {
+    return Intl.message('Path root', name: 'pathRoot', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

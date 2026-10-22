@@ -1266,5 +1266,19 @@
   "autoInclude": "Auto-include",
   "allReferencedProxies": "All referenced proxies",
   "allReferencedProxyProviders": "All referenced proxy providers",
-  "ruleAction": "Rule action"
+  "ruleAction": "Rule action",
+  "sudoku": "Sudoku",
+  "sudokuKey": "Sudoku key",
+  "localProxySudokuKeyEmpty": "Sudoku key is required",
+  "tableType": "Table type",
+  "customTable": "Custom table",
+  "customTables": "Custom tables",
+  "paddingMin": "Padding min",
+  "paddingMax": "Padding max",
+  "enablePureDownlink": "Pure downlink",
+  "multiplex": "Multiplex",
+  "httpMask": "HTTP mask",
+  "httpMaskMode": "HTTP mask mode",
+  "httpMaskHost": "HTTP mask host",
+  "pathRoot": "Path root"
 }

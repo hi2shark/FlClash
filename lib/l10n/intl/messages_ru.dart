@@ -641,6 +641,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "customProfileResourcesDesc": MessageLookupByLibrary.simpleMessage(
       "Ресурсы пользовательских профилей включают прокси, провайдеры правил, фильтры и наборы значков.",
     ),
+    "customTable": MessageLookupByLibrary.simpleMessage(
+      "Пользовательская таблица",
+    ),
+    "customTables": MessageLookupByLibrary.simpleMessage(
+      "Пользовательские таблицы",
+    ),
     "cut": MessageLookupByLibrary.simpleMessage("Вырезать"),
     "cwnd": MessageLookupByLibrary.simpleMessage("CWND"),
     "dark": MessageLookupByLibrary.simpleMessage("Тёмная"),
@@ -884,6 +890,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "enableLocalProxyMixin": MessageLookupByLibrary.simpleMessage(
       "Включить подмешивание локальных прокси",
     ),
+    "enablePureDownlink": MessageLookupByLibrary.simpleMessage(
+      "Чистая линия вниз",
+    ),
     "enableQuicProxy": MessageLookupByLibrary.simpleMessage(
       "Включить QUIC-прокси",
     ),
@@ -1071,6 +1080,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("часов"),
     "hoursAgo": m33,
     "hoursAgoShort": m34,
+    "httpMask": MessageLookupByLibrary.simpleMessage("HTTP-маскировка"),
+    "httpMaskHost": MessageLookupByLibrary.simpleMessage(
+      "Хост HTTP-маскировки",
+    ),
+    "httpMaskMode": MessageLookupByLibrary.simpleMessage(
+      "Режим HTTP-маскировки",
+    ),
     "httpMethod": MessageLookupByLibrary.simpleMessage("HTTP Method"),
     "hue": MessageLookupByLibrary.simpleMessage("Оттенок"),
     "hysteria2": MessageLookupByLibrary.simpleMessage("Hysteria2"),
@@ -1377,6 +1393,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxySshPassphraseWithoutKey": MessageLookupByLibrary.simpleMessage(
       "Для парольной фразы требуется приватный ключ",
     ),
+    "localProxySudokuKeyEmpty": MessageLookupByLibrary.simpleMessage(
+      "Требуется ключ Sudoku",
+    ),
     "localProxyTlsKeyPairRequired": MessageLookupByLibrary.simpleMessage(
       "Сертификат и приватный ключ необходимо указать вместе",
     ),
@@ -1515,6 +1534,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "more": MessageLookupByLibrary.simpleMessage("Ещё"),
     "morph": MessageLookupByLibrary.simpleMessage("Morph"),
     "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
+    "multiplex": MessageLookupByLibrary.simpleMessage("Мультиплекс"),
     "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("Название"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage("Нижняя панель"),
@@ -1646,6 +1666,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Переопределяемые параметры",
     ),
     "packetEncoding": MessageLookupByLibrary.simpleMessage("Packet Encoding"),
+    "paddingMax": MessageLookupByLibrary.simpleMessage(
+      "Максимальное заполнение",
+    ),
+    "paddingMin": MessageLookupByLibrary.simpleMessage(
+      "Минимальное заполнение",
+    ),
     "parse": MessageLookupByLibrary.simpleMessage("Разобрать"),
     "parseFailed": MessageLookupByLibrary.simpleMessage("Ошибка разбора"),
     "parsePureIp": MessageLookupByLibrary.simpleMessage("Разбирать чистые IP"),
@@ -1659,6 +1685,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "По одной ссылке на строку",
     ),
     "pasteShareLink": MessageLookupByLibrary.simpleMessage("Вставить ссылку"),
+    "pathRoot": MessageLookupByLibrary.simpleMessage("Корень пути"),
     "peers": MessageLookupByLibrary.simpleMessage("Пиры"),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Выбрать из галереи"),
     "pin": MessageLookupByLibrary.simpleMessage("Пин сертификата"),
@@ -2238,6 +2265,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "sudoPasswordTitle": MessageLookupByLibrary.simpleMessage(
       "Введите пароль для sudo",
     ),
+    "sudoku": MessageLookupByLibrary.simpleMessage("Sudoku"),
+    "sudokuKey": MessageLookupByLibrary.simpleMessage("Ключ Sudoku"),
     "supportX25519Mlkem768": MessageLookupByLibrary.simpleMessage(
       "Support X25519MLKEM768",
     ),
@@ -2255,6 +2284,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tabAnimationDesc": MessageLookupByLibrary.simpleMessage(
       "Действительно только в мобильном виде",
     ),
+    "tableType": MessageLookupByLibrary.simpleMessage("Тип таблицы"),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage(
       "Нажмите на значок, чтобы повторить",
     ),

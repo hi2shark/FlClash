@@ -1203,5 +1203,19 @@
   "easytier": "EasyTier",
   "socks5": "SOCKS5",
   "ssh": "SSH",
-  "ruleAction": "Action de règle"
+  "ruleAction": "Action de règle",
+  "sudoku": "Sudoku",
+  "sudokuKey": "Cl\u00e9 Sudoku",
+  "localProxySudokuKeyEmpty": "La cl\u00e9 Sudoku est requise",
+  "tableType": "Type de table",
+  "customTable": "Table personnalis\u00e9e",
+  "customTables": "Tables personnalis\u00e9es",
+  "paddingMin": "Remplissage min",
+  "paddingMax": "Remplissage max",
+  "enablePureDownlink": "Liaison descendante pure",
+  "multiplex": "Multiplexage",
+  "httpMask": "Masque HTTP",
+  "httpMaskMode": "Mode du masque HTTP",
+  "httpMaskHost": "H\u00f4te du masque HTTP",
+  "pathRoot": "Racine du chemin"
 }

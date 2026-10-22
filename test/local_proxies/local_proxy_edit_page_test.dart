@@ -834,4 +834,77 @@ void main() {
     await _pumpFrames(tester);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('initializes Sudoku fields and saves the config', (tester) async {
+    final original = _proxy(
+      id: 31,
+      name: 'Existing Sudoku',
+      type: 'sudoku',
+      config: {
+        'name': 'Existing Sudoku',
+        'type': 'sudoku',
+        'server': 'sudoku.example.com',
+        'port': 443,
+        'key': '0123456789abcdef0123456789abcdef',
+        'aead-method': 'chacha20-poly1305',
+        'table-type': 'prefer_entropy',
+        'padding-min': 3,
+        'padding-max': 9,
+        'custom-table': 'xpxvvpvv',
+        'custom-tables': ['aaaa', 'bbbb'],
+        'enable-pure-downlink': true,
+        'multiplex': 'auto',
+        'http-mask': true,
+        'http-mask-mode': 'stream',
+        'http-mask-tls': true,
+        'http-mask-host': 'cdn.example.com',
+        'path-root': 'tunnel',
+      },
+    );
+    await tester.runAsync(() => localProxyStore.add(original));
+    final stored = localProxyStore.proxies.single;
+
+    await tester.pumpWidget(_wrap(LocalProxyEditPage(proxy: stored)));
+    await _pumpFrames(tester);
+
+    expect(tester.takeException(), isNull);
+    expect(
+      _fieldController(tester, 'Sudoku key').text,
+      '0123456789abcdef0123456789abcdef',
+    );
+    expect(_fieldController(tester, 'Custom table').text, 'xpxvvpvv');
+    expect(_fieldController(tester, 'Custom tables').text, 'aaaa\nbbbb');
+    expect(_fieldController(tester, 'Padding min').text, '3');
+    expect(_fieldController(tester, 'Padding max').text, '9');
+    expect(_fieldController(tester, 'HTTP mask host').text, 'cdn.example.com');
+    expect(_fieldController(tester, 'Path root').text, 'tunnel');
+
+    await _tapSave(tester);
+
+    final config = localProxyStore.proxies.single.config;
+    expect(config['key'], '0123456789abcdef0123456789abcdef');
+    expect(config['aead-method'], 'chacha20-poly1305');
+    expect(config['table-type'], 'prefer_entropy');
+    expect(config['multiplex'], 'auto');
+    expect(config['padding-min'], 3);
+    expect(config['padding-max'], 9);
+    expect(config['custom-table'], 'xpxvvpvv');
+    expect(config['custom-tables'], ['aaaa', 'bbbb']);
+    expect(config['enable-pure-downlink'], true);
+    expect(config['http-mask'], true);
+    expect(config['http-mask-mode'], 'stream');
+    expect(config['http-mask-tls'], true);
+    expect(config['http-mask-host'], 'cdn.example.com');
+    expect(config['path-root'], 'tunnel');
+  });
+
+  testWidgets('requires the Sudoku key', (tester) async {
+    await tester.pumpWidget(
+      _wrap(const LocalProxyEditPage(initialType: 'sudoku')),
+    );
+    await _pumpFrames(tester);
+
+    await _tapSave(tester, expectStoreChange: false);
+    expect(localProxyStore.proxies, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
 }

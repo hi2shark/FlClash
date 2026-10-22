@@ -169,7 +169,7 @@ void main() {
     },
   );
 
-  testWidgets('add menu shows every supported protocol label', (tester) async {
+  testWidgets('add menu splits protocols into ordered pairs', (tester) async {
     await tester.pumpWidget(_testApp(container));
     await _pumpFrames(tester);
 
@@ -177,18 +177,46 @@ void main() {
     await _pumpFrames(tester);
 
     for (final label in [
+      'Nowhere',
+      'Sudoku',
+      'AnyTLS',
+      'Trojan',
+      'VLESS',
+      'Hysteria2',
       'Shadowsocks',
       'SOCKS5',
       'SSH',
-      'VLESS',
-      'Trojan',
-      'AnyTLS',
-      'Nowhere',
-      'Hysteria2',
       'EasyTier',
     ]) {
       expect(find.text(label), findsOneWidget);
     }
+
+    double topOf(String label) => tester.getTopLeft(find.text(label)).dy;
+    expect(topOf('Nowhere'), topOf('Sudoku'));
+    expect(topOf('AnyTLS'), topOf('Trojan'));
+    expect(topOf('VLESS'), topOf('Hysteria2'));
+    expect(topOf('Shadowsocks'), topOf('SOCKS5'));
+    expect(topOf('SSH'), topOf('EasyTier'));
+    expect(topOf('Nowhere'), lessThan(topOf('AnyTLS')));
+    expect(topOf('AnyTLS'), lessThan(topOf('VLESS')));
+    expect(topOf('VLESS'), lessThan(topOf('Shadowsocks')));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('add menu protocol tiles fit a narrow sheet', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(220, 640);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(_testApp(container));
+    await _pumpFrames(tester);
+
+    await tester.tap(find.widgetWithGlyph(IconButton, AppGlyphs.addCircle));
+    await _pumpFrames(tester);
+
+    expect(find.text('Nowhere'), findsOneWidget);
+    expect(find.text('EasyTier'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

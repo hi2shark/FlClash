@@ -8,26 +8,28 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
 const manualProxyTypes = [
+  'nowhere',
+  'sudoku',
+  'anytls',
+  'trojan',
+  'vless',
+  'hysteria2',
   'ss',
   'socks5',
   'ssh',
-  'vless',
-  'trojan',
-  'anytls',
-  'nowhere',
-  'hysteria2',
   'easytier',
 ];
 
 const _manualProxyTypeSet = {
+  'nowhere',
+  'sudoku',
+  'anytls',
+  'trojan',
+  'vless',
+  'hysteria2',
   'ss',
   'socks5',
   'ssh',
-  'vless',
-  'trojan',
-  'anytls',
-  'nowhere',
-  'hysteria2',
   'easytier',
 };
 
@@ -102,6 +104,36 @@ const _nowhereControlledFields = {
 };
 
 const _nowhereVersions = ['nw3', 'nw2'];
+
+const _sudokuAeadMethods = ['aes-128-gcm', 'chacha20-poly1305', 'none'];
+
+const _sudokuTableTypes = [
+  'prefer_ascii',
+  'prefer_entropy',
+  'up_ascii_down_entropy',
+  'up_entropy_down_ascii',
+];
+
+const _sudokuMultiplexModes = ['off', 'auto', 'on'];
+
+const _sudokuHttpMaskModes = ['legacy', 'stream', 'poll', 'auto', 'ws'];
+
+const _sudokuControlledFields = {
+  'key',
+  'aead-method',
+  'padding-min',
+  'padding-max',
+  'table-type',
+  'custom-table',
+  'custom-tables',
+  'enable-pure-downlink',
+  'multiplex',
+  'http-mask',
+  'http-mask-mode',
+  'http-mask-tls',
+  'http-mask-host',
+  'path-root',
+};
 
 const _commonControlledFields = {'name', 'type', 'server', 'port', 'udp'};
 
@@ -250,6 +282,7 @@ const _controlledFieldsByType = <String, Set<String>>{
   'trojan': _trojanControlledFields,
   'anytls': _anyTlsControlledFields,
   'nowhere': _nowhereControlledFields,
+  'sudoku': _sudokuControlledFields,
   'hysteria2': _hysteria2ControlledFields,
   'easytier': _easytierControlledFields,
 };
@@ -334,6 +367,12 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late final TextEditingController _localPublicKeyController;
   late final TextEditingController _interfaceNameController;
   late final TextEditingController _routingMarkController;
+  late final TextEditingController _paddingMinController;
+  late final TextEditingController _paddingMaxController;
+  late final TextEditingController _customTableController;
+  late final TextEditingController _customTablesController;
+  late final TextEditingController _httpMaskHostController;
+  late final TextEditingController _pathRootController;
 
   late bool _tls;
   late bool _udp;
@@ -366,6 +405,13 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late String _down;
   late String _nowhereVersion;
   late String _nowhereNet;
+  late String _sudokuAeadMethod;
+  late String _sudokuTableType;
+  late String _sudokuMultiplex;
+  late String _httpMaskMode;
+  late bool _enablePureDownlink;
+  late bool _httpMask;
+  late bool _httpMaskTls;
 
   bool get _isNowhere3 => _nowhereVersion == 'nw3';
 
@@ -412,6 +458,24 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       text: nowherePassword.isNotEmpty
           ? nowherePassword
           : config['key']?.toString() ?? '',
+    );
+    _paddingMinController = TextEditingController(
+      text: config['padding-min']?.toString() ?? '',
+    );
+    _paddingMaxController = TextEditingController(
+      text: config['padding-max']?.toString() ?? '',
+    );
+    _customTableController = TextEditingController(
+      text: config['custom-table']?.toString() ?? '',
+    );
+    _customTablesController = TextEditingController(
+      text: _listToLines(config['custom-tables']),
+    );
+    _httpMaskHostController = TextEditingController(
+      text: config['http-mask-host']?.toString() ?? '',
+    );
+    _pathRootController = TextEditingController(
+      text: config['path-root']?.toString() ?? '',
     );
     _alpnController = TextEditingController(
       text: _alpnToString(config['alpn']),
@@ -662,6 +726,25 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _prewarmOnStart = config['prewarm-on-start'] == true;
     _nowhereVersion = _nowhereVersionFromConfig(config);
     _nowhereNet = _nowhereNetFromConfig(config);
+    _sudokuAeadMethod = config['aead-method']?.toString() ?? '';
+    if (!_sudokuAeadMethods.contains(_sudokuAeadMethod)) {
+      _sudokuAeadMethod = _sudokuAeadMethods.first;
+    }
+    _sudokuTableType = config['table-type']?.toString() ?? '';
+    if (!_sudokuTableTypes.contains(_sudokuTableType)) {
+      _sudokuTableType = _sudokuTableTypes.first;
+    }
+    _sudokuMultiplex = config['multiplex']?.toString() ?? '';
+    if (!_sudokuMultiplexModes.contains(_sudokuMultiplex)) {
+      _sudokuMultiplex = _sudokuMultiplexModes.first;
+    }
+    _httpMaskMode = config['http-mask-mode']?.toString() ?? '';
+    if (!_sudokuHttpMaskModes.contains(_httpMaskMode)) {
+      _httpMaskMode = _sudokuHttpMaskModes.first;
+    }
+    _enablePureDownlink = config['enable-pure-downlink'] == true;
+    _httpMask = config['http-mask'] == true;
+    _httpMaskTls = config['http-mask-tls'] == true;
     final legacyCarrier = (config['network'] ?? config['net'])?.toString();
     _up = config['up']?.toString() ?? legacyCarrier ?? 'udp';
     _down = config['down']?.toString() ?? legacyCarrier ?? 'udp';
@@ -780,6 +863,12 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _localPublicKeyController.dispose();
     _interfaceNameController.dispose();
     _routingMarkController.dispose();
+    _paddingMinController.dispose();
+    _paddingMaxController.dispose();
+    _customTableController.dispose();
+    _customTablesController.dispose();
+    _httpMaskHostController.dispose();
+    _pathRootController.dispose();
     super.dispose();
   }
 
@@ -1082,6 +1171,42 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             base['warm-backoff-max'] = warmBackoffMax;
           }
           _applyNowhereDialerAndCongestion(base);
+        }
+      case 'sudoku':
+        base['key'] = _keyController.text;
+        base['aead-method'] = _sudokuAeadMethod;
+        base['table-type'] = _sudokuTableType;
+        base['multiplex'] = _sudokuMultiplex;
+        final paddingMin = _intOrNull(_paddingMinController.text);
+        if (paddingMin != null) {
+          base['padding-min'] = paddingMin;
+        }
+        final paddingMax = _intOrNull(_paddingMaxController.text);
+        if (paddingMax != null) {
+          base['padding-max'] = paddingMax;
+        }
+        if (_customTableController.text.trim().isNotEmpty) {
+          base['custom-table'] = _customTableController.text.trim();
+        }
+        final customTables = _splitLines(_customTablesController.text);
+        if (customTables.isNotEmpty) {
+          base['custom-tables'] = customTables;
+        }
+        if (_enablePureDownlink) {
+          base['enable-pure-downlink'] = true;
+        }
+        if (_httpMask) {
+          base['http-mask'] = true;
+          base['http-mask-mode'] = _httpMaskMode;
+          if (_httpMaskTls) {
+            base['http-mask-tls'] = true;
+          }
+          if (_httpMaskHostController.text.trim().isNotEmpty) {
+            base['http-mask-host'] = _httpMaskHostController.text.trim();
+          }
+          if (_pathRootController.text.trim().isNotEmpty) {
+            base['path-root'] = _pathRootController.text.trim();
+          }
         }
       case 'hysteria2':
         base['password'] = _passwordController.text;
@@ -1525,6 +1650,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             return appLocalizations.localProxyNowhereAdvancedInvalid;
           }
         }
+      case 'sudoku':
+        if (_keyController.text.isEmpty) {
+          return appLocalizations.localProxySudokuKeyEmpty;
+        }
       case 'hysteria2':
         if (_passwordController.text.isEmpty) {
           return appLocalizations.localProxyPasswordEmpty;
@@ -1599,6 +1728,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       'trojan' => l10n.trojan,
       'anytls' => l10n.anytls,
       'nowhere' => _isNowhere3 ? '${l10n.nowhere} 3' : '${l10n.nowhere} 2',
+      'sudoku' => l10n.sudoku,
       'hysteria2' => l10n.hysteria2,
       'easytier' => l10n.easytier,
       _ => _type.toUpperCase(),
@@ -1972,8 +2102,121 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         _keyController,
         appLocalizations.nowhereShareKey,
       ),
+      'sudoku' => _buildTextField(_keyController, appLocalizations.sudokuKey),
       _ => const SizedBox.shrink(),
     };
+  }
+
+  Widget _buildSudokuFields() {
+    final appLocalizations = context.appLocalizations;
+    return Column(
+      children: [
+        _buildDropdown(
+          label: appLocalizations.encryptionAlgorithm,
+          value: _sudokuAeadMethod,
+          items: [
+            for (final method in _sudokuAeadMethods)
+              DropdownMenuItem(value: method, child: Text(method)),
+          ],
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _sudokuAeadMethod = value);
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildDropdown(
+          label: appLocalizations.tableType,
+          value: _sudokuTableType,
+          items: [
+            for (final tableType in _sudokuTableTypes)
+              DropdownMenuItem(value: tableType, child: Text(tableType)),
+          ],
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _sudokuTableType = value);
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(_customTableController, appLocalizations.customTable),
+        const SizedBox(height: 16),
+        _buildTextField(
+          _customTablesController,
+          appLocalizations.customTables,
+          minLines: 2,
+          maxLines: 6,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                _paddingMinController,
+                appLocalizations.paddingMin,
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildTextField(
+                _paddingMaxController,
+                appLocalizations.paddingMax,
+                keyboardType: TextInputType.number,
+              ),
+            ),
+          ],
+        ),
+        _buildSwitch(
+          title: appLocalizations.enablePureDownlink,
+          value: _enablePureDownlink,
+          onChanged: (value) => setState(() => _enablePureDownlink = value),
+        ),
+        const SizedBox(height: 16),
+        _buildDropdown(
+          label: appLocalizations.multiplex,
+          value: _sudokuMultiplex,
+          items: [
+            for (final mode in _sudokuMultiplexModes)
+              DropdownMenuItem(value: mode, child: Text(mode)),
+          ],
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _sudokuMultiplex = value);
+          },
+        ),
+        _buildSwitch(
+          title: appLocalizations.httpMask,
+          value: _httpMask,
+          onChanged: (value) => setState(() => _httpMask = value),
+        ),
+        if (_httpMask) ...[
+          const SizedBox(height: 8),
+          _buildDropdown(
+            label: appLocalizations.httpMaskMode,
+            value: _httpMaskMode,
+            items: [
+              for (final mode in _sudokuHttpMaskModes)
+                DropdownMenuItem(value: mode, child: Text(mode)),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _httpMaskMode = value);
+            },
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _httpMaskHostController,
+            appLocalizations.httpMaskHost,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(_pathRootController, appLocalizations.pathRoot),
+          _buildSwitch(
+            title: appLocalizations.tls,
+            value: _httpMaskTls,
+            onChanged: (value) => setState(() => _httpMaskTls = value),
+          ),
+        ],
+      ],
+    );
   }
 
   Widget _buildTransportFields() {
@@ -2670,13 +2913,15 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               ),
               const SizedBox(height: 12),
               _buildAuthFields(),
-              const SizedBox(height: 24),
-              Text(
-                appLocalizations.transportSettings,
-                style: AppTextStyle.subheadline.of(context, emphasized: true),
-              ),
-              const SizedBox(height: 12),
-              _buildTransportFields(),
+              if (_type != 'sudoku') ...[
+                const SizedBox(height: 24),
+                Text(
+                  appLocalizations.transportSettings,
+                  style: AppTextStyle.subheadline.of(context, emphasized: true),
+                ),
+                const SizedBox(height: 12),
+                _buildTransportFields(),
+              ],
               if (_type == 'anytls') ...[
                 const SizedBox(height: 24),
                 Text(
@@ -2734,6 +2979,15 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                     ],
                   ],
                 ),
+              ],
+              if (_type == 'sudoku') ...[
+                const SizedBox(height: 24),
+                Text(
+                  appLocalizations.advancedSettings,
+                  style: AppTextStyle.subheadline.of(context, emphasized: true),
+                ),
+                const SizedBox(height: 12),
+                _buildSudokuFields(),
               ],
             ],
             if (_type != 'ssh') ...[

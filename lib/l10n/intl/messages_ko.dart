@@ -513,6 +513,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "customProfileResourcesDesc": MessageLookupByLibrary.simpleMessage(
       "사용자 지정 프로필 리소스에는 프록시, 규칙 공급자, 필터, 아이콘 세트가 포함됩니다.",
     ),
+    "customTable": MessageLookupByLibrary.simpleMessage("사용자 지정 테이블"),
+    "customTables": MessageLookupByLibrary.simpleMessage("사용자 지정 테이블 목록"),
     "cut": MessageLookupByLibrary.simpleMessage("잘라내기"),
     "cwnd": MessageLookupByLibrary.simpleMessage("CWND"),
     "dark": MessageLookupByLibrary.simpleMessage("다크"),
@@ -696,6 +698,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "enableLocalProxyMixin": MessageLookupByLibrary.simpleMessage(
       "로컬 프록시 믹스인 사용",
     ),
+    "enablePureDownlink": MessageLookupByLibrary.simpleMessage("순수 다운링크"),
     "enableQuicProxy": MessageLookupByLibrary.simpleMessage("QUIC 프록시 사용"),
     "enabled": MessageLookupByLibrary.simpleMessage("사용"),
     "enabledNodes": MessageLookupByLibrary.simpleMessage("활성화된 노드"),
@@ -845,6 +848,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("시간"),
     "hoursAgo": m33,
     "hoursAgoShort": m34,
+    "httpMask": MessageLookupByLibrary.simpleMessage("HTTP 마스크"),
+    "httpMaskHost": MessageLookupByLibrary.simpleMessage("HTTP 마스크 호스트"),
+    "httpMaskMode": MessageLookupByLibrary.simpleMessage("HTTP 마스크 모드"),
     "httpMethod": MessageLookupByLibrary.simpleMessage("HTTP 메서드"),
     "hue": MessageLookupByLibrary.simpleMessage("색조"),
     "hysteria2": MessageLookupByLibrary.simpleMessage("Hysteria2"),
@@ -1116,6 +1122,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxySshPassphraseWithoutKey": MessageLookupByLibrary.simpleMessage(
       "암호 문구를 사용하려면 개인 키가 필요합니다",
     ),
+    "localProxySudokuKeyEmpty": MessageLookupByLibrary.simpleMessage(
+      "Sudoku 키가 필요합니다",
+    ),
     "localProxyTlsKeyPairRequired": MessageLookupByLibrary.simpleMessage(
       "인증서와 개인 키는 함께 입력해야 합니다",
     ),
@@ -1212,6 +1221,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "more": MessageLookupByLibrary.simpleMessage("더 보기"),
     "morph": MessageLookupByLibrary.simpleMessage("Morph"),
     "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
+    "multiplex": MessageLookupByLibrary.simpleMessage("멀티플렉싱"),
     "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("이름"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage("하단 바"),
@@ -1319,6 +1329,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "overrideEntries": MessageLookupByLibrary.simpleMessage("덮어쓰기 항목"),
     "packetEncoding": MessageLookupByLibrary.simpleMessage("패킷 인코딩"),
+    "paddingMax": MessageLookupByLibrary.simpleMessage("최대 패딩"),
+    "paddingMin": MessageLookupByLibrary.simpleMessage("최소 패딩"),
     "parse": MessageLookupByLibrary.simpleMessage("구문 분석"),
     "parseFailed": MessageLookupByLibrary.simpleMessage("구문 분석 실패"),
     "parsePureIp": MessageLookupByLibrary.simpleMessage("순수 IP 분석"),
@@ -1330,6 +1342,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "paste": MessageLookupByLibrary.simpleMessage("붙여넣기"),
     "pasteNodeLinkHint": MessageLookupByLibrary.simpleMessage("한 줄에 노드 링크 하나"),
     "pasteShareLink": MessageLookupByLibrary.simpleMessage("공유 링크 붙여넣기"),
+    "pathRoot": MessageLookupByLibrary.simpleMessage("경로 루트"),
     "peers": MessageLookupByLibrary.simpleMessage("피어"),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("앨범에서 선택"),
     "pin": MessageLookupByLibrary.simpleMessage("인증서 고정"),
@@ -1789,6 +1802,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "sudoPasswordTitle": MessageLookupByLibrary.simpleMessage(
       "sudo 비밀번호를 입력하세요",
     ),
+    "sudoku": MessageLookupByLibrary.simpleMessage("Sudoku"),
+    "sudokuKey": MessageLookupByLibrary.simpleMessage("Sudoku 키"),
     "supportX25519Mlkem768": MessageLookupByLibrary.simpleMessage(
       "X25519MLKEM768 지원",
     ),
@@ -1802,6 +1817,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tab": MessageLookupByLibrary.simpleMessage("탭"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("탭 애니메이션"),
     "tabAnimationDesc": MessageLookupByLibrary.simpleMessage("모바일 화면에서만 적용됩니다"),
+    "tableType": MessageLookupByLibrary.simpleMessage("테이블 유형"),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage("아이콘을 눌러 다시 시도"),
     "tapToAuthorize": MessageLookupByLibrary.simpleMessage("눌러서 허용"),
     "target": MessageLookupByLibrary.simpleMessage("대상"),

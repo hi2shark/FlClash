@@ -1203,5 +1203,19 @@
   "easytier": "EasyTier",
   "socks5": "SOCKS5",
   "ssh": "SSH",
-  "ruleAction": "규칙 액션"
+  "ruleAction": "규칙 액션",
+  "sudoku": "Sudoku",
+  "sudokuKey": "Sudoku \ud0a4",
+  "localProxySudokuKeyEmpty": "Sudoku \ud0a4\uac00 \ud544\uc694\ud569\ub2c8\ub2e4",
+  "tableType": "\ud14c\uc774\ube14 \uc720\ud615",
+  "customTable": "\uc0ac\uc6a9\uc790 \uc9c0\uc815 \ud14c\uc774\ube14",
+  "customTables": "\uc0ac\uc6a9\uc790 \uc9c0\uc815 \ud14c\uc774\ube14 \ubaa9\ub85d",
+  "paddingMin": "\ucd5c\uc18c \ud328\ub529",
+  "paddingMax": "\ucd5c\ub300 \ud328\ub529",
+  "enablePureDownlink": "\uc21c\uc218 \ub2e4\uc6b4\ub9c1\ud06c",
+  "multiplex": "\uba40\ud2f0\ud50c\ub809\uc2f1",
+  "httpMask": "HTTP \ub9c8\uc2a4\ud06c",
+  "httpMaskMode": "HTTP \ub9c8\uc2a4\ud06c \ubaa8\ub4dc",
+  "httpMaskHost": "HTTP \ub9c8\uc2a4\ud06c \ud638\uc2a4\ud2b8",
+  "pathRoot": "\uacbd\ub85c \ub8e8\ud2b8"
 }

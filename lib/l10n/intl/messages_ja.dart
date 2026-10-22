@@ -524,6 +524,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "customProfileResourcesDesc": MessageLookupByLibrary.simpleMessage(
       "カスタムプロファイルのリソースには、プロキシ、ルールプロバイダー、フィルター、アイコンセットがあります。",
     ),
+    "customTable": MessageLookupByLibrary.simpleMessage("カスタムテーブル"),
+    "customTables": MessageLookupByLibrary.simpleMessage("カスタムテーブル一覧"),
     "cut": MessageLookupByLibrary.simpleMessage("切り取り"),
     "cwnd": MessageLookupByLibrary.simpleMessage("CWND"),
     "dark": MessageLookupByLibrary.simpleMessage("ダーク"),
@@ -705,6 +707,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "enableLocalProxyMixin": MessageLookupByLibrary.simpleMessage(
       "ローカルプロキシ混入を有効化",
     ),
+    "enablePureDownlink": MessageLookupByLibrary.simpleMessage("純ダウンリンク"),
     "enableQuicProxy": MessageLookupByLibrary.simpleMessage("QUIC プロキシを有効化"),
     "enabled": MessageLookupByLibrary.simpleMessage("有効"),
     "enabledNodes": MessageLookupByLibrary.simpleMessage("有効なノード"),
@@ -856,6 +859,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("時間"),
     "hoursAgo": m33,
     "hoursAgoShort": m34,
+    "httpMask": MessageLookupByLibrary.simpleMessage("HTTP マスク"),
+    "httpMaskHost": MessageLookupByLibrary.simpleMessage("HTTP マスクホスト"),
+    "httpMaskMode": MessageLookupByLibrary.simpleMessage("HTTP マスクモード"),
     "httpMethod": MessageLookupByLibrary.simpleMessage("HTTP Method"),
     "hue": MessageLookupByLibrary.simpleMessage("色相"),
     "hysteria2": MessageLookupByLibrary.simpleMessage("Hysteria2"),
@@ -1133,6 +1139,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "localProxySshPassphraseWithoutKey": MessageLookupByLibrary.simpleMessage(
       "パスフレーズを使用するには秘密鍵が必要です",
     ),
+    "localProxySudokuKeyEmpty": MessageLookupByLibrary.simpleMessage(
+      "Sudoku キーが必要です",
+    ),
     "localProxyTlsKeyPairRequired": MessageLookupByLibrary.simpleMessage(
       "証明書と秘密鍵は同時に指定してください",
     ),
@@ -1229,6 +1238,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "more": MessageLookupByLibrary.simpleMessage("その他"),
     "morph": MessageLookupByLibrary.simpleMessage("Morph"),
     "mtu": MessageLookupByLibrary.simpleMessage("MTU"),
+    "multiplex": MessageLookupByLibrary.simpleMessage("マルチプレックス"),
     "mux": MessageLookupByLibrary.simpleMessage("TLS Mux"),
     "name": MessageLookupByLibrary.simpleMessage("名前"),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage("ボトムバー"),
@@ -1340,6 +1350,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "overrideEntries": MessageLookupByLibrary.simpleMessage("上書き項目"),
     "packetEncoding": MessageLookupByLibrary.simpleMessage("Packet Encoding"),
+    "paddingMax": MessageLookupByLibrary.simpleMessage("パディング最大値"),
+    "paddingMin": MessageLookupByLibrary.simpleMessage("パディング最小値"),
     "parse": MessageLookupByLibrary.simpleMessage("解析"),
     "parseFailed": MessageLookupByLibrary.simpleMessage("解析失敗"),
     "parsePureIp": MessageLookupByLibrary.simpleMessage("純粋なIPを解析"),
@@ -1353,6 +1365,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "1行に1つのノードリンクを貼り付け",
     ),
     "pasteShareLink": MessageLookupByLibrary.simpleMessage("共有リンクを貼り付け"),
+    "pathRoot": MessageLookupByLibrary.simpleMessage("パスルート"),
     "peers": MessageLookupByLibrary.simpleMessage("ピア"),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("アルバムから選択"),
     "pin": MessageLookupByLibrary.simpleMessage("証明書ピン"),
@@ -1822,6 +1835,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "submit": MessageLookupByLibrary.simpleMessage("送信"),
     "subscriptionInfo": MessageLookupByLibrary.simpleMessage("サブスクリプション情報"),
     "sudoPasswordTitle": MessageLookupByLibrary.simpleMessage("sudo のパスワードを入力"),
+    "sudoku": MessageLookupByLibrary.simpleMessage("Sudoku"),
+    "sudokuKey": MessageLookupByLibrary.simpleMessage("Sudoku キー"),
     "supportX25519Mlkem768": MessageLookupByLibrary.simpleMessage(
       "Support X25519MLKEM768",
     ),
@@ -1835,6 +1850,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "tab": MessageLookupByLibrary.simpleMessage("タブ"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("タブアニメーション"),
     "tabAnimationDesc": MessageLookupByLibrary.simpleMessage("モバイル表示でのみ有効"),
+    "tableType": MessageLookupByLibrary.simpleMessage("テーブルタイプ"),
     "tapIconToRetry": MessageLookupByLibrary.simpleMessage("アイコンをタップして再試行"),
     "tapToAuthorize": MessageLookupByLibrary.simpleMessage("タップして許可"),
     "target": MessageLookupByLibrary.simpleMessage("宛先"),

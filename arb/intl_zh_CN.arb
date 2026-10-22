@@ -1266,5 +1266,19 @@
   "autoInclude": "自动包含",
   "allReferencedProxies": "全部被引用的代理",
   "allReferencedProxyProviders": "全部被引用的代理集",
-  "ruleAction": "规则动作"
+  "ruleAction": "规则动作",
+  "sudoku": "Sudoku",
+  "sudokuKey": "Sudoku \u5bc6\u94a5",
+  "localProxySudokuKeyEmpty": "Sudoku \u5bc6\u94a5\u4e0d\u80fd\u4e3a\u7a7a",
+  "tableType": "\u8868\u7c7b\u578b",
+  "customTable": "\u81ea\u5b9a\u4e49\u8868",
+  "customTables": "\u81ea\u5b9a\u4e49\u8868\u5217\u8868",
+  "paddingMin": "\u6700\u5c0f\u586b\u5145",
+  "paddingMax": "\u6700\u5927\u586b\u5145",
+  "enablePureDownlink": "\u7eaf\u4e0b\u884c",
+  "multiplex": "\u591a\u8def\u590d\u7528",
+  "httpMask": "HTTP \u4f2a\u88c5",
+  "httpMaskMode": "HTTP \u4f2a\u88c5\u6a21\u5f0f",
+  "httpMaskHost": "HTTP \u4f2a\u88c5\u4e3b\u673a",
+  "pathRoot": "\u8def\u5f84\u6839"
 }
