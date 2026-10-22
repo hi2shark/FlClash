@@ -1,13 +1,14 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/dashboard/widget_metrics.dart';
+import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'card.dart';
 
 class WifiWatchCard extends StatelessWidget {
   const WifiWatchCard({super.key});
@@ -92,7 +93,7 @@ class WifiWatchCard extends StatelessWidget {
     required bool isExcluded,
     required bool prioritizeActionStatus,
   }) {
-    final style = context.textTheme.bodyMedium?.toLight.adjustSize(1);
+    final style = AppTextStyle.subheadline.of(context).toLight;
     const maxLines = 1;
     const overflow = TextOverflow.ellipsis;
 
@@ -115,10 +116,12 @@ class WifiWatchCard extends StatelessWidget {
         children: [
           TextSpan(
             text: ssid,
-            style: (style ?? const TextStyle()).copyWith(
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTextStyle.custom(
+              context,
+              size: AppTextStyle.subheadline.size,
+              leading: AppTextStyle.subheadline.leading,
+              weight: FontWeight.w700,
+            ).copyWith(color: Colors.green),
           ),
           if (hasServiceInfo) TextSpan(text: ' · $status'),
         ],
@@ -132,97 +135,83 @@ class WifiWatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return SizedBox(
-      height: DashboardWidgetMetrics.heightOf(context, 1),
-      child: CommonCard(
-        info: Info(
-          label: appLocalizations.wifiWatchTitle,
-          glyph: AppGlyphs.wifi,
-        ),
-        onPressed: () {},
-        child: Container(
-          padding: baseInfoEdgeInsets.copyWith(top: 0),
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: globalState.measure.bodyMediumHeight + 2,
-                child: Consumer(
-                  builder: (_, ref, child) {
-                    final state = ref.watch(wifiWatchProvider);
-                    final enabled = ref.watch(onDemandEnabledProvider);
-                    final currentSsid = ref.watch(currentSSIDProvider);
-                    final excludeSSIDs = ref.watch(excludeSSIDsProvider);
-                    final ssid = state.ssid ?? state.rawSsid ?? currentSsid;
-                    final hasServiceInfo =
-                        state.wifiPresent ||
-                        state.suspended ||
-                        state.pendingSuspendDeadline != null;
-                    final hasNetwork = ssid != null;
-                    final isExcluded =
-                        enabled && hasNetwork && excludeSSIDs.contains(ssid);
-                    final status = _statusText(
-                      context,
-                      state,
-                      isExcluded,
-                      enabled,
-                    );
-                    return FadeThroughBox(
-                      child: Row(
-                        children: [
-                          GlyphIcon(
-                            _signalIcon(hasNetwork),
-                            size: 20,
-                            color: _signalColor(
-                              context,
-                              state.rssi,
-                              hasNetwork,
-                              isExcluded,
-                              state.validated,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TooltipText(
-                              text: _displayText(
-                                context,
-                                ssid: ssid,
-                                status: status,
-                                hasServiceInfo: hasServiceInfo,
-                                hasNetwork: hasNetwork,
-                                isExcluded: isExcluded,
-                                prioritizeActionStatus:
-                                    state.prioritizeActionStatus,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 42,
-                            height: 24,
-                            child: FittedBox(
-                              child: Switch(
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                value: enabled,
-                                onChanged: (value) {
-                                  ref
-                                      .read(onDemandEnabledProvider.notifier)
-                                      .update((_) => value);
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+    final mobile = !DashboardDensityScope.of(context).isDesktop;
+    return DashboardCard(
+      semanticLabel: appLocalizations.wifiWatchTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: mobile ? MainAxisSize.min : MainAxisSize.max,
+        children: [
+          DashboardCardHeader(
+            glyph: AppGlyphs.wifi,
+            title: appLocalizations.wifiWatchTitle,
           ),
-        ),
+          if (mobile) const SizedBox(height: 12) else const Spacer(),
+          Consumer(
+            builder: (_, ref, child) {
+              final state = ref.watch(wifiWatchProvider);
+              final enabled = ref.watch(onDemandEnabledProvider);
+              final currentSsid = ref.watch(currentSSIDProvider);
+              final excludeSSIDs = ref.watch(excludeSSIDsProvider);
+              final ssid = state.ssid ?? state.rawSsid ?? currentSsid;
+              final hasServiceInfo =
+                  state.wifiPresent ||
+                  state.suspended ||
+                  state.pendingSuspendDeadline != null;
+              final hasNetwork = ssid != null;
+              final isExcluded =
+                  enabled && hasNetwork && excludeSSIDs.contains(ssid);
+              final status = _statusText(context, state, isExcluded, enabled);
+              return FadeThroughBox(
+                child: Row(
+                  children: [
+                    GlyphIcon(
+                      _signalIcon(hasNetwork),
+                      size: 20,
+                      color: _signalColor(
+                        context,
+                        state.rssi,
+                        hasNetwork,
+                        isExcluded,
+                        state.validated,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TooltipText(
+                        text: _displayText(
+                          context,
+                          ssid: ssid,
+                          status: status,
+                          hasServiceInfo: hasServiceInfo,
+                          hasNetwork: hasNetwork,
+                          isExcluded: isExcluded,
+                          prioritizeActionStatus: state.prioritizeActionStatus,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 42,
+                      height: 24,
+                      child: FittedBox(
+                        child: Switch(
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          value: enabled,
+                          onChanged: (value) {
+                            ref
+                                .read(onDemandEnabledProvider.notifier)
+                                .update((_) => value);
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/local_rules/services/local_rule_store.dart';
 import 'package:fl_clash/local_rules/services/local_rule_targets.dart';
 import 'package:fl_clash/models/local_rule.dart';
@@ -58,12 +58,30 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
   }
 
   Future<void> _handleSelectAction() async {
-    final selected = await dialogs.showCommonDialog<RuleAction>(
-      child: OptionsDialog<RuleAction>(
-        title: context.appLocalizations.ruleName,
-        options: RuleAction.addedRuleActions,
-        textBuilder: (item) => item.value,
-        value: _rule.ruleAction,
+    final selected = await showFloatingDialog<RuleAction>(
+      context: context,
+      child: CommonDialog(
+        title: context.appLocalizations.ruleAction,
+        padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(context.appLocalizations.cancel),
+          ),
+        ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final action in RuleAction.addedRuleActions)
+              ListTile(
+                title: Text(action.value),
+                trailing: _rule.ruleAction == action
+                    ? const GlyphIcon(AppGlyphs.check)
+                    : null,
+                onTap: () => Navigator.of(context).pop(action),
+              ),
+          ],
+        ),
       ),
     );
     if (selected == null || !mounted) return;
@@ -118,11 +136,10 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
       title: _isEditing
           ? appLocalizations.editLocalRule
           : appLocalizations.addLocalRule,
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
+      confirmationAction: IconButtonData(
+        glyph: AppGlyphs.check,
         onPressed: _handleSave,
-        label: Text(appLocalizations.save),
-        icon: const GlyphIcon(AppGlyphs.save, fill: 1),
+        tooltip: appLocalizations.save,
       ),
       body: Form(
         key: _formKey,
@@ -133,7 +150,7 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
           children: [
             CommonCard(
               child: ListItem(
-                title: Text(appLocalizations.ruleName),
+                title: Text(appLocalizations.ruleAction),
                 subtitle: Text(_rule.ruleAction.value),
                 trailing: const GlyphIcon(AppGlyphs.chevronForward),
                 onTap: _handleSelectAction,
@@ -295,9 +312,9 @@ class LocalRuleTargetPage extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
                 appLocalizations.localRuleNodesNeedMixin,
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: context.colorScheme.outline,
-                ),
+                style: AppTextStyle.footnote
+                    .of(context)
+                    .copyWith(color: context.colorScheme.outline),
               ),
             ),
           if (localNodes.isEmpty)

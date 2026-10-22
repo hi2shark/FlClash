@@ -1,6 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -138,7 +138,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
                           Expanded(
                             child: Text(
                               context.appLocalizations.unlockTestSelectTargets,
-                              style: context.textTheme.titleLarge,
+                              style: AppTextStyle.title3.of(context),
                             ),
                           ),
                           TextButton(
@@ -347,7 +347,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
               ),
               title: Text(
                 context.appLocalizations.unlockTestEnable,
-                style: context.textTheme.titleMedium,
+                style: AppTextStyle.headline.of(context),
               ),
               subtitle: Text(context.appLocalizations.unlockTestDesc),
               value: props.enable,
@@ -436,7 +436,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
                   const SizedBox(width: 12),
                   Text(
                     '$completed / $total',
-                    style: context.textTheme.labelLarge,
+                    style: AppTextStyle.footnote.of(context),
                   ),
                 ],
               ),
@@ -445,9 +445,9 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
               const SizedBox(height: 12),
               Text(
                 '${context.appLocalizations.testFailed}: ${detection.error}',
-                style: context.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.error,
-                ),
+                style: AppTextStyle.subheadline
+                    .of(context)
+                    .copyWith(color: colorScheme.error),
               ),
             ],
           ],
@@ -469,7 +469,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
           isExpanded: true,
           decoration: InputDecoration(
             labelText: context.appLocalizations.unlockTestHistory,
-            prefixIcon: const GlyphIcon(AppGlyphs.history),
+            prefixIcon: const GlyphIcon(AppGlyphs.refresh),
             border: const OutlineInputBorder(),
             isDense: true,
           ),
@@ -603,16 +603,16 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
       child: Row(
         children: [
           GlyphIcon(
-            AppGlyphs.history,
+            AppGlyphs.refresh,
             color: context.colorScheme.onTertiaryContainer,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               '${context.appLocalizations.unlockTestHistoryResult} · ${_historyLabel(_selectedHistory!)}',
-              style: context.textTheme.bodyMedium?.copyWith(
-                color: context.colorScheme.onTertiaryContainer,
-              ),
+              style: AppTextStyle.subheadline
+                  .of(context)
+                  .copyWith(color: context.colorScheme.onTertiaryContainer),
             ),
           ),
           IconButton(
@@ -639,7 +639,7 @@ class _UnlockTestViewState extends ConsumerState<UnlockTestView> {
           const SizedBox(height: 12),
           Text(
             context.appLocalizations.unlockTestNoResults,
-            style: context.textTheme.titleMedium,
+            style: AppTextStyle.headline.of(context),
           ),
         ],
       ),
@@ -680,7 +680,7 @@ class _TargetGroupSelector extends StatelessWidget {
             tristate: true,
             title: Text(
               _groupLabel(context, group),
-              style: context.textTheme.titleSmall,
+              style: AppTextStyle.subheadline.of(context, emphasized: true),
             ),
             subtitle: Text('$selectedInGroup / ${targets.length}'),
             onChanged: (value) {
@@ -766,10 +766,10 @@ class _StatusSummaryCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('$count', style: context.textTheme.titleLarge),
+                      Text('$count', style: AppTextStyle.title3.of(context)),
                       Text(
                         presentation.label,
-                        style: context.textTheme.labelMedium,
+                        style: AppTextStyle.caption1.of(context),
                       ),
                     ],
                   ),
@@ -822,7 +822,7 @@ class _UnlockServiceCard extends StatelessWidget {
                       target.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.titleMedium,
+                      style: AppTextStyle.headline.of(context),
                     ),
                   ),
                   Container(
@@ -845,10 +845,9 @@ class _UnlockServiceCard extends StatelessWidget {
                         const SizedBox(width: 5),
                         Text(
                           presentation.label,
-                          style: context.textTheme.labelMedium?.copyWith(
-                            color: presentation.color,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyle.caption1
+                              .of(context, emphasized: true)
+                              .copyWith(color: presentation.color),
                         ),
                       ],
                     ),
@@ -861,9 +860,9 @@ class _UnlockServiceCard extends StatelessWidget {
                   reason,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyle.footnote
+                      .of(context)
+                      .copyWith(color: context.colorScheme.onSurfaceVariant),
                 )
               else
                 const SizedBox(height: 32),
@@ -874,13 +873,13 @@ class _UnlockServiceCard extends StatelessWidget {
                 children: [
                   if (item.region.isNotEmpty)
                     _MetaLabel(
-                      glyph: AppGlyphs.cloud,
+                      glyph: AppGlyphs.language,
                       text:
                           '${context.appLocalizations.unlockTestRegion} ${item.region}',
                     )
                   else
                     _MetaLabel(
-                      glyph: AppGlyphs.cloud,
+                      glyph: AppGlyphs.language,
                       text: _groupLabel(context, target.group),
                     ),
                   if (item.latency > 0)
@@ -922,9 +921,9 @@ class _MetaLabel extends StatelessWidget {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.textTheme.labelSmall?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyle.caption2
+                .of(context)
+                .copyWith(color: context.colorScheme.onSurfaceVariant),
           ),
         ),
       ],
@@ -953,11 +952,12 @@ class _ServiceMonogram extends StatelessWidget {
         ),
         child: Text(
           target.monogram,
-          style: context.textTheme.labelLarge?.copyWith(
-            color: context.colorScheme.onPrimaryContainer,
-            fontWeight: FontWeight.w800,
-            fontSize: size > 40 ? 13 : 11,
-          ),
+          style: AppTextStyle.custom(
+            context,
+            size: size > 40 ? 13 : 11,
+            leading: size > 40 ? 16 : 13,
+            weight: FontWeight.w800,
+          ).copyWith(color: context.colorScheme.onPrimaryContainer),
         ),
       ),
     );

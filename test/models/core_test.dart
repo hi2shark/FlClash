@@ -193,15 +193,6 @@ void main() {
     });
   });
 
-  group('UpdateGeoDataParams', () {
-    test('fromJson with snake-case keys', () {
-      final json = {'geo-type': 'mmdb', 'geo-name': 'Country'};
-      final params = UpdateGeoDataParams.fromJson(json);
-      expect(params.geoType, 'mmdb');
-      expect(params.geoName, 'Country');
-    });
-  });
-
   group('Delay', () {
     test('fromJson and toJson', () {
       final json = {'name': 'P1', 'url': 'test.com', 'value': 42};
@@ -216,14 +207,6 @@ void main() {
     test('null value', () {
       final delay = Delay.fromJson({'name': 'P1', 'url': 'test.com'});
       expect(delay.value, null);
-    });
-  });
-
-  group('Now', () {
-    test('fromJson and toJson', () {
-      final now = Now.fromJson({'name': 'test', 'value': '123'});
-      expect(now.name, 'test');
-      expect(now.value, '123');
     });
   });
 
@@ -321,7 +304,6 @@ void main() {
         stopTip: 'Stopping VPN...',
         startTip: 'Starting VPN...',
         onlyStatisticsProxy: false,
-        crashlytics: true,
         suspendOnWifiSsids: ['Home', 'Office'],
       );
 
@@ -359,7 +341,6 @@ void main() {
         stopTip: 'Stopping VPN...',
         startTip: 'Starting VPN...',
         onlyStatisticsProxy: false,
-        crashlytics: true,
         suspendOnWifiSsids: ['Home'],
       );
 

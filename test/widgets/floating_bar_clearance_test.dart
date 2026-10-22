@@ -1,12 +1,9 @@
 import 'dart:io';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/core/method.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_list_page.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/local_rules/pages/local_rule_list_page.dart';
@@ -19,6 +16,8 @@ import 'package:fl_clash/views/network_test.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/test_app.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -86,22 +85,7 @@ const _lifecycleResult = CoreLifecycleResult(
 Widget _testApp(ProviderContainer container, Widget child) {
   return UncontrolledProviderScope(
     container: container,
-    child: MaterialApp(
-      navigatorKey: globalState.navigatorKey,
-      locale: const Locale('en'),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-      ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
-      home: Builder(
-        builder: (context) {
-          globalState.theme = CommonTheme.of(context, 1);
-          globalState.measure = Measure.of(context, 1);
-          return child;
-        },
-      ),
-    ),
+    child: TestApp(child: child),
   );
 }
 

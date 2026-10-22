@@ -1,8 +1,8 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/test_app.dart';
 
 void main() {
   testWidgets('TooltipText derives tooltip message from rich text', (
@@ -23,14 +23,9 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) {
-            globalState.measure = Measure.of(context, 1);
-            return const Center(
-              child: SizedBox(width: 20, child: TooltipText(text: richText)),
-            );
-          },
+      const TestApp(
+        child: Center(
+          child: SizedBox(width: 20, child: TooltipText(text: richText)),
         ),
       ),
     );
@@ -49,14 +44,9 @@ void main() {
     const text = Text('Short', maxLines: 1);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) {
-            globalState.measure = Measure.of(context, 1);
-            return const Center(
-              child: SizedBox(width: 1000, child: TooltipText(text: text)),
-            );
-          },
+      const TestApp(
+        child: Center(
+          child: SizedBox(width: 1000, child: TooltipText(text: text)),
         ),
       ),
     );

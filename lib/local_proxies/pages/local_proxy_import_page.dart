@@ -1,5 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_parser.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
@@ -70,18 +70,16 @@ class _LocalProxyImportPageState extends State<LocalProxyImportPage> {
     final appLocalizations = context.appLocalizations;
     return CommonScaffold(
       title: appLocalizations.pasteShareLink,
-      floatingActionButton: _parsed
-          ? FloatingActionButton.extended(
-              heroTag: null,
+      confirmationAction: _parsed
+          ? IconButtonData(
+              glyph: AppGlyphs.importFile,
               onPressed: _selected.isEmpty ? null : _import,
-              label: Text(appLocalizations.importAvailableNodes),
-              icon: const GlyphIcon(AppGlyphs.importFile, fill: 1),
+              tooltip: appLocalizations.importAvailableNodes,
             )
-          : FloatingActionButton.extended(
-              heroTag: null,
+          : IconButtonData(
+              glyph: AppGlyphs.search,
               onPressed: _parse,
-              label: Text(appLocalizations.parse),
-              icon: const GlyphIcon(AppGlyphs.findReplace, fill: 1),
+              tooltip: appLocalizations.parse,
             ),
       body: Padding(
         padding: const EdgeInsets.all(
@@ -109,7 +107,7 @@ class _LocalProxyImportPageState extends State<LocalProxyImportPage> {
         const SizedBox(height: 16),
         Text(
           appLocalizations.supportedProtocols,
-          style: context.textTheme.titleSmall,
+          style: AppTextStyle.subheadline.of(context, emphasized: true),
         ),
         const SizedBox(height: 8),
         const Text(
@@ -131,7 +129,7 @@ class _LocalProxyImportPageState extends State<LocalProxyImportPage> {
       children: [
         Text(
           appLocalizations.parseResult(validCount, invalidCount),
-          style: context.textTheme.titleMedium,
+          style: AppTextStyle.headline.of(context),
         ),
         const SizedBox(height: 12),
         Expanded(

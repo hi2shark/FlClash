@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -48,7 +48,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
         title: appLocalizations.locationPermissionRequired,
         cancelable: false,
         message: TextSpan(
-          style: context.textTheme.bodyMedium,
+          style: AppTextStyle.subheadline.of(context),
           text: appLocalizations.locationPermissionGuide(appName),
         ),
       );
@@ -245,10 +245,14 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
             final hasNetwork = hasSsid || state.wifiPresent;
             final isExcluded =
                 enabled && hasSsid && excludeSSIDs.contains(ssid);
-            final ssidTextStyle = context.textTheme.bodyMedium?.toLight;
-            final matchedSsidTextStyle = (ssidTextStyle ?? const TextStyle())
-                .copyWith(color: Colors.green, fontWeight: FontWeight.bold);
-            return generateSectionV3(
+            final ssidTextStyle = AppTextStyle.subheadline.of(context).toLight;
+            final matchedSsidTextStyle = AppTextStyle.custom(
+              context,
+              size: AppTextStyle.subheadline.size,
+              leading: AppTextStyle.subheadline.leading,
+              weight: FontWeight.w700,
+            ).copyWith(color: Colors.green);
+            return generateSection(
               title: appLocalizations.currentWifiConnection,
               items: [
                 DecorationListItem(
@@ -272,7 +276,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                       if (hasNetwork) ...[
                         GlyphIcon(
                           _signalGlyph(state.rssi, hasNetwork),
-                          size: 16.ap,
+                          size: 16.ap(context),
                           color: _signalColor(
                             context,
                             state.rssi,
@@ -285,7 +289,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                       ],
                       Text(
                         state.rssi != null ? '${state.rssi} dBm' : '-',
-                        style: context.textTheme.bodyMedium?.toLight,
+                        style: AppTextStyle.subheadline.of(context).toLight,
                       ),
                     ],
                   ),
@@ -294,7 +298,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
                   title: Text(appLocalizations.currentWifiStatus),
                   trailing: Text(
                     _currentWifiStatus(context, state, isExcluded, enabled),
-                    style: context.textTheme.bodyMedium?.toLight,
+                    style: AppTextStyle.subheadline.of(context).toLight,
                   ),
                 ),
               ],
@@ -367,7 +371,12 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       child: ElasticButton(
         child: FilledButton(
           style: FilledButton.styleFrom(
-            backgroundColor: authorized ? null : context.colorScheme.error,
+            backgroundColor: authorized
+                ? null
+                : context.colorScheme.errorContainer,
+            foregroundColor: authorized
+                ? null
+                : context.colorScheme.onErrorContainer,
             padding: const EdgeInsets.symmetric(
               horizontal: _authorizeButtonPadding,
             ),
@@ -425,8 +434,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
               onPressed: _handleRequestIgnoreBatteryOptimization,
             ),
           ),
-          if (isLoading)
-            const SizedBox.square(dimension: 32, child: CommonCircleLoading()),
+          if (isLoading) const CommonCircleLoading(size: 24),
         ],
       ),
     );
@@ -466,7 +474,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
 
   Widget _buildPrerequisites() {
     final appLocalizations = context.appLocalizations;
-    return generateSectionV3(
+    return generateSection(
       title: appLocalizations.prerequisites,
       items: [
         if (_isAndroid) _buildBatteryOptimizationItem(),
@@ -484,7 +492,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
   Widget _buildOnDemandSection() {
     final appLocalizations = context.appLocalizations;
     final enabled = ref.watch(onDemandEnabledProvider);
-    return generateSectionV3(
+    return generateSection(
       items: [
         ListItem.toggle(
           title: Text(appLocalizations.onDemand),
@@ -504,34 +512,22 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     return ListHeader(
       title: appLocalizations.excludeSsids,
       actions: [
-        if (hasSelection)
-          CommonMinIconButtonTheme(
-            child: ElasticButton(
-              child: IconButton.filledTonal(
-                tooltip: context.appLocalizations.delete,
-                onPressed: _handleDelete,
-                icon: const GlyphIcon(AppGlyphs.delete, fill: 1),
-              ),
-            ),
+        if (hasSelection) ...[
+          IconButtonData(
+            glyph: AppGlyphs.delete,
+            tooltip: appLocalizations.delete,
+            onPressed: _handleDelete,
           ),
-        if (hasSelection)
-          CommonMinFilledButtonTheme(
-            child: ElasticButton(
-              child: FilledButton(
-                onPressed: _handleSelectAll,
-                child: Text(appLocalizations.selectAll),
-              ),
-            ),
-          )
-        else
-          CommonMinIconButtonTheme(
-            child: ElasticButton(
-              child: IconButton.filledTonal(
-                tooltip: appLocalizations.add,
-                onPressed: _handleAddOrUpdate,
-                icon: const GlyphIcon(AppGlyphs.addCircle, fill: 1),
-              ),
-            ),
+          IconButtonData(
+            glyph: AppGlyphs.selectAll,
+            tooltip: appLocalizations.selectAll,
+            onPressed: _handleSelectAll,
+          ),
+        ] else
+          IconButtonData(
+            glyph: AppGlyphs.addCircle,
+            tooltip: appLocalizations.add,
+            onPressed: _handleAddOrUpdate,
           ),
       ],
     );

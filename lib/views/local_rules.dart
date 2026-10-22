@@ -1,5 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/local_rules/pages/local_rule_list_page.dart';
 import 'package:fl_clash/local_rules/services/local_rule_reload.dart';
 import 'package:fl_clash/local_rules/services/local_rule_store.dart';

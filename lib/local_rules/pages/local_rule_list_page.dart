@@ -1,5 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/local_rules/pages/local_rule_edit_page.dart';
 import 'package:fl_clash/local_rules/services/local_rule_reload.dart';
 import 'package:fl_clash/local_rules/services/local_rule_store.dart';
@@ -175,7 +175,7 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
                         rules.length,
                         enabledCount,
                       ),
-                      style: context.textTheme.labelLarge,
+                      style: AppTextStyle.footnote.of(context),
                     ),
                   ),
                 ),
@@ -220,12 +220,12 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
+      primaryAction: IconButtonData(
+        glyph: AppGlyphs.addCircle,
         onPressed: () => _handleAddOrEdit(),
-        label: Text(appLocalizations.add),
-        icon: const GlyphIcon(AppGlyphs.add, fill: 1),
+        tooltip: appLocalizations.add,
       ),
+      foldPrimaryAction: true,
     );
   }
 }
@@ -280,11 +280,13 @@ class _RuleCard extends StatelessWidget {
                             : target,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.labelMedium?.copyWith(
-                          color: invalid
-                              ? context.colorScheme.error
-                              : context.colorScheme.tertiary,
-                        ),
+                        style: AppTextStyle.caption1
+                            .of(context)
+                            .copyWith(
+                              color: invalid
+                                  ? context.colorScheme.error
+                                  : context.colorScheme.tertiary,
+                            ),
                       ),
                     ),
                   ],
@@ -294,11 +296,13 @@ class _RuleCard extends StatelessWidget {
                   rule.enabled
                       ? appLocalizations.enabled
                       : appLocalizations.disabled,
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: rule.enabled
-                        ? context.colorScheme.primary
-                        : context.colorScheme.outline,
-                  ),
+                  style: AppTextStyle.caption1
+                      .of(context)
+                      .copyWith(
+                        color: rule.enabled
+                            ? context.colorScheme.primary
+                            : context.colorScheme.outline,
+                      ),
                 ),
               ],
             ),

@@ -1,10 +1,8 @@
 import 'dart:io';
 
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+
 import 'package:fl_clash/local_rules/pages/local_rule_list_page.dart';
 import 'package:fl_clash/local_rules/services/local_rule_store.dart';
 import 'package:fl_clash/models/local_rule.dart';
@@ -16,6 +14,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
 import '../helpers/glyph_finders.dart';
+import '../helpers/test_app.dart';
 
 class _FakePathProvider extends PathProviderPlatform {
   final String root;
@@ -52,22 +51,7 @@ class _FakePathProvider extends PathProviderPlatform {
 Widget _testApp(ProviderContainer container) {
   return UncontrolledProviderScope(
     container: container,
-    child: MaterialApp(
-      navigatorKey: globalState.navigatorKey,
-      locale: const Locale('en'),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-      ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
-      home: Builder(
-        builder: (context) {
-          globalState.theme = CommonTheme.of(context, 1);
-          globalState.measure = Measure.of(context, 1);
-          return const LocalRuleListPage();
-        },
-      ),
-    ),
+    child: const TestApp(child: LocalRuleListPage()),
   );
 }
 

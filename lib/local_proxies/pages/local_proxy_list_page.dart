@@ -1,5 +1,5 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_edit_page.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_import_page.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
@@ -228,7 +228,10 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       appLocalizations.selectProtocol,
-                      style: context.textTheme.titleSmall,
+                      style: AppTextStyle.subheadline.of(
+                        context,
+                        emphasized: true,
+                      ),
                     ),
                   ),
                 ),
@@ -282,7 +285,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                         proxies.length,
                         enabledCount,
                       ),
-                      style: context.textTheme.labelLarge,
+                      style: AppTextStyle.footnote.of(context),
                     ),
                   ),
                 ),
@@ -313,12 +316,12 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
+      primaryAction: IconButtonData(
+        glyph: AppGlyphs.addCircle,
         onPressed: _showAddMenu,
-        label: Text(appLocalizations.add),
-        icon: const GlyphIcon(AppGlyphs.add, fill: 1),
+        tooltip: appLocalizations.add,
       ),
+      foldPrimaryAction: true,
     );
   }
 }
@@ -355,11 +358,13 @@ class _ProxyCard extends StatelessWidget {
                   proxy.enabled
                       ? appLocalizations.enabled
                       : appLocalizations.disabled,
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: proxy.enabled
-                        ? context.colorScheme.primary
-                        : context.colorScheme.outline,
-                  ),
+                  style: AppTextStyle.caption1
+                      .of(context)
+                      .copyWith(
+                        color: proxy.enabled
+                            ? context.colorScheme.primary
+                            : context.colorScheme.outline,
+                      ),
                 ),
               ],
             ),

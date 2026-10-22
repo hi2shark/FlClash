@@ -21,9 +21,6 @@ _SharedState _$SharedStateFromJson(Map<String, dynamic> json) => _SharedState(
   suspendedText: json['suspendedText'] as String? ?? 'Suspended...',
   onlyStatisticsProxy: json['onlyStatisticsProxy'] as bool,
   showStopAction: json['showStopAction'] as bool? ?? true,
-  crashlytics: json['crashlytics'] as bool,
-  showNotificationStopAction:
-      json['showNotificationStopAction'] as bool? ?? true,
   suspendOnWifiSsids:
       (_readSuspendOnWifiSsids(json, 'suspendOnWifiSsids') as List<dynamic>?)
           ?.map((e) => e as String)
@@ -43,7 +40,5 @@ Map<String, dynamic> _$SharedStateToJson(_SharedState instance) =>
       'suspendedText': instance.suspendedText,
       'onlyStatisticsProxy': instance.onlyStatisticsProxy,
       'showStopAction': instance.showStopAction,
-      'crashlytics': instance.crashlytics,
-      'showNotificationStopAction': instance.showNotificationStopAction,
       'suspendOnWifiSsids': instance.suspendOnWifiSsids,
     };

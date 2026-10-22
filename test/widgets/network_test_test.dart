@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/core/method.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
@@ -13,6 +11,8 @@ import 'package:fl_clash/views/network_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/test_app.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockCoreHandler extends Mock implements CoreHandlerInterface {}
@@ -69,20 +69,7 @@ class _UnansweredCoreHandler extends _RecordingCoreHandler {
 Widget _wrap(Widget child) {
   return UncontrolledProviderScope(
     container: globalState.container,
-    child: MaterialApp(
-      navigatorKey: globalState.navigatorKey,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-      ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
-      home: Builder(
-        builder: (context) {
-          globalState.theme = CommonTheme.of(context, 1.0);
-          return child;
-        },
-      ),
-    ),
+    child: TestApp(child: child),
   );
 }
 
@@ -353,7 +340,7 @@ void main() {
     await tester.tap(find.text('CacheFly 100 MB'));
     await tester.pumpAndSettle();
 
-    final speedButton = find.widgetWithText(FilledButton, 'Start Test').first;
+    final speedButton = find.byKey(const ValueKey('speed-test-start'));
     await _tapVisible(tester, speedButton);
     await tester.pumpAndSettle();
 
@@ -388,7 +375,7 @@ void main() {
     );
     await tester.pump();
 
-    final speedButton = find.widgetWithText(FilledButton, 'Start Test').first;
+    final speedButton = find.byKey(const ValueKey('speed-test-start'));
     await _tapVisible(tester, speedButton);
     await tester.pumpAndSettle();
 
@@ -416,7 +403,7 @@ void main() {
     await tester.pumpAndSettle();
     await _tapVisible(tester, find.text('nghttp2.org:443'));
     await tester.pumpAndSettle();
-    final quicButton = find.widgetWithText(FilledButton, 'Start Test').last;
+    final quicButton = find.byKey(const ValueKey('quic-test-start'));
     await _tapVisible(tester, quicButton);
     await tester.pumpAndSettle();
     expect(calls.single.host, 'nghttp2.org:443');
@@ -454,7 +441,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final speedButton = find.widgetWithText(FilledButton, 'Start Test').first;
+    final speedButton = find.byKey(const ValueKey('speed-test-start'));
     await _tapVisible(tester, speedButton);
     await tester.pump();
     expect(find.text('Testing...'), findsOneWidget);
@@ -496,7 +483,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final quicButton = find.widgetWithText(FilledButton, 'Start Test').last;
+    final quicButton = find.byKey(const ValueKey('quic-test-start'));
     await _tapVisible(tester, quicButton);
     await tester.pump();
     expect(find.text('Testing...'), findsOneWidget);

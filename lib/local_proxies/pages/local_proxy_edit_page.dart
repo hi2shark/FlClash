@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -1684,7 +1684,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       children: [
         Text(
           appLocalizations.protocolAuth,
-          style: context.textTheme.titleSmall,
+          style: AppTextStyle.subheadline.of(context, emphasized: true),
         ),
         const SizedBox(height: 12),
         _buildTextField(_networkNameController, appLocalizations.networkName),
@@ -2116,7 +2116,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           ],
           if (_security == 'reality') ...[
             const SizedBox(height: 8),
-            Text(appLocalizations.reality, style: context.textTheme.titleSmall),
+            Text(
+              appLocalizations.reality,
+              style: AppTextStyle.subheadline.of(context, emphasized: true),
+            ),
             const SizedBox(height: 12),
             _buildTextField(
               _realityPublicKeyController,
@@ -2622,7 +2625,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                     '${_type.toUpperCase()}: '
                     '${appLocalizations.localProxyProtocolReimportOnly}',
                     textAlign: TextAlign.center,
-                    style: context.textTheme.bodyLarge,
+                    style: AppTextStyle.body.of(context),
                   ),
                 ],
               ),
@@ -2635,11 +2638,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
       title: widget.proxy == null
           ? appLocalizations.addLocalProxy
           : appLocalizations.editLocalProxy,
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
+      confirmationAction: IconButtonData(
+        glyph: AppGlyphs.check,
         onPressed: _handleSave,
-        label: Text(appLocalizations.save),
-        icon: const GlyphIcon(AppGlyphs.save, fill: 1),
+        tooltip: appLocalizations.save,
       ),
       body: Form(
         key: _formKey,
@@ -2664,20 +2666,23 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               const SizedBox(height: 24),
               Text(
                 appLocalizations.protocolAuth,
-                style: context.textTheme.titleSmall,
+                style: AppTextStyle.subheadline.of(context, emphasized: true),
               ),
               const SizedBox(height: 12),
               _buildAuthFields(),
               const SizedBox(height: 24),
               Text(
                 appLocalizations.transportSettings,
-                style: context.textTheme.titleSmall,
+                style: AppTextStyle.subheadline.of(context, emphasized: true),
               ),
               const SizedBox(height: 12),
               _buildTransportFields(),
               if (_type == 'anytls') ...[
                 const SizedBox(height: 24),
-                Text(appLocalizations.tls, style: context.textTheme.titleSmall),
+                Text(
+                  appLocalizations.tls,
+                  style: AppTextStyle.subheadline.of(context, emphasized: true),
+                ),
                 const SizedBox(height: 12),
                 _buildTlsFields(),
                 const SizedBox(height: 8),
@@ -2686,7 +2691,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                   tilePadding: EdgeInsets.zero,
                   title: Text(
                     appLocalizations.ech,
-                    style: context.textTheme.titleSmall,
+                    style: AppTextStyle.subheadline.of(
+                      context,
+                      emphasized: true,
+                    ),
                   ),
                   children: [_buildEchFields(), const SizedBox(height: 8)],
                 ),
@@ -2698,7 +2706,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                   tilePadding: EdgeInsets.zero,
                   title: Text(
                     appLocalizations.tls,
-                    style: context.textTheme.titleSmall,
+                    style: AppTextStyle.subheadline.of(
+                      context,
+                      emphasized: true,
+                    ),
                   ),
                   children: [
                     const SizedBox(height: 12),
@@ -2710,7 +2721,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                         tilePadding: EdgeInsets.zero,
                         title: Text(
                           appLocalizations.ech,
-                          style: context.textTheme.titleSmall,
+                          style: AppTextStyle.subheadline.of(
+                            context,
+                            emphasized: true,
+                          ),
                         ),
                         children: [
                           _buildEchFields(),
@@ -2729,7 +2743,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                 tilePadding: EdgeInsets.zero,
                 title: Text(
                   appLocalizations.advancedSettings,
-                  style: context.textTheme.titleSmall,
+                  style: AppTextStyle.subheadline.of(context, emphasized: true),
                 ),
                 children: [_buildAdvancedFields(), const SizedBox(height: 8)],
               ),

@@ -1,23 +1,22 @@
-import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/widget_registry.dart';
 import 'package:fl_clash/views/dashboard/widgets/unlock_detection.dart'
     as dashboard;
-import 'package:fl_clash/widgets/grid.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+
+import '../helpers/test_app.dart';
 
 void main() {
-  test('unlock dashboard widget is full width and double height', () {
-    final GridItem widget = DashboardWidget.unlockDetection.widget;
-    expect(widget.crossAxisCellCount, 8);
-    expect(widget.mainAxisCellCount, 2);
+  test('unlock dashboard widget builds the unlock detection card', () {
+    expect(
+      DashboardWidget.unlockDetection.card,
+      isA<dashboard.UnlockDetection>(),
+    );
   });
 
   testWidgets('dark dashboard exposes eight service states without overflow', (
@@ -68,7 +67,7 @@ void main() {
             ),
           ),
         ],
-        child: MaterialApp(
+        child: TestApp(
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: const Color(0xff8f9cff),
@@ -76,17 +75,7 @@ void main() {
             ),
             useMaterial3: true,
           ),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
-          home: Builder(
-            builder: (context) {
-              globalState.theme = CommonTheme.of(context, 1);
-              return dashboard.UnlockDetection(historyLoader: () async => null);
-            },
-          ),
+          child: dashboard.UnlockDetection(historyLoader: () async => null),
         ),
       ),
     );
@@ -147,26 +136,14 @@ void main() {
             ),
           ),
         ],
-        child: MaterialApp(
+        child: TestApp(
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: const Color(0xff6750a4),
             ),
             useMaterial3: true,
           ),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
-          home: Builder(
-            builder: (context) {
-              globalState.theme = CommonTheme.of(context, 1);
-              return dashboard.UnlockDetection(
-                historyLoader: () async => history,
-              );
-            },
-          ),
+          child: dashboard.UnlockDetection(historyLoader: () async => history),
         ),
       ),
     );

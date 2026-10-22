@@ -38,9 +38,6 @@ void main() {
     registerFallbackValue(
       const ChangeProxyParams(groupName: 'G', proxyName: 'P'),
     );
-    registerFallbackValue(
-      const UpdateGeoDataParams(geoType: 't', geoName: 'n'),
-    );
     registerFallbackValue(const SpeedTestParams(proxyName: 'P'));
     registerFallbackValue(const QuicTestParams(proxyName: 'P'));
     registerFallbackValue(

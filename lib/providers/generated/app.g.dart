@@ -286,7 +286,7 @@ final class RequestsProvider
   }
 }
 
-String _$requestsHash() => r'ceb041f2418513a5307b64bc9b5b58cae41e6eec';
+String _$requestsHash() => r'fe172892ec899bd6fd53dcbfebf65cd9e856efa7';
 
 abstract class _$Requests extends $Notifier<FixedList<TrackerInfo>> {
   FixedList<TrackerInfo> build();
@@ -2235,94 +2235,6 @@ abstract class _$Items extends $Notifier<Set<dynamic>> {
   }
 }
 
-@ProviderFor(Item)
-final itemProvider = ItemFamily._();
-
-final class ItemProvider extends $NotifierProvider<Item, dynamic> {
-  ItemProvider._({
-    required ItemFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'itemProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$itemHash();
-
-  @override
-  String toString() {
-    return r'itemProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  Item create() => Item();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(dynamic value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<dynamic>(value),
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ItemProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$itemHash() => r'bd46bf2e285d7171173ed7c46455ff4c39e80a46';
-
-final class ItemFamily extends $Family
-    with $ClassFamilyOverride<Item, dynamic, dynamic, dynamic, String> {
-  ItemFamily._()
-    : super(
-        retry: null,
-        name: r'itemProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  ItemProvider call(String key) => ItemProvider._(argument: key, from: this);
-
-  @override
-  String toString() => r'itemProvider';
-}
-
-abstract class _$Item extends $Notifier<dynamic> {
-  late final _$args = ref.$arg as String;
-  String get key => _$args;
-
-  dynamic build(String key);
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<dynamic, dynamic>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<dynamic, dynamic>,
-              dynamic,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, () => build(_$args));
-  }
-}
-
 @ProviderFor(UpdatingKeys)
 final updatingKeysProvider = UpdatingKeysProvider._();
 
@@ -2483,7 +2395,7 @@ final class UnlockDetectionProvider
   }
 }
 
-String _$unlockDetectionHash() => r'ab57e32a57a94794deb157b210671530c958dd4d';
+String _$unlockDetectionHash() => r'dc171669687e0b6be662223445b56e28c87ecb64';
 
 abstract class _$UnlockDetection extends $Notifier<UnlockDetectionState> {
   UnlockDetectionState build();
@@ -2503,24 +2415,11 @@ abstract class _$UnlockDetection extends $Notifier<UnlockDetectionState> {
   }
 }
 
-/// Raw WiFi-watch state JSON pushed by the native side via
-/// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
-/// Empty until the first push/poll lands. [WifiWatch] watches this so it can
-/// refresh on native events without a high-frequency poll.
-
 @ProviderFor(WifiWatchStateJson)
 final wifiWatchStateJsonProvider = WifiWatchStateJsonProvider._();
 
-/// Raw WiFi-watch state JSON pushed by the native side via
-/// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
-/// Empty until the first push/poll lands. [WifiWatch] watches this so it can
-/// refresh on native events without a high-frequency poll.
 final class WifiWatchStateJsonProvider
     extends $NotifierProvider<WifiWatchStateJson, String> {
-  /// Raw WiFi-watch state JSON pushed by the native side via
-  /// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
-  /// Empty until the first push/poll lands. [WifiWatch] watches this so it can
-  /// refresh on native events without a high-frequency poll.
   WifiWatchStateJsonProvider._()
     : super(
         from: null,
@@ -2550,11 +2449,6 @@ final class WifiWatchStateJsonProvider
 
 String _$wifiWatchStateJsonHash() =>
     r'cbc42dc367a053f128bbcf0fb1efcb0f26e91f4e';
-
-/// Raw WiFi-watch state JSON pushed by the native side via
-/// `WIFI_WATCH_STATE_CHANGED` broadcast → `AndroidManager.onWifiWatchState`.
-/// Empty until the first push/poll lands. [WifiWatch] watches this so it can
-/// refresh on native events without a high-frequency poll.
 
 abstract class _$WifiWatchStateJson extends $Notifier<String> {
   String build();

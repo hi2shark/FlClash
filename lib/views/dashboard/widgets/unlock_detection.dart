@@ -1,12 +1,14 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/unlock_test.dart';
-import 'package:fl_clash/views/dashboard/widget_metrics.dart';
+import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'card.dart';
 
 typedef UnlockTestAppRouteHistoryLoader =
     Future<UnlockTestHistoryEntry?> Function();
@@ -50,64 +52,60 @@ class _UnlockDetectionState extends ConsumerState<UnlockDetection> {
       unlockTestSettingProvider.select((state) => state.enable),
     );
     final detection = ref.watch(unlockDetectionProvider);
-    return SizedBox(
-      height: DashboardWidgetMetrics.heightOf(context, 2),
-      child: CommonCard(
-        onPressed: () {
-          BaseNavigator.push(context, const UnlockTestView());
-        },
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-          child: Column(
-            children: [
-              _DashboardHeader(
-                enabled: enabled,
-                isLoading: detection.isLoading,
-                onRefresh: _refresh,
-              ),
-              const SizedBox(height: 6),
-              Expanded(
-                child: !enabled
-                    ? _EmptyDashboard(
-                        glyph: AppGlyphs.toggle,
-                        message: context.appLocalizations.unlockTestDisabledTip,
-                      )
-                    : FutureBuilder<UnlockTestHistoryEntry?>(
-                        future: _history,
-                        builder: (context, snapshot) {
-                          final currentIsAppRoute =
-                              detection.proxyName.isEmpty &&
-                              (detection.isLoading ||
-                                  detection.results.isNotEmpty);
-                          final results = currentIsAppRoute
-                              ? detection.results
-                              : {
-                                  for (final item
-                                      in snapshot.data?.result.results ??
-                                          const <UnlockTestRunItem>[])
-                                    item.id: item,
-                                };
-                          if (results.isEmpty) {
-                            return _EmptyDashboard(
-                              glyph: AppGlyphs.checkDouble,
-                              message:
-                                  context.appLocalizations.unlockTestNoResults,
-                            );
-                          }
-                          return _DashboardResults(
-                            results: results,
-                            isLoading: currentIsAppRoute && detection.isLoading,
-                            error: currentIsAppRoute ? detection.error : '',
-                            testedAt: currentIsAppRoute
-                                ? detection.testedAt
-                                : snapshot.data?.createdAt,
-                          );
-                        },
-                      ),
-              ),
-            ],
+    final mobile = !DashboardDensityScope.of(context).isDesktop;
+    final results = !enabled
+        ? _EmptyDashboard(
+            glyph: AppGlyphs.toggle,
+            message: context.appLocalizations.unlockTestDisabledTip,
+          )
+        : FutureBuilder<UnlockTestHistoryEntry?>(
+            future: _history,
+            builder: (context, snapshot) {
+              final currentIsAppRoute =
+                  detection.proxyName.isEmpty &&
+                  (detection.isLoading || detection.results.isNotEmpty);
+              final results = currentIsAppRoute
+                  ? detection.results
+                  : {
+                      for (final item
+                          in snapshot.data?.result.results ??
+                              const <UnlockTestRunItem>[])
+                        item.id: item,
+                    };
+              if (results.isEmpty) {
+                return _EmptyDashboard(
+                  glyph: AppGlyphs.checkDouble,
+                  message: context.appLocalizations.unlockTestNoResults,
+                );
+              }
+              return _DashboardResults(
+                results: results,
+                isLoading: currentIsAppRoute && detection.isLoading,
+                error: currentIsAppRoute ? detection.error : '',
+                testedAt: currentIsAppRoute
+                    ? detection.testedAt
+                    : snapshot.data?.createdAt,
+                mobile: mobile,
+              );
+            },
+          );
+    return DashboardCard(
+      semanticLabel: context.appLocalizations.unlockTest,
+      onTap: () {
+        BaseNavigator.push(context, const UnlockTestView());
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: mobile ? MainAxisSize.min : MainAxisSize.max,
+        children: [
+          _DashboardHeader(
+            enabled: enabled,
+            isLoading: detection.isLoading,
+            onRefresh: _refresh,
           ),
-        ),
+          const SizedBox(height: 6),
+          if (mobile) results else Expanded(child: results),
+        ],
       ),
     );
   }
@@ -141,7 +139,7 @@ class _DashboardHeader extends StatelessWidget {
               context.appLocalizations.unlockTest,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: context.textTheme.titleSmall,
+              style: AppTextStyle.subheadline.of(context, emphasized: true),
             ),
           ),
           Tooltip(
@@ -162,9 +160,11 @@ class _DashboardHeader extends StatelessWidget {
                       context.appLocalizations.unlockTestFollowRules,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.labelSmall?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
+                      style: AppTextStyle.caption2
+                          .of(context)
+                          .copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
                     ),
                   ),
                 ],
@@ -181,7 +181,7 @@ class _DashboardHeader extends StatelessWidget {
             icon: isLoading
                 ? const SizedBox.square(
                     dimension: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CommonCircleLoading(size: 16),
                   )
                 : const GlyphIcon(AppGlyphs.refresh, size: 19),
           ),
@@ -219,9 +219,9 @@ class _EmptyDashboard extends StatelessWidget {
               message,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: context.textTheme.bodySmall?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyle.footnote
+                  .of(context)
+                  .copyWith(color: context.colorScheme.onSurfaceVariant),
             ),
           ),
         ],
@@ -235,12 +235,14 @@ class _DashboardResults extends StatelessWidget {
   final bool isLoading;
   final String error;
   final DateTime? testedAt;
+  final bool mobile;
 
   const _DashboardResults({
     required this.results,
     required this.isLoading,
     required this.error,
     required this.testedAt,
+    required this.mobile,
   });
 
   @override
@@ -284,39 +286,53 @@ class _DashboardResults extends StatelessWidget {
                     : _formatTestedAt(context, testedAt),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: context.textTheme.labelSmall?.copyWith(
-                  color: error.isNotEmpty
-                      ? context.colorScheme.error
-                      : context.colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyle.caption2
+                    .of(context)
+                    .copyWith(
+                      color: error.isNotEmpty
+                          ? context.colorScheme.error
+                          : context.colorScheme.onSurfaceVariant,
+                    ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 6),
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              const spacing = 6.0;
-              final tileHeight = (constraints.maxHeight - spacing) / 2;
-              return GridView.builder(
-                padding: EdgeInsets.zero,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: visible.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  crossAxisSpacing: spacing,
-                  mainAxisSpacing: spacing,
-                  mainAxisExtent: tileHeight,
-                ),
-                itemBuilder: (context, index) {
-                  return _ServiceTile(item: visible[index]);
-                },
-              );
-            },
+        if (mobile)
+          _resultsGrid(visible, tileHeight: 44)
+        else
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) => _resultsGrid(
+                visible,
+                tileHeight: (constraints.maxHeight - _gridSpacing) / 2,
+              ),
+            ),
           ),
-        ),
       ],
+    );
+  }
+
+  static const _gridSpacing = 6.0;
+
+  Widget _resultsGrid(
+    List<UnlockTestRunItem> visible, {
+    required double tileHeight,
+  }) {
+    return GridView.builder(
+      padding: EdgeInsets.zero,
+      shrinkWrap: mobile,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: visible.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        crossAxisSpacing: _gridSpacing,
+        mainAxisSpacing: _gridSpacing,
+        mainAxisExtent: tileHeight,
+      ),
+      itemBuilder: (context, index) {
+        return _ServiceTile(item: visible[index]);
+      },
     );
   }
 }
@@ -339,7 +355,7 @@ class _CompactStatus extends StatelessWidget {
           const SizedBox(width: 2),
           Text(
             '$count',
-            style: context.textTheme.labelSmall?.copyWith(color: color),
+            style: AppTextStyle.caption2.of(context).copyWith(color: color),
           ),
         ],
       ),
@@ -381,10 +397,12 @@ class _ServiceTile extends StatelessWidget {
               child: Text(
                 monogram,
                 maxLines: 1,
-                style: context.textTheme.labelSmall?.copyWith(
-                  color: statusColor,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyle.custom(
+                  context,
+                  size: AppTextStyle.caption2.size,
+                  leading: AppTextStyle.caption2.leading,
+                  weight: FontWeight.w700,
+                ).copyWith(color: statusColor),
               ),
             ),
             const SizedBox(width: 6),
@@ -397,19 +415,19 @@ class _ServiceTile extends StatelessWidget {
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.labelSmall?.copyWith(
-                      color: context.colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTextStyle.caption2
+                        .of(context, emphasized: true)
+                        .copyWith(color: context.colorScheme.onSurface),
                   ),
                   Text(
                     _statusLabel(context, item.status),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.labelSmall?.copyWith(
-                      color: statusColor,
-                      fontSize: 9,
-                    ),
+                    style: AppTextStyle.custom(
+                      context,
+                      size: 9,
+                      leading: 11,
+                    ).copyWith(color: statusColor),
                   ),
                 ],
               ),

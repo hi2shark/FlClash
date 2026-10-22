@@ -1,6 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -291,7 +291,10 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Text(label, style: context.textTheme.bodyMedium?.toLight),
+            child: Text(
+              label,
+              style: AppTextStyle.subheadline.of(context).toLight,
+            ),
           ),
           const SizedBox(width: 16),
           Flexible(
@@ -299,7 +302,7 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: context.textTheme.bodyMedium,
+              style: AppTextStyle.subheadline.of(context),
             ),
           ),
         ],
@@ -310,9 +313,9 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
   Widget _buildErrorText(String error) {
     return Text(
       '${context.appLocalizations.testFailed}: $error',
-      style: context.textTheme.bodyMedium?.copyWith(
-        color: context.colorScheme.error,
-      ),
+      style: AppTextStyle.subheadline
+          .of(context)
+          .copyWith(color: context.colorScheme.error),
     );
   }
 
@@ -492,7 +495,6 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
                       keyboardType: TextInputType.url,
                       textInputAction: TextInputAction.done,
                       autocorrect: false,
-                      enableSuggestions: false,
                       maxLines: 1,
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
@@ -602,7 +604,6 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
                       keyboardType: TextInputType.url,
                       textInputAction: TextInputAction.done,
                       autocorrect: false,
-                      enableSuggestions: false,
                       maxLines: 1,
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
@@ -630,6 +631,7 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
     required bool isTesting,
     required VoidCallback onStart,
     required Widget? result,
+    required Key startButtonKey,
     Widget? configuration,
   }) {
     final appLocalizations = context.appLocalizations;
@@ -647,7 +649,7 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
                 width: double.infinity,
                 child: Text(
                   description,
-                  style: context.textTheme.bodyMedium?.toLight,
+                  style: AppTextStyle.subheadline.of(context).toLight,
                 ),
               ),
               if (configuration != null) ...[
@@ -656,12 +658,13 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
               ],
               const SizedBox(height: 12),
               FilledButton.icon(
+                key: startButtonKey,
                 onPressed: isTesting ? null : onStart,
                 icon: isTesting
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CommonCircleLoading(size: 16),
                       )
                     : const GlyphIcon(AppGlyphs.bolt, fill: 1),
                 label: Text(
@@ -686,7 +689,7 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
       body: ListView(
         padding: EdgeInsets.only(top: context.appBarInset, bottom: 20),
         children: [
-          ...generateSection(
+          generateSection(
             title: appLocalizations.selectNode,
             items: [
               ListItem<dynamic>.open(
@@ -709,25 +712,27 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
               ),
             ],
           ),
-          ...generateSection(
+          generateSection(
             title: appLocalizations.speedTest,
             items: [
               _buildTestCard(
                 description: appLocalizations.speedTestDesc,
                 isTesting: _isSpeedTesting,
                 onStart: _handleSpeedTest,
+                startButtonKey: const ValueKey('speed-test-start'),
                 configuration: _buildSpeedTestPackageSelector(),
                 result: _buildSpeedTestResult(),
               ),
             ],
           ),
-          ...generateSection(
+          generateSection(
             title: appLocalizations.quicTest,
             items: [
               _buildTestCard(
                 description: appLocalizations.quicTestDesc,
                 isTesting: _isQuicTesting,
                 onStart: _handleQuicTest,
+                startButtonKey: const ValueKey('quic-test-start'),
                 configuration: _buildQuicTargetSelector(),
                 result: _buildQuicTestResult(),
               ),
@@ -788,7 +793,7 @@ class _NodeSelectionViewState extends ConsumerState<NodeSelectionView> {
           }
           final proxies = snapshot.data;
           if (proxies == null) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CommonCircleLoading(size: 24));
           }
           final testableProxies = filterNetworkTestProxies(proxies);
           if (testableProxies.isEmpty) {
@@ -805,11 +810,11 @@ class _NodeSelectionViewState extends ConsumerState<NodeSelectionView> {
           return ListView(
             padding: EdgeInsets.only(top: context.appBarInset, bottom: 20),
             children: [
-              ...generateSection(
+              generateSection(
                 title: appLocalizations.localNodes,
                 items: localProxies.map(_buildProxyItem),
               ),
-              ...generateSection(
+              generateSection(
                 title: appLocalizations.allNodes,
                 items: otherProxies.map(_buildProxyItem),
               ),

@@ -51,22 +51,6 @@ ProxyState proxyState(Ref ref) {
   );
 }
 
-@riverpod
-ProxiesActionsState proxiesActionsState(Ref ref) {
-  final pageLabel = ref.watch(currentPageLabelProvider);
-  final hasProviders = ref.watch(
-    providersProvider.select((state) => state.isNotEmpty),
-  );
-  final type = ref.watch(
-    proxiesStyleSettingProvider.select((state) => state.type),
-  );
-  return ProxiesActionsState(
-    pageLabel: pageLabel,
-    hasProviders: hasProviders,
-    type: type,
-  );
-}
-
 /// Watching the delay map instead would drop nodes one probe at a time, and
 /// reading it on any other rebuild would drop them whenever something
 /// unrelated changed mid-test.
@@ -87,16 +71,19 @@ DelayMap delaysAtLastTestBatch(Ref ref) {
 
 @riverpod
 GroupsState visibleGroupsState(Ref ref) {
-  final currentGroups = ref.watch(currentGroupsStateProvider);
+  return _hideTimeoutProxies(ref, ref.watch(currentGroupsStateProvider));
+}
+
+GroupsState _hideTimeoutProxies(Ref ref, GroupsState groups) {
   final hideTimeoutProxies = ref.watch(
     proxiesStyleSettingProvider.select((state) => state.hideTimeoutProxies),
   );
   if (!hideTimeoutProxies) {
-    return currentGroups;
+    return groups;
   }
-  return currentGroups.copyWith(
+  return groups.copyWith(
     value: computeHideTimeout(
-      groups: currentGroups.value,
+      groups: groups.value,
       allGroups: ref.watch(groupsProvider),
       delayMap: ref.watch(delaysAtLastTestBatchProvider),
       selectedMap: ref.watch(selectedMapProvider),
@@ -105,13 +92,15 @@ GroupsState visibleGroupsState(Ref ref) {
   );
 }
 
+/// Searches before hiding, so a group whose matches all timed out keeps them,
+/// and with them its delay test, instead of dropping out of the results.
 @riverpod
 GroupsState filterGroupsState(Ref ref, String query) {
-  final currentGroups = ref.watch(visibleGroupsStateProvider);
   final searchQuery = SearchQuery(query);
   if (searchQuery.isEmpty) {
-    return currentGroups;
+    return ref.watch(visibleGroupsStateProvider);
   }
+  final currentGroups = ref.watch(currentGroupsStateProvider);
   final matches = <Proxy, bool>{};
   final groups = currentGroups.value
       .map((group) {
@@ -126,7 +115,7 @@ GroupsState filterGroupsState(Ref ref, String query) {
       })
       .where((group) => group.all.isNotEmpty)
       .toList();
-  return currentGroups.copyWith(value: groups);
+  return _hideTimeoutProxies(ref, currentGroups.copyWith(value: groups));
 }
 
 @riverpod
@@ -179,30 +168,14 @@ ProxiesTabControllerState proxiesTabControllerState(Ref ref) {
 }
 
 @riverpod
-ProxyGroupSelectorState proxyGroupSelectorState(
-  Ref ref,
-  String groupName,
-  String query,
-) {
-  final proxiesStyle = ref.watch(proxiesStyleSettingProvider);
-  final group = ref.watch(
-    visibleGroupsStateProvider.select(
-      (state) => state.value.getGroup(groupName),
-    ),
+bool currentGroupDelayTesting(Ref ref) {
+  final currentGroupName = ref.watch(
+    proxiesTabControllerStateProvider.select((state) => state.currentGroupName),
   );
-  final sortNum = ref.watch(sortNumProvider);
-  final proxies =
-      group?.all
-          .whereMatches(SearchQuery(query), (proxy) => proxy.searchFields)
-          .toList() ??
-      [];
-  return ProxyGroupSelectorState(
-    testUrl: group?.testUrl,
-    proxiesSortType: proxiesStyle.sortType,
-    proxyCardType: proxiesStyle.cardType,
-    sortNum: sortNum,
-    groupType: group?.type ?? GroupType.Selector,
-    proxies: proxies,
+  return ref.watch(
+    delayTestingGroupsProvider.select(
+      (state) => state.contains(currentGroupName),
+    ),
   );
 }
 
@@ -280,23 +253,6 @@ String? selectedProxyName(Ref ref, String groupName) {
     groupsProvider.select((state) => state.getGroup(groupName)),
   );
   return group?.getCurrentSelectedName(proxyName ?? '');
-}
-
-@riverpod
-String proxyDesc(Ref ref, Proxy proxy) {
-  final groupTypeNamesList = GroupType.values.map((e) => e.name).toList();
-  if (!groupTypeNamesList.contains(proxy.type)) {
-    return proxy.type;
-  } else {
-    final isGroup = ref.watch(
-      groupsProvider.select(
-        (state) => state.any((element) => element.name == proxy.name),
-      ),
-    );
-    if (!isGroup) return proxy.type;
-    final state = ref.watch(realSelectedProxyStateProvider(proxy.name));
-    return "${proxy.type}(${state.proxyName.isNotEmpty ? state.proxyName : '*'})";
-  }
 }
 
 @riverpod

@@ -1,6 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
 import 'package:fl_clash/models/local_proxy_provider_config.dart';
@@ -233,14 +233,13 @@ class _LocalProxyMixinSettingsPageState
     final healthEnabled = _config.enabled && _config.healthCheckEnabled;
     return CommonScaffold(
       title: appLocalizations.localProxyMixin,
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
+      confirmationAction: IconButtonData(
+        glyph: AppGlyphs.check,
         onPressed: _handleSave,
-        label: Text(appLocalizations.saveAndReload),
-        icon: const GlyphIcon(AppGlyphs.save, fill: 1),
+        tooltip: appLocalizations.saveAndReload,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CommonCircleLoading(size: 24))
           : ListView(
               padding: const EdgeInsets.all(
                 16,
@@ -268,7 +267,10 @@ class _LocalProxyMixinSettingsPageState
                           children: [
                             Text(
                               appLocalizations.providerInfo,
-                              style: context.textTheme.titleSmall,
+                              style: AppTextStyle.subheadline.of(
+                                context,
+                                emphasized: true,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Text(

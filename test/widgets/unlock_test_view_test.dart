@@ -1,13 +1,12 @@
-import 'package:fl_clash/common/theme.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/unlock_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/test_app.dart';
 
 Widget _wrap({
   required UnlockTestProps props,
@@ -20,7 +19,7 @@ Widget _wrap({
       unlockTestSettingProvider.overrideWithBuild((_, _) => props),
       unlockDetectionProvider.overrideWithValue(detection),
     ],
-    child: MaterialApp(
+    child: TestApp(
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xff6750a4),
@@ -28,17 +27,7 @@ Widget _wrap({
         ),
         useMaterial3: true,
       ),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-      ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
-      home: Builder(
-        builder: (context) {
-          globalState.theme = CommonTheme.of(context, 1);
-          return UnlockTestView(historyLoader: () async => history);
-        },
-      ),
+      child: UnlockTestView(historyLoader: () async => history),
     ),
   );
 }

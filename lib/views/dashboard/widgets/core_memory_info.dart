@@ -3,15 +3,16 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/manager/background_resource_manager.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
-import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/dashboard/widget_metrics.dart';
+import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+
+import 'card.dart';
 
 final _coreMemoryStateNotifier = ValueNotifier<num>(0);
 
@@ -105,53 +106,37 @@ class _CoreMemoryInfoState extends ConsumerState<CoreMemoryInfo>
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return SizedBox(
-      height: DashboardWidgetMetrics.heightOf(context, 1),
-      child: RepaintBoundary(
-        child: CommonCard(
-          info: Info(
-            label: appLocalizations.coreMemoryInfo,
+    final mobile = !DashboardDensityScope.of(context).isDesktop;
+    return DashboardCard(
+      semanticLabel: appLocalizations.coreMemoryInfo,
+      onTap: () {
+        _core.requestGc();
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: mobile ? MainAxisSize.min : MainAxisSize.max,
+        children: [
+          DashboardCardHeader(
             glyph: AppGlyphs.memory,
+            title: appLocalizations.coreMemoryInfo,
           ),
-          onPressed: () {
-            _core.requestGc();
-          },
-          child: Container(
-            padding: baseInfoEdgeInsets.copyWith(top: 0),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  height: globalState.measure.bodyMediumHeight + 2,
-                  child: ValueListenableBuilder(
-                    valueListenable: _coreMemoryStateNotifier,
-                    builder: (_, memory, _) {
-                      final traffic = memory.traffic;
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            traffic.value,
-                            style: context.textTheme.bodyMedium?.toLight
-                                .adjustSize(1),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            traffic.unit,
-                            style: context.textTheme.bodyMedium?.toLight
-                                .adjustSize(1),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+          if (mobile) const SizedBox(height: 12) else const Spacer(),
+          ValueListenableBuilder(
+            valueListenable: _coreMemoryStateNotifier,
+            builder: (_, memory, _) {
+              final traffic = memory.traffic;
+              final style = AppTextStyle.subheadline.of(context).toLight;
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Text(traffic.value, style: style),
+                  const SizedBox(width: 8),
+                  Text(traffic.unit, style: style),
+                ],
+              );
+            },
           ),
-        ),
+        ],
       ),
     );
   }

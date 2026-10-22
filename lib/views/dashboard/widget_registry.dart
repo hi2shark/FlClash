@@ -1,109 +1,74 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
-import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
 extension DashboardWidgetView on DashboardWidget {
-  GridItem get widget => switch (this) {
-    DashboardWidget.networkSpeed => const GridItem(
-      key: ValueKey(DashboardWidget.networkSpeed),
-      crossAxisCellCount: 8,
-      child: NetworkSpeed(),
-    ),
-    DashboardWidget.outboundMode => const GridItem(
-      key: ValueKey(DashboardWidget.outboundMode),
-      crossAxisCellCount: 4,
-      child: OutboundMode(),
-    ),
-    DashboardWidget.trafficUsage => const GridItem(
-      key: ValueKey(DashboardWidget.trafficUsage),
-      crossAxisCellCount: 4,
-      child: TrafficUsage(),
-    ),
-    DashboardWidget.networkDetection => const GridItem(
-      key: ValueKey(DashboardWidget.networkDetection),
-      crossAxisCellCount: 4,
-      child: NetworkDetection(),
-    ),
-    DashboardWidget.tunButton => const GridItem(
-      key: ValueKey(DashboardWidget.tunButton),
-      crossAxisCellCount: 4,
-      child: TUNButton(),
-    ),
-    DashboardWidget.vpnButton => const GridItem(
-      key: ValueKey(DashboardWidget.vpnButton),
-      crossAxisCellCount: 4,
-      child: VpnButton(),
-    ),
-    DashboardWidget.systemProxyButton => const GridItem(
-      key: ValueKey(DashboardWidget.systemProxyButton),
-      crossAxisCellCount: 4,
-      child: SystemProxyButton(),
-    ),
-    DashboardWidget.intranetIp => const GridItem(
-      key: ValueKey(DashboardWidget.intranetIp),
-      crossAxisCellCount: 4,
-      child: IntranetIP(),
-    ),
-    DashboardWidget.memoryInfo => const GridItem(
-      key: ValueKey(DashboardWidget.memoryInfo),
-      crossAxisCellCount: 4,
-      child: MemoryInfo(),
-    ),
-    DashboardWidget.coreMemoryInfo => const GridItem(
-      key: ValueKey(DashboardWidget.coreMemoryInfo),
-      crossAxisCellCount: 4,
-      child: CoreMemoryInfo(),
-    ),
-    DashboardWidget.unlockDetection => const GridItem(
-      key: ValueKey(DashboardWidget.unlockDetection),
-      crossAxisCellCount: 8,
-      mainAxisCellCount: 2,
-      child: UnlockDetection(),
-    ),
-    DashboardWidget.serviceStatus => const GridItem(
-      key: ValueKey(DashboardWidget.serviceStatus),
-      crossAxisCellCount: 8,
-      child: ServiceStatusCard(),
-    ),
-    DashboardWidget.dnsQueries => const GridItem(
-      key: ValueKey(DashboardWidget.dnsQueries),
-      crossAxisCellCount: 4,
-      child: DnsQueriesCard(),
-    ),
-    DashboardWidget.requests => const GridItem(
-      key: ValueKey(DashboardWidget.requests),
-      crossAxisCellCount: 4,
-      child: RequestsCard(),
-    ),
-    DashboardWidget.connections => const GridItem(
-      key: ValueKey(DashboardWidget.connections),
-      crossAxisCellCount: 4,
-      child: ConnectionsCard(),
-    ),
-    DashboardWidget.runTime => const GridItem(
-      key: ValueKey(DashboardWidget.runTime),
-      crossAxisCellCount: 4,
-      child: RunTimeCard(),
-    ),
-    DashboardWidget.proxyGroups => const GridItem(
-      key: ValueKey(DashboardWidget.proxyGroups),
-      crossAxisCellCount: 4,
-      child: ProxyGroupsCard(),
-    ),
-    DashboardWidget.profiles => const GridItem(
-      key: ValueKey(DashboardWidget.profiles),
-      crossAxisCellCount: 4,
-      child: ProfilesCard(),
-    ),
-    DashboardWidget.wifiWatchCard => const GridItem(
-      key: ValueKey(DashboardWidget.wifiWatchCard),
-      crossAxisCellCount: 8,
-      child: WifiWatchCard(),
-    ),
+  Widget get card => switch (this) {
+    DashboardWidget.currentOutbound => const CurrentOutboundCard(),
+    DashboardWidget.networkSpeed => const NetworkSpeedCard(),
+    DashboardWidget.outboundMode => const OutboundModeCard(),
+    DashboardWidget.vpnButton => const VpnCard(),
+    DashboardWidget.networkTakeover => const NetworkTakeoverCard(),
+    DashboardWidget.serviceStatus => const ServiceStatusCard(),
+    DashboardWidget.profiles => const ProfilesCard(),
+    DashboardWidget.proxyGroups => const ProxyGroupsCard(),
+    DashboardWidget.connectionStats => const ConnectionStatsCard(),
+    DashboardWidget.intranetIp => const IntranetIpCard(),
+    DashboardWidget.memoryInfo => const MemoryInfo(),
+    DashboardWidget.coreMemoryInfo => const CoreMemoryInfo(),
+    DashboardWidget.unlockDetection => const UnlockDetection(),
+    DashboardWidget.wifiWatchCard => const WifiWatchCard(),
   };
-}
 
-DashboardWidget dashboardWidgetOf(GridItem gridItem) {
-  return (gridItem.key! as ValueKey<DashboardWidget>).value;
+  Glyph get glyph => switch (this) {
+    DashboardWidget.currentOutbound => AppGlyphs.status,
+    DashboardWidget.networkSpeed => AppGlyphs.speed,
+    DashboardWidget.outboundMode => AppGlyphs.split,
+    DashboardWidget.vpnButton => AppGlyphs.vpn,
+    DashboardWidget.networkTakeover => AppGlyphs.shuffle,
+    DashboardWidget.serviceStatus => AppGlyphs.verified,
+    DashboardWidget.profiles => AppGlyphs.profiles,
+    DashboardWidget.proxyGroups => AppGlyphs.layers,
+    DashboardWidget.connectionStats => AppGlyphs.connections,
+    DashboardWidget.intranetIp => AppGlyphs.devices,
+    DashboardWidget.memoryInfo => AppGlyphs.memory,
+    DashboardWidget.coreMemoryInfo => AppGlyphs.memory,
+    DashboardWidget.unlockDetection => AppGlyphs.locate,
+    DashboardWidget.wifiWatchCard => AppGlyphs.wifi,
+  };
+
+  String label(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return switch (this) {
+      DashboardWidget.currentOutbound => appLocalizations.status,
+      DashboardWidget.networkSpeed => appLocalizations.networkSpeed,
+      DashboardWidget.outboundMode => appLocalizations.outboundMode,
+      DashboardWidget.vpnButton => 'VPN',
+      DashboardWidget.networkTakeover => appLocalizations.networkTakeover,
+      DashboardWidget.serviceStatus => appLocalizations.serviceStatus,
+      DashboardWidget.profiles => appLocalizations.profile,
+      DashboardWidget.proxyGroups => appLocalizations.proxyGroup,
+      DashboardWidget.connectionStats => appLocalizations.connectionStats,
+      DashboardWidget.intranetIp => appLocalizations.intranetIP,
+      DashboardWidget.memoryInfo => appLocalizations.memoryInfo,
+      DashboardWidget.coreMemoryInfo => appLocalizations.coreMemoryInfo,
+      DashboardWidget.unlockDetection => appLocalizations.unlockTest,
+      DashboardWidget.wifiWatchCard => appLocalizations.wifiWatchTitle,
+    };
+  }
+
+  String? description(BuildContext context) {
+    final appLocalizations = context.appLocalizations;
+    return switch (this) {
+      DashboardWidget.currentOutbound => appLocalizations.currentOutboundDesc,
+      DashboardWidget.connectionStats => appLocalizations.connectionStatsDesc,
+      DashboardWidget.memoryInfo => appLocalizations.memoryInfoDesc,
+      _ => null,
+    };
+  }
+
+  /// It holds the start button, which has nowhere else to go.
+  bool get removable => this != DashboardWidget.currentOutbound;
 }

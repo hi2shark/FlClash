@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_edit_page.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
 class _FakePathProvider extends PathProviderPlatform {
@@ -113,7 +115,7 @@ Future<void> _tapSave(
   bool expectStoreChange = true,
 }) async {
   final dynamic onPressed = tester
-      .widget<FloatingActionButton>(find.byType(FloatingActionButton))
+      .widget<IconButton>(find.widgetWithGlyph(IconButton, AppGlyphs.check))
       .onPressed!;
   await tester.runAsync(() async {
     final result = onPressed();
