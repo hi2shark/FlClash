@@ -9,7 +9,6 @@ import 'common.dart';
 import 'core.dart';
 import 'config.dart';
 import 'profile.dart';
-import 'unlock_test.dart';
 
 part 'generated/state.freezed.dart';
 part 'generated/state.g.dart';
@@ -52,17 +51,6 @@ abstract class NetworkDetectionState with _$NetworkDetectionState {
     required bool isLoading,
     required IpInfo? ipInfo,
   }) = _NetworkDetectionState;
-}
-
-@freezed
-abstract class UnlockDetectionState with _$UnlockDetectionState {
-  const factory UnlockDetectionState({
-    required bool isLoading,
-    required String proxyName,
-    required Map<String, UnlockTestRunItem> results,
-    @Default('') String error,
-    DateTime? testedAt,
-  }) = _UnlockDetectionState;
 }
 
 @freezed

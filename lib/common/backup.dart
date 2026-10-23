@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:archive/archive_io.dart';
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/migration.dart';
@@ -73,21 +72,6 @@ Future<void> backupTask(BackupArchiveRequest request) {
   return compute(_backupTask, request);
 }
 
-Future<void> stripUnlockTestHistoryFromBackup(File databaseFile) async {
-  if (!await databaseFile.exists()) {
-    return;
-  }
-  // Drift rewinds a newer snapshot's `user_version`, so restore the header.
-  final schemaVersion = await _readSchemaVersion(databaseFile);
-  final database = Database(NativeDatabase(databaseFile));
-  try {
-    await database.unlockTestRunsDao.clear();
-  } finally {
-    await database.close();
-    await _writeSchemaVersion(databaseFile, schemaVersion);
-  }
-}
-
 Future<void> _backupTask(BackupArchiveRequest request) {
   return writeBackupArchive(
     archivePath: request.archivePath,
@@ -117,7 +101,6 @@ Future<void> writeBackupArchive({
   required String homeDirPath,
   required Iterable<String> entries,
 }) async {
-  await stripUnlockTestHistoryFromBackup(File(databaseSnapshotPath));
   final encoder = ZipFileEncoder()..create(archivePath);
   try {
     encoder.addArchiveFile(
@@ -297,15 +280,4 @@ Future<int> _readSchemaVersion(File databaseFile) async {
   } finally {
     await handle.close();
   }
-}
-
-Future<void> _writeSchemaVersion(File databaseFile, int schemaVersion) async {
-  final bytes = await databaseFile.readAsBytes();
-  if (bytes.length < 64) {
-    throw const BackupException(BackupFailure.invalid);
-  }
-  ByteData.sublistView(
-    bytes,
-  ).setInt32(_schemaVersionHeaderOffset, schemaVersion, Endian.big);
-  await databaseFile.writeAsBytes(bytes, flush: true);
 }

@@ -326,21 +326,6 @@ class CoreController {
         );
   }
 
-  Future<UnlockTestRunResult> getUnlockTest(UnlockTestRunParams params) async {
-    final data = await _interface.unlockTest(params);
-    return data ??
-        UnlockTestRunResult(
-          runId: params.runId,
-          routeMode: params.routeMode,
-          proxyName: params.proxyName,
-          error: 'timeout',
-        );
-  }
-
-  Future<bool> cancelUnlockTest(String runId) {
-    return _interface.cancelUnlockTest(runId);
-  }
-
   Future<List<Proxy>> getAllProxies() async {
     final proxiesData = await _interface.getProxies();
     return proxiesData.proxies.values

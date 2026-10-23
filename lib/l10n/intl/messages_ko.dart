@@ -469,7 +469,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "coreBlockedBySmartAppControlTip": MessageLookupByLibrary.simpleMessage(
       "서명되지 않아 Windows Smart App Control이 FlClashCore.exe를 차단했습니다. Windows 보안 → 앱 및 브라우저 컨트롤 → Smart App Control 설정에서 끔을 선택한 후 FlClash를 다시 시작하세요. Smart App Control은 Windows를 다시 설치하지 않으면 다시 켤 수 없습니다.",
     ),
-    "coreMemoryInfo": MessageLookupByLibrary.simpleMessage("코어 메모리"),
     "coreStatus": MessageLookupByLibrary.simpleMessage("코어 상태"),
     "country": MessageLookupByLibrary.simpleMessage("지역"),
     "crashDetected": MessageLookupByLibrary.simpleMessage("비정상 종료 감지됨"),
@@ -1882,68 +1881,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "알 수 없는 네트워크 오류",
     ),
-    "unlockReasonBootstrapFailed": MessageLookupByLibrary.simpleMessage(
-      "임시 세션 초기화에 실패했습니다",
-    ),
-    "unlockReasonContentLimited": MessageLookupByLibrary.simpleMessage(
-      "카탈로그의 일부만 이용할 수 있습니다",
-    ),
-    "unlockReasonGeoBlocked": MessageLookupByLibrary.simpleMessage(
-      "이 지역에서는 이용할 수 없습니다",
-    ),
-    "unlockReasonNetworkError": MessageLookupByLibrary.simpleMessage(
-      "네트워크 요청에 실패했습니다",
-    ),
-    "unlockReasonRateLimited": MessageLookupByLibrary.simpleMessage(
-      "서비스가 테스트 요청을 제한했습니다",
-    ),
-    "unlockReasonTimeout": MessageLookupByLibrary.simpleMessage(
-      "요청 시간이 초과되었습니다",
-    ),
-    "unlockReasonUnexpectedResponse": MessageLookupByLibrary.simpleMessage(
-      "서비스 응답을 인식할 수 없습니다",
-    ),
-    "unlockReasonVpnBlocked": MessageLookupByLibrary.simpleMessage(
-      "프록시 또는 VPN이 거부되었습니다",
-    ),
-    "unlockTest": MessageLookupByLibrary.simpleMessage("차단 해제 감지"),
-    "unlockTestAll": MessageLookupByLibrary.simpleMessage("전체"),
-    "unlockTestClearAll": MessageLookupByLibrary.simpleMessage("모두 지우기"),
-    "unlockTestCurrentResults": MessageLookupByLibrary.simpleMessage("현재 결과"),
-    "unlockTestDesc": MessageLookupByLibrary.simpleMessage(
-      "노드를 통해 AI 및 미디어 서비스 사용 가능 여부를 확인합니다",
-    ),
-    "unlockTestDisabledTip": MessageLookupByLibrary.simpleMessage(
-      "차단 해제 감지 페이지에서 사용 설정하세요",
-    ),
-    "unlockTestDone": MessageLookupByLibrary.simpleMessage("완료"),
-    "unlockTestEnable": MessageLookupByLibrary.simpleMessage("차단 해제 감지 사용"),
-    "unlockTestError": MessageLookupByLibrary.simpleMessage("오류"),
-    "unlockTestFollowRules": MessageLookupByLibrary.simpleMessage("현재 라우팅 따르기"),
-    "unlockTestGroupEurope": MessageLookupByLibrary.simpleMessage("영국 및 유럽"),
-    "unlockTestGroupGlobalMedia": MessageLookupByLibrary.simpleMessage(
-      "글로벌 미디어",
-    ),
-    "unlockTestGroupHongKongTaiwan": MessageLookupByLibrary.simpleMessage(
-      "홍콩 및 대만",
-    ),
-    "unlockTestGroupJapan": MessageLookupByLibrary.simpleMessage("일본"),
-    "unlockTestGroupKorea": MessageLookupByLibrary.simpleMessage("한국"),
-    "unlockTestHistory": MessageLookupByLibrary.simpleMessage("최근 테스트"),
-    "unlockTestHistoryResult": MessageLookupByLibrary.simpleMessage("기록 결과"),
-    "unlockTestNoResults": MessageLookupByLibrary.simpleMessage(
-      "아직 테스트 결과가 없습니다",
-    ),
-    "unlockTestPartial": MessageLookupByLibrary.simpleMessage("부분"),
-    "unlockTestRegion": MessageLookupByLibrary.simpleMessage("지역"),
-    "unlockTestResetDefault": MessageLookupByLibrary.simpleMessage("기본값 복원"),
-    "unlockTestSearch": MessageLookupByLibrary.simpleMessage("서비스 검색"),
-    "unlockTestSelectAll": MessageLookupByLibrary.simpleMessage("모두 선택"),
-    "unlockTestSelectTargets": MessageLookupByLibrary.simpleMessage("서비스 선택"),
-    "unlockTestSpecifiedNode": MessageLookupByLibrary.simpleMessage("지정된 노드"),
-    "unlockTestStop": MessageLookupByLibrary.simpleMessage("테스트 중지"),
-    "unlockTestUntested": MessageLookupByLibrary.simpleMessage("미테스트"),
-    "unlocked": MessageLookupByLibrary.simpleMessage("해제됨"),
     "unmaximize": MessageLookupByLibrary.simpleMessage("이전 크기로 복원"),
     "unnamed": MessageLookupByLibrary.simpleMessage("이름 없음"),
     "unpinWindow": MessageLookupByLibrary.simpleMessage("창 고정 해제"),

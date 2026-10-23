@@ -86,7 +86,6 @@ const defaultNetworkProps = NetworkProps();
 const defaultProxiesStyleProps = ProxiesStyleProps();
 const defaultWindowProps = WindowProps();
 const defaultAccessControlProps = AccessControlProps();
-const defaultUnlockTestProps = UnlockTestProps();
 const defaultThemeProps = ThemeProps(primaryColor: defaultPrimaryColor);
 
 HotKeyAction _defaultHotKeyAction(HotAction action, PhysicalKeyboardKey key) {
@@ -304,35 +303,6 @@ extension AccessControlPropsExt on AccessControlProps {
 }
 
 @freezed
-abstract class UnlockTestProps with _$UnlockTestProps {
-  const factory UnlockTestProps({
-    @Default(false) bool enable,
-    @Default(defaultUnlockTestTargetIds) List<String> selectedTargets,
-  }) = _UnlockTestProps;
-
-  factory UnlockTestProps.fromJson(Map<String, Object?> json) =>
-      _$UnlockTestPropsFromJson(json);
-
-  factory UnlockTestProps.safeFromJson(Map<String, Object?>? json) {
-    if (json == null) {
-      return defaultUnlockTestProps;
-    }
-    try {
-      final rawSelectedTargets = json['selectedTargets'];
-      final rawTargets = rawSelectedTargets is List
-          ? rawSelectedTargets.whereType<String>().toList(growable: false)
-          : defaultUnlockTestTargetIds;
-      return UnlockTestProps(
-        enable: json['enable'] is bool ? json['enable']! as bool : false,
-        selectedTargets: migrateUnlockTestTargetIds(rawTargets),
-      );
-    } catch (_) {
-      return defaultUnlockTestProps;
-    }
-  }
-}
-
-@freezed
 abstract class WindowProps with _$WindowProps {
   const factory WindowProps({
     @Default(0) double width,
@@ -532,9 +502,6 @@ abstract class Config with _$Config {
     @Default(defaultClashConfig) PatchClashConfig patchClashConfig,
     @Default(true) bool onDemandEnabled,
     @Default([]) List<String> excludeSSIDs,
-    @JsonKey(fromJson: UnlockTestProps.safeFromJson)
-    @Default(defaultUnlockTestProps)
-    UnlockTestProps unlockTestProps,
   }) = _Config;
 
   factory Config.fromJson(Map<String, Object?> json) =>

@@ -102,54 +102,6 @@ abstract class _$AuthorizedTunEnable extends $Notifier<TunAuthorizationState> {
   }
 }
 
-@ProviderFor(unlockTestHistoryWriter)
-final unlockTestHistoryWriterProvider = UnlockTestHistoryWriterProvider._();
-
-final class UnlockTestHistoryWriterProvider
-    extends
-        $FunctionalProvider<
-          UnlockTestHistoryWriter,
-          UnlockTestHistoryWriter,
-          UnlockTestHistoryWriter
-        >
-    with $Provider<UnlockTestHistoryWriter> {
-  UnlockTestHistoryWriterProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'unlockTestHistoryWriterProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$unlockTestHistoryWriterHash();
-
-  @$internal
-  @override
-  $ProviderElement<UnlockTestHistoryWriter> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  UnlockTestHistoryWriter create(Ref ref) {
-    return unlockTestHistoryWriter(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(UnlockTestHistoryWriter value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<UnlockTestHistoryWriter>(value),
-    );
-  }
-}
-
-String _$unlockTestHistoryWriterHash() =>
-    r'a66a8f97eaacb2896715a94a84eef765b3ec9851';
-
 @ProviderFor(AndroidServiceSuspended)
 final androidServiceSuspendedProvider = AndroidServiceSuspendedProvider._();
 
@@ -2361,58 +2313,6 @@ final class IsUpdatingFamily extends $Family
 
   @override
   String toString() => r'isUpdatingProvider';
-}
-
-@ProviderFor(UnlockDetection)
-final unlockDetectionProvider = UnlockDetectionProvider._();
-
-final class UnlockDetectionProvider
-    extends $NotifierProvider<UnlockDetection, UnlockDetectionState> {
-  UnlockDetectionProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'unlockDetectionProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$unlockDetectionHash();
-
-  @$internal
-  @override
-  UnlockDetection create() => UnlockDetection();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(UnlockDetectionState value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<UnlockDetectionState>(value),
-    );
-  }
-}
-
-String _$unlockDetectionHash() => r'dc171669687e0b6be662223445b56e28c87ecb64';
-
-abstract class _$UnlockDetection extends $Notifier<UnlockDetectionState> {
-  UnlockDetectionState build();
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<UnlockDetectionState, UnlockDetectionState>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<UnlockDetectionState, UnlockDetectionState>,
-              UnlockDetectionState,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
 }
 
 @ProviderFor(WifiWatchStateJson)

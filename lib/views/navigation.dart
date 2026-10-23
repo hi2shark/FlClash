@@ -1,5 +1,4 @@
 import 'package:fl_clash/common/app_ports.dart';
-import 'package:fl_clash/common/unlock_test.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/ui/icons/app_glyphs.dart';
@@ -79,14 +78,6 @@ class Navigation implements NavigationPort {
             const NetworkTestView(key: GlobalObjectKey(PageLabel.networkTest)),
         modes: [NavigationItemMode.more],
       ),
-      if (kUnlockTestFeatureEnabled)
-        NavigationItem(
-          glyph: AppGlyphs.vpn,
-          label: PageLabel.unlockTest,
-          builder: (_) =>
-              const UnlockTestView(key: GlobalObjectKey(PageLabel.unlockTest)),
-          modes: [NavigationItemMode.more],
-        ),
       NavigationItem(
         glyph: AppGlyphs.layers,
         label: PageLabel.localProxies,

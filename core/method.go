@@ -205,8 +205,6 @@ var methodHandlers = map[CoreMethod]methodHandler{
 	asyncTestDelayMethod:           withArguments(handleTestDelay),
 	speedTestMethod:                withArguments(handleSpeedTest),
 	quicTestMethod:                 withArguments(handleQuicTest),
-	unlockTestMethod:               withArguments(handleUnlockTest),
-	cancelUnlockTestMethod:         withArguments(handleCancelUnlockTest),
 	watchRouteMethod:               watchRouteHandler,
 	probeMethod:                    withArguments(handleProbe),
 	outboundIpMethod:               withArguments(handleOutboundIp),

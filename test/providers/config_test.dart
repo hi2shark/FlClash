@@ -247,14 +247,13 @@ void main() {
     test('produces correct overrides', () {
       const config = Config(themeProps: ThemeProps(), currentProfileId: 7);
       final overrides = buildConfigOverrides(config);
-      expect(overrides.length, 13);
+      expect(overrides.length, 12);
 
       final overrideContainer = ProviderContainer(overrides: overrides);
       addTearDown(overrideContainer.dispose);
 
       expect(overrideContainer.read(currentProfileIdProvider), 7);
       expect(overrideContainer.read(onDemandEnabledProvider), true);
-      expect(overrideContainer.read(unlockTestSettingProvider).enable, false);
       expect(
         overrideContainer.read(patchClashConfigProvider),
         config.patchClashConfig,

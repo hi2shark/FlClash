@@ -5,7 +5,6 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 
-/// Rebuilds [raw] into the shape schema version 1 left behind: no
 /// `proxy_groups`, no `icon_records`, and a `rules` table that still stores the
 /// whole rule in one `value` column.
 ///
@@ -89,6 +88,25 @@ void _downgradeToV7(Database raw) {
 void _downgradeToV20(Database raw) {
   raw.execute('DROP TABLE IF EXISTS unlock_test_runs');
   raw.execute('PRAGMA user_version = 20');
+}
+
+/// Schema version 21 shipped the `unlock_test_runs` table, which 22 dropped.
+void _downgradeToV21(Database raw) {
+  raw.execute(
+    'CREATE TABLE IF NOT EXISTS unlock_test_runs ('
+    'run_id TEXT NOT NULL, '
+    'created_at INTEGER NOT NULL, '
+    'duration_ms INTEGER NOT NULL, '
+    'route_mode TEXT NOT NULL, '
+    'proxy_name TEXT NOT NULL, '
+    'catalog_version INTEGER NOT NULL, '
+    'results_json TEXT NOT NULL)',
+  );
+  raw.execute(
+    'CREATE INDEX IF NOT EXISTS unlock_test_runs_created_at '
+    'ON unlock_test_runs (created_at)',
+  );
+  raw.execute('PRAGMA user_version = 21');
 }
 
 /// Schema version 19 had no `empty_options` on `custom_proxies`.
@@ -246,13 +264,6 @@ bool _hasTable(Database raw, String name) => raw.select(
   "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
   [name],
 ).isNotEmpty;
-
-Set<String> _indexesOf(Database raw) => {
-  for (final row in raw.select(
-    "SELECT name FROM sqlite_master WHERE type='index'",
-  ))
-    row['name'] as String,
-};
 
 int _userVersion(Database raw) =>
     raw.select('PRAGMA user_version').single['user_version'] as int;
@@ -898,65 +909,35 @@ void main() {
     );
   });
 
-  test('the v21 upgrade adds the unlock_test_runs table', () async {
-    _downgradeToV20(raw);
-    expect(_hasTable(raw, 'unlock_test_runs'), isFalse);
+  test('the v22 upgrade drops the unlock_test_runs table', () async {
+    _downgradeToV21(raw);
+    raw.execute(
+      '''INSERT INTO unlock_test_runs (run_id, created_at, duration_ms, 
+      route_mode, proxy_name, catalog_version, results_json) 
+      VALUES ('run', 1, 1200, 'appRoute', '', 2, '[]')''',
+    );
+    expect(_hasTable(raw, 'unlock_test_runs'), isTrue);
 
     final database = await openAndMigrate();
 
-    expect(
-      _columnsOf(raw, 'unlock_test_runs'),
-      containsAll(<String>[
-        'run_id',
-        'created_at',
-        'duration_ms',
-        'route_mode',
-        'proxy_name',
-        'catalog_version',
-        'results_json',
-      ]),
-    );
-    expect(_indexesOf(raw), contains('unlock_test_runs_created_at'));
+    expect(_hasTable(raw, 'unlock_test_runs'), isFalse);
     expect(_userVersion(raw), currentSchemaVersion);
-    await database.unlockTestRunsDao.insertAndPrune(
-      fl.UnlockTestRunRecord(
-        runId: 'run',
-        createdAt: DateTime.utc(2026, 7, 21),
-        durationMs: 1200,
-        routeMode: 'appRoute',
-        catalogVersion: 2,
-        resultsJson: '[]',
-      ),
-    );
-    expect((await database.unlockTestRunsDao.latest()).single.runId, 'run');
+    expect(await database.profilesDao.query().get(), isEmpty);
   });
 
   test(
-    'a v20 user_version with unlock_test_runs already present still opens',
+    'the v22 upgrade is a no-op without the unlock_test_runs table',
     () async {
-      raw.execute('PRAGMA user_version = 20');
-      expect(_hasTable(raw, 'unlock_test_runs'), isTrue);
+      _downgradeToV20(raw);
+      expect(_hasTable(raw, 'unlock_test_runs'), isFalse);
 
       final database = await openAndMigrate();
 
-      expect(
-        _columnsOf(raw, 'unlock_test_runs'),
-        containsAll(<String>[
-          'run_id',
-          'created_at',
-          'duration_ms',
-          'route_mode',
-          'proxy_name',
-          'catalog_version',
-          'results_json',
-        ]),
-      );
-      expect(_indexesOf(raw), contains('unlock_test_runs_created_at'));
+      expect(_hasTable(raw, 'unlock_test_runs'), isFalse);
       expect(_userVersion(raw), currentSchemaVersion);
-      expect(await database.unlockTestRunsDao.latest(), isEmpty);
+      expect(await database.profilesDao.query().get(), isEmpty);
     },
   );
-
   test(
     'a v17 user_version with definition already present still opens',
     () async {

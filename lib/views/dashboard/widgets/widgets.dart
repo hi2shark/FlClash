@@ -8,7 +8,5 @@ export 'outbound_mode.dart';
 export 'profiles.dart';
 export 'proxy_groups.dart';
 export 'service_status.dart';
-export 'core_memory_info.dart';
 export 'traffic.dart';
-export 'unlock_detection.dart';
 export 'wifi_watch.dart';

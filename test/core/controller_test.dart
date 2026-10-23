@@ -40,12 +40,6 @@ void main() {
     );
     registerFallbackValue(const SpeedTestParams(proxyName: 'P'));
     registerFallbackValue(const QuicTestParams(proxyName: 'P'));
-    registerFallbackValue(
-      const UnlockTestRunParams(
-        runId: 'fallback',
-        routeMode: UnlockTestRouteMode.appRoute,
-      ),
-    );
   });
 
   setUp(() {
@@ -564,62 +558,6 @@ void main() {
       ).thenAnswer((_) async => const ProxiesData(proxies: {}, all: []));
       final result = await controller.getAllProxies();
       expect(result, isEmpty);
-    });
-
-    test('getUnlockTest forwards the core result', () async {
-      const params = UnlockTestRunParams(
-        runId: 'run-1',
-        routeMode: UnlockTestRouteMode.proxy,
-        proxyName: 'P1',
-        targetIds: ['chatgpt', 'netflix'],
-      );
-      when(() => mock.unlockTest(params)).thenAnswer(
-        (_) async => const UnlockTestRunResult(
-          runId: 'run-1',
-          routeMode: UnlockTestRouteMode.proxy,
-          proxyName: 'P1',
-          results: [
-            UnlockTestRunItem(
-              id: 'chatgpt',
-              status: UnlockTestStatus.unlocked,
-              latency: 321,
-              region: 'US',
-              outboundChains: ['P1', 'DIRECT'],
-            ),
-            UnlockTestRunItem(
-              id: 'netflix',
-              status: UnlockTestStatus.locked,
-              reason: UnlockTestReason.geoBlocked,
-              latency: 120,
-            ),
-          ],
-        ),
-      );
-      final result = await controller.getUnlockTest(params);
-      expect(result.runId, 'run-1');
-      expect(result.proxyName, 'P1');
-      expect(result.results, hasLength(2));
-      expect(result.results[0].id, 'chatgpt');
-      expect(result.results[0].status, UnlockTestStatus.unlocked);
-      expect(result.results[0].region, 'US');
-      expect(result.results[0].latency, 321);
-      expect(result.results[1].status, UnlockTestStatus.locked);
-      expect(result.results[1].reason, UnlockTestReason.geoBlocked);
-      expect(result.error, '');
-    });
-
-    test('getUnlockTest applies defaults for missing fields', () async {
-      const params = UnlockTestRunParams(
-        runId: 'run-1',
-        routeMode: UnlockTestRouteMode.appRoute,
-      );
-      when(() => mock.unlockTest(any())).thenAnswer(
-        (_) async => const UnlockTestRunResult(runId: 'run-1', error: 'x'),
-      );
-      final result = await controller.getUnlockTest(params);
-      expect(result.runId, 'run-1');
-      expect(result.results, isEmpty);
-      expect(result.error, 'x');
     });
   });
 }

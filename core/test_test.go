@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"core/unlocktest"
 	"encoding/json"
 	"errors"
 	"net"
@@ -15,7 +14,6 @@ import (
 	"github.com/metacubex/mihomo/adapter/outbound"
 	C "github.com/metacubex/mihomo/constant"
 	P "github.com/metacubex/mihomo/constant/provider"
-	RC "github.com/metacubex/mihomo/rules/common"
 	"github.com/metacubex/mihomo/tunnel"
 )
 
@@ -78,20 +76,6 @@ func TestSpeedTestRejectsInvalidParams(t *testing.T) {
 
 func TestQuicTestRejectsInvalidParams(t *testing.T) {
 	frame := handleMethodCall(&MethodCall{Method: quicTestMethod, Arguments: json.RawMessage("{")})
-
-	var envelope struct {
-		Error *MethodError `json:"error"`
-	}
-	if err := json.Unmarshal(frame, &envelope); err != nil {
-		t.Fatalf("response is not valid JSON: %v", err)
-	}
-	if envelope.Error == nil || envelope.Error.Code != "invalid_arguments" {
-		t.Fatalf("error = %+v, want code invalid_arguments", envelope.Error)
-	}
-}
-
-func TestUnlockTestRejectsInvalidParams(t *testing.T) {
-	frame := handleMethodCall(&MethodCall{Method: unlockTestMethod, Arguments: json.RawMessage("not-a-json")})
 
 	var envelope struct {
 		Error *MethodError `json:"error"`
@@ -197,98 +181,6 @@ func TestHandleQuicTestProxyWithoutUDP(t *testing.T) {
 	}
 	if result.Stage != "udp_capability" {
 		t.Fatalf("expected udp_capability stage, got %q", result.Stage)
-	}
-}
-
-func TestHandleUnlockTestNoTargets(t *testing.T) {
-	result := handleUnlockTest(&unlocktest.Request{
-		RunID:     "empty",
-		RouteMode: unlocktest.RouteModeAppRoute,
-		TargetIDs: []string{},
-	})
-
-	if !strings.Contains(result.Error, "no unlock test targets") {
-		t.Fatalf("expected no targets error, got %q", result.Error)
-	}
-}
-
-func TestDialUnlockTestContextFollowsModeAndSpecialProxy(t *testing.T) {
-	previousMode := tunnel.Mode()
-	previousStatus := tunnel.Status()
-	t.Cleanup(func() {
-		tunnel.SetMode(previousMode)
-		switch previousStatus {
-		case tunnel.Running:
-			tunnel.OnRunning()
-		case tunnel.Inner:
-			tunnel.OnInnerLoading()
-		default:
-			tunnel.OnSuspend()
-		}
-		tunnel.UpdateRules(nil, nil, nil)
-		tunnel.UpdateProxies(nil, nil)
-	})
-	tunnel.OnRunning()
-
-	proxies := make(map[string]C.Proxy)
-	for _, name := range []string{"DIRECT", "GLOBAL", "RULE", "FORCED"} {
-		proxies[name] = adapter.NewProxy(outbound.NewRejectWithOption(
-			outbound.RejectOption{Name: name},
-		))
-	}
-	tunnel.UpdateProxies(proxies, map[string]P.ProxyProvider{})
-	tunnel.UpdateRules(
-		[]C.Rule{RC.NewMatch("RULE")},
-		map[string][]C.Rule{},
-		map[string]P.RuleProvider{},
-	)
-
-	testCases := []struct {
-		name         string
-		mode         tunnel.TunnelMode
-		specialProxy string
-		wantChain    string
-	}{
-		{name: "direct mode", mode: tunnel.Direct, wantChain: "DIRECT"},
-		{name: "global mode", mode: tunnel.Global, wantChain: "GLOBAL"},
-		{name: "rule mode", mode: tunnel.Rule, wantChain: "RULE"},
-		{
-			name:         "specified proxy overrides mode",
-			mode:         tunnel.Direct,
-			specialProxy: "FORCED",
-			wantChain:    "FORCED",
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			tunnel.SetMode(testCase.mode)
-			conn, _, err := dialUnlockTestContext(
-				context.Background(),
-				"tcp",
-				"192.0.2.1:443",
-				testCase.specialProxy,
-			)
-			if err != nil {
-				t.Fatalf("dialUnlockTestContext() error = %v", err)
-			}
-			defer conn.Close()
-			_ = conn.SetDeadline(time.Now().Add(time.Second))
-			_, _ = conn.Write([]byte("GET / HTTP/1.1\r\nHost: example.test\r\n\r\n"))
-
-			source, ok := conn.(interface{ OutboundChains() []string })
-			if !ok {
-				t.Fatal("dialed connection does not expose outbound chains")
-			}
-			deadline := time.Now().Add(time.Second)
-			for len(source.OutboundChains()) == 0 && time.Now().Before(deadline) {
-				time.Sleep(time.Millisecond)
-			}
-			chains := source.OutboundChains()
-			if len(chains) == 0 || chains[0] != testCase.wantChain {
-				t.Fatalf("chains = %v, want first chain %q", chains, testCase.wantChain)
-			}
-		})
 	}
 }
 

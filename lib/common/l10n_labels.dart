@@ -20,7 +20,6 @@ extension PageLabelL10n on PageLabel {
       PageLabel.localProxies => appLocalizations.localNodes,
       PageLabel.localRules => appLocalizations.localRules,
       PageLabel.networkTest => appLocalizations.networkTest,
-      PageLabel.unlockTest => appLocalizations.unlockTest,
       PageLabel.effectiveConfig => appLocalizations.effectiveConfig,
     };
   }

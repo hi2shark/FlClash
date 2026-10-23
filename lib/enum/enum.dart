@@ -231,7 +231,6 @@ enum CoreEventType {
   requestTraffic,
   dns,
   loaded,
-  unlockTestProgress,
   crash,
   geoUpdate,
   routeChanged,
@@ -480,9 +479,7 @@ enum DashboardWidget {
   proxyGroups,
   connectionStats,
   intranetIp,
-  memoryInfo,
-  coreMemoryInfo,
-  unlockDetection;
+  memoryInfo;
 
   final List<SupportPlatform> platforms;
 
@@ -559,7 +556,6 @@ enum PageLabel {
   localProxies,
   localRules,
   networkTest,
-  unlockTest,
   effectiveConfig,
 }
 

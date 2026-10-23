@@ -30,8 +30,6 @@ enum CoreMethod {
   asyncTestDelay,
   speedTest,
   quicTest,
-  unlockTest,
-  cancelUnlockTest,
   probe,
   outboundIp,
   serviceCheck,

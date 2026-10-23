@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"core/unlocktest"
 	gotls "crypto/tls"
 	"fmt"
 	"io"
@@ -11,15 +10,11 @@ import (
 	"net/netip"
 	"strconv"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 	"unicode"
 
-	N "github.com/metacubex/mihomo/common/net"
 	C "github.com/metacubex/mihomo/constant"
-	T "github.com/metacubex/mihomo/tunnel"
-	"github.com/metacubex/mihomo/tunnel/statistic"
 	quic "github.com/metacubex/quic-go"
 	"github.com/metacubex/tls"
 )
@@ -404,114 +399,4 @@ func handleQuicTest(params *QuicTestParams) *QuicTestResult {
 	result.Stage = "completed"
 
 	return result
-}
-
-var unlockManager = unlocktest.NewManager(unlocktest.Runner{})
-
-func handleUnlockTest(request *unlocktest.Request) *unlocktest.Result {
-	result := unlockManager.Run(
-		context.Background(),
-		*request,
-		dialUnlockTestContext,
-		func(progress unlocktest.Progress) {
-			sendMessage(UnlockTestProgressMessage, progress)
-		},
-	)
-	return &result
-}
-
-func handleCancelUnlockTest(runID string) bool {
-	return unlockManager.Cancel(runID)
-}
-
-type unlockChainState struct {
-	mu     sync.RWMutex
-	chains []string
-}
-
-func (state *unlockChainState) update(chains []string) {
-	state.mu.Lock()
-	state.chains = append([]string(nil), chains...)
-	state.mu.Unlock()
-}
-
-func (state *unlockChainState) snapshot() []string {
-	state.mu.RLock()
-	defer state.mu.RUnlock()
-	return append([]string(nil), state.chains...)
-}
-
-type unlockTrackedConn struct {
-	net.Conn
-	metadata *C.Metadata
-	state    *unlockChainState
-	closed   chan struct{}
-	closeErr error
-	close    sync.Once
-}
-
-func (conn *unlockTrackedConn) OutboundChains() []string {
-	return conn.state.snapshot()
-}
-
-func (conn *unlockTrackedConn) Close() error {
-	conn.close.Do(func() {
-		unlockChainObservers.Delete(conn.metadata)
-		close(conn.closed)
-		conn.closeErr = conn.Conn.Close()
-	})
-	return conn.closeErr
-}
-
-var unlockChainObservers sync.Map
-
-func captureUnlockTestChain(tracker statistic.Tracker) {
-	info := tracker.Info()
-	if info == nil || info.Metadata == nil {
-		return
-	}
-	value, ok := unlockChainObservers.Load(info.Metadata)
-	if !ok {
-		return
-	}
-	value.(*unlockChainState).update(info.Chain)
-}
-
-func dialUnlockTestContext(
-	ctx context.Context,
-	network string,
-	address string,
-	specialProxy string,
-) (net.Conn, []string, error) {
-	if network != "tcp" && network != "tcp4" && network != "tcp6" {
-		return nil, nil, fmt.Errorf("unsupported unlock test network %s", network)
-	}
-	metadata := &C.Metadata{
-		NetWork:      C.TCP,
-		Type:         C.INNER,
-		DNSMode:      C.DNSNormal,
-		Process:      C.MihomoName,
-		SpecialProxy: specialProxy,
-	}
-	if err := metadata.SetRemoteAddress(address); err != nil {
-		return nil, nil, err
-	}
-	localConn, tunnelConn := N.Pipe()
-	state := &unlockChainState{}
-	trackedConn := &unlockTrackedConn{
-		Conn:     localConn,
-		metadata: metadata,
-		state:    state,
-		closed:   make(chan struct{}),
-	}
-	unlockChainObservers.Store(metadata, state)
-	go T.Tunnel.HandleTCPConn(tunnelConn, metadata)
-	go func() {
-		select {
-		case <-ctx.Done():
-			_ = trackedConn.Close()
-		case <-trackedConn.closed:
-		}
-	}()
-	return trackedConn, nil, nil
 }

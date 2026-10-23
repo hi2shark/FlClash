@@ -36,8 +36,6 @@ const (
 	asyncTestDelayMethod           CoreMethod = "asyncTestDelay"
 	speedTestMethod                CoreMethod = "speedTest"
 	quicTestMethod                 CoreMethod = "quicTest"
-	unlockTestMethod               CoreMethod = "unlockTest"
-	cancelUnlockTestMethod         CoreMethod = "cancelUnlockTest"
 	probeMethod                    CoreMethod = "probe"
 	outboundIpMethod               CoreMethod = "outboundIp"
 	serviceCheckMethod             CoreMethod = "serviceCheck"
@@ -79,10 +77,9 @@ const (
 	LoadedMessage    MessageType = "loaded"
 	GeoUpdateMessage MessageType = "geoUpdate"
 	// Named after the Dart enum value, which is how CoreEvent.fromJson decodes it.
-	RouteChangedMessage       MessageType = "routeChanged"
-	DialerLoopMessage         MessageType = "dialerLoop"
-	UnlockTestProgressMessage MessageType = "unlockTestProgress"
-	RequestTrafficMessage     MessageType = "requestTraffic"
+	RouteChangedMessage   MessageType = "routeChanged"
+	DialerLoopMessage     MessageType = "dialerLoop"
+	RequestTrafficMessage MessageType = "requestTraffic"
 )
 
 type Message struct {

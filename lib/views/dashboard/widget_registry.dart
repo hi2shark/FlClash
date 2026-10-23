@@ -17,8 +17,6 @@ extension DashboardWidgetView on DashboardWidget {
     DashboardWidget.connectionStats => const ConnectionStatsCard(),
     DashboardWidget.intranetIp => const IntranetIpCard(),
     DashboardWidget.memoryInfo => const MemoryInfo(),
-    DashboardWidget.coreMemoryInfo => const CoreMemoryInfo(),
-    DashboardWidget.unlockDetection => const UnlockDetection(),
     DashboardWidget.wifiWatchCard => const WifiWatchCard(),
   };
 
@@ -34,8 +32,6 @@ extension DashboardWidgetView on DashboardWidget {
     DashboardWidget.connectionStats => AppGlyphs.connections,
     DashboardWidget.intranetIp => AppGlyphs.devices,
     DashboardWidget.memoryInfo => AppGlyphs.memory,
-    DashboardWidget.coreMemoryInfo => AppGlyphs.memory,
-    DashboardWidget.unlockDetection => AppGlyphs.locate,
     DashboardWidget.wifiWatchCard => AppGlyphs.wifi,
   };
 
@@ -53,8 +49,6 @@ extension DashboardWidgetView on DashboardWidget {
       DashboardWidget.connectionStats => appLocalizations.connectionStats,
       DashboardWidget.intranetIp => appLocalizations.intranetIP,
       DashboardWidget.memoryInfo => appLocalizations.memoryInfo,
-      DashboardWidget.coreMemoryInfo => appLocalizations.coreMemoryInfo,
-      DashboardWidget.unlockDetection => appLocalizations.unlockTest,
       DashboardWidget.wifiWatchCard => appLocalizations.wifiWatchTitle,
     };
   }

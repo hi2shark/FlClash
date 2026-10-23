@@ -1076,45 +1076,6 @@ void main() {
     });
   });
 
-  group('UnlockTestProps migration', () {
-    test('new installs are disabled with the 21 default services selected', () {
-      final props = UnlockTestProps.safeFromJson(null);
-
-      expect(props.enable, false);
-      expect(props.selectedTargets, defaultUnlockTestTargetIds);
-      expect(props.selectedTargets, hasLength(21));
-    });
-
-    test('legacy default expands while preserving the feature switch', () {
-      final props = UnlockTestProps.safeFromJson({
-        'enable': true,
-        'selectedTargets': legacyUnlockTestTargetIds,
-      });
-
-      expect(props.enable, true);
-      expect(props.selectedTargets, defaultUnlockTestTargetIds);
-    });
-
-    test('custom selection only maps known legacy aliases', () {
-      final props = UnlockTestProps.safeFromJson({
-        'enable': true,
-        'selectedTargets': ['chatgpt', 'youtube', 'unknown'],
-      });
-
-      expect(props.enable, true);
-      expect(props.selectedTargets, ['chatgpt', 'youtube-premium']);
-    });
-
-    test('malformed legacy values fall back without breaking config load', () {
-      final props = UnlockTestProps.safeFromJson({
-        'enable': 'yes',
-        'selectedTargets': 'chatgpt',
-      });
-
-      expect(props, defaultUnlockTestProps);
-    });
-  });
-
   group('Dns defaults', () {
     test('respect-rules and redir-host are the new defaults', () {
       const dns = Dns();

@@ -1408,288 +1408,6 @@ $IpInfoCopyWith<$Res>? get ipInfo {
 }
 
 /// @nodoc
-mixin _$UnlockDetectionState {
-
- bool get isLoading; String get proxyName; Map<String, UnlockTestRunItem> get results; String get error; DateTime? get testedAt;
-/// Create a copy of UnlockDetectionState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$UnlockDetectionStateCopyWith<UnlockDetectionState> get copyWith => _$UnlockDetectionStateCopyWithImpl<UnlockDetectionState>(this as UnlockDetectionState, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  final _this = this as UnlockDetectionState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnlockDetectionState&&(identical(other.isLoading, _this.isLoading) || other.isLoading == _this.isLoading)&&(identical(other.proxyName, _this.proxyName) || other.proxyName == _this.proxyName)&&const DeepCollectionEquality().equals(other.results, _this.results)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.testedAt, _this.testedAt) || other.testedAt == _this.testedAt));
-}
-
-
-@override
-int get hashCode {
-  final _this = this as UnlockDetectionState;
-  return Object.hash(runtimeType,_this.isLoading,_this.proxyName,const DeepCollectionEquality().hash(_this.results),_this.error,_this.testedAt);
-}
-
-@override
-String toString() {
-  final _this = this as UnlockDetectionState;
-  return 'UnlockDetectionState(isLoading: ${_this.isLoading}, proxyName: ${_this.proxyName}, results: ${_this.results}, error: ${_this.error}, testedAt: ${_this.testedAt})';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $UnlockDetectionStateCopyWith<$Res>  {
-  factory $UnlockDetectionStateCopyWith(UnlockDetectionState value, $Res Function(UnlockDetectionState) _then) = _$UnlockDetectionStateCopyWithImpl;
-@useResult
-$Res call({
- bool isLoading, String proxyName, Map<String, UnlockTestRunItem> results, String error, DateTime? testedAt
-});
-
-
-
-
-}
-/// @nodoc
-class _$UnlockDetectionStateCopyWithImpl<$Res>
-    implements $UnlockDetectionStateCopyWith<$Res> {
-  _$UnlockDetectionStateCopyWithImpl(this._self, this._then);
-
-  final UnlockDetectionState _self;
-  final $Res Function(UnlockDetectionState) _then;
-
-/// Create a copy of UnlockDetectionState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? isLoading = null,Object? proxyName = null,Object? results = null,Object? error = null,Object? testedAt = freezed,}) {
-  return _then(UnlockDetectionState(
-isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
-as bool,proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
-as String,results: null == results ? _self.results : results // ignore: cast_nullable_to_non_nullable
-as Map<String, UnlockTestRunItem>,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String,testedAt: freezed == testedAt ? _self.testedAt : testedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [UnlockDetectionState].
-extension UnlockDetectionStatePatterns on UnlockDetectionState {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _UnlockDetectionState value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _UnlockDetectionState() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _UnlockDetectionState value)  $default,){
-final _that = this;
-switch (_that) {
-case _UnlockDetectionState():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _UnlockDetectionState value)?  $default,){
-final _that = this;
-switch (_that) {
-case _UnlockDetectionState() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isLoading,  String proxyName,  Map<String, UnlockTestRunItem> results,  String error,  DateTime? testedAt)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _UnlockDetectionState() when $default != null:
-return $default(_that.isLoading,_that.proxyName,_that.results,_that.error,_that.testedAt);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isLoading,  String proxyName,  Map<String, UnlockTestRunItem> results,  String error,  DateTime? testedAt)  $default,) {final _that = this;
-switch (_that) {
-case _UnlockDetectionState():
-return $default(_that.isLoading,_that.proxyName,_that.results,_that.error,_that.testedAt);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isLoading,  String proxyName,  Map<String, UnlockTestRunItem> results,  String error,  DateTime? testedAt)?  $default,) {final _that = this;
-switch (_that) {
-case _UnlockDetectionState() when $default != null:
-return $default(_that.isLoading,_that.proxyName,_that.results,_that.error,_that.testedAt);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _UnlockDetectionState implements UnlockDetectionState {
-  const _UnlockDetectionState({required this.isLoading, required this.proxyName, required  Map<String, UnlockTestRunItem> results, this.error = '', this.testedAt}): _results = results;
-  
-
-@override final  bool isLoading;
-@override final  String proxyName;
- final  Map<String, UnlockTestRunItem> _results;
-@override Map<String, UnlockTestRunItem> get results {
-  if (_results is EqualUnmodifiableMapView) return _results;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableMapView(_results);
-}
-
-@override@JsonKey() final  String error;
-@override final  DateTime? testedAt;
-
-/// Create a copy of UnlockDetectionState
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$UnlockDetectionStateCopyWith<_UnlockDetectionState> get copyWith => __$UnlockDetectionStateCopyWithImpl<_UnlockDetectionState>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UnlockDetectionState&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.proxyName, proxyName) || other.proxyName == proxyName)&&const DeepCollectionEquality().equals(other.results, _results)&&(identical(other.error, error) || other.error == error)&&(identical(other.testedAt, testedAt) || other.testedAt == testedAt));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,isLoading,proxyName,const DeepCollectionEquality().hash(_results),error,testedAt);
-}
-
-@override
-String toString() {
-    return 'UnlockDetectionState(isLoading: $isLoading, proxyName: $proxyName, results: $results, error: $error, testedAt: $testedAt)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$UnlockDetectionStateCopyWith<$Res> implements $UnlockDetectionStateCopyWith<$Res> {
-  factory _$UnlockDetectionStateCopyWith(_UnlockDetectionState value, $Res Function(_UnlockDetectionState) _then) = __$UnlockDetectionStateCopyWithImpl;
-@override @useResult
-$Res call({
- bool isLoading, String proxyName, Map<String, UnlockTestRunItem> results, String error, DateTime? testedAt
-});
-
-
-
-
-}
-/// @nodoc
-class __$UnlockDetectionStateCopyWithImpl<$Res>
-    implements _$UnlockDetectionStateCopyWith<$Res> {
-  __$UnlockDetectionStateCopyWithImpl(this._self, this._then);
-
-  final _UnlockDetectionState _self;
-  final $Res Function(_UnlockDetectionState) _then;
-
-/// Create a copy of UnlockDetectionState
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? isLoading = null,Object? proxyName = null,Object? results = null,Object? error = null,Object? testedAt = freezed,}) {
-  return _then(_UnlockDetectionState(
-isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
-as bool,proxyName: null == proxyName ? _self.proxyName : proxyName // ignore: cast_nullable_to_non_nullable
-as String,results: null == results ? _self._results : results // ignore: cast_nullable_to_non_nullable
-as Map<String, UnlockTestRunItem>,error: null == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String,testedAt: freezed == testedAt ? _self.testedAt : testedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
-  ));
-}
-
-
-}
-
-/// @nodoc
 mixin _$TrayState {
 
  Mode get mode; int get port; bool get autoLaunch; bool get systemProxy; bool get tunEnable; bool get isStart; bool get suspended; List<Group> get groups; Map<String, String> get selectedMap; bool get showTrayTitle; bool get safeMode; Map<HotAction, HotKeyAction> get hotKeys;
@@ -5871,14 +5589,14 @@ $VpnStateCopyWith<VpnState> get copyWith => _$VpnStateCopyWithImpl<VpnState>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as VpnState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VpnState&&(identical(other.stack, _this.stack) || other.stack == _this.stack)&&const DeepCollectionEquality().equals(other.vpnProps, _this.vpnProps)&&(identical(other.dnsEnable, _this.dnsEnable) || other.dnsEnable == _this.dnsEnable));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VpnState&&(identical(other.stack, _this.stack) || other.stack == _this.stack)&&(identical(other.vpnProps, _this.vpnProps) || other.vpnProps == _this.vpnProps)&&(identical(other.dnsEnable, _this.dnsEnable) || other.dnsEnable == _this.dnsEnable));
 }
 
 
 @override
 int get hashCode {
   final _this = this as VpnState;
-  return Object.hash(runtimeType,_this.stack,const DeepCollectionEquality().hash(_this.vpnProps),_this.dnsEnable);
+  return Object.hash(runtimeType,_this.stack,_this.vpnProps,_this.dnsEnable);
 }
 
 @override
@@ -5899,7 +5617,7 @@ $Res call({
 });
 
 
-
+$VpnPropsCopyWith<$Res> get vpnProps;
 
 }
 /// @nodoc
@@ -5912,15 +5630,24 @@ class _$VpnStateCopyWithImpl<$Res>
 
 /// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? stack = null,Object? vpnProps = freezed,Object? dnsEnable = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? stack = null,Object? vpnProps = null,Object? dnsEnable = null,}) {
   return _then(VpnState(
 stack: null == stack ? _self.stack : stack // ignore: cast_nullable_to_non_nullable
-as TunStack,vpnProps: freezed == vpnProps ? _self.vpnProps : vpnProps // ignore: cast_nullable_to_non_nullable
+as TunStack,vpnProps: null == vpnProps ? _self.vpnProps : vpnProps // ignore: cast_nullable_to_non_nullable
 as VpnProps,dnsEnable: null == dnsEnable ? _self.dnsEnable : dnsEnable // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
-
+/// Create a copy of VpnState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$VpnPropsCopyWith<$Res> get vpnProps {
+  
+  return $VpnPropsCopyWith<$Res>(_self.vpnProps, (value) {
+    return _then(_self.copyWith(vpnProps: value));
+  });
+}
 }
 
 
@@ -6075,13 +5802,13 @@ _$VpnStateCopyWith<_VpnState> get copyWith => __$VpnStateCopyWithImpl<_VpnState>
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VpnState&&(identical(other.stack, stack) || other.stack == stack)&&const DeepCollectionEquality().equals(other.vpnProps, vpnProps)&&(identical(other.dnsEnable, dnsEnable) || other.dnsEnable == dnsEnable));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _VpnState&&(identical(other.stack, stack) || other.stack == stack)&&(identical(other.vpnProps, vpnProps) || other.vpnProps == vpnProps)&&(identical(other.dnsEnable, dnsEnable) || other.dnsEnable == dnsEnable));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,stack,const DeepCollectionEquality().hash(vpnProps),dnsEnable);
+    return Object.hash(runtimeType,stack,vpnProps,dnsEnable);
 }
 
 @override
@@ -6101,7 +5828,7 @@ $Res call({
 });
 
 
-
+@override $VpnPropsCopyWith<$Res> get vpnProps;
 
 }
 /// @nodoc
@@ -6114,16 +5841,25 @@ class __$VpnStateCopyWithImpl<$Res>
 
 /// Create a copy of VpnState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? stack = null,Object? vpnProps = freezed,Object? dnsEnable = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? stack = null,Object? vpnProps = null,Object? dnsEnable = null,}) {
   return _then(_VpnState(
 stack: null == stack ? _self.stack : stack // ignore: cast_nullable_to_non_nullable
-as TunStack,vpnProps: freezed == vpnProps ? _self.vpnProps : vpnProps // ignore: cast_nullable_to_non_nullable
+as TunStack,vpnProps: null == vpnProps ? _self.vpnProps : vpnProps // ignore: cast_nullable_to_non_nullable
 as VpnProps,dnsEnable: null == dnsEnable ? _self.dnsEnable : dnsEnable // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
 
-
+/// Create a copy of VpnState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$VpnPropsCopyWith<$Res> get vpnProps {
+  
+  return $VpnPropsCopyWith<$Res>(_self.vpnProps, (value) {
+    return _then(_self.copyWith(vpnProps: value));
+  });
+}
 }
 
 

@@ -593,7 +593,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "coreBlockedBySmartAppControlTip": MessageLookupByLibrary.simpleMessage(
       "Smart App Control в Windows заблокировал неподписанный FlClashCore.exe. Откройте Безопасность Windows → Управление приложениями и браузером → Параметры Smart App Control, выберите «Выкл.» и снова запустите FlClash. Повторно включить Smart App Control без переустановки Windows нельзя.",
     ),
-    "coreMemoryInfo": MessageLookupByLibrary.simpleMessage("Память ядра"),
     "coreStatus": MessageLookupByLibrary.simpleMessage("Статус ядра"),
     "country": MessageLookupByLibrary.simpleMessage("Регион"),
     "crashDetected": MessageLookupByLibrary.simpleMessage("Обнаружен сбой"),
@@ -1153,9 +1152,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Введите содержимое правила",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Эта система не выдаёт список установленных приложений без разрешения. Предоставьте его, чтобы настроить прокси для отдельных приложений.",
     ),
@@ -2363,90 +2363,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "Неизвестная сетевая ошибка",
     ),
-    "unlockReasonBootstrapFailed": MessageLookupByLibrary.simpleMessage(
-      "Не удалось создать временный сеанс",
-    ),
-    "unlockReasonContentLimited": MessageLookupByLibrary.simpleMessage(
-      "Доступна только часть каталога",
-    ),
-    "unlockReasonGeoBlocked": MessageLookupByLibrary.simpleMessage(
-      "Недоступно в этом регионе",
-    ),
-    "unlockReasonNetworkError": MessageLookupByLibrary.simpleMessage(
-      "Ошибка сетевого запроса",
-    ),
-    "unlockReasonRateLimited": MessageLookupByLibrary.simpleMessage(
-      "Сервис ограничил частоту проверки",
-    ),
-    "unlockReasonTimeout": MessageLookupByLibrary.simpleMessage(
-      "Время ожидания истекло",
-    ),
-    "unlockReasonUnexpectedResponse": MessageLookupByLibrary.simpleMessage(
-      "Не удалось распознать ответ сервиса",
-    ),
-    "unlockReasonVpnBlocked": MessageLookupByLibrary.simpleMessage(
-      "Прокси или VPN отклонён сервисом",
-    ),
-    "unlockTest": MessageLookupByLibrary.simpleMessage(
-      "Проверка разблокировки",
-    ),
-    "unlockTestAll": MessageLookupByLibrary.simpleMessage("Все"),
-    "unlockTestClearAll": MessageLookupByLibrary.simpleMessage("Очистить"),
-    "unlockTestCurrentResults": MessageLookupByLibrary.simpleMessage(
-      "Текущие результаты",
-    ),
-    "unlockTestDesc": MessageLookupByLibrary.simpleMessage(
-      "Проверка доступности AI и медиасервисов через выбранный узел",
-    ),
-    "unlockTestDisabledTip": MessageLookupByLibrary.simpleMessage(
-      "Включите на странице проверки разблокировки",
-    ),
-    "unlockTestDone": MessageLookupByLibrary.simpleMessage("Готово"),
-    "unlockTestEnable": MessageLookupByLibrary.simpleMessage(
-      "Включить проверку разблокировки",
-    ),
-    "unlockTestError": MessageLookupByLibrary.simpleMessage("Ошибка"),
-    "unlockTestFollowRules": MessageLookupByLibrary.simpleMessage(
-      "Следовать текущей маршрутизации",
-    ),
-    "unlockTestGroupEurope": MessageLookupByLibrary.simpleMessage(
-      "Великобритания и Европа",
-    ),
-    "unlockTestGroupGlobalMedia": MessageLookupByLibrary.simpleMessage(
-      "Глобальные медиа",
-    ),
-    "unlockTestGroupHongKongTaiwan": MessageLookupByLibrary.simpleMessage(
-      "Гонконг и Тайвань",
-    ),
-    "unlockTestGroupJapan": MessageLookupByLibrary.simpleMessage("Япония"),
-    "unlockTestGroupKorea": MessageLookupByLibrary.simpleMessage("Корея"),
-    "unlockTestHistory": MessageLookupByLibrary.simpleMessage(
-      "Недавние проверки",
-    ),
-    "unlockTestHistoryResult": MessageLookupByLibrary.simpleMessage(
-      "Результат из истории",
-    ),
-    "unlockTestNoResults": MessageLookupByLibrary.simpleMessage(
-      "Результатов пока нет",
-    ),
-    "unlockTestPartial": MessageLookupByLibrary.simpleMessage("Частично"),
-    "unlockTestRegion": MessageLookupByLibrary.simpleMessage("Регион"),
-    "unlockTestResetDefault": MessageLookupByLibrary.simpleMessage(
-      "Восстановить по умолчанию",
-    ),
-    "unlockTestSearch": MessageLookupByLibrary.simpleMessage("Поиск сервисов"),
-    "unlockTestSelectAll": MessageLookupByLibrary.simpleMessage("Выбрать все"),
-    "unlockTestSelectTargets": MessageLookupByLibrary.simpleMessage(
-      "Выбрать сервисы",
-    ),
-    "unlockTestSpecifiedNode": MessageLookupByLibrary.simpleMessage(
-      "Указанный узел",
-    ),
-    "unlockTestStop": MessageLookupByLibrary.simpleMessage(
-      "Остановить проверку",
-    ),
-    "unlockTestUntested": MessageLookupByLibrary.simpleMessage("Не проверено"),
-    "unlocked": MessageLookupByLibrary.simpleMessage("Разблокировано"),
     "unmaximize": MessageLookupByLibrary.simpleMessage("Свернуть в окно"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Без названия"),
     "unpinWindow": MessageLookupByLibrary.simpleMessage("Открепить окно"),

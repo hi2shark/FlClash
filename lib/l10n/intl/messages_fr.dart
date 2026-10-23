@@ -615,7 +615,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "coreBlockedBySmartAppControlTip": MessageLookupByLibrary.simpleMessage(
       "Windows Smart App Control a bloqué FlClashCore.exe car il n’est pas signé. Ouvrez Sécurité Windows → Contrôle des applications et du navigateur → Paramètres de Smart App Control, choisissez Désactivé, puis relancez FlClash. Smart App Control ne peut pas être réactivé sans réinstaller Windows.",
     ),
-    "coreMemoryInfo": MessageLookupByLibrary.simpleMessage("Mémoire du noyau"),
     "coreStatus": MessageLookupByLibrary.simpleMessage("État du cœur"),
     "country": MessageLookupByLibrary.simpleMessage("Région"),
     "crashDetected": MessageLookupByLibrary.simpleMessage("Plantage détecté"),
@@ -1193,9 +1192,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Saisissez le contenu de la règle",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "L’autorisation de la liste des apps a été refusée ; les apps installées ne peuvent donc pas être listées. Veuillez l’accorder manuellement dans les réglages du système.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "L’autorisation de la liste des apps a été refusée ; les apps installées ne peuvent donc pas être listées. Veuillez l’accorder manuellement dans les réglages du système.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Ce système masque la liste des apps installées tant que l’autorisation n’est pas accordée. Accordez-la pour configurer le proxy par app.",
     ),
@@ -2425,90 +2425,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "Erreur réseau inconnue",
     ),
-    "unlockReasonBootstrapFailed": MessageLookupByLibrary.simpleMessage(
-      "Échec de l’initialisation de la session temporaire",
-    ),
-    "unlockReasonContentLimited": MessageLookupByLibrary.simpleMessage(
-      "Seule une partie du catalogue est disponible",
-    ),
-    "unlockReasonGeoBlocked": MessageLookupByLibrary.simpleMessage(
-      "Indisponible dans cette région",
-    ),
-    "unlockReasonNetworkError": MessageLookupByLibrary.simpleMessage(
-      "La requête réseau a échoué",
-    ),
-    "unlockReasonRateLimited": MessageLookupByLibrary.simpleMessage(
-      "Le service a limité le taux du test",
-    ),
-    "unlockReasonTimeout": MessageLookupByLibrary.simpleMessage(
-      "La requête a expiré",
-    ),
-    "unlockReasonUnexpectedResponse": MessageLookupByLibrary.simpleMessage(
-      "La réponse du service n’a pas pu être reconnue",
-    ),
-    "unlockReasonVpnBlocked": MessageLookupByLibrary.simpleMessage(
-      "Le proxy ou le VPN a été rejeté",
-    ),
-    "unlockTest": MessageLookupByLibrary.simpleMessage(
-      "Détection de déblocage",
-    ),
-    "unlockTestAll": MessageLookupByLibrary.simpleMessage("Tous"),
-    "unlockTestClearAll": MessageLookupByLibrary.simpleMessage("Tout effacer"),
-    "unlockTestCurrentResults": MessageLookupByLibrary.simpleMessage(
-      "Résultats actuels",
-    ),
-    "unlockTestDesc": MessageLookupByLibrary.simpleMessage(
-      "Vérifier la disponibilité des services IA et média via un nœud",
-    ),
-    "unlockTestDisabledTip": MessageLookupByLibrary.simpleMessage(
-      "Activez-la sur la page de détection de déblocage",
-    ),
-    "unlockTestDone": MessageLookupByLibrary.simpleMessage("Terminé"),
-    "unlockTestEnable": MessageLookupByLibrary.simpleMessage(
-      "Activer la détection de déblocage",
-    ),
-    "unlockTestError": MessageLookupByLibrary.simpleMessage("Erreur"),
-    "unlockTestFollowRules": MessageLookupByLibrary.simpleMessage(
-      "Suivre le routage actuel",
-    ),
-    "unlockTestGroupEurope": MessageLookupByLibrary.simpleMessage(
-      "Royaume-Uni et Europe",
-    ),
-    "unlockTestGroupGlobalMedia": MessageLookupByLibrary.simpleMessage(
-      "Médias mondiaux",
-    ),
-    "unlockTestGroupHongKongTaiwan": MessageLookupByLibrary.simpleMessage(
-      "Hong Kong et Taïwan",
-    ),
-    "unlockTestGroupJapan": MessageLookupByLibrary.simpleMessage("Japon"),
-    "unlockTestGroupKorea": MessageLookupByLibrary.simpleMessage("Corée"),
-    "unlockTestHistory": MessageLookupByLibrary.simpleMessage("Tests récents"),
-    "unlockTestHistoryResult": MessageLookupByLibrary.simpleMessage(
-      "Résultat de l’historique",
-    ),
-    "unlockTestNoResults": MessageLookupByLibrary.simpleMessage(
-      "Aucun résultat de test pour le moment",
-    ),
-    "unlockTestPartial": MessageLookupByLibrary.simpleMessage("Partiel"),
-    "unlockTestRegion": MessageLookupByLibrary.simpleMessage("Région"),
-    "unlockTestResetDefault": MessageLookupByLibrary.simpleMessage(
-      "Restaurer les valeurs par défaut",
-    ),
-    "unlockTestSearch": MessageLookupByLibrary.simpleMessage(
-      "Rechercher des services",
-    ),
-    "unlockTestSelectAll": MessageLookupByLibrary.simpleMessage(
-      "Tout sélectionner",
-    ),
-    "unlockTestSelectTargets": MessageLookupByLibrary.simpleMessage(
-      "Sélectionner les services",
-    ),
-    "unlockTestSpecifiedNode": MessageLookupByLibrary.simpleMessage(
-      "Nœud spécifié",
-    ),
-    "unlockTestStop": MessageLookupByLibrary.simpleMessage("Arrêter le test"),
-    "unlockTestUntested": MessageLookupByLibrary.simpleMessage("Non testé"),
-    "unlocked": MessageLookupByLibrary.simpleMessage("Débloqué"),
     "unmaximize": MessageLookupByLibrary.simpleMessage("Restaurer"),
     "unnamed": MessageLookupByLibrary.simpleMessage("Sans nom"),
     "unpinWindow": MessageLookupByLibrary.simpleMessage(

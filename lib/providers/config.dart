@@ -103,15 +103,6 @@ class OnDemandEnabled extends _$OnDemandEnabled with AutoDisposeNotifierMixin {
   }
 }
 
-@riverpod
-class UnlockTestSetting extends _$UnlockTestSetting
-    with AutoDisposeNotifierMixin {
-  @override
-  UnlockTestProps build() {
-    return const UnlockTestProps();
-  }
-}
-
 @Riverpod(name: 'configProvider')
 Config _config(Ref ref) {
   final appSettingProps = ref.watch(appSettingProvider);
@@ -126,7 +117,6 @@ Config _config(Ref ref) {
   final patchClashConfig = ref.watch(patchClashConfigProvider);
   final onDemandEnabled = ref.watch(onDemandEnabledProvider);
   final excludeSSIDs = ref.watch(excludeSSIDsProvider);
-  final unlockTestProps = ref.watch(unlockTestSettingProvider);
   return Config(
     appSettingProps: appSettingProps,
     windowProps: windowProps,
@@ -140,7 +130,6 @@ Config _config(Ref ref) {
     patchClashConfig: patchClashConfig,
     onDemandEnabled: onDemandEnabled,
     excludeSSIDs: excludeSSIDs,
-    unlockTestProps: unlockTestProps,
   );
 }
 
@@ -180,8 +169,5 @@ List<Override> buildConfigOverrides(Config config) {
     ),
     onDemandEnabledProvider.overrideWithBuild((_, _) => config.onDemandEnabled),
     excludeSSIDsProvider.overrideWithBuild((_, _) => config.excludeSSIDs),
-    unlockTestSettingProvider.overrideWithBuild(
-      (_, _) => config.unlockTestProps,
-    ),
   ];
 }

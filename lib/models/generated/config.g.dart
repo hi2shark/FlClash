@@ -151,8 +151,6 @@ const _$DashboardWidgetEnumMap = {
   DashboardWidget.connectionStats: 'connectionStats',
   DashboardWidget.intranetIp: 'intranetIp',
   DashboardWidget.memoryInfo: 'memoryInfo',
-  DashboardWidget.coreMemoryInfo: 'coreMemoryInfo',
-  DashboardWidget.unlockDetection: 'unlockDetection',
 };
 
 _AccessControlProps _$AccessControlPropsFromJson(Map<String, dynamic> json) =>
@@ -199,22 +197,6 @@ const _$AccessSortTypeEnumMap = {
   AccessSortType.name: 'name',
   AccessSortType.time: 'time',
 };
-
-_UnlockTestProps _$UnlockTestPropsFromJson(Map<String, dynamic> json) =>
-    _UnlockTestProps(
-      enable: json['enable'] as bool? ?? false,
-      selectedTargets:
-          (json['selectedTargets'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          defaultUnlockTestTargetIds,
-    );
-
-Map<String, dynamic> _$UnlockTestPropsToJson(_UnlockTestProps instance) =>
-    <String, dynamic>{
-      'enable': instance.enable,
-      'selectedTargets': instance.selectedTargets,
-    };
 
 _WindowProps _$WindowPropsFromJson(Map<String, dynamic> json) => _WindowProps(
   width: (json['width'] as num?)?.toDouble() ?? 0,
@@ -467,11 +449,6 @@ _Config _$ConfigFromJson(Map<String, dynamic> json) => _Config(
           ?.map((e) => e as String)
           .toList() ??
       const [],
-  unlockTestProps: json['unlockTestProps'] == null
-      ? defaultUnlockTestProps
-      : UnlockTestProps.safeFromJson(
-          json['unlockTestProps'] as Map<String, Object?>?,
-        ),
 );
 
 Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
@@ -487,5 +464,4 @@ Map<String, dynamic> _$ConfigToJson(_Config instance) => <String, dynamic>{
   'patchClashConfig': instance.patchClashConfig,
   'onDemandEnabled': instance.onDemandEnabled,
   'excludeSSIDs': instance.excludeSSIDs,
-  'unlockTestProps': instance.unlockTestProps,
 };

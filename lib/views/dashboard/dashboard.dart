@@ -320,10 +320,7 @@ class _MobileDashboard extends ConsumerWidget {
             final side = dashboardMobileSideOf(constraints.crossAxisExtent);
             final widgets = [
               for (final widget in saved)
-                if (widget.platforms.contains(platform) &&
-                    (kUnlockTestFeatureEnabled ||
-                        widget != DashboardWidget.unlockDetection))
-                  widget,
+                if (widget.platforms.contains(platform)) widget,
             ];
             if (editing) {
               return DashboardEditor(
