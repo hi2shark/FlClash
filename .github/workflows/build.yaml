@@ -543,6 +543,12 @@ jobs:
           target=()
           if [[ "$IS_STABLE" == 'true' ]]; then
             target=(--tag "$TAG")
+            # A tag pushed without `changelog.dart release` must not block the
+            # release: synthesize its entry from git in this throwaway checkout.
+            if ! dart run tool/changelog.dart render release --tag "$TAG" \
+              --out /dev/null >/dev/null 2>&1; then
+              dart run tool/changelog.dart release --version "${TAG#v}"
+            fi
           else
             dart run tool/changelog.dart build --unreleased
           fi
