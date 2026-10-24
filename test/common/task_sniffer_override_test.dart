@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:yaml/yaml.dart';
+import '../helpers/app_paths.dart';
 
 class _FakePathProvider extends PathProviderPlatform {
   final String root;
@@ -94,6 +95,7 @@ void main() {
   setUpAll(() async {
     tmpDir = await Directory.systemTemp.createTemp('flclash_task_test_');
     PathProviderPlatform.instance = _FakePathProvider(tmpDir.path);
+    await useAppPaths(tmpDir);
   });
 
   tearDownAll(() async {

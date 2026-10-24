@@ -9,6 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
+import '../helpers/app_paths.dart';
+
 class _FakePathProvider extends PathProviderPlatform {
   final String root;
 
@@ -66,6 +68,9 @@ void main() {
   setUpAll(() async {
     tmpDir = await Directory.systemTemp.createTemp('flclash_local_rule_store_');
     PathProviderPlatform.instance = _FakePathProvider(tmpDir.path);
+    // The fake rebinds appPath only before its first ask, which a bundle-mate
+    // may already have made; the seam rebinds regardless.
+    await useAppPaths(tmpDir);
     storeFile = File(join(tmpDir.path, 'local_rules.json'));
   });
 

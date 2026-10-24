@@ -17,6 +17,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/test_app.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as path;
@@ -113,6 +114,7 @@ void main() {
       'flclash_floating_bar_clearance_test_',
     );
     PathProviderPlatform.instance = _FakePathProvider(tempDirectory.path);
+    await useAppPaths(tempDirectory);
   });
 
   setUp(() async {

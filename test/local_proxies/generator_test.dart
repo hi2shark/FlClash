@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import '../helpers/app_paths.dart';
 import 'package:yaml/yaml.dart' as yaml;
 
 class _FakePathProvider extends PathProviderPlatform {
@@ -98,6 +99,7 @@ void main() {
     await homeDirectory.create(recursive: true);
     await outsideDirectory.create(recursive: true);
     PathProviderPlatform.instance = _FakePathProvider(homeDirectory.path);
+    await useAppPaths(homeDirectory);
   });
 
   setUp(() async {

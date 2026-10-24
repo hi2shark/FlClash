@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
@@ -86,6 +87,9 @@ void main() {
       'flclash_local_proxy_list_page_test_',
     );
     PathProviderPlatform.instance = _FakePathProvider(tempDirectory.path);
+    // The fake rebinds appPath only before its first ask, which a bundle-mate
+    // may already have made; the seam rebinds regardless.
+    await useAppPaths(tempDirectory);
     storeFile = File(path.join(tempDirectory.path, 'local_proxies.json'));
   });
 

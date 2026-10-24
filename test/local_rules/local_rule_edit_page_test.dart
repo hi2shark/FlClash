@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/test_app.dart';
 
 class _FakePathProvider extends PathProviderPlatform {
@@ -65,6 +66,7 @@ void main() {
       'flclash_local_rule_edit_page_test_',
     );
     PathProviderPlatform.instance = _FakePathProvider(tempDirectory.path);
+    await useAppPaths(tempDirectory);
   });
 
   setUp(() async {

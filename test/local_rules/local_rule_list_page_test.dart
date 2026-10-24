@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
+import '../helpers/app_paths.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 
@@ -73,6 +74,7 @@ void main() {
       'flclash_local_rule_list_page_test_',
     );
     PathProviderPlatform.instance = _FakePathProvider(tempDirectory.path);
+    await useAppPaths(tempDirectory);
     storeFile = File(path.join(tempDirectory.path, 'local_rules.json'));
   });
 

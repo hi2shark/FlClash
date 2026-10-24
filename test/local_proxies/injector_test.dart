@@ -7,6 +7,7 @@ import 'package:fl_clash/models/local_proxy_provider_config.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import '../helpers/app_paths.dart';
 import 'package:yaml/yaml.dart' as yaml;
 
 class _FakePathProvider extends PathProviderPlatform {
@@ -69,6 +70,7 @@ void main() {
   setUpAll(() async {
     tmpDir = await Directory.systemTemp.createTemp('flclash_test_');
     PathProviderPlatform.instance = _FakePathProvider(tmpDir.path);
+    await useAppPaths(tmpDir);
   });
 
   setUp(() async {
