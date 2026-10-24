@@ -136,6 +136,65 @@ void main() {
     expect(versions.single.date, '2026-01-02');
   });
 
+  test(
+    'appendTagVersion adds one entry bounded by the newest recorded one',
+    () {
+      commit('feat(d): third feature');
+      git(['tag', 'v1.2.0']);
+      const existing = Changelog(
+        versions: [
+          ChangelogVersion(
+            version: '1.1.0',
+            tag: 'v1.1.0',
+            date: '2026-01-02',
+            groups: [],
+          ),
+        ],
+      );
+
+      final result = appendTagVersion(
+        git: Git(workingDirectory: repo.path),
+        tag: 'v1.2.0',
+        existing: existing,
+        date: '2026-02-03',
+      );
+
+      expect(result, isNotNull);
+      final versions = result!.changelog.versions;
+      expect(versions.map((version) => version.tag), ['v1.2.0', 'v1.1.0']);
+      expect(versions.first.date, '2026-02-03');
+      expect(versions.first.isEmpty, isFalse);
+      final features = versions.first.groups
+          .firstWhere((group) => group.type == ChangelogType.feat)
+          .entries;
+      expect(features.single.text, 'Third feature');
+      expect(result.commitIdsByTag['v1.2.0'], isNotEmpty);
+    },
+  );
+
+  test('appendTagVersion returns null for a tag already recorded', () {
+    const existing = Changelog(
+      versions: [
+        ChangelogVersion(
+          version: '1.1.0',
+          tag: 'v1.1.0',
+          date: '2026-01-02',
+          groups: [],
+        ),
+      ],
+    );
+
+    expect(
+      appendTagVersion(
+        git: Git(workingDirectory: repo.path),
+        tag: 'v1.1.0',
+        existing: existing,
+        date: '2026-02-03',
+      ),
+      isNull,
+    );
+  });
+
   test('a release tag on another branch is not reachable from this one', () {
     git(['checkout', '--quiet', '-b', 'feature', 'v1.0.0']);
     commit('feat(d): work started before the release');

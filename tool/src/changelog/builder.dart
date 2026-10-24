@@ -44,6 +44,47 @@ class ChangelogBuildResult {
   final Map<String, Set<String>> commitIdsByTag;
 }
 
+/// The entry [tag] adds on top of the newest version already recorded in
+/// [existing], leaving every other entry untouched. The upload job uses this
+/// for a tag pushed without its `release` step: deriving the whole file from
+/// git would need every historical tag, including ones that never left the
+/// maintainer's machine, while this range reaches only the newest recorded
+/// tag.
+///
+/// Returns null when [tag] is already recorded, so callers never rewrite a
+/// curated entry.
+ChangelogBuildResult? appendTagVersion({
+  required Git git,
+  required String tag,
+  required Changelog existing,
+  required String date,
+}) {
+  if (existing.versions.any((version) => version.tag == tag)) {
+    return null;
+  }
+  final parser = ChangelogParser();
+  final commits = git.commits(from: existing.versions.first.tag, to: tag);
+  final parsed = VersionTag.tryParse(tag);
+  final version = ChangelogVersion(
+    version: parsed?.version ?? tag.replaceFirst(RegExp('^v'), ''),
+    tag: tag,
+    date: date,
+    prerelease: parsed?.isPrerelease ?? false,
+    groups: groupItems(parser.parseAll(commits)),
+  );
+  final index = existing.versions.indexWhere((recorded) {
+    final other = VersionTag.tryParse(recorded.tag);
+    return other == null || other.compareTo(parsed ?? other) <= 0;
+  });
+  final versions = [...existing.versions];
+  versions.insert(index == -1 ? versions.length : index, version);
+  return ChangelogBuildResult(
+    changelog: Changelog(versions: versions),
+    warnings: parser.warnings,
+    commitIdsByTag: {tag: commits.map((commit) => commit.shortHash).toSet()},
+  );
+}
+
 class ChangelogBuilder {
   ChangelogBuilder(this.git, {this.boundary = frozenBoundaryTag});
 

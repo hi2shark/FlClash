@@ -271,10 +271,11 @@ Push the tag by name. Every release tag here is lightweight, and `--follow-tags`
 lightweight one silently, so the branch lands, the tag does not, and the release workflow never fires.
 
 A tag pushed without its `changelog.dart release` step does not block the release. The upload job probes
-`render release --tag` and, when `changelog.json` has no version for the tag, runs `release --version` in its throwaway
-checkout and renders the git-derived entries. That copy is commit subjects, never polished release wording; when the
-wording matters, backfill by running `release --version` on the default branch and committing the regenerated files.
-`verify` gates the public repository only, so the fork's releases are never blocked by the missing step.
+`render release --tag` and, when `changelog.json` has no version for the tag, runs `build --tag` in its throwaway
+checkout: one entry appended, bounded by the newest version already recorded in the file, so historical tags that only
+exist on the maintainer's machine stay irrelevant. That entry's copy is commit subjects, never polished release wording;
+backfill it by running `release --version` on the default branch and committing the regenerated files when the wording
+matters. `verify` gates the public repository only, so the fork's releases are never blocked by the missing step.
 
 `tool/release.sh` drives both paths so the ordering below cannot be got wrong by hand. It resolves the version (bumping
 the patch when pubspec still names an already tagged one), prints the notes the tag would ship, and only pushes with

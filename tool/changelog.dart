@@ -17,13 +17,18 @@ Future<void> main(List<String> arguments) async {
     ..addOption('version', help: 'Version being released, without the v.')
     ..addOption('date', help: 'Release date, defaults to today.');
 
-  parser
-      .addCommand('build')
-      .addFlag(
-        'unreleased',
-        negatable: false,
-        help: 'Include commits made after the newest stable tag.',
-      );
+  parser.addCommand('build')
+    ..addFlag(
+      'unreleased',
+      negatable: false,
+      help: 'Include commits made after the newest stable tag.',
+    )
+    ..addOption(
+      'tag',
+      help:
+          'Append that tag\'s entry to changelog.json, derived from the '
+          'range since the newest version already in the file.',
+    );
 
   parser.addCommand('render')
     ..addOption('tag', help: 'Version tag to render, defaults to the newest.')
@@ -74,8 +79,15 @@ int _release(String root, ArgResults command) {
 
 int _build(String root, ArgResults command) {
   final unreleased = command.flag('unreleased');
-  final pubspec = resolve(root, 'pubspec.yaml').readAsStringSync();
+  final tag = command.option('tag');
+  if (unreleased && tag != null) {
+    _fail('build takes --unreleased or --tag, not both');
+  }
   final git = Git(workingDirectory: root);
+  if (tag != null) {
+    return _buildTag(root, git, tag);
+  }
+  final pubspec = resolve(root, 'pubspec.yaml').readAsStringSync();
   PendingVersion? pending;
   if (unreleased) {
     pending = PendingVersion(
@@ -99,6 +111,40 @@ int _build(String root, ArgResults command) {
   _printWarnings(result.warnings);
   _writeData(root, result.changelog);
   stdout.writeln('Wrote $changelogDataPath');
+  return 0;
+}
+
+/// The upload job's fallback for a tag pushed without its `release` step. It
+/// appends one entry bounded by the newest version already in the file, so
+/// historical tags that only exist on the maintainer's machine stay
+/// irrelevant, and an existing entry is never rewritten.
+int _buildTag(String root, Git git, String tag) {
+  final dataFile = resolve(root, changelogDataPath);
+  if (!dataFile.existsSync()) {
+    _fail(
+      '$changelogDataPath is missing; there is no version to bound the range '
+      'for $tag',
+    );
+  }
+  final existing = decodeChangelog(dataFile.readAsStringSync());
+  if (existing.versions.isEmpty) {
+    _fail(
+      'cannot bound the range for $tag: $changelogDataPath has no versions',
+    );
+  }
+  final result = appendTagVersion(
+    git: git,
+    tag: tag,
+    existing: existing,
+    date: today(),
+  );
+  if (result == null) {
+    stdout.writeln('$changelogDataPath already has $tag');
+    return 0;
+  }
+  _printWarnings(result.warnings);
+  _writeData(root, result.changelog);
+  stdout.writeln('Appended $tag to $changelogDataPath');
   return 0;
 }
 
@@ -271,7 +317,8 @@ Usage: dart run tool/changelog.dart <command> [options]
 
 Commands:
   release --version X   Rewrite CHANGELOG.md and changelog.json.
-  build [--unreleased]  Rewrite changelog.json only.
+  build [--unreleased] [--tag vX]
+                        Rewrite changelog.json only.
   render <release|telegram> [--tag vX] [--out file]
   verify                Check the committed changelog against git.
 
