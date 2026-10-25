@@ -2,6 +2,24 @@
   "schemaVersion": 2,
   "versions": [
     {
+      "version": "0.9.104",
+      "tag": "v0.9.104",
+      "date": "2026-10-25",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "f3529c9",
+              "scope": "core",
+              "text": "Updated the Nowhere core to 3.1.0 with TLS certificate file path support"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.103",
       "tag": "v0.9.103",
       "date": "2026-10-25",

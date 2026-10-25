@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.9.104 (2026-10-25)
+
+**Bug Fixes**
+
+- **core** Updated the Nowhere core to 3.1.0 with TLS certificate file path support (f3529c9)
+
 ## v0.9.103 (2026-10-25)
 
 **Features**
