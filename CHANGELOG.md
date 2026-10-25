@@ -1,21 +1,10 @@
 # Changelog
 
-## v0.9.104 (2026-10-25)
-
-**Bug Fixes**
-
-- **core** Updated the Nowhere core to 3.1.0 with TLS certificate file path support (f3529c9)
-
-## v0.9.103 (2026-10-25)
+## v0.9.201 (2026-10-25)
 
 **Features**
 
-- **core** update the embedded clash-meta-nw core to Nowhere 3.1.0 (nw3) with the 3.0.1 wire fixes (5061e72)
-
-## v0.9.2 (2026-10-24)
-
-**Features**
-
+- **core** align the Nowhere core with clash-meta-nw 3.1.1 (39913bf)
 - **access** Access control state shown in a bar at the bottom (e8aac17)
 - **config** Optional general overrides; settings apply sooner (5d6552d)
 - **dashboard** IP quality cached for 3 days; simpler Android dashboard (8176cce)
@@ -37,6 +26,18 @@
 **Performance**
 
 - **editor** Smoother editor for large files and in sheets (7035edd)
+
+## v0.9.104 (2026-10-25)
+
+**Bug Fixes**
+
+- **core** Updated the Nowhere core to 3.1.0 with TLS certificate file path support (f3529c9)
+
+## v0.9.103 (2026-10-25)
+
+**Features**
+
+- **core** update the embedded clash-meta-nw core to Nowhere 3.1.0 (nw3) with the 3.0.1 wire fixes (5061e72)
 
 ## v0.9.102 (2026-10-24)
 
@@ -264,40 +265,6 @@ Internal improvements only.
 - **android/service** Correct return statement in SSID resolution grace handling (babdfdb)
 - **android** Add kotlin-parcelize plugin for @Parcelize support (43c1ffe)
 
-## v0.9.1 (2026-10-17)
-
-**Breaking Changes**
-
-- **network** Desktop TUN keys follow the profile unless picked; changed values carry over (cb08088)
-
-**Features**
-
-- **l10n** French, Spanish and Korean translations (f43755c)
-- **android** No more Firebase analytics or crash reporting (bc72bba)
-- **network** Per-key desktop TUN settings; system proxy and tray fixes (cb08088)
-- **theme** Redesigned theme colors and color styles (5eafd7a)
-- **dashboard** A redesigned dashboard around the current exit (9bd258f)
-- **profiles** Profile-detail resources and include-all in custom groups (0bac500)
-- **proxies** Proxy groups as cards, group tabs as chips (2ea52fd)
-- **views** Sortable tables for connections, requests and DNS (da6fb0a)
-- **ui** Optional two-tier Liquid Glass and slide-to-pick menus (7c9627f)
-- **ui** iOS-style surfaces, alerts and sheets; clearer TV focus (9bd2286)
-
-**Bug Fixes**
-
-- **ui** Fix pasting and Chinese input in text fields (5607f70)
-- **core** Large profiles no longer crash; downloads trust core CAs (5984c16)
-
-**Performance**
-
-- **android** Smoother Android UI while the proxy is busy (2201c19)
-
-## v0.8.9901 (2026-10-15)
-
-**Features**
-
-- **nowhere** Switch core to clash-meta-nw and support Nowhere 3 (06f5fe2)
-
 ## v0.9.0 (2026-10-14)
 
 **Breaking Changes**
@@ -342,27 +309,11 @@ Internal improvements only.
 - **resources** Refresh the geo file size and time after an update finishes (c5bf5bd)
 - **core** Keep the core running while Windows sleeps with the app suspended (60f371a)
 
-## v0.8.99 (2026-10-03)
+## v0.8.9901 (2026-10-15)
 
 **Features**
 
-- **editor** Editor word wrap and snippets (e131675)
-- **dashboard** More dashboard cards (e62afb7)
-- **views** Hide timed-out nodes and search every list (8378c70)
-- **ui** Sidebar, floating dock and drag to go back (841d603)
-- **ui** New app glyphs, empty states and theme page (ee6a497)
-- **overwrite** Invalid override warnings and rule presets (46fb7fe)
-- **config** DNS query log and per-key DNS/NTP overrides (a390a42)
-- **core** Proxied service checks and outbound IP risk (8068e68)
-- **platform** Tray hotkeys, node delays and a delay test (1e97716)
-
-**Bug Fixes**
-
-- **core** A changed resource link is now used by the next sync and by auto update (ff23f30)
-- **core** DNS lookups no longer fail on networks that report no DNS servers (e55f6d1)
-- **proxies** Smaller icons in icon-only group headers (786a6ab)
-- **core,android** Push notifications reconnect in Doze (1e9955d)
-- **backup,database** Restores never apply halfway (bee8f24)
+- **nowhere** Switch core to clash-meta-nw and support Nowhere 3 (06f5fe2)
 
 ## v0.8.9825 (2026-09-23)
 
@@ -397,13 +348,6 @@ Internal improvements only.
 - **notification** Add show stop action feature and enhance localization (80b6e2b)
 - **localization** Add new localization strings for EasyTier and related network settings (0506324)
 
-## v0.8.98 (2026-09-14)
-
-**Bug Fixes**
-
-- **resources** Refresh the geo file size and time after an update finishes (c5bf5bd)
-- **core** Keep the core running while Windows sleeps with the app suspended (60f371a)
-
 ## v0.8.9819 (2026-09-10)
 
 **Features**
@@ -413,17 +357,6 @@ Internal improvements only.
 **Bug Fixes**
 
 - **ci** Clone private mihomo submodule with a dedicated checkout token (4bc14e6)
-
-## v0.8.97 (2026-09-10)
-
-**Features**
-
-- **ui** Rework the app UI and refresh the localization (26cfbaf)
-- **app** Rework the app layer and window handling, and add proxy authentication (aaf934c)
-- **desktop** Rework the desktop runners, packaging, and native build (c0fcbc0)
-- **android** Rework the Android VPN service and lifecycle handling (ae29f38)
-- **plugins** Rework the desktop plugins and add the Helper service and Rust bridge (adf715f)
-- **core** Rework the core IPC and process lifecycle (c6eaa0a)
 
 ## v0.8.9818 (2026-08-12)
 
@@ -702,6 +635,46 @@ Internal improvements only.
 **Features**
 
 - Migrate Clash.Meta core to hi2shark fork with compatibility patches (989f797)
+
+## v0.8.99 (2026-10-03)
+
+**Features**
+
+- **editor** Editor word wrap and snippets (e131675)
+- **dashboard** More dashboard cards (e62afb7)
+- **views** Hide timed-out nodes and search every list (8378c70)
+- **ui** Sidebar, floating dock and drag to go back (841d603)
+- **ui** New app glyphs, empty states and theme page (ee6a497)
+- **overwrite** Invalid override warnings and rule presets (46fb7fe)
+- **config** DNS query log and per-key DNS/NTP overrides (a390a42)
+- **core** Proxied service checks and outbound IP risk (8068e68)
+- **platform** Tray hotkeys, node delays and a delay test (1e97716)
+
+**Bug Fixes**
+
+- **core** A changed resource link is now used by the next sync and by auto update (ff23f30)
+- **core** DNS lookups no longer fail on networks that report no DNS servers (e55f6d1)
+- **proxies** Smaller icons in icon-only group headers (786a6ab)
+- **core,android** Push notifications reconnect in Doze (1e9955d)
+- **backup,database** Restores never apply halfway (bee8f24)
+
+## v0.8.98 (2026-09-14)
+
+**Bug Fixes**
+
+- **resources** Refresh the geo file size and time after an update finishes (c5bf5bd)
+- **core** Keep the core running while Windows sleeps with the app suspended (60f371a)
+
+## v0.8.97 (2026-09-10)
+
+**Features**
+
+- **ui** Rework the app UI and refresh the localization (26cfbaf)
+- **app** Rework the app layer and window handling, and add proxy authentication (aaf934c)
+- **desktop** Rework the desktop runners, packaging, and native build (c0fcbc0)
+- **android** Rework the Android VPN service and lifecycle handling (ae29f38)
+- **plugins** Rework the desktop plugins and add the Helper service and Rust bridge (adf715f)
+- **core** Rework the core IPC and process lifecycle (c6eaa0a)
 
 <!-- changelog:frozen -->
 <!-- Entries below predate the structured pipeline. Their wording is kept as written; only the heading and list style were normalized. -->
