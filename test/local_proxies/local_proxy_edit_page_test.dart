@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/switch.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_edit_page.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
@@ -284,8 +285,8 @@ void main() {
     final tlsTile = find
         .ancestor(of: find.text('TLS'), matching: find.byType(ListTile))
         .first;
-    final tlsSwitch = tester.widget<Switch>(
-      find.descendant(of: tlsTile, matching: find.byType(Switch)),
+    final tlsSwitch = tester.widget<CommonSwitch>(
+      find.descendant(of: tlsTile, matching: find.byType(CommonSwitch)),
     );
     tlsSwitch.onChanged!(false);
     await _pumpFrames(tester);
@@ -747,8 +748,8 @@ void main() {
     final morphTile = find
         .ancestor(of: find.text('Morph'), matching: find.byType(ListTile))
         .first;
-    final morphSwitch = tester.widget<Switch>(
-      find.descendant(of: morphTile, matching: find.byType(Switch)),
+    final morphSwitch = tester.widget<CommonSwitch>(
+      find.descendant(of: morphTile, matching: find.byType(CommonSwitch)),
     );
     morphSwitch.onChanged!(false);
     await _pumpFrames(tester);

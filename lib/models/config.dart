@@ -123,6 +123,18 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.wifiWatchCard,
 ];
 
+/// A phone starts without the VPN switch and the diagnostic cards, which stay
+/// addable. The field default keeps the shared list because it must be const.
+final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
+    ? const [
+        DashboardWidget.currentOutbound,
+        DashboardWidget.networkSpeed,
+        DashboardWidget.outboundMode,
+        DashboardWidget.profiles,
+        DashboardWidget.proxyGroups,
+      ]
+    : defaultDashboardWidgets;
+
 const _legacyDefaultDashboardWidgets = {
   'networkSpeed',
   'systemProxyButton',
@@ -157,7 +169,7 @@ List<DashboardWidget> dashboardWidgetsFromJson(
   List<dynamic>? dashboardWidgets,
 ) {
   if (dashboardWidgets == null) {
-    return defaultDashboardWidgets;
+    return platformDefaultDashboardWidgets;
   }
   final byName = DashboardWidget.values.asNameMap();
   if (dashboardWidgets.contains(DashboardWidget.currentOutbound.name)) {
@@ -173,14 +185,14 @@ List<DashboardWidget> dashboardWidgetsFromJson(
   };
   if (names.length == _legacyDefaultDashboardWidgets.length &&
       names.containsAll(_legacyDefaultDashboardWidgets)) {
-    return defaultDashboardWidgets;
+    return platformDefaultDashboardWidgets;
   }
   final kept = dashboardWidgets
       .map((e) => _legacyDashboardWidgets[e] ?? byName[e])
       .nonNulls;
   if (kept.isEmpty &&
       !dashboardWidgets.every(_retiredDashboardWidgets.contains)) {
-    return defaultDashboardWidgets;
+    return platformDefaultDashboardWidgets;
   }
   return {DashboardWidget.currentOutbound, ...kept}.toList();
 }
@@ -193,7 +205,11 @@ Object? _readTabAnimation(Map<dynamic, dynamic> json, String key) {
   if (json.containsKey(key)) {
     return json[key];
   }
-  return json['isAnimateToPage'] == false ? TabAnimation.fade.name : null;
+  return switch (json['isAnimateToPage']) {
+    true => TabAnimation.slide.name,
+    false => TabAnimation.fade.name,
+    _ => null,
+  };
 }
 
 Object? _readUserAgents(Map<dynamic, dynamic> json, String key) {
@@ -233,8 +249,8 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool autoRun,
     @Default(false) bool openLogs,
     @Default(true) bool closeConnections,
-    @Default(defaultTestUrl) String testUrl,
-    @Default(TabAnimation.slide)
+    @Default(defaultDelayTestTimeout) int delayTestTimeout,
+    @Default(TabAnimation.fade)
     @JsonKey(readValue: _readTabAnimation)
     TabAnimation tabAnimation,
     @Default(true) bool floatingNavigationBar,
@@ -248,6 +264,7 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default(false) bool developerMode,
     @Default(RestoreStrategy.compatible) RestoreStrategy restoreStrategy,
     @Default(true) bool showTrayTitle,
+    @Default(true) bool monochromeTrayIcon,
     @Default(true) bool checkCertificate,
     @Default(defaultUserAgents)
     @JsonKey(readValue: _readUserAgents)
@@ -461,7 +478,7 @@ abstract class ThemeProps with _$ThemeProps {
     @JsonKey(readValue: _readColorStyle)
     ColorStyle colorStyle,
     @Default(false) bool pureBlack,
-    @Default(true) bool sidebarBlur,
+    @Default(false) bool sidebarBlur,
     @Default(LiquidGlassMode.none)
     @JsonKey(readValue: _readLiquidGlass)
     LiquidGlassMode liquidGlass,
@@ -509,7 +526,7 @@ abstract class Config with _$Config {
 
   factory Config.strictFromJson(Map<String, Object?> json) =>
       _withLegacyOverrideDns(
-        _$ConfigFromJson(_withLegacyRouteMode(json)),
+        _$ConfigFromJson(_withLegacyTestUrl(_withLegacyRouteMode(json))),
         json,
       );
 
@@ -518,6 +535,9 @@ abstract class Config with _$Config {
       return Config(
         themeProps: defaultThemeProps,
         hotKeyActions: defaultHotKeyActions,
+        appSettingProps: AppSettingProps(
+          dashboardWidgets: platformDefaultDashboardWidgets,
+        ),
       );
     }
     return Config.fromJson(json);
@@ -537,6 +557,26 @@ Config _withLegacyOverrideDns(Config config, Map<String, Object?> json) {
         )
       : <DnsOverrideKey>{};
   return config.copyWith.patchClashConfig(dnsOverrideKeys: keys);
+}
+
+/// The test URL moved from the app settings into the general overrides.
+Map<String, Object?> _withLegacyTestUrl(Map<String, Object?> json) {
+  final app = json['appSettingProps'];
+  final testUrl = app is Map ? app['testUrl'] : null;
+  final clash = json['patchClashConfig'] ?? const <String, Object?>{};
+  if (testUrl is! String ||
+      testUrl.isEmpty ||
+      clash is! Map ||
+      clash.containsKey(GeneralOverrideKey.testUrl.path)) {
+    return json;
+  }
+  return {
+    ...json,
+    'patchClashConfig': {
+      ...Map<String, Object?>.from(clash),
+      GeneralOverrideKey.testUrl.path: testUrl,
+    },
+  };
 }
 
 Map<String, Object?> _withLegacyRouteMode(Map<String, Object?> json) {

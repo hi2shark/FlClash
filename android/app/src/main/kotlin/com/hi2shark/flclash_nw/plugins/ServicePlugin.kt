@@ -4,6 +4,7 @@ import com.hi2shark.flclash_nw.ServiceController
 import com.hi2shark.flclash_nw.ServiceState
 import com.hi2shark.flclash_nw.common.Components
 import com.hi2shark.flclash_nw.models.SharedState
+import com.hi2shark.flclash_nw.service.NetworkObserver
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
@@ -68,6 +69,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 
     private fun initialize(result: MethodChannel.Result) {
+        NetworkObserver.start()
         ServiceController.setEventListener(::sendEvent)
             .onSuccess { result.success("") }
             .onFailure { error -> result.success(error.message.orEmpty()) }

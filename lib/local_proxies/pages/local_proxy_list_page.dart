@@ -353,7 +353,6 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
         onPressed: _showAddMenu,
         tooltip: appLocalizations.add,
       ),
-      foldPrimaryAction: true,
     );
   }
 }

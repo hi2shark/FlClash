@@ -225,7 +225,6 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
         onPressed: () => _handleAddOrEdit(),
         tooltip: appLocalizations.add,
       ),
-      foldPrimaryAction: true,
     );
   }
 }

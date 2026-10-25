@@ -17,6 +17,7 @@ part 'dialers.dart';
 part 'generated/database.g.dart';
 part 'groups.dart';
 part 'icons.dart';
+part 'ip_qualities.dart';
 part 'profiles.dart';
 part 'rules.dart';
 part 'scripts.dart';
@@ -33,6 +34,7 @@ part 'scripts.dart';
     ClashProviders,
     CustomProxies,
     ProxyDialers,
+    IpQualities,
   ],
   daos: [
     ProfilesDao,
@@ -44,13 +46,14 @@ part 'scripts.dart';
     ClashProvidersDao,
     CustomProxiesDao,
     ProxyDialersDao,
+    IpQualitiesDao,
   ],
 )
 class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -113,6 +116,9 @@ class Database extends _$Database {
         }
         if (from < 22) {
           await customStatement('DROP TABLE IF EXISTS unlock_test_runs');
+        }
+        if (from < 23) {
+          await _createTableIfMissing(m, ipQualities);
         }
       }),
       beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),

@@ -35,7 +35,6 @@ internal class ServiceModules(private val service: Service) {
         this.wifiWatchModule = wifiWatchModule
         val nextModules = listOf(
             NotificationModule(service, nextScope),
-            NetworkObserveModule(service),
             SuspendModule(service),
             wifiWatchModule,
         )

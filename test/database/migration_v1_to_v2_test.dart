@@ -84,9 +84,10 @@ void _downgradeToV7(Database raw) {
   raw.execute('PRAGMA user_version = 7');
 }
 
-/// Schema version 20 had no `unlock_test_runs` table.
+/// Schema version 20 had neither `unlock_test_runs` nor `ip_qualities`.
 void _downgradeToV20(Database raw) {
   raw.execute('DROP TABLE IF EXISTS unlock_test_runs');
+  raw.execute('DROP TABLE IF EXISTS ip_qualities');
   raw.execute('PRAGMA user_version = 20');
 }
 
@@ -107,6 +108,13 @@ void _downgradeToV21(Database raw) {
     'ON unlock_test_runs (created_at)',
   );
   raw.execute('PRAGMA user_version = 21');
+}
+
+/// Schema version 22 dropped `unlock_test_runs` and had no `ip_qualities`.
+void _downgradeToV22(Database raw) {
+  raw.execute('DROP TABLE IF EXISTS unlock_test_runs');
+  raw.execute('DROP TABLE IF EXISTS ip_qualities');
+  raw.execute('PRAGMA user_version = 22');
 }
 
 /// Schema version 19 had no `empty_options` on `custom_proxies`.
@@ -938,6 +946,18 @@ void main() {
       expect(await database.profilesDao.query().get(), isEmpty);
     },
   );
+
+  test('the v23 upgrade creates ip_qualities', () async {
+    _downgradeToV22(raw);
+    expect(_hasTable(raw, 'ip_qualities'), isFalse);
+
+    final database = await openAndMigrate();
+
+    expect(_hasTable(raw, 'ip_qualities'), isTrue);
+    expect(_userVersion(raw), currentSchemaVersion);
+    expect(await database.ipQualities.count.getSingle(), 0);
+  });
+
   test(
     'a v17 user_version with definition already present still opens',
     () async {

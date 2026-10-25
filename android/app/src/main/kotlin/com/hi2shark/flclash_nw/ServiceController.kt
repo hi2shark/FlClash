@@ -11,6 +11,7 @@ import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.common.intent
 import com.hi2shark.flclash_nw.core.Core
 import com.hi2shark.flclash_nw.service.ManagedService
+import com.hi2shark.flclash_nw.service.NetworkObserver
 import com.hi2shark.flclash_nw.service.ProxyService
 import com.hi2shark.flclash_nw.service.ServiceConfig
 import com.hi2shark.flclash_nw.service.ServiceStartResult
@@ -59,6 +60,7 @@ object ServiceController {
         initParams: String,
         setupParams: String,
     ): Result<String> = runCatching {
+        NetworkObserver.start()
         suspendCancellableCoroutine { continuation ->
             Core.quickSetup(initParams, setupParams) { result ->
                 continuation.resume(result.orEmpty())

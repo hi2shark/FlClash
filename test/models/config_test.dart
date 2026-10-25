@@ -129,15 +129,13 @@ void main() {
       expect(restored.autoRun, false);
       expect(restored.openLogs, false);
       expect(restored.closeConnections, true);
-      expect(restored.tabAnimation, TabAnimation.slide);
+      expect(restored.tabAnimation, TabAnimation.fade);
       expect(restored.autoCheckUpdate, true);
       expect(restored.sidebarExpanded, true);
       expect(restored.minimizeOnExit, true);
       expect(restored.restoreStrategy, RestoreStrategy.compatible);
       expect(restored.userAgents, defaultUserAgents);
       expect(restored.filters, defaultFilters);
-      expect(restored.testUrl, defaultTestUrl);
-      expect(restored.showNotificationStopAction, true);
     });
 
     test('a saved outboundModeV2 card folds into outboundMode', () {
@@ -259,7 +257,6 @@ void main() {
         onlyStatisticsProxy: true,
         autoLaunch: true,
         closeConnections: false,
-        testUrl: 'https://custom.test',
         userAgents: ['CustomUA/1.0'],
         filters: [Filter(label: 'Asia', regex: 'hk`jp')],
       );
@@ -271,7 +268,6 @@ void main() {
       expect(restored.onlyStatisticsProxy, true);
       expect(restored.autoLaunch, true);
       expect(restored.closeConnections, false);
-      expect(restored.testUrl, 'https://custom.test');
       expect(restored.userAgents, ['CustomUA/1.0']);
       expect(restored.filters, [const Filter(label: 'Asia', regex: 'hk`jp')]);
     });
@@ -411,39 +407,6 @@ void main() {
     });
   });
 
-  group('AuthenticationProps', () {
-    test('credentials stay empty until enabled with a username', () {
-      expect(const AuthenticationProps().credentials, isEmpty);
-      expect(
-        const AuthenticationProps(enable: true, username: '').credentials,
-        isEmpty,
-      );
-      expect(
-        const AuthenticationProps(
-          enable: true,
-          username: 'alice',
-          password: 'pw',
-        ).credentials,
-        ['alice:pw'],
-      );
-    });
-
-    test('round-trip preserves fields', () {
-      const props = AuthenticationProps(
-        enable: true,
-        username: 'bob',
-        password: 'p@ss',
-      );
-      final restored = roundTrip(
-        () => props.toJson(),
-        AuthenticationProps.fromJson,
-      );
-      expect(restored.enable, true);
-      expect(restored.username, 'bob');
-      expect(restored.password, 'p@ss');
-    });
-  });
-
   group('NetworkProps JSON round-trip', () {
     test('default values', () {
       const props = NetworkProps();
@@ -452,23 +415,6 @@ void main() {
       expect(props.bypassPrivateRoute, true);
       expect(props.autoSetSystemDns, true);
       expect(props.appendSystemDns, false);
-      expect(props.authentication.enable, false);
-      expect(props.authentication.credentials, isEmpty);
-    });
-
-    test('round-trips authentication credentials', () {
-      const props = NetworkProps(
-        authentication: AuthenticationProps(
-          enable: true,
-          username: 'user',
-          password: 'secret',
-        ),
-      );
-      final restored = roundTrip(() => props.toJson(), NetworkProps.fromJson);
-      expect(restored.authentication.enable, true);
-      expect(restored.authentication.username, 'user');
-      expect(restored.authentication.password, 'secret');
-      expect(restored.authentication.credentials, ['user:secret']);
     });
 
     test('round-trip with custom values', () {
@@ -598,6 +544,64 @@ void main() {
     });
   });
 
+  group('PatchClashConfig general overrides', () {
+    Map<String, Object?> savedBefore(Map<String, Object?> changes) => {
+      ...(jsonDecode(jsonEncode(defaultClashConfig)) as Map<String, Object?>)
+        ..remove('general-override-keys')
+        ..remove('test-url'),
+      ...changes,
+    };
+
+    test('a legacy config keeps overriding what it used to, defaults '
+        'included', () {
+      final config = PatchClashConfig.fromJson(
+        savedBefore({'tcp-concurrent': false}),
+      );
+
+      expect(config.generalOverrideKeys, {
+        GeneralOverrideKey.unifiedDelay,
+        GeneralOverrideKey.tcpConcurrent,
+        GeneralOverrideKey.ipv6,
+        GeneralOverrideKey.geodataLoader,
+      });
+      expect(config.tcpConcurrent, false);
+      expect(config.ipv6, false);
+      expect(config.unifiedDelay, true);
+    });
+
+    test('saved keys are taken as they are', () {
+      final config = PatchClashConfig.fromJson({
+        ...savedBefore({'ipv6': true}),
+        'general-override-keys': ['unified-delay'],
+      });
+
+      expect(config.generalOverrideKeys, {GeneralOverrideKey.unifiedDelay});
+    });
+
+    test('only picked keys reach the Core live', () {
+      final json = defaultClashConfig
+          .copyWith(
+            ipv6: true,
+            tcpConcurrent: false,
+            generalOverrideKeys: {GeneralOverrideKey.ipv6},
+          )
+          .toUpdateParams(authentication: const [], skipCertVerify: false)
+          .toJson();
+
+      expect(json['ipv6'], true);
+      expect(json['tcp-concurrent'], isNull);
+      expect(json['unified-delay'], isNull);
+    });
+
+    test('picking a key reloads the profile', () {
+      final picked = defaultClashConfig.copyWith(
+        generalOverrideKeys: {GeneralOverrideKey.ipv6},
+      );
+
+      expect(picked.setupOnly, isNot(defaultClashConfig.setupOnly));
+    });
+  });
+
   group('PatchClashConfig.setupOnly', () {
     UpdateParams liveParams(PatchClashConfig config) =>
         config.toUpdateParams(authentication: const [], skipCertVerify: false);
@@ -643,6 +647,8 @@ void main() {
         defaultClashConfig.copyWith(hosts: const {'a.test': '1.1.1.1'}),
         defaultClashConfig.copyWith(dns: defaultDns.copyWith(ipv6: true)),
         defaultClashConfig.copyWith(tunOverrideKeys: {TunOverrideKey.gso}),
+        defaultClashConfig.copyWith(geodataLoader: GeodataLoader.standard),
+        defaultClashConfig.copyWith(testUrl: 'https://probe.test/204'),
       ];
 
       for (final config in setupOnlyChanges) {
@@ -877,7 +883,6 @@ void main() {
       expect(restored.networkProps.systemProxy, true);
       expect(restored.vpnProps.enable, true);
       expect(restored.hotKeyActions, isEmpty);
-      expect(restored.onDemandEnabled, true);
     });
 
     test('a legacy bypass-private route mode drops the routes it ignored', () {
@@ -908,6 +913,31 @@ void main() {
 
       expect(config.networkProps.bypassPrivateRoute, false);
       expect(config.patchClashConfig.tun.routeAddress, ['10.0.0.0/8']);
+    });
+
+    test('a legacy custom test URL becomes a general override', () {
+      final config = Config.realFromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'appSettingProps': {'testUrl': 'https://probe.test/204'},
+      });
+
+      expect(config.patchClashConfig.testUrl, 'https://probe.test/204');
+      expect(
+        config.patchClashConfig.generalOverrideKeys,
+        contains(GeneralOverrideKey.testUrl),
+      );
+    });
+
+    test('a legacy default test URL stays unpicked', () {
+      final config = Config.realFromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'appSettingProps': {'testUrl': defaultTestUrl},
+      });
+
+      expect(
+        config.patchClashConfig.generalOverrideKeys,
+        isNot(contains(GeneralOverrideKey.testUrl)),
+      );
     });
 
     for (final (overrideDns, keys) in [
@@ -1050,8 +1080,6 @@ void main() {
           themeMode: ThemeMode.system,
         ),
         windowProps: WindowProps(width: 1280, height: 720),
-        onDemandEnabled: false,
-        excludeSSIDs: ['Home'],
       );
       final restored = roundTrip(() => config.toJson(), Config.fromJson);
       expect(restored.currentProfileId, 42);
@@ -1061,56 +1089,21 @@ void main() {
       expect(restored.vpnProps.enable, false);
       expect(restored.windowProps.width, 1280);
       expect(restored.windowProps.height, 720);
-      expect(restored.onDemandEnabled, false);
-      expect(restored.excludeSSIDs, ['Home']);
     });
 
-    test('missing on-demand flag defaults to enabled', () {
-      final restored = Config.fromJson({
+    test('a window saved under the old key opens at the default size', () {
+      final config = Config.fromJson({
         'themeProps': const ThemeProps().toJson(),
-        'excludeSSIDs': ['Home'],
+        'windowProps': const WindowProps(
+          width: 680,
+          height: 580,
+          left: 10,
+          top: 20,
+        ).toJson(),
       });
-
-      expect(restored.onDemandEnabled, true);
-      expect(restored.excludeSSIDs, ['Home']);
+      expect(config.windowProps, defaultWindowProps);
+      expect(config.windowProps.size, defaultWindowSize);
     });
-  });
-
-  group('Dns defaults', () {
-    test('respect-rules and redir-host are the new defaults', () {
-      const dns = Dns();
-      expect(dns.enable, false);
-      expect(dns.respectRules, true);
-      expect(dns.enhancedMode, DnsMode.redirHost);
-      expect(dns.proxyServerNameserver, isEmpty);
-    });
-
-    test('fromJson falls back to new defaults when fields are missing', () {
-      final dns = Dns.fromJson({});
-      expect(dns.respectRules, true);
-      expect(dns.enhancedMode, DnsMode.redirHost);
-    });
-
-    test('round-trip preserves respect-rules and enhanced-mode', () {
-      const dns = Dns(respectRules: false, enhancedMode: DnsMode.fakeIp);
-      final restored = roundTrip(() => dns.toJson(), Dns.fromJson);
-      expect(restored.respectRules, false);
-      expect(restored.enhancedMode, DnsMode.fakeIp);
-    });
-  });
-
-  test('a window saved under the old key opens at the default size', () {
-    final config = Config.fromJson({
-      'themeProps': const ThemeProps().toJson(),
-      'windowProps': const WindowProps(
-        width: 680,
-        height: 580,
-        left: 10,
-        top: 20,
-      ).toJson(),
-    });
-    expect(config.windowProps, defaultWindowProps);
-    expect(config.windowProps.size, defaultWindowSize);
   });
 
   group('ProxyGroup definition', () {
