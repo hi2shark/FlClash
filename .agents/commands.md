@@ -51,7 +51,7 @@ hooks:
 ```
 
 CI flips `setup` to `false` with `yq` in its throwaway checkout before
-`dart run tool/changelog.dart` and `dart run tool/test.dart`; no test loads the Go core. `rust_api`
+`dart run tool/test.dart`; no test loads the Go core. `rust_api`
 stays on there because the editor tests in `test/plugins/code_forge/` and the socket
 test in `test/core/desktop/ipc_native_test.dart` load the Rust library the hook
 builds; the release-notes job, which runs no tests, flips both.
@@ -243,17 +243,21 @@ emulator validation; Kotlin compilation cannot prove those system callbacks.
 
 ## Changelog And Release
 
-The changelog is derived from Conventional Commits by `tool/changelog.dart` and written to two committed files:
-`CHANGELOG.md` for readers and `changelog.json` for the renderers. See `.agents/rules.md` for the `Changelog:` trailers
-that decide the wording.
+The changelog is local tooling only; the workflows carry none. The `Verify changelog` gate in the `dart` job and the
+`Generate release notes` step in `upload` were removed from `.github/workflows/build.yaml`: the derivation resolves
+against upstream's tag set and died on this fork's tags. Release notes are `.github/release_template.md` alone,
+`release_telegram.py` posts the tag and its link without bullets when `telegram.md` is absent, and the update dialog
+falls back to plain bullets in the body, of which the template has none. Never merge either step back when merging
+upstream; see Fork Versioning below.
 
-The app ships no changelog of its own. `render release` appends the released version as JSON inside an HTML comment
-(`<!-- flclash:changelog:json … -->`), so the release body GitHub already returns to `checkForUpdate` carries the
-notes shown in the update dialog. `parseReleaseChangelog` reads that block and falls back to the English
-bullets when a release predates it.
+What remains documents `tool/changelog.dart` as a local tool. It derives the changelog from Conventional Commits into
+the committed `CHANGELOG.md` for readers and `changelog.json` for the renderers. See `.agents/rules.md` for the
+`Changelog:` trailers that decide the wording. `render release` appends the released version as JSON inside an HTML
+comment (`<!-- flclash:changelog:json … -->`) for `checkForUpdate` to read, but no release body carries that block any
+more.
 
 ```bash
-dart run tool/changelog.dart verify                  # what CI checks
+dart run tool/changelog.dart verify                  # local only; no CI runs it
 dart run tool/changelog.dart release --version 0.8.96
 dart run tool/changelog.dart build --unreleased      # changelog.json only, includes untagged work
 dart run tool/changelog.dart render release --out release.md
@@ -273,12 +277,9 @@ git push origin main && git push origin v0.8.96
 Push the tag by name. Every release tag here is lightweight, and `--follow-tags` carries annotated tags only: it skips a
 lightweight one silently, so the branch lands, the tag does not, and the release workflow never fires.
 
-A tag pushed without its `changelog.dart release` step does not block the release. The upload job probes
-`render release --tag` and, when `changelog.json` has no version for the tag, runs `build --tag` in its throwaway
-checkout: one entry appended, bounded by the newest version already recorded in the file, so historical tags that only
-exist on the maintainer's machine stay irrelevant. That entry's copy is commit subjects, never polished release wording;
-backfill it by running `release --version` on the default branch and committing the regenerated files when the wording
-matters. `verify` gates the public repository only, so the fork's releases are never blocked by the missing step.
+A tag pushed without its `changelog.dart release` step does not block anything: CI neither verifies nor builds the
+changelog. Run `release --version` on the default branch and commit the regenerated files when the wording matters;
+tags with no entry in `changelog.json` simply stay without one.
 
 `tool/release.sh` drives both paths so the ordering below cannot be got wrong by hand. It resolves the version (bumping
 the patch when pubspec still names an already tagged one), prints the notes the tag would ship, and only pushes with
@@ -290,10 +291,9 @@ tool/release.sh pre --push        # bump, tag vX.Y.Z-pre.N, push
 tool/release.sh stable --push     # changelog, chore(release) commit, tag, push
 ```
 
-The release commit comes before the tag on purpose: the generated wording is reviewable in the diff before it ships, and
-the tag is what `render release` reads. CI never writes back to the repository; it only runs `verify`. Wording in
-`changelog.json` may be edited by hand as long as no derivable entry disappears and every entry still points at a commit
-inside that version's range.
+The release commit comes before the tag on purpose: the generated wording is reviewable in the diff before it ships.
+CI never touches the changelog. Wording in `changelog.json` may be edited by hand as long as no derivable entry
+disappears and every entry still points at a commit inside that version's range.
 
 Entries at or below `v0.8.96` are frozen: they predate the pipeline, live under the `<!-- changelog:frozen -->` marker
 in `CHANGELOG.md`, and are never regenerated.
@@ -303,11 +303,10 @@ in `CHANGELOG.md`, and are never regenerated.
 skipped and moves on instead of reporting drift that does not exist. Checking mere tag existence is what made every such
 branch fail on an unrelated release.
 
-Prerelease tags (`v0.8.96-pre.N`) skip the release commit, and CI renders their notes with `build --unreleased` for the
-Telegram post. They publish no GitHub release, so the update dialog never sees them. `build --unreleased` reads the
-version from `pubspec.yaml` rather than the tag; the upload job aligns that file with the pushed tag first, so a
-`vX.Y.Z-pre.N` tag collects the `X.Y.Z` section without a manual pubspec bump. A tag whose base `vX.Y.Z` is already
-stable still refuses to collect anything, as it should.
+Prerelease tags (`v0.8.96-pre.N`) skip the release commit and publish no GitHub release, so the update dialog never
+sees them. `build --unreleased` reads the version from `pubspec.yaml` rather than the tag, so a local run collects the
+`X.Y.Z` section after `tool/bump_version.sh` wrote it there. A tag whose base `vX.Y.Z` is already stable still
+refuses to collect anything, as it should.
 
 This repository publishes its own releases. `build` runs for both the upstream owner and `hi2shark`, so the download
 URLs resolve against whichever repository hosts the tag, while the Telegram, Homebrew and F-Droid pushes stay with
@@ -319,7 +318,7 @@ would ever talk to.
 
 This fork tags releases as `v0.9.000N` while upstream keeps the app version in `pubspec.yaml`. Tag builds therefore
 rewrite `pubspec.yaml` in the runner before packaging: `version: <tag without v>+<build number>`. The build job does it
-before `flutter pub get`; the upload job does it before rendering prerelease notes. The working tree is never written
+before `flutter pub get`; the upload job does it before publishing. The working tree is never written
 back.
 
 Everything that reads the version follows the tag:
@@ -335,6 +334,10 @@ The `+<build number>` suffix still comes from pubspec; run `tool/bump_version.sh
 When merging upstream, keep both `Align version with tag` steps and the `Verify asset names match the tag` guard in
 `.github/workflows/build.yaml`. Upstream's flow assumes pubspec already names the release; dropping these steps
 publishes `FlClash-0.9.0-*` assets under a `v0.9.000N` tag and leaves the release download links broken.
+
+Those are the steps to keep; the changelog steps are the ones to keep out. This fork removed `Verify changelog` from
+the `dart` job and `Generate release notes` from `upload`, and an upstream merge must not bring them back, in
+`build.yaml` or anywhere else in `.github/`.
 
 ### Website
 
@@ -376,7 +379,6 @@ bash tool/hooks/test.sh
 flutter pub get
 dart format --output=none --set-exit-if-changed lib test tool plugins setup.dart
 flutter analyze --no-fatal-infos
-dart run tool/changelog.dart verify   # main and tags only
 dart run tool/test.dart -- --reporter expanded --coverage
 dart run tool/check_coverage.dart coverage/lcov.info 75
 ```

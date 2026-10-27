@@ -64,17 +64,6 @@ jobs:
         run: |
           yq -i '.hooks.user_defines.setup.build_assets = false' pubspec.yaml
 
-      # The changelog is derived from the tagged history of the repository that
-      # owns it: the frozen window opens at v0.8.96 and every release tag has to
-      # be recorded in changelog.json. A fork keeps its own tag set, so the
-      # derivation cannot resolve and the step dies on an ambiguous revision
-      # instead of returning a verdict. Releases are gated the same way.
-      - name: Verify changelog
-        if: >-
-          github.repository == 'chen08209/FlClash' &&
-          (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
-        run: dart run tool/changelog.dart verify
-
       - name: Run tests
         run: dart run tool/test.dart -- --reporter expanded --coverage
 
@@ -533,28 +522,6 @@ jobs:
           build_number="$(sed -n 's/^version: [^+]*+\([0-9][0-9]*\)$/\1/p' pubspec.yaml)"
           sed -i.bak "s/^version: .*/version: ${version}+${build_number}/" pubspec.yaml
           rm -f pubspec.yaml.bak
-
-      - name: Generate release notes
-        shell: bash
-        env:
-          IS_STABLE: ${{ env.IS_STABLE }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          target=()
-          if [[ "$IS_STABLE" == 'true' ]]; then
-            target=(--tag "$TAG")
-            # A tag pushed without `changelog.dart release` must not block the
-            # release: append its entry to changelog.json in this throwaway
-            # checkout, bounded by the newest version already recorded there.
-            if ! dart run tool/changelog.dart render release --tag "$TAG" \
-              --out /dev/null >/dev/null 2>&1; then
-              dart run tool/changelog.dart build --tag "$TAG"
-            fi
-          else
-            dart run tool/changelog.dart build --unreleased
-          fi
-          dart run tool/changelog.dart render release "${target[@]}" --out release.md
-          dart run tool/changelog.dart render telegram "${target[@]}" --out telegram.md
 
       - name: Push to telegram
         if: ${{ env.IS_STABLE == 'true' && github.repository == 'chen08209/FlClash' }}

@@ -601,8 +601,9 @@ commit that introduced what it amends.
 
 ### Changelog Trailers
 
-`tool/changelog.dart` builds the user facing changelog from the commit history, so the trailers below are the copy that
-ships to users. The subject stays the developer facing summary and is only the fallback.
+`tool/changelog.dart` builds `CHANGELOG.md` and `changelog.json` from the commit history as local tooling — CI
+neither verifies nor ships the changelog since the pipeline left the workflows — so the trailers below are the copy
+that lands there. The subject stays the developer facing summary and is only the fallback.
 
 ```text
 feat(profiles): support per-profile override script
