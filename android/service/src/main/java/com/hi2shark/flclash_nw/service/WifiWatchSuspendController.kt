@@ -302,8 +302,22 @@ internal class WifiWatchSuspendController(
                 }
                 generation++
                 cancelPendingLocked("SSID resolution grace expired")
-                logLocked("SSID resolution grace expired — resume to safe default")
-                return@synchronized requestSuspendedLocked(false)
+                // Screen off redacts the SSID while the transport stays up.
+                // Losing the name is not a network change, so a suspend that
+                // already landed stays; one that never did still falls open.
+                val keepSuspended = lastRequestedSuspended == true
+                logLocked(
+                    if (keepSuspended) {
+                        "SSID resolution grace expired — WiFi still present, keep suspended"
+                    } else {
+                        "SSID resolution grace expired — resume to safe default"
+                    }
+                )
+                return@synchronized if (keepSuspended) {
+                    null
+                } else {
+                    requestSuspendedLocked(false)
+                }
             }
             action?.invoke()
         }

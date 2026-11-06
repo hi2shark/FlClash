@@ -195,15 +195,18 @@ class WifiWatchSuspendControllerTest {
         scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
         assertEquals(listOf(true), events)
 
-        // Switching APs while suspended: keep the current state briefly while
-        // waiting for the SSID to resolve.
+        // The transport stays up but the SSID is redacted. Keep the suspend.
         controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = true)
         scheduler.advanceBy(WifiWatchSuspendController.SSID_RESOLUTION_GRACE_MILLIS - 1)
         assertEquals(listOf(true), events)
 
-        // If it never resolves, actively resume instead of hanging forever.
         scheduler.advanceBy(1)
-        assertEquals(listOf(true, false), events)
+        assertEquals(listOf(true), events)
+
+        // The same network resolving again must not start another suspend.
+        controller.updateWifiNetwork(ssid = "Home", validated = true, wifiPresent = true)
+        scheduler.advanceBy(WifiWatchSuspendController.SUSPEND_DELAY_MILLIS)
+        assertEquals(listOf(true), events)
     }
 
     @Test
