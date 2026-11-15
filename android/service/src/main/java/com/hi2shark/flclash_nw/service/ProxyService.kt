@@ -6,6 +6,8 @@ import android.os.Binder
 import android.os.IBinder
 import com.hi2shark.flclash_nw.core.Core
 import com.hi2shark.flclash_nw.service.modules.ServiceModules
+import com.hi2shark.flclash_nw.service.modules.promoteToInitialForeground
+import com.hi2shark.flclash_nw.service.modules.stopForegroundCompat
 import com.google.gson.Gson
 
 class ProxyService : Service(), ManagedService {
@@ -68,7 +70,7 @@ class ProxyService : Service(), ManagedService {
     }
 
     override fun onLowMemory() {
-        Core.forceGC()
+        Core.forceGCIfLoaded()
         super.onLowMemory()
     }
 
@@ -83,6 +85,16 @@ class ProxyService : Service(), ManagedService {
     }
 
     override fun onBind(intent: Intent): IBinder = binder
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (!running) {
+            promoteToInitialForeground()
+        }
+        if (intent?.action != ACTION_HOST_FOREGROUND_START) {
+            notifyVpnStartRequested()
+        }
+        return START_STICKY
+    }
 
     override fun start() {
         try {
@@ -111,5 +123,11 @@ class ProxyService : Service(), ManagedService {
         }
     }
 
-    private fun cleanup() = modules.stop()
+    private fun cleanup() {
+        try {
+            modules.stop()
+        } finally {
+            stopForegroundCompat()
+        }
+    }
 }

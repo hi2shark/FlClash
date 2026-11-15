@@ -162,10 +162,10 @@ func TestRouteChangesSplitResetsFromMoves(t *testing.T) {
 	general.Mode = tunnel.Rule
 	withCurrentConfig(t, &config.Config{General: general, Controller: &config.Controller{}})
 	previousMode := tunnel.Mode()
-	previousIPv6 := resolver.DisableIPv6
+	previousIPv6 := resolver.DisableIPv6.Load()
 	t.Cleanup(func() {
 		tunnel.SetMode(previousMode)
-		resolver.DisableIPv6 = previousIPv6
+		resolver.DisableIPv6.Store(previousIPv6)
 	})
 	global := tunnel.Global
 	for range 2 {

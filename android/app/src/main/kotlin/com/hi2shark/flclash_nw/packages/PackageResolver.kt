@@ -5,9 +5,9 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.ComponentInfo
 import android.content.pm.PackageManager
 import android.os.Build
-import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
 import com.hi2shark.flclash_nw.models.InstalledPackage
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipFile
 
 internal class PackageResolver(
@@ -15,6 +15,8 @@ internal class PackageResolver(
     private val appPackageName: String,
 ) {
     private val cacheLock = Any()
+    private val scanLock = Any()
+    private val chinaPackageCache = ConcurrentHashMap<String, Pair<Long, Boolean>>()
 
     @Volatile
     private var cachedPackages: List<InstalledPackage>? = null
@@ -36,9 +38,27 @@ internal class PackageResolver(
         synchronized(cacheLock) { cachedPackages = null }
     }
 
-    fun getChinaPackageNames(): List<String> = installedPackages
-        .map { it.packageName }
-        .filter(::isChinaPackage)
+    fun clearTransientCaches() {
+        synchronized(cacheLock) { cachedPackages = null }
+        chinaPackageCache.clear()
+    }
+
+    fun getChinaPackageNames(): List<String> = synchronized(scanLock) {
+        val packages = installedPackages
+        val activeNames = packages.mapTo(HashSet(packages.size)) { it.packageName }
+        chinaPackageCache.keys.retainAll(activeNames)
+        val scratch = DexReadBuffer(MAX_DEX_SIZE_BYTES.toInt())
+        packages.filter { pkg ->
+            val cached = chinaPackageCache[pkg.packageName]
+            if (cached != null && cached.first == pkg.lastUpdateTime) {
+                cached.second
+            } else {
+                isChinaPackage(pkg.packageName, scratch).also { matched ->
+                    chinaPackageCache[pkg.packageName] = pkg.lastUpdateTime to matched
+                }
+            }
+        }.map { it.packageName }
+    }
 
     private fun loadPackages(): List<InstalledPackage> {
         val flags = PackageManager.GET_PERMISSIONS
@@ -69,7 +89,7 @@ internal class PackageResolver(
             }.toList()
     }
 
-    private fun isChinaPackage(packageName: String): Boolean {
+    private fun isChinaPackage(packageName: String, scratch: DexReadBuffer): Boolean {
         if (ChinaPackageMatcher.isSkipped(packageName)) {
             return false
         }
@@ -77,11 +97,13 @@ internal class PackageResolver(
             return true
         }
 
-        return runCatching {
+        return try {
             val packageInfo = getPackageInfo(packageName)
             packageInfo.componentNames().any(ChinaPackageMatcher::matchesKnownPrefix) ||
-                packageInfo.applicationInfo?.publicSourceDir?.let(::scanArchive) == true
-        }.getOrDefault(false)
+                packageInfo.applicationInfo?.publicSourceDir?.let { scanArchive(it, scratch) } == true
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun getPackageInfo(packageName: String) = if (
@@ -103,27 +125,27 @@ internal class PackageResolver(
         yieldAll(providers.orEmpty().asSequence().map(ComponentInfo::name))
     }
 
-    private fun scanArchive(sourcePath: String): Boolean = ZipFile(File(sourcePath)).use { archive ->
-        if (archive.entries().asSequence().any { it.name.startsWith("firebase-") }) {
-            return false
-        }
-        archive.entries().asSequence()
-            .filter { entry ->
-                entry.name.startsWith("classes") && entry.name.endsWith(".dex")
-            }.any { entry ->
-                if (entry.size > MAX_DEX_SIZE_BYTES) {
-                    return@any true
-                }
-                val dexFile = archive.getInputStream(entry).buffered().use { input ->
-                    DexBackedDexFile.fromInputStream(null, input)
-                }
-                dexFile.classes.any { clazz ->
-                    ChinaPackageMatcher.matchesKnownPrefix(
-                        ChinaPackageMatcher.classNameOf(clazz.type),
-                    )
-                }
+    private fun scanArchive(sourcePath: String, scratch: DexReadBuffer): Boolean =
+        ZipFile(File(sourcePath)).use { archive ->
+            if (archive.entries().asSequence().any { it.name.startsWith("firebase-") }) {
+                return false
             }
-    }
+            archive.entries().asSequence()
+                .filter { entry ->
+                    entry.name.startsWith("classes") && entry.name.endsWith(".dex")
+                }.any { entry ->
+                    if (entry.size > MAX_DEX_SIZE_BYTES) {
+                        return@any true
+                    }
+                    val length = archive.getInputStream(entry).use { input ->
+                        scratch.readAll(input, entry.size)
+                    }
+                    if (length == DexReadBuffer.OVERSIZED) {
+                        return@any true
+                    }
+                    DexClassPrefixScanner.containsMatchingClass(scratch.bytes, length)
+                }
+        }
 
     companion object {
         const val GET_INSTALLED_APPS = "com.android.permission.GET_INSTALLED_APPS"

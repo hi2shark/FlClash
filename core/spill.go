@@ -38,7 +38,13 @@ func spillResponse(id string, data []byte) []byte {
 	path, err := writeSpilledResponse(data)
 	if err != nil {
 		logError("spill response %s: %v", id, err)
-		return data
+		return encodeResponse(MethodResponse{
+			ID: id,
+			Error: &MethodError{
+				Code:    "spill_failed",
+				Message: err.Error(),
+			},
+		})
 	}
 	return encodeResponse(MethodResponse{ID: id, File: path})
 }

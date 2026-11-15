@@ -1,6 +1,7 @@
 package core
 
 import (
+	"core/platform"
 	"runtime"
 	"runtime/debug"
 	"sync"
@@ -26,6 +27,7 @@ var (
 )
 
 func handleInitClash(params *InitParams) bool {
+	platform.ConfigureMemoryLimit()
 	configMu.Lock()
 	defer configMu.Unlock()
 	sdkVersion.Store(int32(params.Version))

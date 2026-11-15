@@ -358,6 +358,10 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     private fun hasForegroundLocation(context: Context): Boolean =
         isGranted(context, Manifest.permission.ACCESS_FINE_LOCATION)
 
+    private fun hasAnyLocationPermission(context: Context): Boolean =
+        hasForegroundLocation(context) ||
+            isGranted(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+
     // Since Q the SSID reads as UNKNOWN_SSID from the background without this
     // permission, which is where the on-demand check spends most of its time.
     private fun hasBackgroundLocation(context: Context): Boolean =
@@ -476,6 +480,10 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
 
     @Suppress("DEPRECATION")
     private fun readWifiManagerStatus(): WifiNetworkStatus? {
+        val ctx = context ?: return null
+        if (!hasAnyLocationPermission(ctx)) {
+            return null
+        }
         val info = runCatching { wifiManager?.connectionInfo }.getOrNull()
             ?: return null
         val ssid = normalizeSsid(info.ssid)
@@ -509,11 +517,14 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
 
     @Suppress("DEPRECATION")
     private fun readScanResultRssi(): Int? {
+        val ctx = context ?: return null
+        if (!hasAnyLocationPermission(ctx)) {
+            return null
+        }
         val wm = wifiManager ?: return null
         val info = runCatching { wm.connectionInfo }.getOrNull() ?: return null
         val connectedSsid = normalizeSsid(info.ssid) ?: return null
         val connectedBssid = info.bssid?.takeIf { it != "02:00:00:00:00:00" }
-        runCatching { wm.startScan() }
         val results = runCatching { wm.scanResults }.getOrNull() ?: return null
         return results.firstOrNull { result ->
             if (connectedBssid != null && result.BSSID != null) {

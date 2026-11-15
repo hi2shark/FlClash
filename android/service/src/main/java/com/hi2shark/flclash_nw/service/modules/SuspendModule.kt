@@ -4,10 +4,13 @@ import android.app.Service
 import android.content.Intent
 import android.os.PowerManager
 import androidx.core.content.getSystemService
+import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.common.receiveBroadcastFlow
 import com.hi2shark.flclash_nw.service.ManagedService
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -15,7 +18,13 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
 internal class SuspendModule(private val service: Service) : ServiceModule {
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(
+        SupervisorJob() +
+            Dispatchers.Default +
+            CoroutineExceptionHandler { _, error ->
+                GlobalState.log("Suspend module coroutine failed: $error")
+            },
+    )
 
     private fun isScreenOn(): Boolean {
         val pm = service.getSystemService<PowerManager>()

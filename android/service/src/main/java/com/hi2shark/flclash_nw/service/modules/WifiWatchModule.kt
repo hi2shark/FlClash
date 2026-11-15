@@ -1,18 +1,20 @@
 package com.hi2shark.flclash_nw.service.modules
 
+import android.Manifest
 import android.app.Service
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.net.wifi.ScanResult
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.service.DefaultNetworkResumeAction
@@ -28,10 +30,12 @@ import com.hi2shark.flclash_nw.service.WifiWatchState
 import com.hi2shark.flclash_nw.service.WifiWatchSuspendController
 import com.hi2shark.flclash_nw.service.defaultNetworkResumeAction
 import com.hi2shark.flclash_nw.service.selectWifiNetwork
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -44,7 +48,13 @@ internal class WifiWatchModule(
     // on different threads. Serialize them so an old snapshot cannot publish
     // after a newer network transition.
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val scope = CoroutineScope(Dispatchers.Default.limitedParallelism(1))
+    private val scope = CoroutineScope(
+        SupervisorJob() +
+            Dispatchers.Default.limitedParallelism(1) +
+            CoroutineExceptionHandler { _, error ->
+                GlobalState.log("WiFi-watch coroutine failed: $error")
+            },
+    )
     private val connectivity by lazy {
         service.getSystemService<ConnectivityManager>()
     }
@@ -87,10 +97,7 @@ internal class WifiWatchModule(
     private val callback = createWifiNetworkCallback()
     private var wifiResolutionReconcileJob: Job? = null
     private var lastPublishedStatus: WifiNetworkStatus? = null
-    // Default-network callback for immediate Cellular detection. Only
-    // registered on API 24+; null on older devices, where Cellular detection
-    // falls back to reconsiderForceResumeFromActiveNetwork() called from the
-    // WiFi callback path.
+    private var wifiCallbackRegistered = false
     private var defaultNetworkCallback: ConnectivityManager.NetworkCallback? = null
     private var defaultLostReconsider: WifiWatchSuspendController.Cancellable? = null
     private val physicalDefaultNetwork = PhysicalDefaultNetworkTracker<Network>()
@@ -100,11 +107,29 @@ internal class WifiWatchModule(
 
     override fun start() {
         scope.launch {
-            ServiceConfig.suspendOnWifiSsids.collect {
-                controller.updateSuspendOnWifiSsids(it)
+            ServiceConfig.suspendOnWifiSsids.collect { ssids ->
+                controller.updateSuspendOnWifiSsids(ssids)
+                if (ssids.isEmpty()) {
+                    if (wifiCallbackRegistered || defaultNetworkCallback != null) {
+                        stopWatching("suspend SSID list cleared")
+                        controller.updateWifiNetwork(
+                            ssid = null,
+                            validated = false,
+                            wifiPresent = false,
+                        )
+                        onStateChanged()
+                    }
+                } else {
+                    ensureWatchingStarted()
+                }
             }
         }
+    }
 
+    private fun ensureWatchingStarted() {
+        if (wifiCallbackRegistered) {
+            return
+        }
         val manager = connectivity
         if (manager == null) {
             controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = false)
@@ -113,12 +138,39 @@ internal class WifiWatchModule(
         runCatching {
             manager.registerNetworkCallback(wifiNetworkRequest, callback)
         }.onSuccess {
-            scope.launch { updateKnownWifiNetworks(manager) }
+            wifiCallbackRegistered = true
+            updateKnownWifiNetworks(manager)
         }.onFailure {
             GlobalState.log("WiFi-watch registerNetworkCallback failed: ${it.message}")
             controller.updateWifiNetwork(ssid = null, validated = false, wifiPresent = false)
         }
         registerDefaultNetworkWatch(manager)
+    }
+
+    private fun stopWatching(reason: String) {
+        cancelWifiResolutionReconcile(reason)
+        cancelDefaultLostReconsider(reason)
+        if (wifiCallbackRegistered) {
+            wifiCallbackRegistered = false
+            runCatching {
+                connectivity?.unregisterNetworkCallback(callback)
+            }
+        }
+        defaultNetworkCallback?.let { cb ->
+            runCatching {
+                connectivity?.unregisterNetworkCallback(cb)
+            }
+        }
+        defaultNetworkCallback = null
+        physicalDefaultNetwork.clear()
+        synchronized(wifiNetworksLock) {
+            wifiNetworks.clear()
+            lastPublishedStatus = null
+        }
+        lastRssiTrusted = false
+        runCatching {
+            if (wakeLock?.isHeld == true) wakeLock?.release()
+        }
     }
 
     private fun schedule(delayMillis: Long, action: () -> Unit): WifiWatchSuspendController.Cancellable {
@@ -661,8 +713,19 @@ internal class WifiWatchModule(
      * network). This keeps the suspend-on-WiFi logic working as long as the
      * system still exposes the current SSID/RSSI.
      */
+    private fun hasLocationPermission(): Boolean =
+        ContextCompat.checkSelfPermission(
+            service,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                service,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED
+
     @Suppress("DEPRECATION")
     private fun readWifiManagerFallback(): WifiNetworkStatus? {
+        if (!hasLocationPermission()) return null
         val info = runCatching { wifiManager?.connectionInfo }.getOrNull() ?: return null
         val ssid = normalizeSsid(info.ssid) ?: return null
         val rssi = resolveRssi(info)
@@ -685,9 +748,11 @@ internal class WifiWatchModule(
     private fun NetworkCapabilities.readWifiInfo(): WifiInfo? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             transportInfo as? WifiInfo
-        } else {
+        } else if (hasLocationPermission()) {
             @Suppress("DEPRECATION")
             wifiManager?.connectionInfo
+        } else {
+            null
         }
     }
 
@@ -768,8 +833,21 @@ internal class WifiWatchModule(
         } else {
             null
         }
-        val signalStrengthRssi = readSignalStrengthFromAllNetworks()
-        val scanRssi = readScanResultRssi()
+        val signalStrengthRssi = if (status?.rssi == null && fallback?.rssi == null && hasTrackedWifi) {
+            readSignalStrengthFromAllNetworks()
+        } else {
+            null
+        }
+        val scanRssi = if (
+            status?.rssi == null &&
+            fallback?.rssi == null &&
+            signalStrengthRssi == null &&
+            hasTrackedWifi
+        ) {
+            readScanResultRssi()
+        } else {
+            null
+        }
         val rssi = status?.rssi
             ?: fallback?.rssi
             ?: signalStrengthRssi
@@ -809,13 +887,11 @@ internal class WifiWatchModule(
      */
     @Suppress("DEPRECATION")
     private fun readScanResultRssi(): Int? {
+        if (!hasLocationPermission()) return null
         val wm = wifiManager ?: return null
         val info = runCatching { wm.connectionInfo }.getOrNull() ?: return null
         val connectedSsid = normalizeSsid(info.ssid) ?: return null
         val connectedBssid = info.bssid?.takeIf { it != "02:00:00:00:00:00" }
-        // Best-effort refresh. Scanning is throttled by the system; if it fails
-        // we still fall back to the last cached results.
-        runCatching { wm.startScan() }
         val results = runCatching { wm.scanResults }.getOrNull()
         val rssi = results?.firstOrNull { result ->
             if (connectedBssid != null && result.BSSID != null) {
@@ -831,22 +907,8 @@ internal class WifiWatchModule(
     }
 
     override fun stop() {
-        cancelWifiResolutionReconcile("module uninstall")
-        cancelDefaultLostReconsider("module uninstall")
         resumeRetry.cancel("module uninstall")
-        runCatching {
-            connectivity?.unregisterNetworkCallback(callback)
-        }
-        defaultNetworkCallback?.let { cb ->
-            runCatching {
-                connectivity?.unregisterNetworkCallback(cb)
-            }
-        }
-        defaultNetworkCallback = null
-        physicalDefaultNetwork.clear()
-        synchronized(wifiNetworksLock) {
-            wifiNetworks.clear()
-        }
+        stopWatching("module uninstall")
         controller.cancel()
         scope.cancel()
     }

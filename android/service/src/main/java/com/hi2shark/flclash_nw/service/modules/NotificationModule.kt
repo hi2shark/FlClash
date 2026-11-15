@@ -1,6 +1,8 @@
 package com.hi2shark.flclash_nw.service.modules
 
+import android.app.Notification
 import android.app.Notification.FOREGROUND_SERVICE_IMMEDIATE
+import android.app.NotificationManager
 import android.app.Service
 import android.app.Service.STOP_FOREGROUND_REMOVE
 import android.content.Intent
@@ -56,13 +58,69 @@ private val NotificationParams.extended: ExtendedNotificationParams
         suspendedText,
     )
 
+internal fun Service.promoteToInitialForeground() {
+    ensureNotificationChannel()
+    startForeground(buildServiceNotification(this, ServiceConfig.notificationParams.value.extended))
+}
+
+@Suppress("DEPRECATION")
+internal fun Service.stopForegroundCompat() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        stopForeground(STOP_FOREGROUND_REMOVE)
+    } else {
+        stopForeground(true)
+    }
+}
+
+private fun buildServiceNotification(
+    service: Service,
+    params: ExtendedNotificationParams,
+    builder: NotificationCompat.Builder = createNotificationBuilder(service),
+    stopPendingIntent: android.app.PendingIntent = QuickAction.STOP.quickIntent.toPendingIntent,
+): Notification = with(builder) {
+    setContentTitle(params.title)
+    setContentText(params.contentText)
+    clearActions()
+    if (params.showStopAction) {
+        addAction(0, params.stopText, stopPendingIntent)
+    }
+    build()
+}
+
+private fun createNotificationBuilder(service: Service): NotificationCompat.Builder {
+    val intent = Intent().setComponent(Components.mainActivity)
+    return NotificationCompat.Builder(
+        service,
+        GlobalState.NOTIFICATION_CHANNEL,
+    ).apply {
+        setSmallIcon(R.drawable.ic_service)
+        setContentTitle("FlClash")
+        setContentIntent(intent.toPendingIntent)
+        setPriority(NotificationCompat.PRIORITY_LOW)
+        setCategory(NotificationCompat.CATEGORY_SERVICE)
+        setOngoing(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
+        }
+        setShowWhen(true)
+        setOnlyAlertOnce(true)
+    }
+}
+
 internal class NotificationModule(
     private val service: Service,
     private val scope: CoroutineScope,
 ) : ServiceModule {
     override fun start() {
         service.ensureNotificationChannel()
-        update(ServiceConfig.notificationParams.value.extended)
+        service.startForeground(
+            buildServiceNotification(
+                service = service,
+                params = ServiceConfig.notificationParams.value.extended,
+                builder = notificationBuilder,
+                stopPendingIntent = stopIntent,
+            ),
+        )
         scope.launch {
             // Some ROMs, vivo's among them, drop updates posted behind the
             // keyguard, so unlocking restarts the loop to post once more.
@@ -100,48 +158,24 @@ internal class NotificationModule(
         service.getSystemService<PowerManager>()?.isInteractive ?: true
 
     private val notificationBuilder: NotificationCompat.Builder by lazy {
-        val intent = Intent().setComponent(Components.mainActivity)
-
-        NotificationCompat.Builder(
-            service,
-            GlobalState.NOTIFICATION_CHANNEL,
-        ).apply {
-            setSmallIcon(R.drawable.ic_service)
-            setContentTitle("FlClash")
-            setContentIntent(intent.toPendingIntent)
-            setPriority(NotificationCompat.PRIORITY_LOW)
-            setCategory(NotificationCompat.CATEGORY_SERVICE)
-            setOngoing(true)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                foregroundServiceBehavior = FOREGROUND_SERVICE_IMMEDIATE
-            }
-            setShowWhen(true)
-            setOnlyAlertOnce(true)
-        }
+        createNotificationBuilder(service)
     }
 
     private val stopIntent by lazy { QuickAction.STOP.quickIntent.toPendingIntent }
 
     private fun update(params: ExtendedNotificationParams) {
-        service.startForeground(
-            with(notificationBuilder) {
-                setContentTitle(params.title)
-                setContentText(params.contentText)
-                clearActions()
-                if (params.showStopAction) {
-                    addAction(0, params.stopText, stopIntent)
-                }
-                build()
-            },
+        service.getSystemService<NotificationManager>()?.notify(
+            GlobalState.NOTIFICATION_ID,
+            buildServiceNotification(
+                service = service,
+                params = params,
+                builder = notificationBuilder,
+                stopPendingIntent = stopIntent,
+            ),
         )
     }
 
-    @Suppress("DEPRECATION")
     override fun stop() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            service.stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            service.stopForeground(true)
-        }
+        service.stopForegroundCompat()
     }
 }

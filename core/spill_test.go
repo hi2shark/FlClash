@@ -102,3 +102,25 @@ func TestClearSpilledResponsesKeepsTheDirectory(t *testing.T) {
 		t.Errorf("entries = %v, want none left", entries)
 	}
 }
+
+func TestSpillResponseReturnsStructuredErrorInsteadOfLargePayloadWhenWriteFails(t *testing.T) {
+	home := withSpillHome(t, 16)
+	blocker := filepath.Join(home, spilledResponseDirName)
+	if err := os.WriteFile(blocker, []byte("not-a-dir"), 0o600); err != nil {
+		t.Fatalf("write blocker file: %v", err)
+	}
+	oversized := make([]byte, 1024)
+
+	frame := spillResponse("42", oversized)
+
+	if len(frame) >= len(oversized) {
+		t.Fatalf("frame length = %d, want a small error envelope instead of inline payload", len(frame))
+	}
+	var envelope MethodResponse
+	if err := json.Unmarshal(frame, &envelope); err != nil {
+		t.Fatalf("response is not valid JSON: %v", err)
+	}
+	if envelope.ID != "42" || envelope.Error == nil || envelope.Error.Code != "spill_failed" {
+		t.Errorf("envelope = %+v, want id=42 and error.code=spill_failed", envelope)
+	}
+}

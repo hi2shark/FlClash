@@ -38,7 +38,7 @@ internal object ChinaPackageMatcher {
         "com.stubhub",
     )
 
-    private val CHINA_PACKAGE_REGEX = listOf(
+    private val CHINA_PACKAGE_PREFIXES = listOf(
         "com.tencent",
         "com.alibaba",
         "com.umeng",
@@ -78,7 +78,24 @@ internal object ChinaPackageMatcher {
         "andes.oplus",
         "com.unionpay",
         "cn.wps",
-    ).joinToString("|", prefix = "(", postfix = ").*") { prefix ->
-        Regex.escape(prefix)
-    }.toRegex()
+    )
+
+    private val CHINA_PACKAGE_REGEX = CHINA_PACKAGE_PREFIXES
+        .joinToString("|", prefix = "(", postfix = ").*") { prefix ->
+            Regex.escape(prefix)
+        }.toRegex()
+
+    internal val DEX_DESCRIPTOR_PREFIXES: List<ByteArray> = run {
+        val descriptorStrings = CHINA_PACKAGE_PREFIXES
+            .map { prefix -> "L${prefix.replace('.', '/')}" }
+            .distinct()
+            .sorted()
+        val deduplicated = mutableListOf<String>()
+        for (candidate in descriptorStrings) {
+            if (deduplicated.lastOrNull()?.let(candidate::startsWith) != true) {
+                deduplicated.add(candidate)
+            }
+        }
+        deduplicated.map(String::encodeToByteArray)
+    }
 }

@@ -266,6 +266,35 @@ func TestLoadConfigWithBaseRejectsAProfileThatIsNotAMapping(t *testing.T) {
 	}
 }
 
+func TestLoadConfigWithBasePreservesExistingConfigAndCleansTempFileOnParseError(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.yaml")
+	const previous = "mode: rule\n"
+	if err := os.WriteFile(configPath, []byte(previous), 0o600); err != nil {
+		t.Fatalf("write existing config: %v", err)
+	}
+	badProfile := writeBaseProfile(t, "proxies:\n  - {name: broken, type: unknown_proto}\n")
+
+	if _, err := loadConfigWithBase(&SetupBase{Path: badProfile, Overlay: "{}"}, configPath); err == nil {
+		t.Fatal("loadConfigWithBase accepted an unknown proxy type")
+	}
+
+	got, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatalf("read config.yaml: %v", err)
+	}
+	if string(got) != previous {
+		t.Errorf("config.yaml = %q, want %q preserved", string(got), previous)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("read dir: %v", err)
+	}
+	if len(entries) != 1 || entries[0].Name() != "config.yaml" {
+		t.Errorf("dir entries = %v, want only config.yaml with no leaked temp files", entries)
+	}
+}
+
 func TestLoadSetupConfigReadsConfigYamlWithoutABase(t *testing.T) {
 	home := t.TempDir()
 	previous := constant.Path.HomeDir()

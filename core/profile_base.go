@@ -103,18 +103,22 @@ func loadConfigWithBase(base *SetupBase, configPath string) (*config.Config, err
 	if err != nil {
 		return nil, err
 	}
-	raw := config.DefaultRawConfig()
-	if err := document.Decode(raw); err != nil {
-		return nil, err
-	}
-	if err := writeConfigDocument(configPath, document); err != nil {
-		return nil, err
-	}
-	cfg, err := config.ParseRawConfig(raw)
+	temporary, err := writeDocumentFile(filepath.Dir(configPath), ".config-*.yaml", document)
+	document = nil
 	if err != nil {
 		return nil, err
 	}
-	return withPlatformLimits(cfg), nil
+	cfg, err := loadConfig(temporary)
+	if err != nil {
+		_ = os.Remove(temporary)
+		return nil, err
+	}
+	if err := os.Rename(temporary, configPath); err != nil {
+		_ = os.Remove(temporary)
+		return nil, err
+	}
+	scheduleReclaimOwnership()
+	return cfg, nil
 }
 
 func mergeProfileBase(base *SetupBase) (*yaml.Node, error) {
@@ -247,21 +251,6 @@ func resolveAlias(node *yaml.Node) *yaml.Node {
 
 func isNull(node *yaml.Node) bool {
 	return node.Kind == yaml.ScalarNode && node.ShortTag() == "!!null"
-}
-
-// config.yaml is read again without this process: by the Android service
-// starting on its own and by mihomo's own reload through the controller.
-func writeConfigDocument(path string, document *yaml.Node) error {
-	temporary, err := writeDocumentFile(filepath.Dir(path), ".config-*.yaml", document)
-	if err != nil {
-		return err
-	}
-	if err := os.Rename(temporary, path); err != nil {
-		_ = os.Remove(temporary)
-		return err
-	}
-	scheduleReclaimOwnership()
-	return nil
 }
 
 func writeDocumentFile(dir, pattern string, document *yaml.Node) (string, error) {

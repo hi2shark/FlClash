@@ -38,7 +38,7 @@ class BackgroundResourceManager {
 
   void _scheduleCleanup() {
     _cleanupTimer?.cancel();
-    _cleanupTimer = Timer(const Duration(minutes: 3), () {
+    _cleanupTimer = Timer(const Duration(seconds: 45), () {
       _cleanupTimer = null;
       unawaited(_cleanup());
     });

@@ -42,8 +42,11 @@ interface ManagedService {
     }
 }
 
+const val ACTION_HOST_FOREGROUND_START =
+    "com.hi2shark.flclash_nw.service.action.HOST_FOREGROUND_START"
+
 internal fun Service.notifyVpnStartRequested() {
-    GlobalState.log("VPN start requested")
+    GlobalState.log("Service start requested")
     BroadcastAction.VPN_START_REQUESTED.sendBroadcast()
 }
 
@@ -52,13 +55,15 @@ internal fun Service.notifyVpnRevoked() {
     BroadcastAction.VPN_REVOKED.sendBroadcast()
 }
 
-// UI_HIDDEN reaches the services too, since they share the activity's process,
-// and Android 14 stopped delivering the running levels this answers to.
 @Suppress("DEPRECATION")
-internal fun trimCoreMemory(level: Int) {
-    if (level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW ||
-        level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL
-    ) {
-        Core.forceGC()
+fun trimCoreMemory(level: Int) {
+    when (level) {
+        ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN,
+        ComponentCallbacks2.TRIM_MEMORY_BACKGROUND,
+        ComponentCallbacks2.TRIM_MEMORY_MODERATE,
+        ComponentCallbacks2.TRIM_MEMORY_COMPLETE,
+        ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW,
+        ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL,
+        -> Core.forceGCIfLoaded()
     }
 }

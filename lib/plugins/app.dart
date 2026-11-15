@@ -13,7 +13,6 @@ const _platformProbeTimeout = Duration(seconds: 2);
 class App {
   static App? _instance;
   late MethodChannel methodChannel;
-  Function()? onExit;
   Function()? onPackagesChanged;
   final floatingKeyboard = ValueNotifier(false);
 
@@ -21,10 +20,6 @@ class App {
     methodChannel = const MethodChannel('$packageName/app');
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
-        case 'exit':
-          if (onExit != null) {
-            await onExit!();
-          }
         case 'packagesChanged':
           onPackagesChanged?.call();
         case 'floatingImeChanged':

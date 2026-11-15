@@ -1,7 +1,9 @@
 package com.hi2shark.flclash_nw.service.modules
 
 import android.app.Service
+import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.service.ManagedService
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,7 +26,10 @@ internal class ServiceModules(private val service: Service) {
     fun start() {
         if (scope != null) return
 
-        val nextScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val exceptionHandler = CoroutineExceptionHandler { _, error ->
+            GlobalState.log("Service module coroutine failed: $error")
+        }
+        val nextScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
         // Assign the field before start(): starting registers network callbacks
         // and can fire the first onStateChanged() before the list is built. If
         // the field were assigned afterwards, getWifiWatchStateJson() would

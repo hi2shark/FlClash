@@ -102,9 +102,6 @@ dependencies {
     implementation(project(":core"))
     implementation(libs.core.splashscreen)
     implementation(libs.gson)
-    implementation(libs.smali.dexlib2) {
-        exclude(group = "com.google.guava", module = "guava")
-    }
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
 }

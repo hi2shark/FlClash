@@ -224,6 +224,10 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         scope.launch(Dispatchers.IO) {
             try {
                 result.success(block())
+            } catch (oom: OutOfMemoryError) {
+                packageResolver.clearTransientCaches()
+                GlobalState.log("Platform call ran out of memory: $oom")
+                result.error("OUT_OF_MEMORY", oom.message ?: "Out of memory", null)
             } catch (error: Exception) {
                 GlobalState.log("Platform call failed: $error")
                 result.error("PLATFORM_ERROR", error.toString(), null)
@@ -489,7 +493,6 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     override fun onDetachedFromActivity() {
-        channel.invokeMethod("exit", null)
         detachFromActivity()
         invokeVpnPrepareCallback(false)
         invokeRequestNotificationCallback(false)

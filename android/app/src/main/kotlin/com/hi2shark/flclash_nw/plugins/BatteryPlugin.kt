@@ -8,6 +8,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.os.Build
 import android.os.Handler
@@ -25,6 +26,7 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
+import java.util.Locale
 
 class BatteryPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware,
     EventChannel.StreamHandler {
@@ -42,6 +44,8 @@ class BatteryPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAw
     private var events: EventChannel.EventSink? = null
 
     private var lastPublished: Boolean? = null
+
+    private var observingPowerKeeper = false
 
     private val activityResultListener =
         PluginRegistry.ActivityResultListener { requestCode, _, _ ->
@@ -96,11 +100,14 @@ class BatteryPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAw
             allowlistReceiver,
             IntentFilter(ACTION_POWER_SAVE_WHITELIST_CHANGED),
         )
-        context.contentResolver.registerContentObserver(
-            Settings.System.getUriFor(MILLET_NO_RESTRICT_APP),
-            false,
-            saverObserver,
-        )
+        observingPowerKeeper = usesMiuiPowerKeeper()
+        if (observingPowerKeeper) {
+            context.contentResolver.registerContentObserver(
+                Settings.System.getUriFor(MILLET_NO_RESTRICT_APP),
+                false,
+                saverObserver,
+            )
+        }
         events = sink
         lastPublished = ignoring
     }
@@ -109,7 +116,10 @@ class BatteryPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAw
         events ?: return
         events = null
         context.unregisterReceiver(allowlistReceiver)
-        context.contentResolver.unregisterContentObserver(saverObserver)
+        if (observingPowerKeeper) {
+            observingPowerKeeper = false
+            context.contentResolver.unregisterContentObserver(saverObserver)
+        }
     }
 
     private fun publish() {
@@ -134,7 +144,7 @@ class BatteryPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAw
             return
         }
         pendingRequest.replace(callback, supersededValue = Unit)
-        val pages = if (isXiaomi) saverPages() else optimizationPages()
+        val pages = if (usesMiuiPowerKeeper()) saverPages() else optimizationPages()
         if (pages.none { launch(activity, it) }) {
             resolve()
         }
@@ -152,19 +162,39 @@ class BatteryPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAw
         return listOf(prompt, allowlist)
     }
 
+    private fun powerKeeperPolicyIntent(): Intent = Intent()
+        .setComponent(ComponentName(POWERKEEPER_PACKAGE, POWERKEEPER_POLICY_ACTIVITY))
+        .putExtra("package_name", context.packageName)
+        .putExtra(
+            "package_label",
+            context.applicationInfo.loadLabel(context.packageManager).toString(),
+        )
+
+    private fun usesMiuiPowerKeeper(): Boolean {
+        if (!isXiaomiBrand) {
+            return false
+        }
+        val intent = powerKeeperPolicyIntent()
+        val resolved = runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.resolveActivity(
+                    intent,
+                    PackageManager.ResolveInfoFlags.of(0),
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.resolveActivity(intent, 0)
+            }
+        }.getOrNull()
+        return resolved != null
+    }
+
     private fun saverPages(): List<Intent> {
-        val policy = Intent()
-            .setComponent(ComponentName(POWERKEEPER_PACKAGE, POWERKEEPER_POLICY_ACTIVITY))
-            .putExtra("package_name", context.packageName)
-            .putExtra(
-                "package_label",
-                context.applicationInfo.loadLabel(context.packageManager).toString(),
-            )
         val details = Intent(
             Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
             "package:${context.packageName}".toUri(),
         )
-        return listOf(policy, details)
+        return listOf(powerKeeperPolicyIntent(), details)
     }
 
     private fun launch(activity: Activity, page: Intent): Boolean = try {
@@ -181,7 +211,7 @@ class BatteryPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAw
     // app, the allowlist alone does not stop PowerKeeper freezing it, and PowerKeeper
     // drops a running VPN from the allowlist while the list follows the user's policy.
     private fun isIgnoringOptimizations(): Boolean {
-        if (isXiaomi) {
+        if (usesMiuiPowerKeeper()) {
             return context.packageName in noRestrictionApps()
         }
         return context.getSystemService(PowerManager::class.java)
@@ -222,7 +252,10 @@ class BatteryPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAw
     }
 
     private companion object {
-        val isXiaomi = Build.MANUFACTURER.equals("xiaomi", ignoreCase = true)
+        val XIAOMI_BRANDS = setOf("xiaomi", "redmi", "poco")
+
+        val isXiaomiBrand = Build.MANUFACTURER.lowercase(Locale.ROOT) in XIAOMI_BRANDS ||
+            Build.BRAND.lowercase(Locale.ROOT) in XIAOMI_BRANDS
 
         // Every plugin on the activity sees every result; AppPlugin holds 1001-1004.
         const val REQUEST_CODE = 1005

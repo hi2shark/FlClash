@@ -90,6 +90,7 @@ void main() {
             match[1]!,
         },
         {
+          'closeRuleProviders',
           'parseSubRules',
           'parseRules',
           'parseNameServerPolicy',

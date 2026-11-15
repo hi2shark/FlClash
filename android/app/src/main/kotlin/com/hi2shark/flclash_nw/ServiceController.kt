@@ -7,9 +7,11 @@ import android.content.ServiceConnection
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import androidx.core.content.ContextCompat
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.common.intent
 import com.hi2shark.flclash_nw.core.Core
+import com.hi2shark.flclash_nw.service.ACTION_HOST_FOREGROUND_START
 import com.hi2shark.flclash_nw.service.ManagedService
 import com.hi2shark.flclash_nw.service.NetworkObserver
 import com.hi2shark.flclash_nw.service.ProxyService
@@ -104,6 +106,7 @@ object ServiceController {
                 .onFailure { error ->
                     GlobalState.log("Unable to clean up failed background service start: $error")
                 }
+            stopServices()
             release()
             return@withLock false
         }
@@ -195,12 +198,19 @@ private class ManagedServiceBinding(
     suspend fun bind(): Result<Unit> = runCatching {
         withContext(Dispatchers.Main.immediate) {
             serviceState.value = null
+            ContextCompat.startForegroundService(
+                GlobalState.application,
+                Intent(intent).setAction(ACTION_HOST_FOREGROUND_START),
+            )
             isBound = GlobalState.application.bindService(
                 intent,
                 this@ManagedServiceBinding,
                 Context.BIND_AUTO_CREATE,
             )
-            check(isBound) { "bindService() failed" }
+            if (!isBound) {
+                runCatching { GlobalState.application.stopService(intent) }
+                error("bindService() failed")
+            }
         }
     }
 

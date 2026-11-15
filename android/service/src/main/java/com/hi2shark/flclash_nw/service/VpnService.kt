@@ -20,6 +20,8 @@ import com.hi2shark.flclash_nw.service.models.toCIDR
 import com.hi2shark.flclash_nw.service.models.tunMtu
 import com.hi2shark.flclash_nw.service.models.tunOptions
 import com.hi2shark.flclash_nw.service.modules.ServiceModules
+import com.hi2shark.flclash_nw.service.modules.promoteToInitialForeground
+import com.hi2shark.flclash_nw.service.modules.stopForegroundCompat
 import com.google.gson.Gson
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
@@ -135,7 +137,7 @@ class VpnService : SystemVpnService(), ManagedService {
         }
 
     override fun onLowMemory() {
-        Core.forceGC()
+        Core.forceGCIfLoaded()
         super.onLowMemory()
     }
 
@@ -157,10 +159,13 @@ class VpnService : SystemVpnService(), ManagedService {
         }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Android starts always-on VPN through this callback instead of FlClash's bound-service
-        // path. Notify the app layer so it can restore Core and fully initialize the VPN service.
-        notifyVpnStartRequested()
-        return super.onStartCommand(intent, flags, startId)
+        if (!running) {
+            promoteToInitialForeground()
+        }
+        if (intent?.action != ACTION_HOST_FOREGROUND_START) {
+            notifyVpnStartRequested()
+        }
+        return START_STICKY
     }
 
     override fun onRevoke() {
@@ -334,7 +339,11 @@ class VpnService : SystemVpnService(), ManagedService {
         try {
             modules.stop()
         } finally {
-            stopTun()
+            try {
+                stopTun()
+            } finally {
+                stopForegroundCompat()
+            }
         }
     }
 
