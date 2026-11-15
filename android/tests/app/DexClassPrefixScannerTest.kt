@@ -109,13 +109,18 @@ class DexClassPrefixScannerTest {
 
         val v4Mapped = Core.parseInetSocketAddress("[::ffff:10.0.0.1]:443")
         assertEquals(443, v4Mapped.port)
-        val expectedMapped = ByteArray(16).apply {
-            this[10] = 0xff.toByte()
-            this[11] = 0xff.toByte()
+        assertArrayEquals(byteArrayOf(10, 0, 0, 1), v4Mapped.address.address)
+
+        val nat64 = Core.parseInetSocketAddress("[64:ff9b::10.0.0.1]:443")
+        assertEquals(443, nat64.port)
+        val expectedNat64 = ByteArray(16).apply {
+            this[1] = 0x64
+            this[2] = 0xff.toByte()
+            this[3] = 0x9b.toByte()
             this[12] = 10
             this[15] = 1
         }
-        assertArrayEquals(expectedMapped, v4Mapped.address.address)
+        assertArrayEquals(expectedNat64, nat64.address.address)
     }
 
     private fun buildMinimalDex(
