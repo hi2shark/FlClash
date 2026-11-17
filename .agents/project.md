@@ -9,7 +9,7 @@ FlClash is a multi-platform proxy client based on ClashMeta (mihomo), built with
   patch. The editor in `plugins/code_forge` came from `code_forge` 10.14.0, which
   needs Dart 3.13.2, so the CI pin cannot go below Flutter 3.47.2.
 - Before moving the pin, walk `flutter-upgrade.md`: it lists the workarounds tied to
-  the current SDK, such as Impeller disabled on the Intel macOS release build.
+  the current SDK, such as Impeller disabled on Windows.
 - The Dart SDK lower bound in `pubspec.yaml` sets the package language
   version. `flutter analyze` excludes `lib/**/generated/**`, so a raise is
   proven by `flutter test`, which parses the generated code, not by analyze.

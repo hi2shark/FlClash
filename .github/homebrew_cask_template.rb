@@ -1,14 +1,8 @@
 cask "flclash" do
   version "VERSION"
+  sha256 "ARM_SHA256"
 
-  on_macos do
-    arch arm: "arm64", intel: "amd64"
-
-    sha256 arm:   "ARM_SHA256",
-           intel: "AMD_SHA256"
-
-    url "https://github.com/chen08209/FlClash/releases/download/v#{version}/FlClash-#{version}-macos-#{arch}.dmg"
-  end
+  url "https://github.com/chen08209/FlClash/releases/download/v#{version}/FlClash-#{version}-macos-arm64.dmg"
 
   name "FlClash"
   desc "Multi-platform proxy client based on ClashMeta"
@@ -20,6 +14,7 @@ cask "flclash" do
   end
 
   depends_on :macos
+  depends_on arch: :arm64
 
   app "FlClash.app"
 

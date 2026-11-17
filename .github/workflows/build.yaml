@@ -108,7 +108,7 @@ jobs:
           - platform: windows
             os: windows-2022
           - platform: macos
-            os: macos-latest
+            os: macos-15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -337,10 +337,7 @@ jobs:
             os: ubuntu-22.04
             arch: amd64
           - platform: macos
-            os: macos-15-intel
-            arch: amd64
-          - platform: macos
-            os: macos-latest
+            os: macos-15
             arch: arm64
           - platform: windows
             os: windows-11-arm
@@ -434,11 +431,6 @@ jobs:
         run: |
           flutter --version
           flutter pub get
-
-      # See .agents/flutter-upgrade.md before bumping FLUTTER_VERSION.
-      - name: Disable Impeller on Intel macOS
-        if: matrix.platform == 'macos' && matrix.arch == 'amd64'
-        run: plutil -replace FLTEnableImpeller -bool NO macos/Runner/Info.plist
 
       # The core embeds this bundle and FlClashHttpOverrides.trustCoreRoots loads it for Dart.
       # Pinned by hash, so a new bundle from https://curl.se/docs/caextract.html is a reviewed bump.
@@ -558,13 +550,11 @@ jobs:
         run: |
           version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
           arm_sha=$(sha256sum "./dist/FlClash-${version}-macos-arm64.dmg" | awk '{print $1}')
-          amd_sha=$(sha256sum "./dist/FlClash-${version}-macos-amd64.dmg" | awk '{print $1}')
 
           mkdir -p ./brew/Casks
           sed \
             -e "s|VERSION|$version|g" \
             -e "s|ARM_SHA256|$arm_sha|g" \
-            -e "s|AMD_SHA256|$amd_sha|g" \
             ./.github/homebrew_cask_template.rb > ./brew/Casks/flclash.rb
 
       - name: Push to Homebrew tap
