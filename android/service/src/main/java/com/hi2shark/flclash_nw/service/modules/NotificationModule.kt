@@ -94,7 +94,7 @@ private fun createNotificationBuilder(service: Service): NotificationCompat.Buil
         GlobalState.NOTIFICATION_CHANNEL,
     ).apply {
         setSmallIcon(R.drawable.ic_service)
-        setContentTitle("FlClash")
+        setContentTitle("HI2NW")
         setContentIntent(intent.toPendingIntent)
         setPriority(NotificationCompat.PRIORITY_LOW)
         setCategory(NotificationCompat.CATEGORY_SERVICE)

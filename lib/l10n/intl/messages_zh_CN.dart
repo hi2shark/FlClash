@@ -31,7 +31,7 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m4(detail) => "清除数据失败：${detail}";
 
   static String m5(code) =>
-      "Windows 拒绝运行 FlClashCore.exe（错误 ${code}）。智能应用控制、AppLocker 等应用控制策略会拦截未签名程序，请在该策略中放行 FlClash 或关闭策略后重试。";
+      "Windows 拒绝运行 FlClashCore.exe（错误 ${code}）。智能应用控制、AppLocker 等应用控制策略会拦截未签名程序，请在该策略中放行 HI2NW 或关闭策略后重试。";
 
   static String m6(name) =>
       "应用连续两次未能完成启动。为打断崩溃循环，已取消选中配置 ${name}，并跳过本次自动配置，你可以随时重新选中它。";
@@ -455,7 +455,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "core": MessageLookupByLibrary.simpleMessage("内核"),
     "coreBlockedByPolicyTip": m5,
     "coreBlockedBySmartAppControlTip": MessageLookupByLibrary.simpleMessage(
-      "Windows 智能应用控制拦截了未签名的 FlClashCore.exe。请打开 Windows 安全中心 → 应用和浏览器控制 → 智能应用控制设置，选择「关闭」后重新启动 FlClash。智能应用控制关闭后无法再开启，除非重装 Windows。",
+      "Windows 智能应用控制拦截了未签名的 FlClashCore.exe。请打开 Windows 安全中心 → 应用和浏览器控制 → 智能应用控制设置，选择「关闭」后重新启动 HI2NW。智能应用控制关闭后无法再开启，除非重装 Windows。",
     ),
     "coreStatus": MessageLookupByLibrary.simpleMessage("核心状态"),
     "country": MessageLookupByLibrary.simpleMessage("区域"),
@@ -564,7 +564,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "disclaimerChangesTitle": MessageLookupByLibrary.simpleMessage("声明变更"),
     "disclaimerDesc": MessageLookupByLibrary.simpleMessage(
-      "在使用 FlClash（以下简称“本软件”）前，请仔细阅读并充分理解本声明的全部内容。点击“同意”即表示你已阅读、理解并接受以下全部条款；如不同意，请点击“退出”并停止使用本软件。",
+      "在使用 HI2NW（以下简称“本软件”）前，请仔细阅读并充分理解本声明的全部内容。点击“同意”即表示你已阅读、理解并接受以下全部条款；如不同意，请点击“退出”并停止使用本软件。",
     ),
     "disclaimerLiabilityContent": MessageLookupByLibrary.simpleMessage(
       "在适用法律允许的最大范围内，开发者及所有贡献者均不对因使用或无法使用本软件而产生的任何直接、间接、偶然、特殊、惩罚性或后果性损害承担责任，包括但不限于数据丢失、设备损坏、网络异常、业务中断、利润损失或因此引起的任何法律纠纷，即使已被告知发生此类损害的可能性。",
@@ -774,7 +774,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "healthCheckTimeout": MessageLookupByLibrary.simpleMessage("超时（毫秒）"),
     "healthCheckUrl": MessageLookupByLibrary.simpleMessage("检测 URL"),
     "helperCorruptTip": MessageLookupByLibrary.simpleMessage(
-      "Helper 服务不可用，无法启用 TUN 模式，请重新安装 FlClash。",
+      "Helper 服务不可用，无法启用 TUN 模式，请重新安装 HI2NW。",
     ),
     "hex": MessageLookupByLibrary.simpleMessage("十六进制"),
     "hideFromList": MessageLookupByLibrary.simpleMessage("从列表中隐藏"),
@@ -844,7 +844,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "init": MessageLookupByLibrary.simpleMessage("初始化"),
     "initFailed": MessageLookupByLibrary.simpleMessage("启动失败"),
     "initFailedTip": MessageLookupByLibrary.simpleMessage(
-      "FlClash 启动时出错，无法继续运行。可以复制错误详情用于反馈；如果问题反复出现，清除数据后通常可以重新启动。",
+      "HI2NW 启动时出错，无法继续运行。可以复制错误详情用于反馈；如果问题反复出现，清除数据后通常可以重新启动。",
     ),
     "initiator": MessageLookupByLibrary.simpleMessage("发起方"),
     "initiatorShort": MessageLookupByLibrary.simpleMessage("发起"),
@@ -1581,10 +1581,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "已发送，请在另一台设备上确认导入。",
     ),
     "sendFromPhonePageTitle": MessageLookupByLibrary.simpleMessage(
-      "把链接发送到 FlClash",
+      "把链接发送到 HI2NW",
     ),
     "sendFromPhonePermissionDenied": MessageLookupByLibrary.simpleMessage(
-      "从手机接收链接需要「附近的设备」权限，FlClash 才能访问局域网。请在应用设置中开启。",
+      "从手机接收链接需要「附近的设备」权限，HI2NW 才能访问局域网。请在应用设置中开启。",
     ),
     "sendFromPhoneTip": MessageLookupByLibrary.simpleMessage(
       "用手机相机扫描二维码，在打开的页面里粘贴链接。两台设备需要连在同一个网络。",
@@ -1614,7 +1614,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "shareLinkUnreadable": m84,
     "shareLinksInvalid": MessageLookupByLibrary.simpleMessage("无法从链接中读取代理"),
     "shareQrcodeTip": MessageLookupByLibrary.simpleMessage(
-      "在另一台设备上用 FlClash 扫码即可导入此配置。",
+      "在另一台设备上用 HI2NW 扫码即可导入此配置。",
     ),
     "show": MessageLookupByLibrary.simpleMessage("显示"),
     "showLess": MessageLookupByLibrary.simpleMessage("收起"),

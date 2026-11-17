@@ -1,4 +1,4 @@
-display_name: FlClash
+display_name: HI2NW
 
 icon: ./assets/images/icon.png
 
@@ -8,12 +8,13 @@ supported_mime_type:
   - x-scheme-handler/flclash
 
 keywords:
+  - HI2NW
   - FlClash
   - Clash
   - ClashMeta
   - Proxy
 
-generic_name: FlClash
+generic_name: HI2NW
 
 categories:
   - Network

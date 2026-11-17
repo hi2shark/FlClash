@@ -8,7 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod/riverpod.dart';
 
 final _packageInfo = PackageInfo(
-  appName: 'FlClash',
+  appName: appName,
   packageName: 'com.hi2shark.flclash_nw',
   version: '1.2.3',
   buildNumber: '1',
@@ -44,7 +44,7 @@ void main() {
       setGlobalUa('');
 
       expect(globalState.ua, _packageInfo.ua);
-      expect(globalState.ua, contains('FlClash/v1.2.3'));
+      expect(globalState.ua, contains('$appName/v1.2.3'));
     });
 
     test('prefers the configured global user agent', () {
