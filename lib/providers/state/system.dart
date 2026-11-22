@@ -243,6 +243,46 @@ Future<List<String>> vpnRouteAddress(Ref ref) {
   return routes.vpnRouteAddress(bypassPrivateRoute: bypassPrivateRoute);
 }
 
+List<String> _nativeIncludeRoutes(List<String> routeAddress) {
+  if (routeAddress.isEmpty) {
+    return const [];
+  }
+  var hasIpv4 = false;
+  var hasIpv6 = false;
+  for (final route in routeAddress) {
+    if (!isCidr(route)) {
+      continue;
+    }
+    if (route.contains(':')) {
+      hasIpv6 = true;
+    } else {
+      hasIpv4 = true;
+    }
+  }
+  if (!hasIpv4 && !hasIpv6) {
+    return const [];
+  }
+  return [if (!hasIpv4) '0.0.0.0/0', ...routeAddress, if (!hasIpv6) '::/0'];
+}
+
+@visibleForTesting
+Future<({List<String> include, List<String> exclude})> resolveVpnRoutes({
+  required Tun tun,
+  required bool bypassPrivateRoute,
+  required bool nativeExcludeSupported,
+}) async {
+  if (nativeExcludeSupported) {
+    return (
+      include: _nativeIncludeRoutes(tun.routeAddress),
+      exclude: tun.excludedRoutes(bypassPrivateRoute: bypassPrivateRoute),
+    );
+  }
+  return (
+    include: await tun.vpnRouteAddress(bypassPrivateRoute: bypassPrivateRoute),
+    exclude: const <String>[],
+  );
+}
+
 @Riverpod(keepAlive: true)
 Future<VpnOptions> vpnOptions(Ref ref) async {
   final networkSetting = ref.watch(
@@ -264,8 +304,22 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
   );
   final vpnSetting = ref.watch(vpnSettingProvider);
   final safeMode = ref.watch(safeModeProvider);
-  final routeAddress = ref.watch(vpnRouteAddressProvider.future);
   final tun = clashConfig.tun;
+  final nativeExclude = system.isAndroid && ref.watch(versionProvider) >= 33;
+  final List<String> routeAddress;
+  final List<String> routeExcludeAddress;
+  if (nativeExclude) {
+    final bypassPrivateRoute = ref.watch(
+      networkSettingProvider.select((state) => state.bypassPrivateRoute),
+    );
+    routeAddress = _nativeIncludeRoutes(tun.routeAddress);
+    routeExcludeAddress = tun.excludedRoutes(
+      bypassPrivateRoute: bypassPrivateRoute,
+    );
+  } else {
+    routeAddress = await ref.watch(vpnRouteAddressProvider.future);
+    routeExcludeAddress = const [];
+  }
   return VpnOptions(
     enable: vpnSetting.enable && !safeMode,
     stack: tun.stack.name,
@@ -280,7 +334,8 @@ Future<VpnOptions> vpnOptions(Ref ref) async {
     accessControlProps: vpnSetting.accessControlProps,
     allowBypass: vpnSetting.allowBypass,
     bypassDomain: networkSetting.bypassDomain,
-    routeAddress: await routeAddress,
+    routeAddress: routeAddress,
+    routeExcludeAddress: routeExcludeAddress,
     mtu: tun.mtu,
     congestionController: tun.congestionController,
   );
@@ -293,10 +348,33 @@ class AccessControlState extends _$AccessControlState
   AccessControlProps build() => const AccessControlProps();
 }
 
+@visibleForTesting
+bool resolveSuspendState({
+  required bool isAndroid,
+  required bool androidSuspended,
+  required bool onDemandEnabled,
+  required List<String> excludeSSIDs,
+  required String? currentSSID,
+}) {
+  if (isAndroid) {
+    return androidSuspended;
+  }
+  return onDemandEnabled && excludeSSIDs.contains(currentSSID);
+}
+
 @riverpod
 bool suspend(Ref ref) {
+  if (system.isAndroid) {
+    return ref.watch(androidServiceSuspendedProvider);
+  }
   final onDemandEnabled = ref.watch(onDemandEnabledProvider);
   final currentSSID = ref.watch(currentSSIDProvider);
   final excludeSSIDs = ref.watch(excludeSSIDsProvider);
-  return onDemandEnabled && excludeSSIDs.contains(currentSSID);
+  return resolveSuspendState(
+    isAndroid: false,
+    androidSuspended: false,
+    onDemandEnabled: onDemandEnabled,
+    excludeSSIDs: excludeSSIDs,
+    currentSSID: currentSSID,
+  );
 }

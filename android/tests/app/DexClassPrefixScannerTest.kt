@@ -123,6 +123,22 @@ class DexClassPrefixScannerTest {
         assertArrayEquals(expectedNat64, nat64.address.address)
     }
 
+    @Test
+    fun `Core constructs socket addresses from raw IPv4 and IPv6 bytes`() {
+        val v4 = Core.toInetSocketAddress(byteArrayOf(10, 0, 0, 2), 8080)
+        assertEquals(8080, v4.port)
+        assertArrayEquals(byteArrayOf(10, 0, 0, 2), v4.address.address)
+
+        val v6Bytes = ByteArray(16).apply {
+            this[0] = 0x20
+            this[1] = 0x01
+            this[15] = 1
+        }
+        val v6 = Core.toInetSocketAddress(v6Bytes, 443)
+        assertEquals(443, v6.port)
+        assertArrayEquals(v6Bytes, v6.address.address)
+    }
+
     private fun buildMinimalDex(
         definedTypes: List<String>,
         extraReferencedTypes: List<String> = emptyList(),

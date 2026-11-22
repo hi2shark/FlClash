@@ -268,7 +268,7 @@ class SetupAction extends _$SetupAction {
       if (!_isCurrent(request)) {
         return true;
       }
-      if (request.running && ref.read(suspendProvider)) {
+      if (request.running && !system.isAndroid && ref.read(suspendProvider)) {
         return true;
       }
       if (ref.read(safeModeProvider)) {
@@ -294,6 +294,9 @@ class SetupAction extends _$SetupAction {
 
   /// An excluded SSID parks the listener without ending the run.
   void syncSuspend() {
+    if (system.isAndroid) {
+      return;
+    }
     debouncer.call(FunctionTag.suspend, () {
       return _listenerScheduler.run(() async {
         if (!ref.read(isStartProvider) || ref.read(safeModeProvider)) {

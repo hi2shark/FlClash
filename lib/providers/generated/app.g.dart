@@ -1576,7 +1576,7 @@ final class DelayDataSourceProvider
   }
 }
 
-String _$delayDataSourceHash() => r'fdf5b512ab2557762daf3712dde212b6fda22eef';
+String _$delayDataSourceHash() => r'c282e0d3ad767f1d9141ac53c493d83bb9498ece';
 
 abstract class _$DelayDataSource extends $Notifier<DelayMap> {
   DelayMap build();
@@ -2383,7 +2383,7 @@ final class WifiWatchProvider
         argument: null,
         retry: null,
         name: r'wifiWatchProvider',
-        isAutoDispose: false,
+        isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -2404,7 +2404,7 @@ final class WifiWatchProvider
   }
 }
 
-String _$wifiWatchHash() => r'6cd48613cfdf8e8146f8c7ea3b2f409516886cf8';
+String _$wifiWatchHash() => r'887ef8e4bc4bd5c58cd06ee10c988039fc5650e4';
 
 abstract class _$WifiWatch extends $Notifier<WifiWatchState> {
   WifiWatchState build();

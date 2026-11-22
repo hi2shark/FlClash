@@ -104,8 +104,9 @@ class _AccessViewState extends ConsumerState<AccessView>
   @override
   void dispose() {
     _controller.dispose();
-    // Release full package list when leaving Access page.
+    // Release full package list and icon references when leaving Access page.
     _packagesNotifier.value = [];
+    app?.clearPackageIconCache();
     super.dispose();
   }
 

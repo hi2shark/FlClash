@@ -25,6 +25,7 @@ data class VpnOptions(
     val bypassDomain: List<String>,
     val stack: String,
     val routeAddress: List<String>,
+    val routeExcludeAddress: List<String>? = null,
     val mtu: Int = 0,
     val congestionController: String? = null,
 )
@@ -59,6 +60,16 @@ fun VpnOptions.getIpv4RouteAddress(): List<CIDR> = routeAddress
 
 fun VpnOptions.getIpv6RouteAddress(): List<CIDR> = routeAddress
     .map(String::toCIDR)
+    .filter { it.address is Inet6Address }
+
+fun VpnOptions.getIpv4RouteExcludeAddress(): List<CIDR> = routeExcludeAddress
+    .orEmpty()
+    .mapNotNull { runCatching { it.toCIDR() }.getOrNull() }
+    .filter { it.address is Inet4Address }
+
+fun VpnOptions.getIpv6RouteExcludeAddress(): List<CIDR> = routeExcludeAddress
+    .orEmpty()
+    .mapNotNull { runCatching { it.toCIDR() }.getOrNull() }
     .filter { it.address is Inet6Address }
 
 fun String.toCIDR(): CIDR {

@@ -177,6 +177,14 @@ class Service {
         '{}';
   }
 
+  Future<bool> setForeground(bool foreground) async {
+    return await methodChannel.invokeMethod<bool>(
+          'setForeground',
+          foreground,
+        ) ??
+        false;
+  }
+
   bool get hasListeners {
     return _listeners.isNotEmpty;
   }

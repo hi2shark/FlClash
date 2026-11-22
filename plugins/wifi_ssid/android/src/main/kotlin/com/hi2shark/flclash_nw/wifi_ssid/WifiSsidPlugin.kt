@@ -27,6 +27,8 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.RequestPermissionsResultListener
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler, ActivityAware {
     private lateinit var channel: MethodChannel
@@ -46,11 +48,13 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     @Volatile
     private var hasPendingSsid = false
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var workerExecutor: ExecutorService? = null
     private var ssidTimeout: Runnable? = null
     // Trust-scoped snapshot published to watchValidatedWifiSsid(); the on-demand
     // getSsid lookup reads wifiInfoByNetwork instead.
     private val wifiNetworksLock = Any()
     private val wifiNetworks = linkedMapOf<Network, WifiNetworkStatus>()
+    private val reconcileLock = Any()
     private var wifiResolutionReconcileRunnable: Runnable? = null
     private var wifiResolutionReconcileAttempts = 0
 
@@ -133,8 +137,8 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         connectivityManager = binding.applicationContext.getSystemService(
             Context.CONNECTIVITY_SERVICE,
         ) as? ConnectivityManager
-        if (hasForegroundLocation(binding.applicationContext)) {
-            registerWifiNetworkCallback()
+        workerExecutor = Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "WifiSsidWorker").apply { isDaemon = true }
         }
     }
 
@@ -147,6 +151,8 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         eventSink = null
         stopWifiNetworkWatch()
         unregisterWifiNetworkCallback()
+        workerExecutor?.shutdownNow()
+        workerExecutor = null
         detachFromActivity(cancelPermissionRequest = true)
         context = null
         wifiManager = null
@@ -192,6 +198,9 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     override fun onCancel(arguments: Any?) {
         stopWifiNetworkWatch()
         eventSink = null
+        if (!hasPendingSsid) {
+            unregisterWifiNetworkCallback()
+        }
     }
 
     private fun checkPermission(result: Result) {
@@ -407,8 +416,32 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
             result.error(ERROR_UNAVAILABLE, "WifiManager not available", null)
             return
         }
-        @Suppress("DEPRECATION")
-        result.success(normalizeSsid(wm.connectionInfo?.ssid))
+        runOffMainThread(
+            work = {
+                @Suppress("DEPRECATION")
+                normalizeSsid(wm.connectionInfo?.ssid)
+            },
+            onResult = { ssid -> result.success(ssid) },
+        )
+    }
+
+    private fun runOffMainThread(
+        work: () -> Any?,
+        onResult: (Any?) -> Unit,
+    ) {
+        val executor = workerExecutor
+        if (executor == null || executor.isShutdown) {
+            onResult(null)
+            return
+        }
+        runCatching {
+            executor.execute {
+                val value = runCatching(work).getOrNull()
+                mainHandler.post { onResult(value) }
+            }
+        }.onFailure {
+            onResult(null)
+        }
     }
 
     private fun currentSsid(): String? {
@@ -426,16 +459,15 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     }
 
     private fun getCurrentWifiInfo(result: Result) {
-        val status = currentWifiInfo()
-        if (status == null) {
-            result.success(null)
-            return
-        }
-        result.success(
-            mapOf(
-                "ssid" to status.ssid,
-                "rssi" to status.rssi,
-            ),
+        runOffMainThread(
+            work = {
+                val status = currentWifiInfo() ?: return@runOffMainThread null
+                mapOf(
+                    "ssid" to status.ssid,
+                    "rssi" to status.rssi,
+                )
+            },
+            onResult = { payload -> result.success(payload) },
         )
     }
 
@@ -537,7 +569,9 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
 
     private fun refreshWifiNetworkCallback() {
         unregisterWifiNetworkCallback()
-        registerWifiNetworkCallback()
+        if (eventSink != null || hasPendingSsid) {
+            registerWifiNetworkCallback()
+        }
     }
 
     private fun registerWifiNetworkCallback(): Boolean {
@@ -664,6 +698,9 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         val results = pendingSsidResults.toList()
         pendingSsidResults.clear()
         hasPendingSsid = false
+        if (eventSink == null) {
+            unregisterWifiNetworkCallback()
+        }
         results.forEach { result ->
             if (errorMessage == null) {
                 result.success(ssid)
@@ -691,7 +728,7 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         }
         stopWifiNetworkWatch()
         registerWifiNetworkCallback()
-        updateKnownWifiNetworks(cm)
+        runOffMainThread(work = { updateKnownWifiNetworks(cm) }, onResult = {})
     }
 
     private fun stopWifiNetworkWatch() {
@@ -705,7 +742,9 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         if (eventSink == null) {
             return
         }
-        connectivityManager?.let(::updateKnownWifiNetworks)
+        connectivityManager?.let { cm ->
+            runOffMainThread(work = { updateKnownWifiNetworks(cm) }, onResult = {})
+        }
     }
 
     private fun markWifiNetworkAvailable(network: Network) {
@@ -810,53 +849,78 @@ class WifiSsidPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     }
 
     private fun scheduleWifiResolutionReconcile(reason: String) {
-        if (wifiResolutionReconcileRunnable != null) {
-            return
-        }
-        log(
-            "start unresolved SSID reconcile reason=$reason interval=" +
-                "${SSID_RECONCILE_INTERVAL_MILLIS}ms maxAttempts=$MAX_SSID_RECONCILE_ATTEMPTS",
-        )
-        wifiResolutionReconcileAttempts = 0
-        val runnable = object : Runnable {
-            override fun run() {
-                val cm = connectivityManager ?: run {
-                    stopWifiResolutionReconcile("ConnectivityManager unavailable")
-                    return
-                }
-                wifiResolutionReconcileAttempts += 1
-                log(
-                    "unresolved SSID reconcile attempt=$wifiResolutionReconcileAttempts/" +
-                        MAX_SSID_RECONCILE_ATTEMPTS,
-                )
-                updateKnownWifiNetworks(cm)
-                if (!shouldRetryWifiResolution()) {
-                    stopWifiResolutionReconcile(
-                        "WiFi state resolved after attempt=$wifiResolutionReconcileAttempts",
+        val runnable = synchronized(reconcileLock) {
+            if (wifiResolutionReconcileRunnable != null) {
+                return
+            }
+            log(
+                "start unresolved SSID reconcile reason=$reason interval=" +
+                    "${SSID_RECONCILE_INTERVAL_MILLIS}ms maxAttempts=$MAX_SSID_RECONCILE_ATTEMPTS",
+            )
+            wifiResolutionReconcileAttempts = 0
+            val next = object : Runnable {
+                override fun run() {
+                    val cm = connectivityManager ?: run {
+                        stopWifiResolutionReconcile("ConnectivityManager unavailable")
+                        return
+                    }
+                    val attempt = synchronized(reconcileLock) {
+                        if (wifiResolutionReconcileRunnable !== this) {
+                            return
+                        }
+                        wifiResolutionReconcileAttempts += 1
+                        wifiResolutionReconcileAttempts
+                    }
+                    log(
+                        "unresolved SSID reconcile attempt=$attempt/" +
+                            MAX_SSID_RECONCILE_ATTEMPTS,
                     )
-                    return
-                }
-                if (wifiResolutionReconcileAttempts >= MAX_SSID_RECONCILE_ATTEMPTS) {
-                    log("unresolved SSID reconcile exhausted attempts")
-                    wifiResolutionReconcileRunnable = null
-                    wifiResolutionReconcileAttempts = 0
-                    return
-                }
-                if (wifiResolutionReconcileRunnable === this) {
-                    mainHandler.postDelayed(this, SSID_RECONCILE_INTERVAL_MILLIS)
+                    runOffMainThread(
+                        work = {
+                            updateKnownWifiNetworks(cm)
+                            shouldRetryWifiResolution()
+                        },
+                        onResult = { retry ->
+                            val shouldPost = synchronized(reconcileLock) {
+                                if (wifiResolutionReconcileRunnable !== this) {
+                                    null
+                                } else if (retry != true) {
+                                    false
+                                } else if (attempt >= MAX_SSID_RECONCILE_ATTEMPTS) {
+                                    log("unresolved SSID reconcile exhausted attempts")
+                                    wifiResolutionReconcileRunnable = null
+                                    wifiResolutionReconcileAttempts = 0
+                                    null
+                                } else {
+                                    true
+                                }
+                            }
+                            if (shouldPost == false) {
+                                stopWifiResolutionReconcile(
+                                    "WiFi state resolved after attempt=$attempt",
+                                )
+                            } else if (shouldPost == true) {
+                                mainHandler.postDelayed(this, SSID_RECONCILE_INTERVAL_MILLIS)
+                            }
+                        },
+                    )
                 }
             }
+            wifiResolutionReconcileRunnable = next
+            next
         }
-        wifiResolutionReconcileRunnable = runnable
         mainHandler.postDelayed(runnable, SSID_RECONCILE_INTERVAL_MILLIS)
     }
 
     private fun stopWifiResolutionReconcile(reason: String) {
-        val runnable = wifiResolutionReconcileRunnable ?: return
+        val runnable = synchronized(reconcileLock) {
+            val active = wifiResolutionReconcileRunnable ?: return
+            wifiResolutionReconcileRunnable = null
+            wifiResolutionReconcileAttempts = 0
+            active
+        }
         log("cancel unresolved SSID reconcile: $reason")
         mainHandler.removeCallbacks(runnable)
-        wifiResolutionReconcileRunnable = null
-        wifiResolutionReconcileAttempts = 0
     }
 
     private fun wifiVerdict(): WifiVerdict {

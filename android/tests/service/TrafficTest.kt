@@ -64,4 +64,15 @@ class TrafficTest {
         assertTrue(text.indexOf("↑") < text.indexOf("↓"))
         assertEquals("1B/s↑  2B/s↓", text)
     }
+
+    @Test
+    fun `decodes 16-byte big-endian traffic payload`() {
+        val bytes = byteArrayOf(
+            0, 0, 0, 0, 0, 0, 0x04, 0x00,
+            0, 0, 0, 0, 0, 0, 0x08, 0x00,
+        )
+        assertEquals(Traffic(up = 1024L, down = 2048L), parseTrafficBytes(bytes))
+        assertEquals(null, parseTrafficBytes(null))
+        assertEquals(null, parseTrafficBytes(byteArrayOf(1, 2, 3)))
+    }
 }

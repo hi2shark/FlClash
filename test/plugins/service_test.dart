@@ -168,6 +168,19 @@ void main() {
       expect(sent['currentProfileName'], 'profile');
       expect(sent['onlyStatisticsProxy'], isTrue);
     });
+
+    test('setForeground relays the foreground flag to the platform', () async {
+      mockChannel((_) async => null);
+
+      await Service().setForeground(false);
+      await Service().setForeground(true);
+
+      expect(calls.map((call) => call.method), [
+        'setForeground',
+        'setForeground',
+      ]);
+      expect(calls.map((call) => call.arguments), [false, true]);
+    });
   });
 
   group('stop reports', () {

@@ -13,7 +13,7 @@ type ResultHandler interface {
 
 type TunHandler interface {
 	Protect(fd int32) (bool, error)
-	ResolveUid(protocol int32, source, target string) (int32, error)
+	ResolveUid(protocol int32, srcIp []byte, srcPort int32, dstIp []byte, dstPort int32) (int32, error)
 	ResolvePackage(uid int32) (string, error)
 }
 
@@ -26,8 +26,8 @@ func (c tunCallbacks) Protect(fd int) bool {
 	return err == nil && protected
 }
 
-func (c tunCallbacks) ResolveUid(protocol int, source, target string) int {
-	uid, err := c.handler.ResolveUid(int32(protocol), source, target)
+func (c tunCallbacks) ResolveUid(protocol int, srcIp []byte, srcPort int, dstIp []byte, dstPort int) int {
+	uid, err := c.handler.ResolveUid(int32(protocol), srcIp, int32(srcPort), dstIp, int32(dstPort))
 	if err != nil {
 		return -1
 	}
@@ -92,8 +92,20 @@ func ResetNetwork() {
 	core.ResetNetwork()
 }
 
+func SetBulkEventsPaused(paused bool) {
+	core.SetBulkEventsPaused(paused)
+}
+
+func ClearPackageCache() {
+	core.ClearPackageCache()
+}
+
 func GetTraffic(onlyStatisticsProxy bool) string {
 	return core.GetTraffic(onlyStatisticsProxy)
+}
+
+func GetTrafficBytes(onlyStatisticsProxy bool) []byte {
+	return core.GetTrafficBytes(onlyStatisticsProxy)
 }
 
 func GetTotalTraffic(onlyStatisticsProxy bool) string {

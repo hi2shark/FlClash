@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.Components
 import com.hi2shark.flclash_nw.common.GlobalState
@@ -77,12 +78,15 @@ private fun buildServiceNotification(
     params: ExtendedNotificationParams,
     builder: NotificationCompat.Builder = createNotificationBuilder(service),
     stopPendingIntent: android.app.PendingIntent = QuickAction.STOP.quickIntent.toPendingIntent,
+    updateActions: Boolean = true,
 ): Notification = with(builder) {
     setContentTitle(params.title)
     setContentText(params.contentText)
-    clearActions()
-    if (params.showStopAction) {
-        addAction(0, params.stopText, stopPendingIntent)
+    if (updateActions) {
+        clearActions()
+        if (params.showStopAction) {
+            addAction(0, params.stopText, stopPendingIntent)
+        }
     }
     build()
 }
@@ -111,12 +115,16 @@ internal class NotificationModule(
     private val service: Service,
     private val scope: CoroutineScope,
 ) : ServiceModule {
+    private var lastActionState: Pair<Boolean, String>? = null
+
     override fun start() {
         service.ensureNotificationChannel()
+        val initial = ServiceConfig.notificationParams.value.extended
+        lastActionState = initial.showStopAction to initial.stopText
         service.startForeground(
             buildServiceNotification(
                 service = service,
-                params = ServiceConfig.notificationParams.value.extended,
+                params = initial,
                 builder = notificationBuilder,
                 stopPendingIntent = stopIntent,
             ),
@@ -130,12 +138,17 @@ internal class NotificationModule(
                 addAction(Intent.ACTION_SCREEN_ON)
                 addAction(Intent.ACTION_SCREEN_OFF)
                 addAction(Intent.ACTION_USER_PRESENT)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    addAction(NotificationManager.ACTION_APP_BLOCK_STATE_CHANGED)
+                }
             }.map { intent ->
-                intent.action != Intent.ACTION_SCREEN_OFF
+                val screenOn = intent.action == Intent.ACTION_SCREEN_ON ||
+                    (intent.action != Intent.ACTION_SCREEN_OFF && isScreenOn())
+                screenOn && areNotificationsEnabled()
             }.onStart {
-                emit(isScreenOn())
-            }.collectLatest { screenOn ->
-                if (!screenOn) return@collectLatest
+                emit(isScreenOn() && areNotificationsEnabled())
+            }.collectLatest { active ->
+                if (!active) return@collectLatest
                 combine(
                     flow {
                         while (true) {
@@ -157,6 +170,9 @@ internal class NotificationModule(
     private fun isScreenOn() =
         service.getSystemService<PowerManager>()?.isInteractive ?: true
 
+    private fun areNotificationsEnabled() =
+        NotificationManagerCompat.from(service).areNotificationsEnabled()
+
     private val notificationBuilder: NotificationCompat.Builder by lazy {
         createNotificationBuilder(service)
     }
@@ -164,6 +180,9 @@ internal class NotificationModule(
     private val stopIntent by lazy { QuickAction.STOP.quickIntent.toPendingIntent }
 
     private fun update(params: ExtendedNotificationParams) {
+        val actionState = params.showStopAction to params.stopText
+        val actionsChanged = actionState != lastActionState
+        lastActionState = actionState
         service.getSystemService<NotificationManager>()?.notify(
             GlobalState.NOTIFICATION_ID,
             buildServiceNotification(
@@ -171,6 +190,7 @@ internal class NotificationModule(
                 params = params,
                 builder = notificationBuilder,
                 stopPendingIntent = stopIntent,
+                updateActions = actionsChanged,
             ),
         )
     }

@@ -57,11 +57,13 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
         ref.read(proxiesActionProvider.notifier).updateGroupsDebounce();
       }
     });
-    ref.listenManual(suspendProvider, (prev, next) {
-      if (prev != next) {
-        ref.read(setupActionProvider.notifier).syncSuspend();
-      }
-    });
+    if (!system.isAndroid) {
+      ref.listenManual(suspendProvider, (prev, next) {
+        if (prev != next) {
+          ref.read(setupActionProvider.notifier).syncSuspend();
+        }
+      });
+    }
     final systemDns = systemDnsCoordinator;
     if (systemDns != null) {
       ref.listenManual(shouldPatchSystemDnsProvider, (prev, next) {

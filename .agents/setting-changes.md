@@ -120,7 +120,8 @@ asks for nothing. The tap runs `SetupAction.restartVpn`: a stop, then a start, a
 | `systemProxy`          | `VpnProps.systemProxy`, off under local auth or safe mode     | with the VPN                           |
 | `port`                 | `PatchClashConfig.mixedPort`                                  | with `systemProxy`                     |
 | `bypassDomain`         | `NetworkProps.bypassDomain`                                   | with `systemProxy`                     |
-| `routeAddress`         | `Tun.routeAddress` and `bypassPrivateRoute`                   | with the VPN                           |
+| `routeAddress`         | `Tun.routeAddress` and `bypassPrivateRoute` (< API 33)        | with the VPN                           |
+| `routeExcludeAddress`  | `Tun.routeExcludeAddress` and `bypassPrivateRoute` (API 33+)  | with the VPN                           |
 | `mtu`                  | `Tun`                                                         | with the VPN                           |
 | `congestionController` | `Tun`                                                         | with the VPN                           |
 

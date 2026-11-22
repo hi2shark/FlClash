@@ -16,6 +16,7 @@ class ConnectivityManager extends ConsumerStatefulWidget {
   final Function(List<ConnectivityResult> results)? onConnectivityChanged;
   final Stream<List<ConnectivityResult>>? connectivityStream;
   final SsidReader? readSsid;
+  final bool? isAndroid;
   final Widget child;
 
   const ConnectivityManager({
@@ -23,6 +24,7 @@ class ConnectivityManager extends ConsumerStatefulWidget {
     this.onConnectivityChanged,
     this.connectivityStream,
     this.readSsid,
+    @visibleForTesting this.isAndroid,
     required this.child,
   });
 
@@ -33,9 +35,10 @@ class ConnectivityManager extends ConsumerStatefulWidget {
 
 class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
   late final StreamSubscription subscription;
-  StreamSubscription<String?>? validatedWifiSsidSubscription;
   late final SsidReader _readSsid =
       widget.readSsid ?? WifiSsidManager.instance.getSsid;
+
+  bool get _isAndroid => widget.isAndroid ?? system.isAndroid;
 
   int _ssidRequestId = 0;
   bool _onWifi = false;
@@ -46,54 +49,40 @@ class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
     final stream =
         widget.connectivityStream ?? Connectivity().onConnectivityChanged;
     subscription = stream.listen(_handleResults);
-    if (system.isAndroid) {
-      validatedWifiSsidSubscription = WifiSsidManager.instance
-          .watchValidatedWifiSsid()
-          .listen(
-            (ssid) {
-              ref.read(currentSSIDProvider.notifier).value = ssid;
-              commonPrint.log(
-                'Validated Wi-fi SSID: $ssid',
-                logLevel: LogLevel.info,
-              );
-            },
-            onError: (_) {
-              ref.read(currentSSIDProvider.notifier).value = null;
-            },
-          );
+    if (!_isAndroid) {
+      ref.listenManual(
+        excludeSSIDsProvider.select((state) => state.isNotEmpty),
+        (previous, next) {
+          if (previous != next) {
+            unawaited(_updateSsid());
+          }
+        },
+      );
+      ref.listenManual(
+        locationPermissionsProvider.select(
+          (permission) => permission == WifiSsidPermission.granted,
+        ),
+        (previous, next) {
+          if (previous != next) {
+            unawaited(_updateSsid());
+          }
+        },
+      );
     }
-    ref.listenManual(excludeSSIDsProvider.select((state) => state.isNotEmpty), (
-      previous,
-      next,
-    ) {
-      if (previous != next) {
-        unawaited(_updateSsid());
-      }
-    });
-    ref.listenManual(
-      locationPermissionsProvider.select(
-        (permission) => permission == WifiSsidPermission.granted,
-      ),
-      (previous, next) {
-        if (previous != next) {
-          unawaited(_updateSsid());
-        }
-      },
-    );
   }
 
   void _handleResults(List<ConnectivityResult> results) {
     _onWifi = results.contains(ConnectivityResult.wifi);
-    unawaited(_updateSsid());
+    if (!_isAndroid) {
+      unawaited(_updateSsid());
+    }
     widget.onConnectivityChanged?.call(results);
   }
 
   Future<void> _updateSsid() async {
     final requestId = ++_ssidRequestId;
-    // The SSID costs a blocking platform call and a location permission on
-    // Android, macOS and Windows, and nothing reads it until a network is
-    // excluded.
-    if (!_onWifi ||
+    if (_isAndroid ||
+        !_onWifi ||
         ref.read(safeModeProvider) ||
         ref.read(excludeSSIDsProvider).isEmpty) {
       _publishSsid(requestId, null);
@@ -124,7 +113,6 @@ class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
   @override
   void dispose() {
     subscription.cancel();
-    validatedWifiSsidSubscription?.cancel();
     super.dispose();
   }
 

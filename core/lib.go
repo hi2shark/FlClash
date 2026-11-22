@@ -5,10 +5,12 @@ package core
 import (
 	"core/platform"
 	t "core/tun"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -24,7 +26,7 @@ import (
 
 type TunCallbacks interface {
 	Protect(fd int) bool
-	ResolveUid(protocol int, source, target string) int
+	ResolveUid(protocol int, srcIp []byte, srcPort int, dstIp []byte, dstPort int) int
 	ResolvePackage(uid int) string
 }
 
@@ -35,8 +37,9 @@ var (
 )
 
 type TunHandler struct {
-	listener  *sing_tun.Listener
-	callbacks TunCallbacks
+	listener    *sing_tun.Listener
+	callbacks   TunCallbacks
+	uidPackages sync.Map
 
 	mu sync.RWMutex
 }
@@ -80,6 +83,7 @@ func (th *TunHandler) clear() {
 	}
 	th.callbacks = nil
 	th.listener = nil
+	th.uidPackages.Clear()
 }
 
 // A refused protect never fails the dial: mihomo's tunnel retries a failed
@@ -93,6 +97,33 @@ func (th *TunHandler) handleProtect(fd int) {
 		return
 	}
 	th.callbacks.Protect(fd)
+}
+
+func addrBytesAndPort(addr net.Addr) ([]byte, int) {
+	var ip net.IP
+	var port int
+	switch a := addr.(type) {
+	case *net.TCPAddr:
+		ip, port = a.IP, a.Port
+	case *net.UDPAddr:
+		ip, port = a.IP, a.Port
+	default:
+		ap, err := netip.ParseAddrPort(addr.String())
+		if err != nil {
+			return nil, -1
+		}
+		return ap.Addr().Unmap().AsSlice(), int(ap.Port())
+	}
+	if port < 0 || port > 65535 {
+		return nil, -1
+	}
+	if v4 := ip.To4(); v4 != nil {
+		return v4, port
+	}
+	if v6 := ip.To16(); v6 != nil {
+		return v6, port
+	}
+	return nil, -1
 }
 
 func (th *TunHandler) handleResolveProcess(source, target net.Addr) (int, string) {
@@ -113,12 +144,24 @@ func (th *TunHandler) handleResolveProcess(source, target net.Addr) (int, string
 	if sdkVersion.Load() < 29 {
 		uid = platform.QuerySocketUidFromProcFs(source, target)
 	} else {
-		uid = th.callbacks.ResolveUid(protocol, source.String(), target.String())
+		srcIp, srcPort := addrBytesAndPort(source)
+		dstIp, dstPort := addrBytesAndPort(target)
+		if srcIp == nil || dstIp == nil {
+			return -1, ""
+		}
+		uid = th.callbacks.ResolveUid(protocol, srcIp, srcPort, dstIp, dstPort)
 	}
 	if uid < 0 {
 		return -1, ""
 	}
-	return uid, th.callbacks.ResolvePackage(uid)
+	if cached, ok := th.uidPackages.Load(uid); ok {
+		return uid, cached.(string)
+	}
+	pkg := th.callbacks.ResolvePackage(uid)
+	if pkg != "" {
+		th.uidPackages.Store(uid, pkg)
+	}
+	return uid, pkg
 }
 
 var (
@@ -316,8 +359,22 @@ func SetEventListener(listener func([]byte)) {
 	eventListener = listener
 	listening.Store(listener != nil)
 	eventListenerLock.Unlock()
+	setBulkEventsPaused(false)
 	if listener == nil {
+		currentRequestTraffic.clear()
 		stopRouteWatch()
+	}
+}
+
+func SetBulkEventsPaused(paused bool) {
+	defer recoverExport("setBulkEventsPaused")
+	setBulkEventsPaused(paused)
+}
+
+func ClearPackageCache() {
+	defer recoverExport("clearPackageCache")
+	if th := activeTunHandler.Load(); th != nil {
+		th.uidPackages.Clear()
 	}
 }
 
@@ -333,6 +390,15 @@ func GetTotalTraffic(onlyStatisticsProxy bool) string {
 func GetTraffic(onlyStatisticsProxy bool) string {
 	defer recoverExport("getTraffic")
 	return marshalResult(handleGetTraffic(onlyStatisticsProxy))
+}
+
+func GetTrafficBytes(onlyStatisticsProxy bool) []byte {
+	defer recoverExport("getTrafficBytes")
+	t := handleGetTraffic(onlyStatisticsProxy)
+	var buf [16]byte
+	binary.BigEndian.PutUint64(buf[0:8], uint64(t.Up))
+	binary.BigEndian.PutUint64(buf[8:16], uint64(t.Down))
+	return buf[:]
 }
 
 func marshalResult(value any) string {

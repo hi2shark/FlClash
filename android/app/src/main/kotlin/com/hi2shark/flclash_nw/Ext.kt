@@ -21,8 +21,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
-private const val ICON_TTL_DAYS = 1L
+private const val ICON_ORPHAN_TTL_DAYS = 30L
+private const val ICON_TOUCH_INTERVAL_DAYS = 7L
+private val iconSweepStarted = AtomicBoolean(false)
 
 val Application.sharedState: SharedState
     get() = try {
@@ -49,10 +52,15 @@ suspend fun PackageManager.getPackageIconPath(packageName: String): String =
     withContext(Dispatchers.IO) {
         val cacheDir = GlobalState.application.cacheDir
         val iconDir = File(cacheDir, "icons").apply { mkdirs() }
+        pruneStaleIconsOnce(iconDir)
         return@withContext try {
             val lastUpdateTime = getPackageInfo(packageName, 0).lastUpdateTime
             val iconFile = File(iconDir, "${packageName}_${lastUpdateTime}.webp")
-            if (iconFile.exists() && !isExpired(iconFile)) {
+            if (iconFile.exists()) {
+                val now = System.currentTimeMillis()
+                if (now - iconFile.lastModified() > TimeUnit.DAYS.toMillis(ICON_TOUCH_INTERVAL_DAYS)) {
+                    iconFile.setLastModified(now)
+                }
                 return@withContext iconFile.absolutePath
             }
             iconDir.listFiles { f -> f.name.startsWith("${packageName}_") }?.forEach(File::delete)
@@ -88,10 +96,16 @@ private suspend fun saveDrawableToFile(drawable: Drawable, file: File) {
     }
 }
 
-private fun isExpired(file: File): Boolean {
-    val now = System.currentTimeMillis()
-    val age = now - file.lastModified()
-    return age > TimeUnit.DAYS.toMillis(ICON_TTL_DAYS)
+private fun pruneStaleIconsOnce(iconDir: File) {
+    if (!iconSweepStarted.compareAndSet(false, true)) {
+        return
+    }
+    val cutoff = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(ICON_ORPHAN_TTL_DAYS)
+    iconDir.listFiles()?.forEach { file ->
+        if (file.name != "default_icon.webp" && file.lastModified() < cutoff) {
+            file.delete()
+        }
+    }
 }
 
 inline fun <reified T : FlutterPlugin> FlutterEngine.plugin(): T? {

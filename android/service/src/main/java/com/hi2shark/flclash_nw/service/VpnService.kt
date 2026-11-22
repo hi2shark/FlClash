@@ -3,6 +3,8 @@ package com.hi2shark.flclash_nw.service
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.IpPrefix
+import android.net.Network
 import android.net.ProxyInfo
 import android.os.Binder
 import android.os.Build
@@ -15,7 +17,9 @@ import com.hi2shark.flclash_nw.core.Core
 import com.hi2shark.flclash_nw.service.models.CIDR
 import com.hi2shark.flclash_nw.service.models.VpnOptions
 import com.hi2shark.flclash_nw.service.models.getIpv4RouteAddress
+import com.hi2shark.flclash_nw.service.models.getIpv4RouteExcludeAddress
 import com.hi2shark.flclash_nw.service.models.getIpv6RouteAddress
+import com.hi2shark.flclash_nw.service.models.getIpv6RouteExcludeAddress
 import com.hi2shark.flclash_nw.service.models.toCIDR
 import com.hi2shark.flclash_nw.service.models.tunMtu
 import com.hi2shark.flclash_nw.service.models.tunOptions
@@ -23,6 +27,13 @@ import com.hi2shark.flclash_nw.service.modules.ServiceModules
 import com.hi2shark.flclash_nw.service.modules.promoteToInitialForeground
 import com.hi2shark.flclash_nw.service.modules.stopForegroundCompat
 import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
 import android.net.VpnService as SystemVpnService
@@ -32,6 +43,8 @@ class VpnService : SystemVpnService(), ManagedService {
     private val binder = LocalBinder()
     private val tunLock = Any()
     private var tunRunning = false
+    private var serviceScope: CoroutineScope? = null
+    private var underlyingNetworkJob: Job? = null
 
     @Volatile
     private var running = false
@@ -59,9 +72,6 @@ class VpnService : SystemVpnService(), ManagedService {
 
     override fun setWifiSuspended(suspended: Boolean): ServiceStartResult =
         suspensionController.setWifiSuspended(suspended)
-
-    override fun setIdleSuspended(suspended: Boolean): ServiceStartResult =
-        suspensionController.setIdleSuspended(suspended)
 
     override fun getWifiWatchStateJson(): String = Gson().toJson(
         modules.wifiWatchModule?.currentState(isSuspended)
@@ -107,6 +117,9 @@ class VpnService : SystemVpnService(), ManagedService {
             ?.firstOrNull()
             ?.takeIf { it.isNotEmpty() }
             .orEmpty()
+        if (packageName.isEmpty()) {
+            return ""
+        }
         return uidPackageNameMap.putIfAbsent(uid, packageName) ?: packageName
     }
 
@@ -181,9 +194,6 @@ class VpnService : SystemVpnService(), ManagedService {
             configureAccessControl(options)
             setSession(getString(CommonR.string.app_name))
             setBlocking(false)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                setMetered(false)
-            }
             if (options.allowBypass) {
                 allowBypass()
             }
@@ -200,6 +210,7 @@ class VpnService : SystemVpnService(), ManagedService {
             establish()?.detachFd()
                 ?: error("VPN establishment was rejected by the system")
         }
+        applyUnderlyingNetwork(NetworkObserver.activePhysicalNetwork.value)
         synchronized(tunLock) {
             tunRunning = true
             try {
@@ -230,11 +241,14 @@ class VpnService : SystemVpnService(), ManagedService {
     private fun Builder.addAddressAndRoutes(options: VpnOptions) {
         val ipv4Address = IPV4_ADDRESS.toCIDR()
         addAddress(ipv4Address.address, ipv4Address.prefixLength)
-        addRoutes(
+        val hasIpv4Route = addRoutes(
             routes = options::getIpv4RouteAddress,
             fallbackAddress = NET_ANY,
             routeAll = options.routeAddress.isEmpty(),
         )
+        if (hasIpv4Route) {
+            excludeRoutes(options::getIpv4RouteExcludeAddress)
+        }
 
         if (options.ipv6) {
             try {
@@ -243,11 +257,14 @@ class VpnService : SystemVpnService(), ManagedService {
             } catch (_: Exception) {
                 GlobalState.log("IPv6 VPN address is not supported")
             }
-            addRoutes(
+            val hasIpv6Route = addRoutes(
                 routes = options::getIpv6RouteAddress,
                 fallbackAddress = NET_ANY6,
                 routeAll = options.routeAddress.isEmpty(),
             )
+            if (hasIpv6Route) {
+                excludeRoutes(options::getIpv6RouteExcludeAddress)
+            }
         }
     }
 
@@ -257,19 +274,73 @@ class VpnService : SystemVpnService(), ManagedService {
         routes: () -> List<CIDR>,
         fallbackAddress: String,
         routeAll: Boolean,
-    ) {
+    ): Boolean {
         val routeList = runCatching(routes).getOrNull()
         if (routeAll || routeList == null) {
             addRoute(fallbackAddress, 0)
-            return
+            return true
         }
-        try {
+        if (routeList.isEmpty()) {
+            return false
+        }
+        return try {
             routeList.forEach { route ->
                 addRoute(route.address, route.prefixLength)
             }
+            true
         } catch (_: Exception) {
             addRoute(fallbackAddress, 0)
+            true
         }
+    }
+
+    private fun Builder.excludeRoutes(routes: () -> List<CIDR>) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return
+        }
+        val routeList = runCatching(routes).getOrNull().orEmpty()
+        routeList.forEach { route ->
+            runCatching {
+                excludeRoute(IpPrefix(route.address, route.prefixLength))
+            }.onFailure { error ->
+                GlobalState.log(
+                    "Unable to exclude route ${route.address.hostAddress}/${route.prefixLength}: $error",
+                )
+            }
+        }
+    }
+
+    private fun applyUnderlyingNetwork(network: Network?) {
+        runCatching {
+            setUnderlyingNetworks(network?.let { arrayOf(it) })
+        }.onFailure { error ->
+            GlobalState.log("Unable to update underlying networks: $error")
+        }
+    }
+
+    private fun startObservers() {
+        stopObservers()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        serviceScope = scope
+        underlyingNetworkJob = scope.launch {
+            NetworkObserver.activePhysicalNetwork.collect { network ->
+                if (running && !isSuspended) {
+                    applyUnderlyingNetwork(network)
+                }
+            }
+        }
+        scope.launch {
+            ServiceConfig.packageCacheEpoch.drop(1).collect {
+                uidPackageNameMap.clear()
+            }
+        }
+    }
+
+    private fun stopObservers() {
+        underlyingNetworkJob?.cancel()
+        underlyingNetworkJob = null
+        serviceScope?.cancel()
+        serviceScope = null
     }
 
     private fun Builder.addDnsServers(options: VpnOptions) {
@@ -312,6 +383,7 @@ class VpnService : SystemVpnService(), ManagedService {
             modules.start()
             handleStart(requireNotNull(ServiceConfig.vpnOptions) { "VPN options are missing" })
             running = true
+            startObservers()
             // runtimeState gates setSuspended on isRunning, so it must lead.
             ServiceConfig.runtimeState.markStarted()
             suspensionController.reset()
@@ -336,6 +408,8 @@ class VpnService : SystemVpnService(), ManagedService {
     }
 
     private fun cleanup() {
+        stopObservers()
+        uidPackageNameMap.clear()
         try {
             modules.stop()
         } finally {

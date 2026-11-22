@@ -1018,6 +1018,95 @@ void main() {
     expect(zh.stopTip, isNot(en.stopTip));
     expect(zh.startTip, isNot(en.startTip));
   });
+
+  test(
+    'resolveVpnRoutes passes raw exclusions on API 33+ and subtracts otherwise',
+    () async {
+      const tun = Tun(
+        routeAddress: ['0.0.0.0/0'],
+        routeExcludeAddress: ['192.168.0.0/16'],
+      );
+
+      final native = await resolveVpnRoutes(
+        tun: tun,
+        bypassPrivateRoute: true,
+        nativeExcludeSupported: true,
+      );
+      expect(native.include, ['0.0.0.0/0', '::/0']);
+      expect(native.exclude, contains('192.168.0.0/16'));
+      expect(native.exclude, containsAll(privateRouteAddress));
+
+      final nativeIpv6Only = await resolveVpnRoutes(
+        tun: const Tun(routeAddress: ['fc00::/7']),
+        bypassPrivateRoute: false,
+        nativeExcludeSupported: true,
+      );
+      expect(nativeIpv6Only.include, ['0.0.0.0/0', 'fc00::/7']);
+
+      final nativeAll = await resolveVpnRoutes(
+        tun: const Tun(),
+        bypassPrivateRoute: true,
+        nativeExcludeSupported: true,
+      );
+      expect(nativeAll.include, isEmpty);
+      expect(nativeAll.exclude, containsAll(privateRouteAddress));
+
+      final subtracted = await resolveVpnRoutes(
+        tun: tun,
+        bypassPrivateRoute: false,
+        nativeExcludeSupported: false,
+      );
+      expect(subtracted.exclude, isEmpty);
+      expect(subtracted.include, isNot(contains('0.0.0.0/0')));
+      expect(subtracted.include, isNot(contains('192.168.0.0/16')));
+    },
+  );
+
+  test(
+    'resolveSuspendState defers to native service on Android and SSID on desktop',
+    () {
+      expect(
+        resolveSuspendState(
+          isAndroid: true,
+          androidSuspended: false,
+          onDemandEnabled: true,
+          excludeSSIDs: const ['Home'],
+          currentSSID: 'Home',
+        ),
+        isFalse,
+      );
+      expect(
+        resolveSuspendState(
+          isAndroid: true,
+          androidSuspended: true,
+          onDemandEnabled: false,
+          excludeSSIDs: const [],
+          currentSSID: null,
+        ),
+        isTrue,
+      );
+      expect(
+        resolveSuspendState(
+          isAndroid: false,
+          androidSuspended: false,
+          onDemandEnabled: true,
+          excludeSSIDs: const ['Home'],
+          currentSSID: 'Home',
+        ),
+        isTrue,
+      );
+      expect(
+        resolveSuspendState(
+          isAndroid: false,
+          androidSuspended: true,
+          onDemandEnabled: false,
+          excludeSSIDs: const ['Home'],
+          currentSSID: 'Home',
+        ),
+        isFalse,
+      );
+    },
+  );
 }
 
 TestProfiles _profiles(ProviderContainer container) {

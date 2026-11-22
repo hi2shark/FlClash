@@ -690,10 +690,10 @@ class WifiWatchStateJson extends _$WifiWatchStateJson
   }
 }
 
-@Riverpod(keepAlive: true)
-class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
-  Timer? _fallbackTimer;
-  bool _initialized = false;
+@riverpod
+class WifiWatch extends _$WifiWatch {
+  Timer? _countdownTimer;
+  bool _fetching = false;
 
   @override
   WifiWatchState build() {
@@ -701,30 +701,103 @@ class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
       return const WifiWatchState();
     }
 
-    final androidSuspended = ref.watch(androidServiceSuspendedProvider);
-    final stateJson = ref.watch(wifiWatchStateJsonProvider);
+    final isVisible = ref.read(appVisibleProvider);
+    ref.onDispose(_cancelCountdownTimer);
 
-    if (!_initialized) {
-      _initialized = true;
-      _fetch();
-      _fallbackTimer = Timer.periodic(
-        const Duration(seconds: 10),
-        (_) => _fetch(),
+    void refreshState() {
+      final nextState = buildWifiWatchState(
+        ref.read(wifiWatchStateJsonProvider),
+        ref.read(androidServiceSuspendedProvider),
       );
-      ref.onDispose(() {
-        _fallbackTimer?.cancel();
-        _fallbackTimer = null;
-        _initialized = false;
-      });
+      state = nextState;
+      _syncCountdownTimer(
+        nextState.pendingSuspendDeadline,
+        isVisible: ref.read(appVisibleProvider),
+      );
     }
 
-    return buildWifiWatchState(stateJson, androidSuspended);
+    ref.listen(androidServiceSuspendedProvider, (prev, next) {
+      if (prev != next) {
+        refreshState();
+      }
+    });
+    ref.listen(wifiWatchStateJsonProvider, (prev, next) {
+      if (prev != next) {
+        refreshState();
+      }
+    });
+    ref.listen(appVisibleProvider, (prev, next) {
+      if (!next) {
+        _cancelCountdownTimer();
+        return;
+      }
+      if (prev != true) {
+        unawaited(_fetch());
+        _syncCountdownTimer(state.pendingSuspendDeadline, isVisible: true);
+      }
+    });
+    ref.listen(runTimeProvider, (prev, next) {
+      if ((prev != null) != (next != null) && ref.read(appVisibleProvider)) {
+        unawaited(_fetch());
+      }
+    });
+    ref.listen(onDemandEnabledProvider, (prev, next) {
+      if (prev != next && ref.read(appVisibleProvider)) {
+        unawaited(_fetch());
+      }
+    });
+
+    if (isVisible) {
+      unawaited(_fetch());
+    }
+
+    final initialState = buildWifiWatchState(
+      ref.read(wifiWatchStateJsonProvider),
+      ref.read(androidServiceSuspendedProvider),
+    );
+    _syncCountdownTimer(
+      initialState.pendingSuspendDeadline,
+      isVisible: isVisible,
+    );
+    return initialState;
+  }
+
+  void _cancelCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+  }
+
+  void _syncCountdownTimer(DateTime? deadline, {required bool isVisible}) {
+    _cancelCountdownTimer();
+    if (!isVisible || deadline == null) {
+      return;
+    }
+    if (!deadline.isAfter(DateTime.now())) {
+      return;
+    }
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!ref.mounted || !ref.read(appVisibleProvider)) {
+        _cancelCountdownTimer();
+        return;
+      }
+      if (!deadline.isAfter(DateTime.now())) {
+        _cancelCountdownTimer();
+      }
+      state = state.copyWith();
+    });
   }
 
   Future<void> _fetch() async {
+    if (_fetching) {
+      return;
+    }
+    _fetching = true;
     try {
       final data = await service?.getWifiWatchState();
       final currentWifiInfo = await _getCurrentWifiInfo();
+      if (!ref.mounted) {
+        return;
+      }
       final merged = mergeServiceAndDeviceWifi(data, currentWifiInfo);
       final notifier = ref.read(wifiWatchStateJsonProvider.notifier);
       if (ref.read(wifiWatchStateJsonProvider) != merged) {
@@ -732,6 +805,8 @@ class WifiWatch extends _$WifiWatch with AutoDisposeNotifierMixin {
       }
     } catch (e, stack) {
       commonPrint.log('WifiWatch fetch failed: $e\n$stack');
+    } finally {
+      _fetching = false;
     }
   }
 

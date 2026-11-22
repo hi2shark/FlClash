@@ -30,9 +30,29 @@ private val Long.formatBytes: String
 val Traffic.speedText: String
     get() = "${up.formatBytes}/s↑  ${down.formatBytes}/s↓"
 
+fun parseTrafficBytes(bytes: ByteArray?): Traffic? {
+    if (bytes == null || bytes.size != 16) {
+        return null
+    }
+    return Traffic(
+        up = bytes.readLongBE(0),
+        down = bytes.readLongBE(8),
+    )
+}
+
+private fun ByteArray.readLongBE(offset: Int): Long {
+    var value = 0L
+    for (i in 0 until 8) {
+        value = (value shl 8) or (this[offset + i].toLong() and 0xffL)
+    }
+    return value
+}
+
 fun Core.getSpeedTrafficText(onlyStatisticsProxy: Boolean): String {
     return runCatching {
-        gson.fromJson(getTraffic(onlyStatisticsProxy), Traffic::class.java).speedText
+        val traffic = parseTrafficBytes(getTrafficBytes(onlyStatisticsProxy))
+            ?: gson.fromJson(getTraffic(onlyStatisticsProxy), Traffic::class.java)
+        traffic.speedText
     }.onFailure { error ->
         GlobalState.log("Unable to read traffic: $error")
     }.getOrDefault("")

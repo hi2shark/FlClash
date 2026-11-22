@@ -11,6 +11,7 @@ object ServiceConfig {
     private var currentVpnOptions: VpnOptions? = null
     private val mutableNotificationParams = MutableStateFlow(NotificationParams())
     private val mutableSuspendOnWifiSsids = MutableStateFlow<Set<String>>(emptySet())
+    private val mutablePackageCacheEpoch = MutableStateFlow(0L)
 
     val vpnOptions: VpnOptions?
         get() = currentVpnOptions
@@ -22,6 +23,8 @@ object ServiceConfig {
     val suspendOnWifiSsids: StateFlow<Set<String>> =
         mutableSuspendOnWifiSsids.asStateFlow()
 
+    val packageCacheEpoch: StateFlow<Long> = mutablePackageCacheEpoch.asStateFlow()
+
     fun updateVpnOptions(options: VpnOptions) {
         currentVpnOptions = options
     }
@@ -32,5 +35,9 @@ object ServiceConfig {
 
     fun updateSuspendOnWifiSsids(value: Set<String>) {
         mutableSuspendOnWifiSsids.value = value
+    }
+
+    fun invalidatePackageCache() {
+        mutablePackageCacheEpoch.value += 1
     }
 }

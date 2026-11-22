@@ -137,3 +137,31 @@ func TestRequestTrafficGivesUpOnAClosedRequestItCannotReport(t *testing.T) {
 		t.Fatal("a closed request outlived its retries")
 	}
 }
+
+func TestSetBulkEventsPausedStopsBulkEmissionAndClearsWatch(t *testing.T) {
+	t.Cleanup(func() {
+		setBulkEventsPaused(false)
+		currentRequestTraffic.clear()
+	})
+	tracker := newPipeTracker(t)
+	currentRequestTraffic.add(tracker)
+	if !shouldEmitBulkEvents() {
+		t.Fatal("bulk events should emit when not paused")
+	}
+
+	setBulkEventsPaused(true)
+	if shouldEmitBulkEvents() {
+		t.Fatal("bulk events should pause after setBulkEventsPaused(true)")
+	}
+	currentRequestTraffic.mu.Lock()
+	remaining := len(currentRequestTraffic.requests)
+	currentRequestTraffic.mu.Unlock()
+	if remaining != 0 {
+		t.Fatalf("expected tracked requests to clear on pause, got %d", remaining)
+	}
+
+	setBulkEventsPaused(false)
+	if !shouldEmitBulkEvents() {
+		t.Fatal("bulk events should resume after setBulkEventsPaused(false)")
+	}
+}

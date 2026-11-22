@@ -1,10 +1,9 @@
 package com.hi2shark.flclash_nw.service
 
 /**
- * Shared arbiter for the three suspend reasons (external/user, WiFi-watch,
- * screen/idle). Serializes reason updates and applies the combined decision,
- * rolling the reason back when the apply step fails so a rejected transition
- * cannot leave a stale reason latched.
+ * Shared arbiter for suspend reasons (external/user and WiFi-watch). Serializes
+ * updates and rolls the reason back when the apply step fails so a rejected
+ * transition cannot leave a stale reason latched.
  */
 internal class SuspensionController(
     private val serviceName: String,
@@ -39,17 +38,6 @@ internal class SuspensionController(
             applyDesiredLocked().also { result ->
                 if (!result.success) {
                     reasons.setWifiSuspended(previous)
-                }
-            }
-        }
-
-    fun setIdleSuspended(suspended: Boolean): ServiceStartResult =
-        synchronized(lock) {
-            val previous = reasons.idleSuspended
-            reasons.setIdleSuspended(suspended)
-            applyDesiredLocked().also { result ->
-                if (!result.success) {
-                    reasons.setIdleSuspended(previous)
                 }
             }
         }

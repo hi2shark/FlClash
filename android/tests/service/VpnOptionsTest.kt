@@ -142,6 +142,19 @@ class RouteAddressTest {
             options.getIpv4RouteAddress()
         }
     }
+
+    @Test
+    fun `splits routeExcludeAddress by address family, tolerates null and skips malformed entries`() {
+        val legacy = optionsWithRoutes(emptyList()).copy(routeExcludeAddress = null)
+        assertTrue(legacy.getIpv4RouteExcludeAddress().isEmpty())
+        assertTrue(legacy.getIpv6RouteExcludeAddress().isEmpty())
+
+        val excluded = optionsWithRoutes(emptyList()).copy(
+            routeExcludeAddress = listOf("10.0.0.0/8", "not-a-cidr", "fc00::/7", "192.168.0.0/16"),
+        )
+        assertEquals(2, excluded.getIpv4RouteExcludeAddress().size)
+        assertEquals(1, excluded.getIpv6RouteExcludeAddress().size)
+    }
 }
 
 class TunOptionsTest {

@@ -37,6 +37,7 @@ void main() {
     required SsidReader readSsid,
     void Function(List<ConnectivityResult>)? onConnectivityChanged,
     List<String> excludeSSIDs = const ['Home'],
+    bool? isAndroid,
   }) async {
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -45,6 +46,7 @@ void main() {
           connectivityStream: connectivity.stream,
           readSsid: readSsid,
           onConnectivityChanged: onConnectivityChanged,
+          isAndroid: isAndroid,
           child: const SizedBox.shrink(),
         ),
       ),
@@ -311,4 +313,30 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'skips Dart SSID reads on Android while still forwarding connectivity',
+    (tester) async {
+      var reads = 0;
+      final seen = <List<ConnectivityResult>>[];
+      await pumpManager(
+        tester,
+        isAndroid: true,
+        readSsid: () async {
+          reads++;
+          return 'Home';
+        },
+        onConnectivityChanged: seen.add,
+      );
+
+      connectivity.add([ConnectivityResult.wifi]);
+      await tester.pumpAndSettle();
+
+      expect(reads, 0);
+      expect(currentSsid(), isNull);
+      expect(seen, [
+        [ConnectivityResult.wifi],
+      ]);
+    },
+  );
 }

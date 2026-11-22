@@ -5,6 +5,7 @@ import com.hi2shark.flclash_nw.ServiceState
 import com.hi2shark.flclash_nw.common.Components
 import com.hi2shark.flclash_nw.models.SharedState
 import com.hi2shark.flclash_nw.service.NetworkObserver
+import com.hi2shark.flclash_nw.service.ServiceConfig
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
@@ -57,6 +58,7 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             "stop" -> stop(call, result)
             "setSuspended" -> setSuspended(call, result)
             "getWifiWatchState" -> getWifiWatchState(result)
+            "setForeground" -> setForeground(call, result)
             else -> result.notImplemented()
         }
     }
@@ -71,7 +73,10 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     private fun initialize(result: MethodChannel.Result) {
         NetworkObserver.start()
         ServiceController.setEventListener(::sendEvent)
-            .onSuccess { result.success("") }
+            .onSuccess {
+                notifySuspended(ServiceConfig.runtimeState.isSuspended)
+                result.success("")
+            }
             .onFailure { error -> result.success(error.message.orEmpty()) }
     }
 
@@ -137,6 +142,12 @@ class ServicePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         scope.launch {
             result.success(ServiceController.getWifiWatchState())
         }
+    }
+
+    private fun setForeground(call: MethodCall, result: MethodChannel.Result) {
+        val foreground = call.arguments as? Boolean ?: true
+        ServiceController.setBulkEventsPaused(!foreground)
+        result.success(true)
     }
 
     // Read on the platform thread, where start and stop arrive: revision and intent are one instant.

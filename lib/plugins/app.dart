@@ -147,7 +147,6 @@ class App {
     }
   }
 
-  @visibleForTesting
   void clearPackageIconCache() {
     _packageIcons.clear();
     _packageIconTasks.clear();

@@ -2,6 +2,7 @@ package core
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/metacubex/mihomo/adapter"
@@ -13,6 +14,19 @@ import (
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
 
+var bulkEventsPaused atomic.Bool
+
+func setBulkEventsPaused(paused bool) {
+	bulkEventsPaused.Store(paused)
+	if paused {
+		currentRequestTraffic.clear()
+	}
+}
+
+func shouldEmitBulkEvents() bool {
+	return hasEventListener() && !bulkEventsPaused.Load()
+}
+
 func init() {
 	mihomoHttp.TLSConfigHook = relaxCertVerify
 	adapter.UrlTestHook = func(url string, name string, delay uint16, timedOut bool) {
@@ -20,13 +34,13 @@ func init() {
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
 		notifyProbeRoute(c)
-		if hasEventListener() {
+		if shouldEmitBulkEvents() {
 			sendMessage(RequestMessage, c)
 			watchRequestTraffic(c)
 		}
 	}
 	dns.DefaultQueryNotify = func(record dns.QueryRecord) {
-		if hasEventListener() {
+		if shouldEmitBulkEvents() {
 			sendMessage(DnsMessage, newDnsQuery(record))
 		}
 	}

@@ -46,9 +46,6 @@ class ProxyService : Service(), ManagedService {
     override fun setWifiSuspended(suspended: Boolean): ServiceStartResult =
         suspensionController.setWifiSuspended(suspended)
 
-    override fun setIdleSuspended(suspended: Boolean): ServiceStartResult =
-        suspensionController.setIdleSuspended(suspended)
-
     override fun getWifiWatchStateJson(): String = Gson().toJson(
         modules.wifiWatchModule?.currentState(isSuspended)
             ?: WifiWatchState(

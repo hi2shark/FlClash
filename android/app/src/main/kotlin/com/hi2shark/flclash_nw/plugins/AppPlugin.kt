@@ -23,6 +23,7 @@ import androidx.core.net.toUri
 import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.hi2shark.flclash_nw.FlClashApplication
 import com.hi2shark.flclash_nw.LauncherIconSwitcher
 import com.hi2shark.flclash_nw.R
 import com.hi2shark.flclash_nw.common.Components
@@ -32,8 +33,10 @@ import com.hi2shark.flclash_nw.common.QuickAction
 import com.hi2shark.flclash_nw.common.quickIntent
 import com.hi2shark.flclash_nw.common.registerReceiverCompat
 import com.hi2shark.flclash_nw.common.shortcutId
+import com.hi2shark.flclash_nw.core.Core
 import com.hi2shark.flclash_nw.getPackageIconPath
 import com.hi2shark.flclash_nw.packages.PackageResolver
+import com.hi2shark.flclash_nw.service.ServiceConfig
 import com.hi2shark.flclash_nw.showToast
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -88,6 +91,10 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         )
     }
 
+    private val trimCacheCallback: () -> Unit = {
+        packageResolver.clearTransientCaches()
+    }
+
     private var packageChangeContext: Context? = null
 
     private val packageChangeReceiver = object : BroadcastReceiver() {
@@ -101,6 +108,8 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 return
             }
             packageResolver.invalidate()
+            ServiceConfig.invalidatePackageCache()
+            Core.clearPackageCache()
             channel.invokeMethod("packagesChanged", null)
         }
     }
@@ -441,6 +450,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
         channel =
             MethodChannel(flutterPluginBinding.binaryMessenger, "${Components.PACKAGE_NAME}/app")
         channel.setMethodCallHandler(this)
+        FlClashApplication.registerTrimCallback(trimCacheCallback)
         watchPackageChanges(flutterPluginBinding.applicationContext)
     }
 
@@ -456,6 +466,7 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        FlClashApplication.unregisterTrimCallback(trimCacheCallback)
         packageChangeContext?.unregisterReceiver(packageChangeReceiver)
         packageChangeContext = null
         channel.setMethodCallHandler(null)

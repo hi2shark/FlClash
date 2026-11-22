@@ -40,7 +40,6 @@ internal class ServiceModules(private val service: Service) {
         this.wifiWatchModule = wifiWatchModule
         val nextModules = listOf(
             NotificationModule(service, nextScope),
-            SuspendModule(service),
             wifiWatchModule,
         )
         val startedModules = mutableListOf<ServiceModule>()

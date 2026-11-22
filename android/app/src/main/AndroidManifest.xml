@@ -32,6 +32,7 @@
 
     <application
         android:name=".FlClashApplication"
+        android:allowBackup="false"
         android:banner="@mipmap/ic_banner"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"

@@ -20,7 +20,6 @@ interface ManagedService {
 
     fun setSuspended(suspended: Boolean): ServiceStartResult
     fun setWifiSuspended(suspended: Boolean): ServiceStartResult
-    fun setIdleSuspended(suspended: Boolean): ServiceStartResult
 
     fun getWifiWatchStateJson(): String = "{}"
 

@@ -155,6 +155,12 @@ object Core {
         return count
     }
 
+    fun toInetSocketAddress(ip: ByteArray, port: Int): InetSocketAddress {
+        require(port in 0..65535) { "Invalid port: $port" }
+        require(ip.size == 4 || ip.size == 16) { "Invalid IP byte length: ${ip.size}" }
+        return InetSocketAddress(InetAddress.getByAddress(null, ip), port)
+    }
+
     fun startTun(
         fd: Int,
         protect: (Int) -> Boolean,
@@ -173,13 +179,18 @@ object Core {
 
                 override fun resolveUid(
                     protocol: Int,
-                    source: String,
-                    target: String,
+                    srcIp: ByteArray?,
+                    srcPort: Int,
+                    dstIp: ByteArray?,
+                    dstPort: Int,
                 ): Int {
+                    if (srcIp == null || dstIp == null) {
+                        return -1
+                    }
                     return resolveUid(
                         protocol,
-                        parseInetSocketAddress(source),
-                        parseInetSocketAddress(target),
+                        toInetSocketAddress(srcIp, srcPort),
+                        toInetSocketAddress(dstIp, dstPort),
                     )
                 }
 
@@ -242,8 +253,23 @@ object Core {
         }
     }
 
+    fun setBulkEventsPaused(paused: Boolean) {
+        if (libraryLoaded) {
+            Mobile.setBulkEventsPaused(paused)
+        }
+    }
+
+    fun clearPackageCache() {
+        if (libraryLoaded) {
+            Mobile.clearPackageCache()
+        }
+    }
+
     fun getTraffic(onlyStatisticsProxy: Boolean): String =
         if (libraryLoaded) Mobile.getTraffic(onlyStatisticsProxy) else EMPTY_TRAFFIC_JSON
+
+    fun getTrafficBytes(onlyStatisticsProxy: Boolean): ByteArray? =
+        if (libraryLoaded) Mobile.getTrafficBytes(onlyStatisticsProxy) else null
 
     fun getTotalTraffic(onlyStatisticsProxy: Boolean): String =
         if (libraryLoaded) Mobile.getTotalTraffic(onlyStatisticsProxy) else EMPTY_TRAFFIC_JSON

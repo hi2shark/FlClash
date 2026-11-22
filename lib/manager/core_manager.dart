@@ -4,6 +4,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
+import 'package:fl_clash/manager/background_resource_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -93,7 +94,8 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     if (ref.read(coreStatusProvider) != CoreStatus.connected) {
       return;
     }
-    if (ref.read(appSettingProvider).openLogs) {
+    if (ref.read(appSettingProvider).openLogs &&
+        !backgroundResourceManager.isBulkStreamsPaused) {
       _core.startLog();
     } else {
       _core.stopLog();

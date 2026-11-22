@@ -13,6 +13,9 @@ import android.os.HandlerThread
 import androidx.core.content.getSystemService
 import com.hi2shark.flclash_nw.common.GlobalState
 import com.hi2shark.flclash_nw.core.Core
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
@@ -21,16 +24,18 @@ import java.util.concurrent.ConcurrentHashMap
 private data class NetworkInfo(
     @Volatile var losingUntilMillis: Long = 0,
     @Volatile var dnsList: List<InetAddress> = emptyList(),
-) {
-    val priorityPenalty: Int
-        get() = if (losingUntilMillis > System.currentTimeMillis()) 10 else 0
-}
+    @Volatile var validated: Boolean = false,
+    @Volatile var transportPriority: Int = UNKNOWN_TRANSPORT_PRIORITY,
+)
 
 // Outlives every service run: the Core also tests delays and updates providers
 // while stopped, and a `system` nameserver has no upstream until DNS arrives here.
 object NetworkObserver {
 
     private val networkInfos = ConcurrentHashMap<Network, NetworkInfo>()
+    private val mutableActivePhysicalNetwork = MutableStateFlow<Network?>(null)
+    val activePhysicalNetwork: StateFlow<Network?> = mutableActivePhysicalNetwork.asStateFlow()
+
     private val connectivity by lazy {
         GlobalState.application.getSystemService<ConnectivityManager>()
     }
@@ -39,6 +44,8 @@ object NetworkObserver {
     }
     private var currentDnsList = listOf<String>()
     private var currentNetwork: Network? = null
+    @Volatile
+    private var bestMatchingNetwork: Network? = null
     private var started = false
 
     private val request = NetworkRequest.Builder().apply {
@@ -52,7 +59,29 @@ object NetworkObserver {
 
     private val callback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
-            networkInfos[network] = NetworkInfo()
+            if (usesBestMatchingCallback()) {
+                // registerBestMatchingNetworkCallback replaces the previous best network
+                // without delivering onLost for it.
+                bestMatchingNetwork = network
+                networkInfos.keys.retainAll(setOf(network))
+            }
+            val caps = connectivity?.getNetworkCapabilities(network)
+            val info = networkInfos.computeIfAbsent(network) { NetworkInfo() }
+            info.losingUntilMillis = 0
+            info.validated = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+            info.transportPriority = transportPriorityOf(caps)
+            scheduleUpdateDns()
+        }
+
+        override fun onCapabilitiesChanged(
+            network: Network,
+            networkCapabilities: NetworkCapabilities,
+        ) {
+            val info = networkInfos.computeIfAbsent(network) { NetworkInfo() }
+            info.validated = networkCapabilities.hasCapability(
+                NetworkCapabilities.NET_CAPABILITY_VALIDATED,
+            )
+            info.transportPriority = transportPriorityOf(networkCapabilities)
             scheduleUpdateDns()
         }
 
@@ -70,12 +99,16 @@ object NetworkObserver {
         }
 
         override fun onLost(network: Network) {
+            if (bestMatchingNetwork == network) {
+                bestMatchingNetwork = null
+            }
             networkInfos.remove(network)
             scheduleUpdateDns()
         }
 
         override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) {
-            networkInfos[network]?.dnsList = linkProperties.dnsServers
+            val info = networkInfos.computeIfAbsent(network) { NetworkInfo() }
+            info.dnsList = linkProperties.dnsServers
             scheduleUpdateDns()
         }
     }
@@ -89,39 +122,62 @@ object NetworkObserver {
         handler.postDelayed(updateDnsTask, DNS_UPDATE_DELAY_MILLIS)
     }
 
+    private fun usesBestMatchingCallback(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
     @Synchronized
     fun start() {
         if (started) return
-        runCatching { requireNotNull(connectivity).registerNetworkCallback(request, callback) }
+        runCatching {
+            val manager = requireNotNull(connectivity)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                manager.registerBestMatchingNetworkCallback(request, callback, handler)
+            } else {
+                manager.registerNetworkCallback(request, callback)
+            }
+        }
             .onSuccess { started = true }
             .onFailure { error -> GlobalState.log("Unable to observe networks: $error") }
     }
 
-    private fun networkPriority(entry: Map.Entry<Network, NetworkInfo>): Int {
-        val capabilities = connectivity?.getNetworkCapabilities(entry.key)
-        return when {
-            capabilities == null -> 100
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> 90
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> 0
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> 1
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                capabilities.hasTransport(TRANSPORT_USB) -> 2
+    private fun transportPriorityOf(capabilities: NetworkCapabilities?): Int = when {
+        capabilities == null -> UNKNOWN_TRANSPORT_PRIORITY
+        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> 90
+        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> 0
+        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> 1
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            capabilities.hasTransport(TRANSPORT_USB) -> 2
 
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) -> 3
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> 4
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM &&
-                capabilities.hasTransport(TRANSPORT_SATELLITE) -> 5
+        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) -> 3
+        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> 4
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM &&
+            capabilities.hasTransport(TRANSPORT_SATELLITE) -> 5
 
-            else -> 20
-        } + entry.value.priorityPenalty
+        else -> 20
+    }
+
+    private fun resolvePreferredNetwork(): Network? {
+        if (usesBestMatchingCallback()) {
+            return bestMatchingNetwork
+        }
+        val now = System.currentTimeMillis()
+        val candidates = networkInfos.entries.map { (network, info) ->
+            PhysicalNetworkCandidate(
+                key = network,
+                transportPriority = info.transportPriority,
+                validated = info.validated,
+                losing = info.losingUntilMillis > now,
+            )
+        }
+        return selectPreferredPhysicalNetwork(candidates)
     }
 
     @Synchronized
     private fun updateDns() {
-        val preferred = networkInfos.entries.minByOrNull(::networkPriority)
+        val preferred = resolvePreferredNetwork()
+        mutableActivePhysicalNetwork.value = preferred
         val dnsList = preferred
-            ?.value
-            ?.dnsList
+            ?.let { networkInfos[it]?.dnsList }
             .orEmpty()
             .map { address -> address.asSocketAddressText(DNS_PORT) }
             .distinct()
@@ -129,7 +185,7 @@ object NetworkObserver {
             currentDnsList = dnsList
             Core.updateDNS(dnsList.joinToString(","))
         }
-        val network = preferred?.key ?: return
+        val network = preferred ?: return
         // Sockets protected onto the network we left stay bound to it; closing
         // them makes apps reconnect now instead of after a TCP timeout.
         if (currentNetwork != null && currentNetwork != network) {
@@ -141,6 +197,7 @@ object NetworkObserver {
 
 private const val DNS_PORT = 53
 private const val DNS_UPDATE_DELAY_MILLIS = 200L
+private const val UNKNOWN_TRANSPORT_PRIORITY = 100
 
 private fun InetAddress.asSocketAddressText(port: Int): String = when (this) {
     is Inet6Address -> "[$hostAddress]:$port"

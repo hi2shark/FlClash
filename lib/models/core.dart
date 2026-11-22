@@ -86,6 +86,7 @@ abstract class VpnOptions with _$VpnOptions {
     required List<String> bypassDomain,
     required String stack,
     @Default([]) List<String> routeAddress,
+    @Default([]) List<String> routeExcludeAddress,
     @Default(0) int mtu,
     @Default('') String congestionController,
   }) = _VpnOptions;

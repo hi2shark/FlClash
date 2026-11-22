@@ -43,34 +43,53 @@ class Bootstrap {
     windowPort = window;
     trayPort = appTray;
     navigationPort = navigation;
-    final dynamicColor = await _initDynamicColor();
-    return _initData(version, dynamicColor);
+    await _claimDataDirectory();
+    final (dynamicColor, packageInfo, config, _) = await (
+      _initDynamicColor(),
+      PackageInfo.fromPlatform(),
+      migration.run(),
+      system.isAndroid
+          ? SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge)
+          : Future<void>.value(),
+    ).wait;
+    globalState.packageInfo = packageInfo;
+    return _initData(version, dynamicColor, config);
   }
 
   Future<DynamicColorSeeds> _initDynamicColor() async {
-    TonalPalette? primaryPalette;
-    Color? accentColor;
-    try {
-      primaryPalette = await _getSystemPrimaryPalette();
-    } catch (error) {
-      commonPrint.log(
-        'Failed to get core palette: $error',
-        logLevel: LogLevel.warning,
-      );
-    }
-    try {
-      accentColor = await DynamicColorPlugin.getAccentColor();
-    } catch (error) {
-      commonPrint.log(
-        'Failed to get accent color: $error',
-        logLevel: LogLevel.warning,
-      );
-    }
+    final (primaryPalette, accentColor) = await (
+      _readSystemPrimaryPalette(),
+      _readSystemAccentColor(),
+    ).wait;
     return (
       lightSeed: primaryPalette != null ? Color(primaryPalette.get(40)) : null,
       darkSeed: primaryPalette != null ? Color(primaryPalette.get(80)) : null,
       accentColor: accentColor ?? const Color(defaultPrimaryColor),
     );
+  }
+
+  Future<TonalPalette?> _readSystemPrimaryPalette() async {
+    try {
+      return await _getSystemPrimaryPalette();
+    } catch (error) {
+      commonPrint.log(
+        'Failed to get core palette: $error',
+        logLevel: LogLevel.warning,
+      );
+      return null;
+    }
+  }
+
+  Future<Color?> _readSystemAccentColor() async {
+    try {
+      return await DynamicColorPlugin.getAccentColor();
+    } catch (error) {
+      commonPrint.log(
+        'Failed to get accent color: $error',
+        logLevel: LogLevel.warning,
+      );
+      return null;
+    }
   }
 
   /// Runs before migration and the database: a copy started from another
@@ -98,13 +117,18 @@ class Bootstrap {
   Future<ProviderContainer> _initData(
     int version,
     DynamicColorSeeds dynamicColor,
+    Config initialConfig,
   ) async {
-    await _claimDataDirectory();
-    globalState.packageInfo = await PackageInfo.fromPlatform();
-    var config = await migration.run();
-    _bootDecision = await bootGuard.evaluate(
-      profileId: config.currentProfileId,
-    );
+    var config = initialConfig;
+    final (bootDecision, profiles, _) = await (
+      bootGuard.evaluate(profileId: config.currentProfileId),
+      database.profilesDao.query().get(),
+      AppLocalizations.load(
+        getLocaleForString(config.appSettingProps.locale) ??
+            WidgetsBinding.instance.platformDispatcher.locale,
+      ),
+    ).wait;
+    _bootDecision = bootDecision;
     if (_bootDecision.recovery == BootRecovery.clearProfile) {
       config = config.copyWith(currentProfileId: null);
       await preferences.saveConfig(config);
@@ -137,16 +161,8 @@ class Bootstrap {
           darkSeed: dynamicColor.darkSeed,
           accentColor: dynamicColor.accentColor,
         );
-    final profiles = await database.profilesDao.query().get();
     container.read(profilesProvider.notifier).reorder(profiles);
-    await AppLocalizations.load(
-      getLocaleForString(config.appSettingProps.locale) ??
-          WidgetsBinding.instance.platformDispatcher.locale,
-    );
     await window?.init(version, config.windowProps);
-    if (system.isAndroid) {
-      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    }
     return container;
   }
 

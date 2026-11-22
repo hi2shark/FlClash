@@ -117,6 +117,7 @@ void main() {
         options.copyWith(bypassDomain: const ['example.com']),
         options.copyWith(stack: 'gvisor'),
         options.copyWith(routeAddress: const ['10.0.0.0/8']),
+        options.copyWith(routeExcludeAddress: const ['192.168.0.0/16']),
         options.copyWith(mtu: 1500),
         options.copyWith(congestionController: 'bbr'),
         options.copyWith(
@@ -175,7 +176,14 @@ void main() {
       final proxyOnly = options.copyWith(enable: false);
 
       expect(
-        proxyOnly.copyWith(ipv6: true, stack: 'gvisor', mtu: 1500).effective,
+        proxyOnly
+            .copyWith(
+              ipv6: true,
+              stack: 'gvisor',
+              mtu: 1500,
+              routeExcludeAddress: const ['10.0.0.0/8'],
+            )
+            .effective,
         proxyOnly.effective,
       );
     });
