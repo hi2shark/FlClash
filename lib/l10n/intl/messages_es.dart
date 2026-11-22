@@ -369,6 +369,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "appAccessControl": MessageLookupByLibrary.simpleMessage(
       "Control de acceso de apps",
     ),
+    "appIcon": MessageLookupByLibrary.simpleMessage("Icono de la aplicación"),
     "appIconDesign": MessageLookupByLibrary.simpleMessage(
       "Diseño del icono de la app",
     ),

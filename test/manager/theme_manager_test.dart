@@ -1,3 +1,4 @@
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/theme_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -64,5 +65,41 @@ void main() {
     expect(themes, hasLength(3));
     expect(themes[1], same(themes[0]));
     expect(themes[2], isNot(same(themes[1])));
+  });
+
+  testWidgets('syncs launcher icon mode on mount and whenever it changes', (
+    tester,
+  ) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final originalSyncer = launcherIconSyncer;
+    addTearDown(() => launcherIconSyncer = originalSyncer);
+    final synced = <AppIconMode>[];
+    launcherIconSyncer = (mode) async {
+      synced.add(mode);
+    };
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: ThemeManager(syncAppIcon: true, child: SizedBox.shrink()),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(synced, [AppIconMode.auto]);
+
+    container
+        .read(themeSettingProvider.notifier)
+        .update((state) => state.copyWith(appIconMode: AppIconMode.dark));
+    await tester.pump();
+    expect(synced, [AppIconMode.auto, AppIconMode.dark]);
+
+    container
+        .read(themeSettingProvider.notifier)
+        .update((state) => state.copyWith(appIconMode: AppIconMode.light));
+    await tester.pump();
+    expect(synced, [AppIconMode.auto, AppIconMode.dark, AppIconMode.light]);
   });
 }

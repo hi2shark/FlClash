@@ -23,6 +23,7 @@ import androidx.core.net.toUri
 import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.hi2shark.flclash_nw.LauncherIconSwitcher
 import com.hi2shark.flclash_nw.R
 import com.hi2shark.flclash_nw.common.Components
 import com.hi2shark.flclash_nw.common.GlobalState
@@ -203,6 +204,11 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
                 result.success(openAppSettings())
             }
 
+            "setLauncherIcon" -> {
+                val mode = call.argument<String>("mode") ?: "auto"
+                result.success(setLauncherIcon(mode))
+            }
+
             "getLastExitInfo" -> reply(result) {
                 GlobalState.lastExitInfo()
             }
@@ -273,6 +279,22 @@ class AppPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware 
             activity.startActivity(intent)
             true
         } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun setLauncherIcon(mode: String): Boolean {
+        if (isTelevision) {
+            return false
+        }
+        return try {
+            LauncherIconSwitcher.apply(
+                GlobalState.application.packageManager,
+                GlobalState.application.packageName,
+                mode,
+            )
+        } catch (error: Exception) {
+            GlobalState.log("Failed to switch launcher icon: $error")
             false
         }
     }

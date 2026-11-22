@@ -127,7 +127,7 @@ class AboutView extends ConsumerWidget {
   }
 }
 
-class _AboutHero extends StatelessWidget {
+class _AboutHero extends ConsumerWidget {
   final bool isCheckingUpdate;
   final VoidCallback onCheckUpdate;
   final VoidCallback onEnterDeveloperMode;
@@ -141,9 +141,17 @@ class _AboutHero extends StatelessWidget {
   static const _logoSize = 96.0;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = context.colorScheme;
     final appLocalizations = context.appLocalizations;
+    final appIconMode = ref.watch(
+      themeSettingProvider.select((state) => state.appIconMode),
+    );
+    final useDarkIcon = switch (appIconMode) {
+      AppIconMode.dark => true,
+      AppIconMode.light => false,
+      AppIconMode.auto => colorScheme.brightness == Brightness.dark,
+    };
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Column(
@@ -151,7 +159,9 @@ class _AboutHero extends StatelessWidget {
           _DeveloperModeDetector(
             onEnterDeveloperMode: onEnterDeveloperMode,
             child: Image.asset(
-              'assets/images/icon.png',
+              useDarkIcon
+                  ? 'assets/images/icon_dark.png'
+                  : 'assets/images/icon.png',
               width: _logoSize,
               height: _logoSize,
             ),

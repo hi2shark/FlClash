@@ -885,6 +885,8 @@ enum TabAnimation { slide, fade }
 
 enum LiquidGlassMode { none, standard, ultra }
 
+enum AppIconMode { auto, light, dark }
+
 enum Language { yaml, javaScript, json }
 
 enum ScrollPositionCacheKey { proxiesTabList }

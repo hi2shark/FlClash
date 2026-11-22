@@ -14,11 +14,14 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ThemeView extends StatelessWidget {
-  const ThemeView({super.key});
+  const ThemeView({super.key, this.supportsAppIcon});
+
+  final bool? supportsAppIcon;
 
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
+    final showAppIcon = supportsAppIcon ?? (system.isAndroid || system.isMacOS);
     return BaseScaffold(
       title: appLocalizations.theme,
       body: ListView(
@@ -31,6 +34,7 @@ class ThemeView extends StatelessWidget {
           const SizedBox(height: 16),
           const _ThemeModeItem(),
           const SizedBox(height: 16),
+          if (showAppIcon) ...const [_AppIconItem(), SizedBox(height: 16)],
           const _PureBlackItem(),
           const SizedBox(height: 16),
           const _PrimaryColorItem(),
@@ -101,6 +105,59 @@ class _ThemeModeItem extends ConsumerWidget {
         ref
             .read(themeSettingProvider.notifier)
             .update((state) => state.copyWith(themeMode: value));
+      },
+    );
+  }
+}
+
+class _AppIconItem extends ConsumerWidget {
+  const _AppIconItem();
+
+  static const double _thumbSize = 30;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appLocalizations = context.appLocalizations;
+    final mode = ref.watch(
+      themeSettingProvider.select((state) => state.appIconMode),
+    );
+    const light = Image(
+      image: AssetImage('assets/images/icon.png'),
+      width: _thumbSize,
+      height: _thumbSize,
+    );
+    const dark = Image(
+      image: AssetImage('assets/images/icon_dark.png'),
+      width: _thumbSize,
+      height: _thumbSize,
+    );
+    return PreviewChoiceGroup<AppIconMode>(
+      info: Info(label: appLocalizations.appIcon, glyph: AppGlyphs.iconTile),
+      value: mode,
+      choices: [
+        PreviewChoice(
+          value: AppIconMode.auto,
+          label: appLocalizations.auto,
+          pictogram: const SizedBox.square(
+            dimension: _thumbSize,
+            child: MiniSplitScreen(light: light, dark: dark),
+          ),
+        ),
+        PreviewChoice(
+          value: AppIconMode.light,
+          label: appLocalizations.light,
+          pictogram: light,
+        ),
+        PreviewChoice(
+          value: AppIconMode.dark,
+          label: appLocalizations.dark,
+          pictogram: dark,
+        ),
+      ],
+      onChanged: (value) {
+        ref
+            .read(themeSettingProvider.notifier)
+            .update((state) => state.copyWith(appIconMode: value));
       },
     );
   }

@@ -474,6 +474,7 @@ abstract class ThemeProps with _$ThemeProps {
     int? primaryColor,
     @Default(defaultPrimaryColors) List<int> primaryColors,
     @Default(ThemeMode.system) ThemeMode themeMode,
+    @Default(AppIconMode.auto) AppIconMode appIconMode,
     @Default(ColorStyle.vivid)
     @JsonKey(readValue: _readColorStyle)
     ColorStyle colorStyle,

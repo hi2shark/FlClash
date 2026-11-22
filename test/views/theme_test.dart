@@ -76,6 +76,46 @@ void main() {
     });
   });
 
+  group('app icon', () {
+    testWidgets('switches between auto, light and dark when supported', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1400, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const TestApp(child: ThemeView(supportsAppIcon: true)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final group = find.ancestor(
+        of: find.text('App icon'),
+        matching: find.byType(PreviewChoiceGroup<AppIconMode>),
+      );
+      Finder choice(String label) =>
+          find.descendant(of: group, matching: find.text(label)).last;
+
+      expect(readTheme().appIconMode, AppIconMode.auto);
+
+      await tester.tap(choice('Light'));
+      await tester.pumpAndSettle();
+      expect(readTheme().appIconMode, AppIconMode.light);
+
+      await tester.tap(choice('Dark'));
+      await tester.pumpAndSettle();
+      expect(readTheme().appIconMode, AppIconMode.dark);
+
+      await tester.tap(choice('Auto'));
+      await tester.pumpAndSettle();
+      expect(readTheme().appIconMode, AppIconMode.auto);
+    });
+  });
+
   group('primary color', () {
     Finder swatch(int color) => find.byWidgetPredicate(
       (widget) =>

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:fl_clash/common/common.dart';
@@ -9,7 +10,8 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -80,10 +82,26 @@ ThemeData watchAppTheme(WidgetRef ref, Brightness brightness) {
   return theme;
 }
 
+const _appIconChannel = MethodChannel('$packageName/app');
+
+@visibleForTesting
+Future<void> Function(AppIconMode mode) launcherIconSyncer = _syncLauncherIcon;
+
+Future<void> _syncLauncherIcon(AppIconMode mode) async {
+  try {
+    await _appIconChannel.invokeMethod<bool>('setLauncherIcon', {
+      'mode': mode.name,
+    });
+  } on MissingPluginException {
+    return;
+  }
+}
+
 class ThemeManager extends ConsumerWidget {
   final Widget child;
+  final bool? syncAppIcon;
 
-  const ThemeManager({super.key, required this.child});
+  const ThemeManager({super.key, required this.child, this.syncAppIcon});
 
   Widget _buildSystemUi(Widget child) {
     if (!system.isAndroid) {
@@ -130,19 +148,24 @@ class ThemeManager extends ConsumerWidget {
     globalState.measure = measure;
     return MeasureScope(
       measure: measure,
-      child: AppViewScope(
-        child: _AppMediaQuery(
-          textScaler: TextScaler.linear(textScaleFactor),
-          child: _LiquidGlassSetting(
-            child: LayoutBuilder(
-              builder: (_, constraints) {
-                ref
-                    .read(themeActionProvider.notifier)
-                    .updateViewSize(
-                      Size(constraints.maxWidth, constraints.maxHeight),
-                    );
-                return _buildSystemUi(child);
-              },
+      child: _AppIconSync(
+        enabled:
+            syncAppIcon ??
+            ((system.isAndroid || system.isMacOS) && !safeModeBuild),
+        child: AppViewScope(
+          child: _AppMediaQuery(
+            textScaler: TextScaler.linear(textScaleFactor),
+            child: _LiquidGlassSetting(
+              child: LayoutBuilder(
+                builder: (_, constraints) {
+                  ref
+                      .read(themeActionProvider.notifier)
+                      .updateViewSize(
+                        Size(constraints.maxWidth, constraints.maxHeight),
+                      );
+                  return _buildSystemUi(child);
+                },
+              ),
             ),
           ),
         ),
@@ -193,6 +216,33 @@ class _LiquidGlassSetting extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _AppIconSync extends ConsumerStatefulWidget {
+  const _AppIconSync({required this.enabled, required this.child});
+
+  final bool enabled;
+  final Widget child;
+
+  @override
+  ConsumerState<_AppIconSync> createState() => _AppIconSyncState();
+}
+
+class _AppIconSyncState extends ConsumerState<_AppIconSync> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.enabled) {
+      ref.listenManual(
+        themeSettingProvider.select((state) => state.appIconMode),
+        (_, next) => unawaited(launcherIconSyncer(next)),
+        fireImmediately: true,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class _AppMediaQuery extends StatelessWidget {
