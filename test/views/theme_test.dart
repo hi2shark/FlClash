@@ -13,7 +13,7 @@ import 'package:fl_clash/views/font_family.dart';
 import 'package:fl_clash/views/theme.dart';
 import 'package:fl_clash/views/theme_preview.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -409,7 +409,9 @@ void main() {
 
     final fontsIllustration = find.descendant(
       of: find.byType(FontFamilyView),
-      matching: find.byKey(const ValueKey(NullStatusIllustration.fonts)),
+      matching: find.byKey(
+        const ValueKey<Illustration>(NullStatusIllustration.fonts),
+      ),
     );
 
     String? previewFamilyOf(WidgetTester tester, String text) =>
@@ -452,8 +454,8 @@ void main() {
       expect(readTheme().fontFamily, isNull);
     });
 
-    testWidgets('lists the fonts as the sheet opens and gives the names '
-        'their fonts once it has stopped', (tester) async {
+    testWidgets('opens the sheet immediately and reveals the font list with '
+        'their own fonts once it has stopped', (tester) async {
       var reads = 0;
       systemFontFamiliesReader = () async {
         reads++;
@@ -464,18 +466,61 @@ void main() {
       await tester.tap(find.text('Aa').first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      await tester.pump(const Duration(milliseconds: 16));
       expect(reads, 1);
-      expect(fontsIllustration, findsNothing);
-      expect(inPage('Arrival Sans'), findsOneWidget);
       expect(
         isRouteMoving(tester.element(find.byType(FontFamilyView))),
         isTrue,
       );
-      expect(previewFamilyOf(tester, 'Arrival Sans'), isNot('Arrival Sans'));
+      expect(fontsIllustration, findsOneWidget);
+      expect(inPage('Arrival Sans'), findsNothing);
 
       await pumpSettled(tester);
+      expect(fontsIllustration, findsNothing);
+      expect(inPage('Arrival Sans'), findsOneWidget);
       expect(previewFamilyOf(tester, 'Arrival Sans'), 'Arrival Sans');
+    });
+
+    testWidgets('gives no name its font while the list scrolls', (
+      tester,
+    ) async {
+      systemFontFamiliesReader = () async => [
+        for (var i = 0; i < 80; i++) 'Scrolled Font $i',
+      ];
+      await pumpThemeView(tester);
+      await openFonts(tester);
+
+      final names = find.descendant(
+        of: find.byType(FontFamilyView),
+        matching: find.textContaining('Scrolled Font', skipOffstage: false),
+        skipOffstage: false,
+      );
+      Set<String> withFamilyOf(bool Function(String?, String) test) => {
+        for (final element in names.evaluate())
+          if (test(
+            DefaultTextStyle.of(element).style.fontFamily,
+            (element.widget as Text).data!,
+          ))
+            (element.widget as Text).data!,
+      };
+      Set<String> withTheirFonts() =>
+          withFamilyOf((family, name) => family == name);
+      Set<String> listed() => withFamilyOf((_, _) => true);
+      final before = withTheirFonts();
+      expect(before, listed());
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(inPage('Scrolled Font 2')),
+      );
+      for (var i = 0; i < 10; i++) {
+        await gesture.moveBy(const Offset(0, -60));
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(withTheirFonts().difference(before), isEmpty);
+      }
+      expect(listed().difference(before), isNotEmpty);
+
+      await gesture.up();
+      await pumpSettled(tester);
+      expect(withTheirFonts(), listed());
     });
 
     testWidgets('shows the loading illustration while the fonts take long', (
@@ -487,10 +532,7 @@ void main() {
 
       await tester.tap(find.text('Aa').first);
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
-      expect(fontsIllustration, findsNothing);
-
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 50));
       expect(fontsIllustration, findsOneWidget);
       expect(inPage('Default'), findsNothing);
 

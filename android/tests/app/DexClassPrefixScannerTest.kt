@@ -1,6 +1,6 @@
-package com.hi2shark.flclash_nw.packages
+package com.hi2shark.hi2nw.packages
 
-import com.hi2shark.flclash_nw.core.Core
+import com.hi2shark.hi2nw.core.Core
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

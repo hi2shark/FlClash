@@ -5,13 +5,13 @@ import 'package:fl_clash/common/service_probe.dart'
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/ip_quality.dart';
 import 'package:fl_clash/providers/outbound_ip.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/providers/routed_probe.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/widgets/card.dart';
 import 'package:fl_clash/views/dashboard/widgets/current_outbound.dart';
@@ -20,13 +20,15 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/glyph_finders.dart';
 import '../../helpers/test_app.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../../helpers/host_scaffold.dart';
 
 const _ip = '203.0.113.9';
 
@@ -77,7 +79,7 @@ OutboundIpResult _address({int coreEpoch = 1}) => OutboundIpResult(
 );
 
 Widget _card({DashboardDensity density = DashboardDensity.standard}) =>
-    Scaffold(
+    HostScaffold(
       body: Align(
         alignment: Alignment.topLeft,
         child: SizedBox(
@@ -95,12 +97,14 @@ Widget _card({DashboardDensity density = DashboardDensity.standard}) =>
 Widget _app(
   Future<IpQuality> Function(Ref ref, String ip) quality, {
   DashboardDensity density = DashboardDensity.standard,
+  bool root = false,
 }) {
   return TestApp(
     locale: const Locale('en'),
     overrides: [
       profilesProvider.overrideWithValue(const [_profile]),
       suspendProvider.overrideWithValue(false),
+      rootAccessProvider.overrideWith((_) async => root),
       outboundIpProbeProvider.overrideWithBuild(
         (_, _) => const RoutedProbeState({
           routedOutbound: ProbeEntry(
@@ -149,9 +153,7 @@ void _useTallView(WidgetTester tester) {
 
 Finder _clover() => find.ancestor(
   of: find.byType(ShapeBadge),
-  matching: find.byWidgetPredicate(
-    (widget) => widget is InkResponse && widget.runtimeType == InkResponse,
-  ),
+  matching: find.byWidgetPredicate((widget) => widget is PressRegion),
 );
 
 double _cloverTurn(WidgetTester tester) => tester
@@ -167,6 +169,38 @@ DashboardChip _chip(WidgetTester tester, String label) =>
 
 void main() {
   setUpAll(() => registerFallbackValue(const OutboundIpParams(timeout: 0)));
+
+  group('root access', () {
+    if (rsFeature) {
+      testWidgets('fades in a border and names it only to a screen reader', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        await tester.pumpWidget(_app((_, _) async => _residential, root: true));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 150));
+
+        final midway = tester.widget<DashboardCard>(find.byType(DashboardCard));
+        expect(midway.side.color.a, inExclusiveRange(0, 1));
+
+        await tester.pump(commonDuration);
+
+        final card = tester.widget<DashboardCard>(find.byType(DashboardCard));
+        expect(card.side.color.a, closeTo(1, 0.01));
+        expect(find.text('Root'), findsNothing);
+        expect(find.bySemanticsLabel(RegExp('Status Root')), findsOneWidget);
+        semantics.dispose();
+      });
+    }
+
+    testWidgets('leaves the card plain without it', (tester) async {
+      await tester.pumpWidget(_app((_, _) async => _residential));
+      await tester.pump(commonDuration);
+
+      final card = tester.widget<DashboardCard>(find.byType(DashboardCard));
+      expect(card.side, BorderSide.none);
+    });
+  });
 
   group('the exit address', () {
     testWidgets('shows with its country, type, quality and organization', (
@@ -241,7 +275,7 @@ void main() {
 
       expect(find.byType(SkeletonPill), findsNWidgets(3));
       expect(find.byType(SkeletonText), findsOneWidget);
-      expect(tester.widget<InkResponse>(_clover()).onTap, isNull);
+      expect(tester.widget<PressRegion>(_clover()).onTap, isNull);
       final turn = _cloverTurn(tester);
       await tester.pump(const Duration(milliseconds: 300));
       expect(_cloverTurn(tester), isNot(turn));
@@ -252,7 +286,7 @@ void main() {
       expect(find.byType(SkeletonPill), findsNothing);
       expect(find.text('Residential'), findsOneWidget);
       expect(_cloverTurn(tester) % (math.pi / 2), closeTo(0, 1e-9));
-      expect(tester.widget<InkResponse>(_clover()).onTap, isNotNull);
+      expect(tester.widget<PressRegion>(_clover()).onTap, isNotNull);
     });
 
     testWidgets('checks a failed quality again from its clover', (
@@ -402,74 +436,102 @@ void main() {
       tester,
     ).read(outboundIpProbeProvider).entryOf(routedOutbound).phase;
 
-    testWidgets('that fails as the proxy starts shows as checking', (
+    Future<void> startProxy(WidgetTester tester) async {
+      start(tester);
+      await tester.pump();
+      await tester.pump(probeMoveSettleDuration);
+      await tester.pump();
+    }
+
+    testWidgets('that fails once keeps checking for a second answer', (
       tester,
     ) async {
       final core = _MockCore();
-      var epoch = 1;
+      var failing = true;
       when(() => core.outboundIp(any())).thenAnswer((invocation) async {
         final params =
             invocation.positionalArguments.single as OutboundIpParams;
-        final failing = params.proxyName != directOutbound && epoch == 1;
-        return failing ? null : _address(coreEpoch: epoch);
+        if (params.proxyName != directOutbound && failing) {
+          throw TimeoutException('no answer');
+        }
+        return _address();
       });
       await tester.pumpWidget(_probingApp(core));
       await tester.pump();
       await tester.pump(commonDuration);
       expect(find.text(_ip), findsOneWidget);
 
-      start(tester);
-      await tester.pump();
-      await tester.pump(probeSettleDuration);
-      expect(phaseOf(tester), ProbePhase.failed);
+      await startProxy(tester);
+      expect(phaseOf(tester), ProbePhase.probing);
       expect(find.text('Check failed'), findsNothing);
       expect(find.byType(SkeletonText), findsNWidgets(2));
 
-      epoch = 2;
-      containerOf(tester)
-          .read(routeTrackerProvider.notifier)
-          .applySnapshot(const RouteSnapshot(coreEpoch: 2, routeVersion: 1));
-      await tester.pump(probeSettleDuration);
+      failing = false;
+      await tester.pump(probeConfirmDelay);
       await tester.pumpAndSettle();
       await tester.pump(const Duration(milliseconds: 700));
       expect(find.text(_ip), findsOneWidget);
       expect(find.byType(SkeletonText), findsNothing);
     });
 
-    testWidgets('that fails past the start is shown, then checked again', (
+    testWidgets('that fails twice is shown, then asked again behind it', (
       tester,
     ) async {
       final core = _MockCore();
       final asked = <String>[];
+      const failing = true;
       when(() => core.outboundIp(any())).thenAnswer((invocation) async {
         final params =
             invocation.positionalArguments.single as OutboundIpParams;
         asked.add(params.proxyName);
-        return params.proxyName == directOutbound ? _address() : null;
+        if (params.proxyName != directOutbound && failing) {
+          throw TimeoutException('no answer');
+        }
+        return _address();
       });
       await tester.pumpWidget(_probingApp(core));
       await tester.pump();
       await tester.pump(commonDuration);
 
-      start(tester);
-      await tester.pump();
-      await tester.pump(probeSettleDuration);
-      await tester.tap(find.byTooltip('Retry'));
-      await tester.pump();
-      expect(phaseOf(tester), ProbePhase.failed);
-      expect(find.text('Check failed'), findsNothing);
-      expect(asked, [directOutbound, routedOutbound]);
-
-      await tester.pump(const Duration(seconds: 5));
+      await startProxy(tester);
+      await tester.pump(probeConfirmDelay);
+      await tester.pumpAndSettle();
       expect(find.text('Check failed'), findsOneWidget);
       expect(find.text('Tap the icon to retry'), findsOneWidget);
+      expect(asked, [directOutbound, routedOutbound, routedOutbound]);
+
       await tester.tap(find.byTooltip('Retry'));
       await tester.pump();
-      expect(asked, [directOutbound, routedOutbound, routedOutbound]);
+      expect(asked, hasLength(4));
       await tester.pumpAndSettle();
-      await tester.pump(const Duration(milliseconds: 700));
       expect(find.text('Check failed'), findsOneWidget);
-      expect(find.byType(SkeletonText), findsNothing);
+
+      await tester.pump(const Duration(minutes: 1));
+      expect(asked, hasLength(4));
+    });
+
+    testWidgets('that timed out is shown without a second attempt', (
+      tester,
+    ) async {
+      final core = _MockCore();
+      when(() => core.outboundIp(any())).thenAnswer((invocation) async {
+        final params =
+            invocation.positionalArguments.single as OutboundIpParams;
+        return params.proxyName == directOutbound
+            ? _address()
+            : const OutboundIpResult(
+                error: 'timeout',
+                coreEpoch: 1,
+                routeVersion: 1,
+              );
+      });
+      await tester.pumpWidget(_probingApp(core));
+      await tester.pump();
+      await tester.pump(commonDuration);
+
+      await startProxy(tester);
+      await tester.pump(commonDuration);
+      expect(find.text('Check failed'), findsOneWidget);
     });
   });
 
@@ -512,15 +574,15 @@ void main() {
       await tester.pump();
     }
 
-    Finder startButton() => find
-        .byWidgetPredicate((widget) => widget.runtimeType == InkResponse)
-        .last;
+    Finder startButton() =>
+        find.byWidgetPredicate((widget) => widget is PressRegion).last;
 
     testWidgets('dispatches each toggle through the shared running state', (
       tester,
     ) async {
       container = containerWith();
       container.read(runTimeProvider.notifier).value = 1;
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
       await pumpCard(tester);
       final action =
           container.read(setupActionProvider.notifier) as _RecordingSetupAction;
@@ -576,10 +638,7 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
-      expect(
-        tester.renderObject<RenderProxyBox>(press).child!.debugLayer,
-        isA<TransformLayer>(),
-      );
+      expect(tester.renderObject(press).debugLayer, isA<TransformLayer>());
       await gesture.cancel();
       await tester.pumpAndSettle();
     });
@@ -588,7 +647,7 @@ void main() {
       container = containerWith(profiles: const []);
       await pumpCard(tester, density: DashboardDensity.mobile);
 
-      final toggle = tester.widget<InkResponse>(startButton());
+      final toggle = tester.widget<PressRegion>(startButton());
       expect(toggle.onTap, isNull);
       expect(tester.takeException(), isNull);
     });

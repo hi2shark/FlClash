@@ -2,17 +2,19 @@ package core
 
 import (
 	"github.com/metacubex/mihomo/component/resolver"
+	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/dns"
+	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
 
-func handleGetTraffic(onlyStatisticsProxy bool) Traffic {
-	up, down := statistic.DefaultManager.NowTraffic(onlyStatisticsProxy)
+func handleGetTraffic(params TrafficParams) Traffic {
+	up, down := statistic.DefaultManager.NowTraffic(params.OnlyProxy)
 	return Traffic{Up: up, Down: down}
 }
 
-func handleGetTotalTraffic(onlyStatisticsProxy bool) Traffic {
-	up, down := statistic.DefaultManager.TotalTraffic(onlyStatisticsProxy)
+func handleGetTotalTraffic(params TrafficParams) Traffic {
+	up, down := statistic.DefaultManager.TotalTraffic(params.OnlyProxy)
 	return Traffic{Up: up, Down: down}
 }
 
@@ -20,8 +22,8 @@ func handleResetTraffic() {
 	statistic.DefaultManager.ResetStatistic()
 }
 
-func handleGetConnections() *statistic.Snapshot {
-	return statistic.DefaultManager.Snapshot()
+func handleGetConnections() *connectionSnapshot {
+	return newConnectionSnapshot(statistic.DefaultManager.Snapshot())
 }
 
 func handleGetConnectionCount() int {
@@ -33,17 +35,15 @@ func handleGetConnectionCount() int {
 	return count
 }
 
-func handleCloseConnections() bool {
+func handleCloseConnections() {
 	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
 		_ = c.Close()
 		return true
 	})
-	return true
 }
 
-func handleResetConnections() bool {
+func handleResetConnections() {
 	resolver.ResetConnection()
-	return true
 }
 
 // A network change clears rather than waits out the TTLs: mihomo serves an
@@ -54,18 +54,54 @@ func handleClearDnsCache() {
 	dns.ClearAll()
 }
 
-// A connection that went out over a network the device has left hangs until
-// TCP gives up on it, and so do the DNS clients' pooled connections.
-func handleResetNetwork() {
-	handleCloseConnections()
+// handleNetworkChanged is how the desktop host reports a new network, which
+// Android's NetworkObserver reports through handleResetNetwork. The epoch
+// moves so the probes left on the old network, which hang or were just
+// closed, give up their slots and their answers.
+func handleNetworkChanged() {
 	handleClearDnsCache()
+	bumpRouteEpoch()
 }
 
-func handleCloseConnection(connectionId string) bool {
-	c := statistic.DefaultManager.Get(connectionId)
-	if c == nil {
-		return false
+// A connection that went out over a network the device has left hangs until
+// TCP gives up on it, and so do the DNS clients' pooled connections and the
+// socket or QUIC connection a WireGuard, Hysteria2 or TUIC outbound shares.
+func handleResetNetwork() {
+	handleCloseConnections()
+	resetOutbounds()
+	handleNetworkChanged()
+}
+
+type networkResetter interface{ ResetNetwork() }
+
+// AllProxies keeps one proxy per name; providers may each hold one by that name.
+func resetOutbounds() {
+	reset := make(map[networkResetter]struct{})
+	visit := func(proxy constant.Proxy) {
+		outbound, ok := proxy.Adapter().(networkResetter)
+		if !ok {
+			return
+		}
+		if _, done := reset[outbound]; done {
+			return
+		}
+		reset[outbound] = struct{}{}
+		outbound.ResetNetwork()
 	}
-	_ = c.Close()
-	return true
+	for _, proxy := range tunnel.AllProxies() {
+		visit(proxy)
+	}
+	for _, provider := range tunnel.ProvidersSnapshot() {
+		for _, proxy := range provider.Proxies() {
+			visit(proxy)
+		}
+	}
+}
+
+// A connection that is already gone is closed as far as the host is concerned.
+func handleCloseConnection(params IDParams) error {
+	if c := statistic.DefaultManager.Get(params.ID); c != nil {
+		_ = c.Close()
+	}
+	return nil
 }

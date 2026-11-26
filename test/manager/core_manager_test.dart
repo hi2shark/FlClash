@@ -1,11 +1,10 @@
 import 'dart:io';
 
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/core_manager.dart';
-import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -16,7 +15,7 @@ import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/ui.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -25,6 +24,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../helpers/app_paths.dart';
 import '../helpers/test_database_providers.dart';
 import '../helpers/test_profiles.dart';
+import '../helpers/test_app.dart';
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
@@ -32,7 +32,6 @@ const _nullProfileSetupState = SetupState(
   profileId: null,
   profileLastUpdateDate: null,
   profileType: ProfileType.file,
-  extendType: ExtendType.standard,
   rules: [],
   proxyGroups: [],
   addedRules: [],
@@ -62,7 +61,6 @@ class _ApplyRecordingSetupAction extends SetupAction {
   int updates = 0;
   int applies = 0;
   int globalRulesApplies = 0;
-  final List<bool> appliedForce = [];
 
   @override
   void applyIfGlobalRulesUsed() => globalRulesApplies++;
@@ -75,14 +73,20 @@ class _ApplyRecordingSetupAction extends SetupAction {
   @override
   void applyProfileDebounce({bool silence = false, bool force = false}) {
     applies++;
-    appliedForce.add(force);
   }
+}
+
+class _LostRecordingSetupAction extends SetupAction {
+  int lostCount = 0;
+
+  @override
+  void onCoreLost() => lostCount++;
 }
 
 _MockCoreHandlerInterface _coreInterface() {
   final coreInterface = _MockCoreHandlerInterface();
-  when(() => coreInterface.startLog()).thenAnswer((_) {});
-  when(() => coreInterface.stopLog()).thenAnswer((_) {});
+  when(() => coreInterface.startLog()).thenAnswer((_) async {});
+  when(() => coreInterface.stopLog()).thenAnswer((_) async {});
   return coreInterface;
 }
 
@@ -103,13 +107,11 @@ Future<ProviderContainer> _pumpCoreManager(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: MaterialApp(
+      child: HostApp(
         navigatorKey: globalState.navigatorKey,
-        localizationsDelegates: const [AppLocalizations.delegate],
-        supportedLocales: AppLocalizations.delegate.supportedLocales,
         builder: (context, child) {
           globalState.measure = Measure.of(context, 1);
-          return StatusManager(child: child!);
+          return BannerHost(stacked: false, topInset: 0, child: child!);
         },
         home: const CoreManager(child: SizedBox()),
       ),
@@ -146,8 +148,13 @@ void main() {
   late Directory profileSwitchTempDir;
 
   setUpAll(() async {
-    registerFallbackValue(const SetupParams(selectedMap: {}, testUrl: ''));
-    await AppLocalizations.load(const Locale('en'));
+    registerFallbackValue(
+      const SetupParams(
+        selectedMap: {},
+        options: CoreOptions(testUrl: ''),
+      ),
+    );
+    loadAppLocalizations(const Locale('en'));
     profileSwitchTempDir = Directory.systemTemp.createTempSync(
       'core_manager_test',
     );
@@ -164,7 +171,7 @@ void main() {
     tester,
   ) async {
     final coreInterface = _MockCoreHandlerInterface();
-    when(() => coreInterface.stopLog()).thenAnswer((_) {});
+    when(() => coreInterface.stopLog()).thenAnswer((_) async {});
     final container = ProviderContainer(
       overrides: [
         coreHandlerProvider.overrideWithValue(
@@ -176,7 +183,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(home: CoreManager(child: SizedBox())),
+        child: const HostApp(home: CoreManager(child: SizedBox())),
       ),
     );
     container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
@@ -213,6 +220,88 @@ void main() {
 
     expect(container.read(coreStatusProvider), CoreStatus.disconnected);
     expect(find.text('boom'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a crash ends the run here without telling the Core to stop', (
+    tester,
+  ) async {
+    final coreInterface = _coreInterface();
+    final setup = _LostRecordingSetupAction();
+    final container = await _pumpCoreManager(
+      tester,
+      coreInterface,
+      overrides: [setupActionProvider.overrideWith(() => setup)],
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+
+    coreEventManager.sendEvent(_crash);
+    await tester.pump();
+
+    expect(container.read(coreStatusProvider), CoreStatus.disconnected);
+    expect(setup.lostCount, 1);
+    verifyNever(() => coreInterface.stopListener());
+
+    await tester.pumpWidget(const SizedBox());
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+  });
+
+  testWidgets('connections still open close once the core is gone', (
+    tester,
+  ) async {
+    final container = await _pumpCoreManager(tester, _coreInterface());
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+    container
+        .read(requestsProvider.notifier)
+        .addRequest(
+          TrackerInfo(
+            id: 'a',
+            start: DateTime.utc(2026),
+            metadata: const Metadata(network: 'tcp', host: 'example.com'),
+            chains: const ['Proxy'],
+            rule: 'MATCH',
+            rulePayload: '',
+          ),
+        );
+    await tester.pump();
+    expect(container.read(requestsProvider).activeCount, 1);
+
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    await tester.pump();
+
+    expect(container.read(requestsProvider).activeCount, 0);
+    expect(container.read(requestsProvider)['a']!.closedAt, isNotNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a connection whose dial failed is recorded closed when the '
+      'Core says', (tester) async {
+    final container = await _pumpCoreManager(tester, _coreInterface());
+
+    coreEventManager.sendEvent(
+      const CoreEvent(
+        type: CoreEventType.request,
+        data: {
+          'id': 'a',
+          'start': '2026-11-21T08:00:00Z',
+          'metadata': {'network': 'tcp', 'host': 'example.com'},
+          'chains': ['Proxy'],
+          'rule': 'Match',
+          'rulePayload': '',
+          'closedAt': '2026-11-21T08:00:00Z',
+          'failure': {'kind': 'timeout', 'message': 'i/o timeout'},
+        },
+      ),
+    );
+    await tester.pump();
+
+    final connection = container.read(requestsProvider)['a']!;
+    expect(connection.closedAt, DateTime.utc(2026, 11, 21, 8));
+    expect(connection.failure?.kind, ConnectionFailureKind.timeout);
+    expect(container.read(requestCountProvider), 1);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -348,8 +437,8 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('a test URL change forces the apply, which alone hands it '
-      'over', (tester) async {
+  testWidgets('a test URL change reaches the Core as an update, without an '
+      'apply', (tester) async {
     final setupAction = _ApplyRecordingSetupAction();
     final container = await _pumpCoreManager(
       tester,
@@ -359,14 +448,11 @@ void main() {
 
     container
         .read(patchClashConfigProvider.notifier)
-        .update((state) => state.copyWith(hosts: const {'a.test': '1.1.1.1'}));
-    await tester.pump();
-    container
-        .read(patchClashConfigProvider.notifier)
         .update((state) => state.copyWith(testUrl: 'https://probe.test/204'));
     await tester.pump();
 
-    expect(setupAction.appliedForce, [false, true]);
+    expect(setupAction.updates, 1);
+    expect(setupAction.applies, 0);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -531,7 +617,10 @@ void main() {
       var setupCalls = 0;
       when(() => coreInterface.setupConfig(any())).thenAnswer((_) async {
         setupCalls++;
-        return 'rejected';
+        throw const CoreMethodException(
+          code: 'config_rejected',
+          message: 'rejected',
+        );
       });
       final container = await _pumpCoreManager(
         tester,
@@ -556,7 +645,10 @@ void main() {
       var setupCalls = 0;
       when(() => coreInterface.setupConfig(any())).thenAnswer((_) async {
         setupCalls++;
-        return 'rejected';
+        throw const CoreMethodException(
+          code: 'config_rejected',
+          message: 'rejected',
+        );
       });
       final a = Profile.normal(label: 'a');
       final b = Profile.normal(label: 'b');
@@ -591,7 +683,10 @@ void main() {
         var setupCalls = 0;
         when(() => coreInterface.setupConfig(any())).thenAnswer((_) async {
           setupCalls++;
-          return 'rejected';
+          throw const CoreMethodException(
+            code: 'config_rejected',
+            message: 'rejected',
+          );
         });
         const missingId = -1;
         final container = await _pumpCoreManager(

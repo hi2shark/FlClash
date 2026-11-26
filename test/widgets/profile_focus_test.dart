@@ -1,14 +1,13 @@
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/profiles.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -45,6 +44,7 @@ Future<ProviderContainer> pumpProfiles(
   int? currentProfileId,
   ValueListenable<bool>? isActive,
   bool picker = false,
+  bool firstFrameOnly = false,
   List<Override> overrides = const [],
 }) async {
   tester.view.physicalSize = const Size(900, 800);
@@ -68,14 +68,8 @@ Future<ProviderContainer> pumpProfiles(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: MaterialApp(
+      child: HostApp(
         navigatorKey: globalState.navigatorKey,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          AppUiLocalizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
-        supportedLocales: AppLocalizations.delegate.supportedLocales,
         builder: (context, child) {
           return wrapAppScopes(context, child!);
         },
@@ -90,7 +84,9 @@ Future<ProviderContainer> pumpProfiles(
       ),
     ),
   );
-  await tester.pump();
+  if (!firstFrameOnly) {
+    await tester.pump();
+  }
   return container;
 }
 
@@ -104,7 +100,7 @@ void main() {
     await pumpProfiles(tester, profiles: profiles);
 
     final cards = find
-        .byType(FilledButton)
+        .byType(Card)
         .evaluate()
         .map((element) => element.widget)
         .toList();
@@ -112,8 +108,7 @@ void main() {
     Future<void> focusCard(int index) async {
       for (var tab = 0; tab < 50; tab++) {
         final context = FocusManager.instance.primaryFocus?.context;
-        final focusedCard = context
-            ?.findAncestorWidgetOfExactType<FilledButton>();
+        final focusedCard = context?.findAncestorWidgetOfExactType<Card>();
         if (identical(focusedCard, cards[index])) {
           return;
         }
@@ -131,14 +126,14 @@ void main() {
 
       expect(
         find.descendant(
-          of: find.byType(CommonPopupMenu),
+          of: find.byType(PopupMenu),
           matching: find.text(currentAppLocalizations.delete),
         ),
         findsOneWidget,
       );
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
-      expect(find.byType(CommonPopupMenu), findsNothing);
+      expect(find.byType(PopupMenu), findsNothing);
     }
   });
 
@@ -165,7 +160,7 @@ void main() {
           of: find.text('url'),
           matching: find.byType(ProfileItem),
         ),
-        matching: find.byType(CommonCircleLoading),
+        matching: find.byType(ActivityIndicator),
       ),
       findsOneWidget,
     );
@@ -317,14 +312,19 @@ void main() {
       expect(rect.bottom, lessThanOrEqualTo(viewport.bottom));
     }
 
-    testWidgets('on first build', (tester) async {
+    testWidgets('in its first frame, which a tab switch snapshots', (
+      tester,
+    ) async {
       await pumpProfiles(
         tester,
         profiles: profiles,
         currentProfileId: selected.id,
+        firstFrameOnly: true,
       );
-      await tester.pumpAndSettle();
 
+      expectRevealed(tester);
+
+      await tester.pumpAndSettle();
       expectRevealed(tester);
     });
 

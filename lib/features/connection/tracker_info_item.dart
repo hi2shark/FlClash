@@ -1,307 +1,211 @@
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/widgets.dart';
 
-String _ruleText(TrackerInfo trackerInfo) {
-  final rule = trackerInfo.rule;
-  final rulePayload = trackerInfo.rulePayload;
-  if (rulePayload.isNotEmpty) {
-    return '$rule($rulePayload)';
-  }
-  return rule;
-}
+import 'tracker_app_well.dart';
+import 'tracker_clock.dart';
+import 'tracker_menu.dart';
+import 'tracker_selection.dart';
+import 'tracker_texts.dart';
 
-String _endpointText(String ip, String port) {
-  if (ip.isEmpty) {
-    return '';
-  }
-  if (port.isNotEmpty) {
-    return '$ip:$port';
-  }
-  return ip;
-}
-
-void showTrackerInfoDetail(
+List<PopupMenuItem> trackerInfoMenuItems(
   BuildContext context,
-  TrackerInfo trackerInfo,
-  String title,
-) {
-  showInSheet<void>(
-    context,
-    builder: (_) {
-      return CommonScaffold(
-        body: TrackerInfoDetailView(trackerInfo: trackerInfo),
-        title: title,
-      );
-    },
+  TrackerInfo trackerInfo, {
+  ValueChanged<TrackerInfo>? onClose,
+}) {
+  final appLocalizations = context.appLocalizations;
+  final metadata = trackerInfo.metadata;
+  final destination = trackerEndpointText(
+    metadata.destinationIP,
+    metadata.destinationPort,
   );
+  final menuActions = TrackerMenuScope.of(context);
+  final close = onClose ?? menuActions?.close;
+  final onlyApp = menuActions?.onlyApp;
+  final hideHost = menuActions?.hideHost;
+  // The row that opened the menu can leave the list before its sheet opens.
+  final formHost = Navigator.of(context).overlay!.context;
+  return [
+    if (close != null && trackerInfo.isActive)
+      PopupMenuItem(
+        glyph: AppGlyphs.block,
+        label: appLocalizations.closeConnection,
+        danger: true,
+        onPressed: () => close(trackerInfo),
+      ),
+    if (metadata.host.isNotEmpty)
+      copyMenuItem(
+        appLocalizations.copyHost,
+        trackerCopyText(trackerInfo),
+        section: const PopupMenuSection(),
+      ),
+    if (metadata.host.isEmpty && destination.isNotEmpty)
+      copyMenuItem(
+        appLocalizations.copyDestination,
+        trackerCopyText(trackerInfo),
+        section: const PopupMenuSection(),
+      ),
+    if (onlyApp != null && metadata.process.isNotEmpty)
+      PopupMenuItem(
+        glyph: AppGlyphs.filter,
+        label: appLocalizations.onlyThisApp,
+        section: const PopupMenuSection(),
+        onPressed: () => onlyApp(trackerInfo),
+      ),
+    if (hideHost != null && trackerInfo.title.isNotEmpty)
+      PopupMenuItem(
+        glyph: AppGlyphs.eyeOff,
+        label: appLocalizations.hideThisHost,
+        section: onlyApp == null || metadata.process.isEmpty
+            ? const PopupMenuSection()
+            : null,
+        onPressed: () => hideHost(trackerInfo),
+      ),
+    if (rsFeature && metadata.mitm)
+      PopupMenuItem(
+        glyph: AppGlyphs.eye,
+        label: appLocalizations.viewHttp,
+        section: const PopupMenuSection(),
+        onPressed: () => showTrackerInfoDetail(
+          formHost,
+          trackerInfo,
+          appLocalizations.details(appLocalizations.connection),
+          opensRequests: true,
+        ),
+      ),
+  ];
 }
 
-class TrackerInfoItem extends ConsumerWidget {
+class TrackerInfoItem extends StatelessWidget {
   final TrackerInfo trackerInfo;
-  final bool isLive;
-  final Function(String)? onClickKeyword;
-  final Widget? action;
+  final ValueChanged<TrackerInfo>? onClose;
   final String detailTitle;
+
+  /// With its latest traffic, which [traffic] tells of.
+  final ValueGetter<TrackerInfo>? latest;
+  final Listenable? traffic;
 
   const TrackerInfoItem({
     super.key,
     required this.trackerInfo,
-    this.isLive = false,
-    this.onClickKeyword,
-    this.action,
+    this.onClose,
     required this.detailTitle,
+    this.latest,
+    this.traffic,
   });
 
   @override
-  Widget build(BuildContext context, ref) {
-    final showIcon = ref.watch(
-      patchClashConfigProvider.select(
-        (state) =>
-            state.findProcessMode == FindProcessMode.always && system.isAndroid,
-      ),
-    );
-    return RecordListItem(
-      onTap: () => showTrackerInfoDetail(context, trackerInfo, detailTitle),
-      header: _buildHeader(context),
-      body: _TrackerInfoBody(
-        trackerInfo: trackerInfo,
-        showIcon: showIcon,
-        onClickKeyword: onClickKeyword,
-      ),
+  Widget build(BuildContext context) {
+    final selection = TrackerSelection.maybeOf(context);
+    if (selection == null) {
+      return _buildRow(context, selected: false);
+    }
+    return TrackerSelected(
+      id: trackerInfo.id,
+      builder: (context, selected) => _buildRow(context, selected: selected),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    final network = Text(
-      trackerInfo.metadata.network.toUpperCase(),
-      style: AppTextStyle.caption1
-          .of(context, emphasized: true)
-          .copyWith(color: context.colorScheme.onSurfaceVariant),
-    );
-    if (!isLive) {
-      return RecordHeader(
-        trailing: action,
-        children: [RecordTimestamp(trackerInfo.start.showFull), network],
-      );
-    }
-    final color = context.colorScheme.onSurfaceVariant;
-    WidgetSpan arrow(Glyph glyph) => WidgetSpan(
-      alignment: PlaceholderAlignment.middle,
-      child: GlyphIcon(glyph, size: 12, color: color),
-    );
-    return RecordHeader(
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 4,
-        children: [
-          Text.rich(
-            TextSpan(
-              children: [
-                arrow(AppGlyphs.arrowUp),
-                TextSpan(
-                  text: ' ${(trackerInfo.uploadSpeed ?? 0).traffic.show}/s   ',
-                ),
-                arrow(AppGlyphs.arrowDown),
-                TextSpan(
-                  text: ' ${(trackerInfo.downloadSpeed ?? 0).traffic.show}/s',
-                ),
-              ],
-            ),
-          ),
-          ?action,
-        ],
+  Widget _buildRow(BuildContext context, {required bool selected}) {
+    final colorScheme = context.colorScheme;
+    final metadata = trackerInfo.metadata;
+    final secondary = colorScheme.onSurfaceVariant;
+    final failure = trackerInfo.failure;
+    final row = DecorationListItem(
+      isSelected: selected,
+      leading: TrackerAppWell(trackerInfo: trackerInfo, size: 40),
+      title: Text(
+        metadata.host.isNotEmpty
+            ? metadata.host
+            : trackerEndpointText(
+                metadata.destinationIP,
+                metadata.destinationPort,
+              ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyle.subheadline.of(context),
       ),
-      children: [
-        Text(trackerInfo.start.getLastUpdateTimeDesc(context, compact: true)),
-        network,
-      ],
+      subtitle: DefaultTextStyle.merge(
+        style: AppTextStyle.caption1
+            .of(context)
+            .toTabular
+            .copyWith(color: secondary),
+        child: failure != null
+            ? RecordLabelLine(
+                labels: trackerLabels(context, trackerInfo),
+                underTitle: true,
+              )
+            : TrackerLifetime(
+                trackerInfo: trackerInfo,
+                builder: (lifetime) => RecordLabelLine(
+                  underTitle: true,
+                  labels: [
+                    if (trackerInfo.chains.lastOrNull case final node?
+                        when node.isNotEmpty)
+                      RecordLabel(label: node),
+                    RecordLabel(label: lifetime),
+                    ...trackerLabels(context, trackerInfo, failure: false),
+                  ],
+                ),
+              ),
+      ),
+      trailing: switch ((traffic, latest)) {
+        (final traffic?, final latest?) => ListenableBuilder(
+          listenable: traffic,
+          builder: (context, _) {
+            final trackerInfo = latest();
+            return MemoBuilder(
+              inputs: [trackerInfo],
+              builder: (_) => TrackerTraffic(trackerInfo: trackerInfo),
+            );
+          },
+        ),
+        _ => TrackerTraffic(trackerInfo: trackerInfo),
+      },
+      onPressed: () =>
+          openTrackerInfo(context, latest?.call() ?? trackerInfo, detailTitle),
+    );
+    return ContextMenuRegion(
+      menuBuilder: (context) => trackerInfoMenuItems(
+        context,
+        latest?.call() ?? trackerInfo,
+        onClose: onClose,
+      ),
+      child: selected ? RecordSelectedRow(child: row) : row,
     );
   }
 }
 
-class _TrackerInfoBody extends StatelessWidget {
+class TrackerTraffic extends StatelessWidget {
   final TrackerInfo trackerInfo;
-  final bool showIcon;
-  final Function(String)? onClickKeyword;
 
-  const _TrackerInfoBody({
-    required this.trackerInfo,
-    required this.showIcon,
-    this.onClickKeyword,
-  });
-
-  Widget _buildTitle(RecordTextStyles styles) {
-    final metadata = trackerInfo.metadata;
-    final title = Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(
-            text: _endpointText(trackerInfo.title, metadata.destinationPort),
-            style: styles.title,
-          ),
-          if (metadata.host.isNotEmpty && metadata.destinationIP.isNotEmpty)
-            TextSpan(
-              text: '  ${metadata.destinationIP}',
-              style: styles.secondary,
-            ),
-        ],
-      ),
-    );
-    final process = metadata.process;
-    if (!showIcon || process.isEmpty) {
-      return title;
-    }
-    return Row(
-      spacing: 8,
-      children: [
-        GestureDetector(
-          onTap: () => onClickKeyword?.call(process),
-          child: PackageIcon(packageName: process, size: 24),
-        ),
-        Flexible(child: title),
-      ],
-    );
-  }
+  const TrackerTraffic({super.key, required this.trackerInfo});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final styles = RecordTextStyles.of(context);
-    final metadata = trackerInfo.metadata;
-    final rule = _ruleText(trackerInfo);
-    final source = [
-      trackerInfo.progressText,
-      _endpointText(metadata.sourceIP, metadata.sourcePort),
-    ].where((text) => text.isNotEmpty).join('  ·  ');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 4,
-      children: [
-        _buildTitle(styles),
-        Wrap(
-          spacing: 6,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            if (rule.isNotEmpty) Text(rule, style: styles.secondary),
-            for (final (index, chain) in trackerInfo.chains.reversed.indexed)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 6,
-                children: [
-                  if (index > 0 || rule.isNotEmpty) const RecordArrow(),
-                  Flexible(
-                    child: TonalChip(
-                      label: chain,
-                      color: context.raisedSurfaceLevel.colorOf(colorScheme),
-                      foregroundColor: colorScheme.onSurfaceVariant,
-                      onPressed: () => onClickKeyword?.call(chain),
-                    ),
-                  ),
-                ],
-              ),
-          ],
-        ),
-        if (source.isNotEmpty) Text(source, style: styles.secondary),
-      ],
-    );
-  }
-}
-
-class TrackerInfoDetailView extends StatelessWidget {
-  final TrackerInfo trackerInfo;
-
-  const TrackerInfoDetailView({super.key, required this.trackerInfo});
-
-  Widget _buildChains(BuildContext context) {
-    return DetailRow(
-      title: context.appLocalizations.proxyChains,
-      value: Wrap(
-        spacing: 6,
-        runSpacing: 4,
-        alignment: WrapAlignment.end,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          for (final (index, chain) in trackerInfo.chains.reversed.indexed)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 6,
-              children: [
-                if (index > 0) const RecordArrow(),
-                Flexible(child: MetaChip(label: chain)),
-              ],
-            ),
-        ],
+    final secondary = colorScheme.onSurfaceVariant;
+    final total = (trackerInfo.upload + trackerInfo.download).traffic.show;
+    final active = trackerInfo.isActive;
+    return PlainTextLines(spacing: 2, [
+      (
+        text: active ? trackerSpeedText(trackerInfo) : total,
+        style: AppTextStyle.footnote
+            .of(context, emphasized: active)
+            .toTabular
+            .copyWith(color: active ? colorScheme.onSurface : secondary),
       ),
-    );
-  }
-
-  List<Widget> _buildRows(List<(String, String)> entries) {
-    return [
-      for (final (title, value) in entries)
-        if (value.isNotEmpty) DetailRow.text(title: title, value: value),
-    ];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = context.appLocalizations;
-    final metadata = trackerInfo.metadata;
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
-        bottom: 20 + context.bottomInset,
-        top: context.sectionsTopPadding,
-      ),
-      children: [
-        generateSection(
-          title: appLocalizations.basicInfo,
-          items: _buildRows([
-            (appLocalizations.creationTime, trackerInfo.start.showFull),
-            (appLocalizations.networkType, metadata.network),
-            (appLocalizations.process, trackerInfo.progressText),
-            (appLocalizations.rule, _ruleText(trackerInfo)),
-            (appLocalizations.upload, trackerInfo.upload.traffic.show),
-            (appLocalizations.download, trackerInfo.download.traffic.show),
-          ]),
+      if (active)
+        (
+          text: total,
+          style: AppTextStyle.caption2
+              .of(context)
+              .toTabular
+              .copyWith(color: secondary),
         ),
-        generateSection(
-          title: appLocalizations.address,
-          items: _buildRows([
-            (appLocalizations.host, metadata.host),
-            (
-              appLocalizations.source,
-              _endpointText(metadata.sourceIP, metadata.sourcePort),
-            ),
-            (
-              appLocalizations.destination,
-              _endpointText(metadata.destinationIP, metadata.destinationPort),
-            ),
-            (
-              appLocalizations.destinationGeoIP,
-              metadata.destinationGeoIP.join(' '),
-            ),
-            (appLocalizations.destinationIPASN, metadata.destinationIPASN),
-            (appLocalizations.remoteDestination, metadata.remoteDestination),
-          ]),
-        ),
-        generateSection(
-          title: appLocalizations.proxies,
-          items: [
-            ..._buildRows([
-              (appLocalizations.specialProxy, metadata.specialProxy),
-              (appLocalizations.specialRules, metadata.specialRules),
-              (appLocalizations.dnsMode, metadata.dnsMode?.name ?? ''),
-            ]),
-            _buildChains(context),
-          ],
-        ),
-      ],
-    );
+    ]);
   }
 }

@@ -1,12 +1,16 @@
+import 'dart:async';
+
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/lib.dart';
 import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/spill.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/state.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -19,6 +23,7 @@ class _FakeService implements Service {
 
   String initError = '';
   String syncError = '';
+  Exception? syncException;
   bool shutdownResult = true;
   bool startResult = true;
   bool stopResult = true;
@@ -26,15 +31,21 @@ class _FakeService implements Service {
 
   final invokedCalls = <CoreMethodCall>[];
 
+  Completer<void>? initGate;
+
   @override
   Future<String> init() async {
     calls.add('init');
+    await initGate?.future;
     return initError;
   }
 
   @override
   Future<String> syncState(SharedState state) async {
     calls.add('syncState');
+    if (syncException case final exception?) {
+      throw exception;
+    }
     return syncError;
   }
 
@@ -57,10 +68,17 @@ class _FakeService implements Service {
   }
 
   @override
-  Future<CoreMethodResponse?> invokeMethod(CoreMethodCall call) async {
-    calls.add('invokeMethod:${call.method.name}');
+  Future<CoreMethodResponse> invokeMethod(
+    CoreMethodCall call, {
+    CoreResultModel? model,
+  }) async {
+    calls.add('invokeMethod:${call.method.wireName}');
     invokedCalls.add(call);
-    return onInvokeMethod?.call(call);
+    final response = onInvokeMethod?.call(call);
+    if (response == null) {
+      throw const CoreMethodException(code: 'no_response', message: '');
+    }
+    return response;
   }
 
   @override
@@ -78,7 +96,7 @@ void main() {
   late CoreLib lib;
 
   setUpAll(() async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
   });
 
   setUp(() {
@@ -147,6 +165,57 @@ void main() {
       final retry = await lib.start();
 
       expect(retry.outcome, CoreLifecycleOutcome.applied);
+      expect(service.calls, ['init', 'syncState']);
+    });
+
+    test('a sync the channel fails disconnects as a sync error does', () async {
+      service.syncException = PlatformException(code: 'sync');
+
+      await expectLater(lib.start(), throwsA(isA<PlatformException>()));
+      expect(service.calls, ['init', 'syncState', 'shutdown']);
+
+      service.syncException = null;
+      service.calls.clear();
+      final retry = await lib.start();
+
+      expect(retry.outcome, CoreLifecycleOutcome.applied);
+      expect(service.calls, ['init', 'syncState']);
+    });
+  });
+
+  group('a start still opening', () {
+    setUp(() => service.initGate = Completer<void>());
+
+    test('gives way to a close and leaves no session open', () async {
+      final start = lib.start();
+      await Future<void>.delayed(Duration.zero);
+      final close = lib.close();
+      service.initGate!.complete();
+
+      expect((await start).outcome, CoreLifecycleOutcome.superseded);
+      expect((await close).outcome, CoreLifecycleOutcome.coalesced);
+      expect(service.calls, ['init', 'shutdown']);
+    });
+
+    test('gives way to a stop and leaves no session open', () async {
+      final start = lib.start();
+      await Future<void>.delayed(Duration.zero);
+      final stop = lib.stop();
+      service.initGate!.complete();
+
+      expect((await start).outcome, CoreLifecycleOutcome.superseded);
+      expect((await stop).outcome, CoreLifecycleOutcome.coalesced);
+      expect(service.calls, ['init', 'shutdown']);
+    });
+
+    test('takes a second start as the same one', () async {
+      final first = lib.start();
+      await Future<void>.delayed(Duration.zero);
+      final second = lib.start();
+      service.initGate!.complete();
+
+      expect((await first).outcome, CoreLifecycleOutcome.applied);
+      expect((await second).outcome, CoreLifecycleOutcome.coalesced);
       expect(service.calls, ['init', 'syncState']);
     });
   });
@@ -220,17 +289,25 @@ void main() {
   group('listeners', () {
     test('a listener start is answered by the service', () async {
       await lib.start();
-      service.onInvokeMethod = (_) =>
-          const CoreMethodResponse(id: '1', result: true);
+      service.onInvokeMethod = (_) => const CoreMethodResponse(id: '1');
 
-      expect(await lib.startListener(), isTrue);
+      await lib.startListener();
 
       service.startResult = false;
-      expect(await lib.startListener(), isFalse);
+      await expectLater(
+        lib.startListener(),
+        throwsA(
+          isA<CoreMethodException>().having(
+            (error) => error.code,
+            'code',
+            'service_refused',
+          ),
+        ),
+      );
 
       service.startResult = true;
       service.onInvokeMethod = (_) => null;
-      expect(await lib.startListener(), isTrue);
+      await lib.startListener();
       expect(service.calls.last, 'start');
     });
 
@@ -238,20 +315,36 @@ void main() {
       await lib.start();
       service.onInvokeMethod = (_) => null;
 
-      expect(await lib.stopListener(), isTrue);
+      await lib.stopListener();
 
       service.stopResult = false;
-      expect(await lib.stopListener(), isFalse);
+      await expectLater(
+        lib.stopListener(),
+        throwsA(isA<CoreMethodException>()),
+      );
+    });
+
+    test('a listener command the Core refuses still fails', () async {
+      await lib.start();
+      service.onInvokeMethod = (call) => CoreMethodResponse(
+        id: call.id,
+        error: const CoreMethodError(code: 'core_error', message: 'busy'),
+      );
+
+      await expectLater(
+        lib.startListener(),
+        throwsA(isA<CoreMethodException>()),
+      );
+      expect(service.calls, isNot(contains('start')));
     });
 
     test('stopListener stops the service before the core listener', () async {
       await lib.start();
-      service.onInvokeMethod = (_) =>
-          const CoreMethodResponse(id: '1', result: true);
+      service.onInvokeMethod = (_) => const CoreMethodResponse(id: '1');
       service.calls.clear();
 
-      expect(await lib.stopListener(), isTrue);
-      expect(service.calls, ['stop', 'invokeMethod:stopListener']);
+      await lib.stopListener();
+      expect(service.calls, ['stop', 'invokeMethod:listener.stop']);
     });
   });
 
@@ -261,8 +354,8 @@ void main() {
       service.onInvokeMethod = (call) =>
           CoreMethodResponse(id: call.id, result: 'ok');
 
-      await lib.invokeMethod<String>(method: CoreMethod.getProxies);
-      await lib.invokeMethod<String>(method: CoreMethod.getProxies);
+      await lib.invokeMethod(method: CoreMethod.proxyList);
+      await lib.invokeMethod(method: CoreMethod.proxyList);
 
       expect(service.invokedCalls.map((call) => call.id), ['1', '2']);
     });
@@ -272,34 +365,44 @@ void main() {
       service.onInvokeMethod = (call) =>
           CoreMethodResponse(id: call.id, result: 'payload');
 
-      expect(
-        await lib.invokeMethod<String>(method: CoreMethod.getProxies),
-        'payload',
-      );
+      expect(await lib.invokeMethod(method: CoreMethod.proxyList), 'payload');
     });
 
-    test('resolves to null when the service answers nothing', () async {
+    test('fails when the service answers nothing', () async {
       await lib.start();
       service.onInvokeMethod = (_) => null;
 
-      expect(
-        await lib.invokeMethod<String>(method: CoreMethod.getProxies),
-        isNull,
+      await expectLater(
+        lib.invokeMethod(method: CoreMethod.proxyList),
+        throwsA(
+          isA<CoreMethodException>().having(
+            (error) => error.code,
+            'code',
+            'no_response',
+          ),
+        ),
       );
     });
 
     testWidgets('gives up instead of hanging when no connection arrives', (
       tester,
     ) async {
-      Object? result = 'unset';
+      Object? failure;
       final pending = lib
-          .invokeMethod<String>(method: CoreMethod.getProxies)
-          .then((value) => result = value);
+          .invokeMethod(method: CoreMethod.proxyList)
+          .catchError((Object error) => failure = error);
 
       await tester.pump(const Duration(seconds: 11));
       await pending;
 
-      expect(result, isNull);
+      expect(
+        failure,
+        isA<CoreMethodException>().having(
+          (error) => error.code,
+          'code',
+          'core_unavailable',
+        ),
+      );
       expect(service.calls, isEmpty);
     });
   });

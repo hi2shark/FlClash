@@ -1,14 +1,16 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/mitm_network.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/pages/editor.dart';
+import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/views/config/override.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart' show mapEquals;
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 extension on DnsOverrideKey {
@@ -29,6 +31,7 @@ extension on DnsOverrideKey {
     DnsOverrideKey.fakeIpRange6 => l.fakeipRange6,
     DnsOverrideKey.fakeIpFilter => l.fakeipFilter,
     DnsOverrideKey.fakeIpFilterMode => l.fakeipFilterMode,
+    DnsOverrideKey.fakeIpDisableMapping => 'Fake-IP Disable Mapping',
     DnsOverrideKey.fakeIpTtl => l.fakeipTtl,
     DnsOverrideKey.defaultNameserver => 'Default Nameserver',
     DnsOverrideKey.nameserverPolicy => 'Nameserver Policy',
@@ -52,7 +55,6 @@ extension on DnsOverrideKey {
     DnsOverrideKey.enable => (l) => l.statusDesc,
     DnsOverrideKey.listenRoutingMark => (l) => l.listenRoutingMarkDesc,
     DnsOverrideKey.respectRules => (l) => l.respectRulesDesc,
-    DnsOverrideKey.fakeIpFilterMode => (l) => l.fakeipFilterModeDesc,
     _ => null,
   };
 
@@ -73,6 +75,7 @@ extension on DnsOverrideKey {
     DnsOverrideKey.fakeIpRange6 ||
     DnsOverrideKey.fakeIpFilter ||
     DnsOverrideKey.fakeIpFilterMode ||
+    DnsOverrideKey.fakeIpDisableMapping ||
     DnsOverrideKey.fakeIpTtl => 'Fake-IP',
     DnsOverrideKey.defaultNameserver ||
     DnsOverrideKey.nameserverPolicy ||
@@ -117,6 +120,12 @@ ProfileOverrides _setProfileDns(ProfileOverrides overrides, _DnsState state) =>
     overrides.copyWith(dns: state.model, dnsOverrideKeys: state.keys);
 
 String _patchDnsDescription(AppLocalizations l) => l.dnsOverrideDesc;
+
+const _mitmKeys = {
+  DnsOverrideKey.nameserver: MitmNetworkKey.nameserver,
+  DnsOverrideKey.defaultNameserver: MitmNetworkKey.defaultNameserver,
+  DnsOverrideKey.fakeIpFilter: MitmNetworkKey.fakeIpFilter,
+};
 
 class DnsView extends OverrideView<DnsOverrideKey, Dns> {
   /// The keys written over the DNS of every subscription and file profile.
@@ -173,6 +182,30 @@ class _DnsOverrideSpec extends OverrideSpec<DnsOverrideKey, Dns> {
 
   @override
   String label(DnsOverrideKey key, AppLocalizations l) => key.label(l);
+
+  @override
+  List<String> notesOf(
+    WidgetRef ref,
+    Iterable<DnsOverrideKey> keys,
+    AppLocalizations l,
+  ) {
+    final takeover = ref.watch(mitmTakeoverProvider).value;
+    if (takeover == null) {
+      return const [];
+    }
+    final policy = keys.contains(DnsOverrideKey.nameserverPolicy)
+        ? ref.watch(target.selectModel((dns) => dns.nameserverPolicy))
+        : const <String, String>{};
+    return [
+      for (final key in keys)
+        if (takeover.keys[_mitmKeys[key]] case final module?)
+          '${key.label(l)}: ${l.mitmChangeReplacedBy(module)}',
+      for (final MapEntry(key: domain, value: module)
+          in takeover.nameserverPolicy.entries)
+        if (policy.containsKey(domain))
+          '$domain: ${l.mitmChangeReplacedBy(module)}',
+    ];
+  }
 
   @override
   ConfigLabel? description(DnsOverrideKey key) => key.description;
@@ -248,11 +281,16 @@ class _DnsOverrideSpec extends OverrideSpec<DnsOverrideKey, Dns> {
       (dns) => dns.fakeIpFilter,
       (dns, value) => dns.copyWith(fakeIpFilter: value),
       itemMaxLength: TextInputLimits.domain,
+      description: (l) => l.fakeipFilterDesc,
     ),
     DnsOverrideKey.fakeIpFilterMode => OptionsOverrideField(
       FakeIpFilterMode.values,
       (dns) => dns.fakeIpFilterMode,
       (dns, value) => dns.copyWith(fakeIpFilterMode: value),
+    ),
+    DnsOverrideKey.fakeIpDisableMapping => ToggleOverrideField(
+      (dns) => dns.fakeIpDisableMapping,
+      (dns, value) => dns.copyWith(fakeIpDisableMapping: value),
     ),
     DnsOverrideKey.fakeIpTtl => NumberOverrideField(
       (dns) => dns.fakeIpTtl,
@@ -262,20 +300,24 @@ class _DnsOverrideSpec extends OverrideSpec<DnsOverrideKey, Dns> {
       (dns) => dns.defaultNameserver,
       (dns, value) => dns.copyWith(defaultNameserver: value),
       itemMaxLength: TextInputLimits.dnsServer,
+      description: (l) => l.defaultNameserverDesc,
     ),
     DnsOverrideKey.nameserverPolicy => _PolicyField(
       (dns) => dns.nameserverPolicy,
       (dns, value) => dns.copyWith(nameserverPolicy: value),
+      description: (l) => l.nameserverPolicyDesc,
     ),
     DnsOverrideKey.nameserver => ListOverrideField(
       (dns) => dns.nameserver,
       (dns, value) => dns.copyWith(nameserver: value),
       itemMaxLength: TextInputLimits.dnsServer,
+      description: (l) => l.nameserverDesc,
     ),
     DnsOverrideKey.fallback => ListOverrideField(
       (dns) => dns.fallback,
       (dns, value) => dns.copyWith(fallback: value),
       itemMaxLength: TextInputLimits.dnsServer,
+      description: (l) => l.fallbackDesc,
     ),
     DnsOverrideKey.fallbackLazyQuery => ToggleOverrideField(
       (dns) => dns.fallbackLazyQuery,
@@ -285,15 +327,18 @@ class _DnsOverrideSpec extends OverrideSpec<DnsOverrideKey, Dns> {
       (dns) => dns.proxyServerNameserver,
       (dns, value) => dns.copyWith(proxyServerNameserver: value),
       itemMaxLength: TextInputLimits.dnsServer,
+      description: (l) => l.proxyServerNameserverDesc,
     ),
     DnsOverrideKey.proxyServerNameserverPolicy => _PolicyField(
       (dns) => dns.proxyServerNameserverPolicy,
       (dns, value) => dns.copyWith(proxyServerNameserverPolicy: value),
+      description: (l) => l.proxyServerNameserverPolicyDesc,
     ),
     DnsOverrideKey.directNameserver => ListOverrideField(
       (dns) => dns.directNameserver,
       (dns, value) => dns.copyWith(directNameserver: value),
       itemMaxLength: TextInputLimits.dnsServer,
+      description: (l) => l.directNameserverDesc,
     ),
     DnsOverrideKey.directNameserverFollowPolicy => ToggleOverrideField(
       (dns) => dns.directNameserverFollowPolicy,
@@ -312,17 +357,20 @@ class _DnsOverrideSpec extends OverrideSpec<DnsOverrideKey, Dns> {
       (dns) => dns.fallbackFilter.geosite,
       (dns, value) => dns.copyWith.fallbackFilter(geosite: value),
       itemMaxLength: TextInputLimits.geoSite,
+      description: (l) => l.fallbackFilterGeositeDesc,
     ),
     DnsOverrideKey.fallbackFilterIpcidr => ListOverrideField(
       (dns) => dns.fallbackFilter.ipcidr,
       (dns, value) => dns.copyWith.fallbackFilter(ipcidr: value),
       itemMaxLength: TextInputLimits.cidr,
       itemValidator: validateCidr,
+      description: (l) => l.fallbackFilterIpcidrDesc,
     ),
     DnsOverrideKey.fallbackFilterDomain => ListOverrideField(
       (dns) => dns.fallbackFilter.domain,
       (dns, value) => dns.copyWith.fallbackFilter(domain: value),
       itemMaxLength: TextInputLimits.domain,
+      description: (l) => l.fallbackFilterDomainDesc,
     ),
   };
 }
@@ -346,7 +394,9 @@ class _ProfileDnsOverrideSpec extends _DnsOverrideSpec
 }
 
 class _PolicyField extends ValueOverrideField<Dns, Map<String, String>> {
-  const _PolicyField(super.select, super.update);
+  const _PolicyField(super.select, super.update, {required this.description});
+
+  final ConfigLabel description;
 
   @override
   Widget build(
@@ -357,6 +407,7 @@ class _PolicyField extends ValueOverrideField<Dns, Map<String, String>> {
     return _PolicyItem(
       model: model,
       title: title,
+      description: description,
       leading: leading,
       select: select,
       update: update,
@@ -368,6 +419,7 @@ class _PolicyItem extends ConsumerWidget {
   const _PolicyItem({
     required this.model,
     required this.title,
+    required this.description,
     required this.leading,
     required this.select,
     required this.update,
@@ -375,6 +427,7 @@ class _PolicyItem extends ConsumerWidget {
 
   final OverrideModel<Dns> model;
   final ConfigLabel title;
+  final ConfigLabel description;
   final Widget leading;
   final Map<String, String> Function(Dns dns) select;
   final Dns Function(Dns dns, Map<String, String> value) update;
@@ -394,6 +447,7 @@ class _PolicyItem extends ConsumerWidget {
       ),
       widget: MapEditView(
         title: title,
+        description: description(appLocalizations),
         entries: policy,
         keyMaxLength: TextInputLimits.domain,
         valueMaxLength: TextInputLimits.dnsServer,

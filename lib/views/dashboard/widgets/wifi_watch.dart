@@ -5,7 +5,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
@@ -35,8 +35,8 @@ class WifiWatchCard extends StatelessWidget {
           ? context.colorScheme.primary
           : context.colorScheme.outline;
     }
-    if (rssi >= -60) return Colors.green;
-    if (rssi >= -75) return Colors.orange;
+    if (rssi >= -60) return context.colorScheme.success;
+    if (rssi >= -75) return context.colorScheme.warning;
     return context.colorScheme.error;
   }
 
@@ -84,7 +84,7 @@ class WifiWatchCard extends StatelessWidget {
     return appLocalizations.wifiWatchListening;
   }
 
-  Text _displayText(
+  Widget _buildDisplayText(
     BuildContext context, {
     required String? ssid,
     required String status,
@@ -98,37 +98,51 @@ class WifiWatchCard extends StatelessWidget {
     const overflow = TextOverflow.ellipsis;
 
     if (!hasNetwork || ssid == null || prioritizeActionStatus) {
-      return Text(status, style: style, maxLines: maxLines, overflow: overflow);
+      return TooltipText(
+        text: Text(
+          status,
+          style: style,
+          maxLines: maxLines,
+          overflow: overflow,
+        ),
+      );
     }
 
     final display = hasServiceInfo ? '$ssid · $status' : ssid;
     if (!isExcluded) {
-      return Text(
-        display,
-        style: style,
-        maxLines: maxLines,
-        overflow: overflow,
+      return TooltipText(
+        text: Text(
+          display,
+          style: style,
+          maxLines: maxLines,
+          overflow: overflow,
+        ),
       );
     }
 
-    return Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(
-            text: ssid,
-            style: AppTextStyle.custom(
-              context,
-              size: AppTextStyle.subheadline.size,
-              leading: AppTextStyle.subheadline.leading,
-              weight: FontWeight.w700,
-            ).copyWith(color: Colors.green),
-          ),
-          if (hasServiceInfo) TextSpan(text: ' · $status'),
-        ],
+    return Tooltip(
+      triggerMode: TooltipTriggerMode.longPress,
+      preferBelow: false,
+      message: display,
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: ssid,
+              style: AppTextStyle.custom(
+                context,
+                size: AppTextStyle.subheadline.size,
+                leading: AppTextStyle.subheadline.leading,
+                weight: FontWeight.w700,
+              ).copyWith(color: context.colorScheme.success),
+            ),
+            if (hasServiceInfo) TextSpan(text: ' · $status'),
+          ],
+        ),
+        style: style,
+        maxLines: maxLines,
+        overflow: overflow,
       ),
-      style: style,
-      maxLines: maxLines,
-      overflow: overflow,
     );
   }
 
@@ -178,16 +192,14 @@ class WifiWatchCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: TooltipText(
-                        text: _displayText(
-                          context,
-                          ssid: ssid,
-                          status: status,
-                          hasServiceInfo: hasServiceInfo,
-                          hasNetwork: hasNetwork,
-                          isExcluded: isExcluded,
-                          prioritizeActionStatus: state.prioritizeActionStatus,
-                        ),
+                      child: _buildDisplayText(
+                        context,
+                        ssid: ssid,
+                        status: status,
+                        hasServiceInfo: hasServiceInfo,
+                        hasNetwork: hasNetwork,
+                        isExcluded: isExcluded,
+                        prioritizeActionStatus: state.prioritizeActionStatus,
                       ),
                     ),
                     SizedBox(
@@ -195,8 +207,6 @@ class WifiWatchCard extends StatelessWidget {
                       height: 24,
                       child: FittedBox(
                         child: Switch(
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
                           value: enabled,
                           onChanged: (value) {
                             ref

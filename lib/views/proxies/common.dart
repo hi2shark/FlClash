@@ -1,8 +1,8 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/ui/typography.dart';
 import 'package:flutter/widgets.dart';
+import 'package:prism_ui/typography.dart';
 
 const proxyGridSpacing = 8.0;
 
@@ -25,7 +25,7 @@ double getItemHeight(ProxyCardType proxyCardType) {
       4;
   return switch (proxyCardType) {
     ProxyCardType.loose =>
-      baseHeight + measure.textHeight(AppTextStyle.caption2) + 6,
+      baseHeight + measure.textHeight(AppTextStyle.footnote) + 6,
     ProxyCardType.standard => baseHeight,
     ProxyCardType.compact =>
       baseHeight - measure.textHeight(AppTextStyle.subheadline),
@@ -65,6 +65,21 @@ double? selectedRowOffset({
     return null;
   }
   return (index ~/ columns) * rowExtent;
+}
+
+/// Finds a card keyed `ValueKey(proxy.name)` in [proxies] once a refresh
+/// moved it, so its element is kept rather than built again.
+ChildIndexGetter proxyIndexFinder(List<Proxy> proxies) {
+  Map<String, int>? indexes;
+  return (key) {
+    if (key case ValueKey<String>(:final value)) {
+      indexes ??= {
+        for (final (index, proxy) in proxies.indexed) proxy.name: index,
+      };
+      return indexes![value];
+    }
+    return null;
+  };
 }
 
 void animateScrollTo(ScrollController controller, double offset) {

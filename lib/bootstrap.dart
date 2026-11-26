@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_clash/common/boot_guard.dart';
 import 'package:fl_clash/common/boot_record.dart';
 import 'package:fl_clash/common/common.dart';
@@ -11,16 +10,15 @@ import 'package:fl_clash/common/tray.dart';
 import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/disclaimer.dart';
 import 'package:fl_clash/views/navigation.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_color_utilities/palettes/tonal_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class Bootstrap {
@@ -34,6 +32,7 @@ class Bootstrap {
   }
 
   BootDecision _bootDecision = const BootDecision();
+  Object? _resetMixedPort;
 
   Future<ProviderContainer> init(int version) async {
     globalState.appEnv = const String.fromEnvironment(
@@ -47,7 +46,7 @@ class Bootstrap {
     final (dynamicColor, packageInfo, config, _) = await (
       _initDynamicColor(),
       PackageInfo.fromPlatform(),
-      migration.run(),
+      _loadConfig(),
       system.isAndroid
           ? SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge)
           : Future<void>.value(),
@@ -56,21 +55,27 @@ class Bootstrap {
     return _initData(version, dynamicColor, config);
   }
 
+  Future<Config> _loadConfig() async {
+    final storedConfig = await preferences.getConfigMap();
+    _resetMixedPort = unusableMixedPort(storedConfig?['patchClashConfig']);
+    return migration.run();
+  }
+
   Future<DynamicColorSeeds> _initDynamicColor() async {
-    final (primaryPalette, accentColor) = await (
-      _readSystemPrimaryPalette(),
+    final (systemSeeds, accentColor) = await (
+      _readSystemSeeds(),
       _readSystemAccentColor(),
     ).wait;
     return (
-      lightSeed: primaryPalette != null ? Color(primaryPalette.get(40)) : null,
-      darkSeed: primaryPalette != null ? Color(primaryPalette.get(80)) : null,
+      lightSeed: systemSeeds?.light,
+      darkSeed: systemSeeds?.dark,
       accentColor: accentColor ?? const Color(defaultPrimaryColor),
     );
   }
 
-  Future<TonalPalette?> _readSystemPrimaryPalette() async {
+  Future<({Color light, Color dark})?> _readSystemSeeds() async {
     try {
-      return await _getSystemPrimaryPalette();
+      return await DynamicColorPlugin.getSystemSeeds();
     } catch (error) {
       commonPrint.log(
         'Failed to get core palette: $error',
@@ -102,31 +107,18 @@ class Bootstrap {
     exit(0);
   }
 
-  Future<TonalPalette?> _getSystemPrimaryPalette() async {
-    final raw = await DynamicColorPlugin.channel.invokeMethod<List<dynamic>>(
-      DynamicColorPlugin.methodName,
-    );
-    if (raw == null || raw.length < TonalPalette.commonSize) {
-      return null;
-    }
-    return TonalPalette.fromList(
-      raw.sublist(0, TonalPalette.commonSize).cast<int>(),
-    );
-  }
-
   Future<ProviderContainer> _initData(
     int version,
     DynamicColorSeeds dynamicColor,
     Config initialConfig,
   ) async {
     var config = initialConfig;
-    final (bootDecision, profiles, _) = await (
+    if (_resetMixedPort != null) {
+      await preferences.saveConfig(config);
+    }
+    final (bootDecision, profiles) = await (
       bootGuard.evaluate(profileId: config.currentProfileId),
       database.profilesDao.query().get(),
-      AppLocalizations.load(
-        getLocaleForString(config.appSettingProps.locale) ??
-            WidgetsBinding.instance.platformDispatcher.locale,
-      ),
     ).wait;
     _bootDecision = bootDecision;
     if (_bootDecision.recovery == BootRecovery.clearProfile) {
@@ -142,7 +134,7 @@ class Bootstrap {
       brightness: WidgetsBinding.instance.platformDispatcher.platformBrightness,
       version: version,
       viewSize: Size.zero,
-      requests: FixedList(maxRequestsLength),
+      requests: ConnectionLog(maxRequestsLength),
       logs: FixedList(maxLogsLength),
       traffics: FixedList(trafficSampleLength),
       totalTraffic: const Traffic(),
@@ -162,6 +154,10 @@ class Bootstrap {
           accentColor: dynamicColor.accentColor,
         );
     container.read(profilesProvider.notifier).reorder(profiles);
+    loadAppLocalizations(
+      getLocaleForString(config.appSettingProps.locale) ??
+          WidgetsBinding.instance.platformDispatcher.locale,
+    );
     await window?.init(version, config.windowProps);
     return container;
   }
@@ -181,6 +177,9 @@ class Bootstrap {
     unawaited(
       _container.read(profilesActionProvider.notifier).autoUpdateProfiles(),
     );
+    unawaited(
+      _container.read(commonActionProvider.notifier).settleUpdateDownloads(),
+    );
     unawaited(_container.read(commonActionProvider.notifier).autoCheckUpdate());
     unawaited(
       autoLaunch?.updateStatus(_container.read(appSettingProvider).autoLaunch),
@@ -195,12 +194,19 @@ class Bootstrap {
       return;
     }
     await _showCrashRecoveryTip();
+    if (_resetMixedPort case final value?) {
+      dialogs.showMixedPortReset(
+        value,
+        _container.read(patchClashConfigProvider).mixedPort,
+      );
+    }
     await _container.read(coreActionProvider.notifier).startCore();
     if (!_bootDecision.isDegraded) {
       await _container.read(setupActionProvider.notifier).initStatus();
     }
     _container.read(initProvider.notifier).value = true;
     unawaited(_container.read(resourcesActionProvider.notifier).autoUpdate());
+    unawaited(_container.read(mitmModulesActionProvider.notifier).autoUpdate());
     await bootGuard.markRunning();
     unawaited(_container.read(locationPermissionsProvider.notifier).refresh());
     permissions.check();

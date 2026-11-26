@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
@@ -135,10 +135,7 @@ void main() {
     );
 
     test('putScript re-applies only a current profile running that script', () {
-      final profile = Profile.normal().copyWith(
-        extendType: ExtendType.script,
-        scriptId: 1,
-      );
+      final profile = Profile.normal().copyWith(scriptId: 1);
       final setupAction = _ApplyRecordingSetupAction();
       final container = scriptsContainer(profile, setupAction);
       final action = container.read(scriptsActionProvider.notifier);
@@ -155,18 +152,48 @@ void main() {
 
       container
           .read(profilesProvider.notifier)
-          .put(profile.copyWith(extendType: ExtendType.standard));
+          .put(profile.copyWith(scriptId: null));
       action.putScript(script(1));
       expect(setupAction.applyCount, 1);
+    });
+
+    test('deleteScript takes the script off every profile running it', () {
+      final current = Profile.normal(label: 'current').copyWith(scriptId: 1);
+      final other = Profile.normal(label: 'other').copyWith(scriptId: 1);
+      final unrelated = Profile.normal(
+        label: 'unrelated',
+      ).copyWith(scriptId: 2);
+      final setupAction = _ApplyRecordingSetupAction();
+      final container = scriptsContainer(current, setupAction);
+      container.read(profilesProvider.notifier).put(other);
+      container.read(profilesProvider.notifier).put(unrelated);
+      final action = container.read(scriptsActionProvider.notifier);
+      action.putScript(script(1));
+      action.putScript(script(2));
+      final appliesBefore = setupAction.applyCount;
+
+      action.deleteScript(1);
+
+      expect(container.read(scriptsProvider).value?.map((item) => item.id), [
+        2,
+      ]);
+      expect(
+        {
+          for (final profile in container.read(profilesProvider))
+            profile.label: profile.scriptId,
+        },
+        {'current': null, 'other': null, 'unrelated': 2},
+      );
+      expect(setupAction.applyCount, appliesBefore + 1);
+
+      action.deleteScript(2);
+      expect(setupAction.applyCount, appliesBefore + 1);
     });
 
     test(
       'updateScript releases the updating key when the download fails',
       () async {
-        final profile = Profile.normal().copyWith(
-          extendType: ExtendType.script,
-          scriptId: 1,
-        );
+        final profile = Profile.normal().copyWith(scriptId: 1);
         final setupAction = _ApplyRecordingSetupAction();
         final container = scriptsContainer(profile, setupAction);
         final remote = script(1, url: 'bad-url');
@@ -209,7 +236,7 @@ void main() {
 
     test('forwards a manual resource update to Core', () async {
       final core = _MockCoreHandlerInterface();
-      when(() => core.updateGeoData('MMDB')).thenAnswer((_) async => '');
+      when(() => core.updateGeoData('MMDB')).thenAnswer((_) async {});
       final container = ProviderContainer(
         overrides: [
           coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
@@ -263,31 +290,48 @@ void main() {
   });
 
   group('CoreAction', () {
-    test(
-      'clears the DNS cache on a network change only while connected',
-      () async {
-        final core = _MockCoreHandlerInterface();
-        when(core.clearDnsCache).thenAnswer((_) async => true);
-        final container = ProviderContainer(
-          overrides: [
-            coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
-          ],
-        );
-        addTearDown(container.dispose);
-        final action = container.read(coreActionProvider.notifier);
+    test('reports a network change to the Core only while connected', () async {
+      final core = _MockCoreHandlerInterface();
+      when(core.reportNetworkChange).thenAnswer((_) async => true);
+      final container = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      addTearDown(container.dispose);
+      final action = container.read(coreActionProvider.notifier);
 
-        await action.clearDnsCacheOnNetworkChange();
-        verifyNever(core.clearDnsCache);
+      await action.reportNetworkChange();
+      verifyNever(core.reportNetworkChange);
 
-        container.read(coreStatusProvider.notifier).value =
-            CoreStatus.connected;
-        await action.clearDnsCacheOnNetworkChange();
-        verify(core.clearDnsCache).called(1);
+      container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+      await action.reportNetworkChange();
+      verify(core.reportNetworkChange).called(1);
 
-        when(core.clearDnsCache).thenThrow(StateError('disconnected'));
-        await expectLater(action.clearDnsCacheOnNetworkChange(), completes);
-      },
-    );
+      when(core.reportNetworkChange).thenThrow(StateError('disconnected'));
+      await expectLater(action.reportNetworkChange(), completes);
+    });
+
+    test('a core that fails to start keeps why for the stopped card', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      loadAppLocalizations(const Locale('en'));
+      final container = ProviderContainer(
+        overrides: [coreActionProvider.overrideWith(_TestCoreAction.new)],
+      );
+      addTearDown(container.dispose);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+      coreAction.startCompleter = Completer()
+        ..completeError(StateError('launch refused'));
+
+      await coreAction.startCore();
+
+      expect(container.read(coreStatusProvider), CoreStatus.disconnected);
+      expect(
+        container.read(coreStopReasonProvider),
+        'Bad state: launch refused',
+      );
+    });
 
     test('applies the profile after restarting a stopped core', () async {
       final container = ProviderContainer(
@@ -354,6 +398,53 @@ void main() {
 
         expect(applied, isFalse);
         expect(setupAction.setRunningCount, 1);
+      },
+    );
+
+    test('a restart resumes a run a lost Core session ended', () async {
+      final container = ProviderContainer(
+        overrides: [
+          coreActionProvider.overrideWith(_TestCoreAction.new),
+          setupActionProvider.overrideWith(_TestSetupAction.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+      final setupAction =
+          container.read(setupActionProvider.notifier) as _TestSetupAction;
+      setupAction.resumeOnRestart();
+
+      await coreAction.restartCore();
+
+      expect(setupAction.setRunningCount, 1);
+      expect(setupAction.applyProfileCount, 0);
+    });
+
+    test(
+      'starting on a stopped Core restarts it and resumes the run',
+      () async {
+        final container = ProviderContainer(
+          overrides: [
+            coreActionProvider.overrideWith(_TestCoreAction.new),
+            setupActionProvider.overrideWith(_TestSetupAction.new),
+            commonActionProvider.overrideWith(_RaceCommonAction.new),
+          ],
+        );
+        addTearDown(container.dispose);
+        final coreAction =
+            container.read(coreActionProvider.notifier) as _TestCoreAction;
+        final setupAction =
+            container.read(setupActionProvider.notifier) as _TestSetupAction;
+        container.read(coreStatusProvider.notifier).value =
+            CoreStatus.disconnected;
+
+        container.read(commonActionProvider.notifier).toggleRunning();
+        await pumpEventQueue();
+
+        expect(coreAction.lifecycleRestartCount, 1);
+        expect(setupAction.setRunningCount, 1);
+        expect(container.read(coreStatusProvider), CoreStatus.connected);
       },
     );
 
@@ -796,6 +887,39 @@ void main() {
       },
     );
 
+    test('a restart whose apply needs TUN authorization asks before it '
+        'restarts the Core, so it never waits on itself', () async {
+      late _HandoffSetupAction setupAction;
+      final container = ProviderContainer(
+        overrides: [
+          coreActionProvider.overrideWith(_TestCoreAction.new),
+          setupActionProvider.overrideWith(() {
+            setupAction = _HandoffSetupAction([AuthorizeCode.success]);
+            return setupAction;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update((state) => state.copyWith.tun(enable: true));
+      container.read(setupActionProvider);
+      final coreAction =
+          container.read(coreActionProvider.notifier) as _TestCoreAction;
+
+      final applied = await coreAction.restartCore().timeout(
+        const Duration(seconds: 5),
+      );
+
+      expect(applied, isTrue);
+      expect(setupAction.authorizationRequestCount, 1);
+      expect(coreAction.lifecycleRestartCount, 1);
+      expect(
+        container.read(authorizedTunEnableProvider),
+        TunAuthorizationState.authorized,
+      );
+    });
+
     test('reopens authorization and propagates a failed restart', () async {
       late _AuthorizationSetupAction setupAction;
       final container = ProviderContainer(
@@ -855,7 +979,7 @@ void main() {
 
     test('a failed authorization leaves tun and system DNS off', () async {
       TestWidgetsFlutterBinding.ensureInitialized();
-      await AppLocalizations.load(const Locale('en'));
+      loadAppLocalizations(const Locale('en'));
       late _AuthorizationSetupAction setupAction;
       final container = ProviderContainer(
         overrides: [
@@ -874,7 +998,6 @@ void main() {
       expect(await setupAction.requestAdmin(true), isTrue);
 
       expect(container.read(patchClashConfigProvider).tun.enable, isFalse);
-      expect(container.read(shouldPatchSystemDnsProvider), isFalse);
       expect(
         await setupAction.requestAdmin(
           container.read(patchClashConfigProvider).tun.enable,
@@ -966,6 +1089,11 @@ class _MemoryScripts extends Scripts {
   void put(Script script) {
     state = AsyncData([...value.where((item) => item.id != script.id), script]);
   }
+
+  @override
+  void del(int id) {
+    state = AsyncData([...value.where((item) => item.id != id)]);
+  }
 }
 
 class _TestSetupAction extends SetupAction {
@@ -1036,6 +1164,24 @@ class _AuthorizationSetupAction extends SetupAction {
       return pending.future;
     }
     return authorizationResults[index];
+  }
+}
+
+/// Hands off to a Core restart as `_setupConfig` does once TUN was just
+/// granted.
+class _HandoffSetupAction extends _AuthorizationSetupAction {
+  _HandoffSetupAction(super.authorizationResults);
+
+  @override
+  Future<bool> applyProfile({
+    bool silence = false,
+    bool force = false,
+    Future<void> Function()? preloadInvoke,
+  }) async {
+    if (!await requestAdmin(ref.read(patchClashConfigProvider).tun.enable)) {
+      return ref.read(coreActionProvider.notifier).restartCore();
+    }
+    return true;
   }
 }
 

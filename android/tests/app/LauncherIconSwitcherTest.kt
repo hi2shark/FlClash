@@ -1,4 +1,4 @@
-package com.hi2shark.flclash_nw
+package com.hi2shark.hi2nw
 
 import android.content.pm.PackageManager
 import org.junit.Assert.assertEquals

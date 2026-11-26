@@ -5,6 +5,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:prism_ui/banner.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'generated/database.g.dart';
@@ -52,9 +53,9 @@ void _reportOptimisticFailure(Object error, StackTrace stackTrace) {
     'Optimistic database write failed: ${compactError(error)}, $stackTrace',
     logLevel: LogLevel.warning,
   );
-  dialogs.showNotifier(
+  dialogs.showBanner(
     currentAppLocalizations.databaseWriteFailedTip,
-    level: MessageLevel.error,
+    level: BannerLevel.error,
   );
 }
 
@@ -65,19 +66,24 @@ void _reportOptimisticFailure(Object error, StackTrace stackTrace) {
 class _Writes {
   final void Function() _reread;
   var _pending = 0;
+  var _started = 0;
   var _missed = false;
 
   _Writes(this._reread);
 
   bool get idle => _pending == 0;
 
-  bool admit() {
+  /// Counts the writes started, for a read to tell one that began after it.
+  int get started => _started;
+
+  bool admit({int? since}) {
     _missed |= !idle;
-    return idle;
+    return idle && (since == null || since == _started);
   }
 
   Future<void> track(Future<void> Function() write) async {
     _pending++;
+    _started++;
     try {
       await write();
     } finally {
@@ -99,10 +105,18 @@ mixin OptimisticMixin<T> on AsyncNotifierMixin<T> {
     return rows.where((_) => _writes.admit());
   }
 
+  // A read-back may run on its own connection, which can answer from before a
+  // write that started after it.
   void _reread() {
+    final since = _writes.started;
     _query?.call().then((rows) {
-      if (ref.mounted && _writes.admit()) {
+      if (!ref.mounted) {
+        return;
+      }
+      if (_writes.admit(since: since)) {
         value = rows;
+      } else if (_writes.idle) {
+        _reread();
       }
     }, onError: _reportReread);
   }
@@ -309,6 +323,25 @@ class Profiles extends _$Profiles {
     _optimistic(next, () => _serial(() => _putLatest([profileId])));
   }
 
+  /// One state change and one transaction for every profile [test] picks.
+  void updateWhere(
+    bool Function(Profile profile) test,
+    Profile Function(Profile profile) builder,
+  ) {
+    final changed = <int>[];
+    final next = state.map((profile) {
+      if (!test(profile)) return profile;
+      final updated = builder(profile);
+      if (updated != profile) changed.add(profile.id);
+      return updated;
+    }).toList();
+    if (changed.isEmpty) return;
+    _optimistic(
+      next,
+      () => _serial(() => database.transaction(() => _putLatest(changed))),
+    );
+  }
+
   void reorder(List<Profile> profiles) {
     final next = List<Profile>.from(profiles);
     final moved = <int>[];
@@ -378,6 +411,66 @@ class Scripts extends _$Scripts with AsyncNotifierMixin, OptimisticMixin {
     AsyncValue<List<Script>> next,
   ) {
     return !scriptListEquality.equals(previous.value, next.value);
+  }
+}
+
+@riverpod
+class MitmModules extends _$MitmModules
+    with AsyncNotifierMixin, OptimisticMixin {
+  @override
+  Stream<List<MitmModule>> build() {
+    final query = database.mitmModulesDao.query();
+    return settled(query.watch(), query.get);
+  }
+
+  @override
+  List<MitmModule> get value => state.value ?? [];
+
+  void put(MitmModule module, {bool first = false}) {
+    final next = List<MitmModule>.from(value);
+    final index = next.indexWhere((item) => item.id == module.id);
+    if (index == -1 && first) {
+      _reorder([module, ...next]);
+      return;
+    }
+    final saved = index == -1 ? module.copyWith(order: next.length) : module;
+    if (index == -1) {
+      next.add(saved);
+    } else {
+      next[index] = saved;
+    }
+    optimistic(next, () => database.mitmModules.put(saved.toCompanion()));
+  }
+
+  void del(int id) {
+    final next = List<MitmModule>.from(value);
+    final index = next.indexWhere((item) => item.id == id);
+    if (index == -1) return;
+    next.removeAt(index);
+    optimistic(next, () => database.mitmModules.remove((t) => t.id.equals(id)));
+  }
+
+  void order(int oldIndex, int newIndex) {
+    _reorder(value.copyAndReorder(oldIndex, newIndex));
+  }
+
+  void _reorder(List<MitmModule> next) {
+    final changed = <MitmModulesCompanion>[];
+    next.forEachIndexed((index, item) {
+      if (item.order != index) {
+        next[index] = item.copyWith(order: index);
+        changed.add(item.toCompanion(index));
+      }
+    });
+    optimistic(next, () => database.mitmModulesDao.putAll(changed));
+  }
+
+  @override
+  bool updateShouldNotify(
+    AsyncValue<List<MitmModule>> previous,
+    AsyncValue<List<MitmModule>> next,
+  ) {
+    return !mitmModuleListEquality.equals(previous.value, next.value);
   }
 }
 
@@ -464,12 +557,32 @@ class ClashProviders extends _$ClashProviders
   }
 }
 
+Future<List<IconSet>> _readIconSets(Database db) =>
+    db.iconSetsDao.query().get();
+
+Future<List<Rule>> _readGlobalRules(Database db) =>
+    db.rulesDao.queryGlobalRules().get();
+
+Future<List<Rule>> Function(Database) _profileRulesReader(int profileId) =>
+    (db) => db.rulesDao.queryProfileRules(profileId).get();
+
+Future<List<ProxyGroup>> Function(Database) _proxyGroupsReader(int profileId) =>
+    (db) => db.proxyGroupsDao.query(profileId).get();
+
+Future<List<CustomProxy>> _readCustomProxies(Database db) =>
+    db.customProxiesDao.query().get();
+
+Future<List<int>> Function(Database) _disabledRuleIdsReader(int profileId) =>
+    (db) => db.rulesDao.queryDisabledRuleIds(profileId).get();
+
 @Riverpod(keepAlive: true)
 class IconSets extends _$IconSets with AsyncNotifierMixin, OptimisticMixin {
   @override
   Stream<List<IconSet>> build() {
-    final query = database.iconSetsDao.query();
-    return settled(query.watch(), query.get);
+    return settled(
+      database.watchApart([database.iconSets], _readIconSets),
+      () => database.readApart(_readIconSets),
+    );
   }
 
   @override
@@ -617,8 +730,10 @@ class GlobalRules extends _$GlobalRules
     with AsyncNotifierMixin, OptimisticMixin, RuleListMixin {
   @override
   Stream<List<Rule>> build() {
-    final query = database.rulesDao.queryGlobalRules();
-    return settled(query.watch(), query.get);
+    return settled(
+      database.watchApart([database.rules], _readGlobalRules),
+      () => database.readApart(_readGlobalRules),
+    );
   }
 
   @override
@@ -636,8 +751,11 @@ class ProfileRules extends _$ProfileRules
     with AsyncNotifierMixin, OptimisticMixin, RuleListMixin {
   @override
   Stream<List<Rule>> build(int profileId) {
-    final query = database.rulesDao.queryProfileRules(profileId);
-    return settled(query.watch(), query.get);
+    final read = _profileRulesReader(profileId);
+    return settled(
+      database.watchApart([database.rules], read),
+      () => database.readApart(read),
+    );
   }
 
   @override
@@ -699,8 +817,11 @@ class ProxyGroups extends _$ProxyGroups
     with AsyncNotifierMixin, OptimisticMixin {
   @override
   Stream<List<ProxyGroup>> build(int profileId) {
-    final query = database.proxyGroupsDao.query(profileId);
-    return settled(query.watch(), query.get);
+    final read = _proxyGroupsReader(profileId);
+    return settled(
+      database.watchApart([database.proxyGroups], read),
+      () => database.readApart(read),
+    );
   }
 
   @override
@@ -848,8 +969,10 @@ class CustomProxies extends _$CustomProxies
     with AsyncNotifierMixin, OptimisticMixin {
   @override
   Stream<List<CustomProxy>> build() {
-    final query = database.customProxiesDao.query();
-    return settled(query.watch(), query.get);
+    return settled(
+      database.watchApart([database.customProxies], _readCustomProxies),
+      () => database.readApart(_readCustomProxies),
+    );
   }
 
   @override
@@ -1030,8 +1153,11 @@ class ProfileDisabledRuleIds extends _$ProfileDisabledRuleIds
 
   @override
   Stream<List<int>> build(int profileId) {
-    final query = database.rulesDao.queryDisabledRuleIds(profileId);
-    return settled(query.watch(), query.get);
+    final read = _disabledRuleIdsReader(profileId);
+    return settled(
+      database.watchApart([database.disabledRules], read),
+      () => database.readApart(read),
+    );
   }
 
   @override

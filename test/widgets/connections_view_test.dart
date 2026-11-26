@@ -1,20 +1,19 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/connection/connections.dart';
-import 'package:fl_clash/features/features.dart';
+import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/core_connections.dart';
 
 void main() {
   late ProviderContainer container;
@@ -64,7 +63,7 @@ void main() {
         child: _TestApp(
           child: PageActivityScope(
             isActive: isPageActive,
-            child: ConnectionsView(connectionsReader: connectionsReader),
+            child: RequestsView(connectionsReader: connectionsReader),
           ),
         ),
       ),
@@ -72,7 +71,9 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('ConnectionsView lazily builds every connection', (tester) async {
+  testWidgets('the list lazily builds every connection, newest first', (
+    tester,
+  ) async {
     final connections = buildConnections(100);
 
     await pumpConnections(tester, connectionsReader: () async => connections);
@@ -81,30 +82,79 @@ void main() {
     final builtItems = find.byType(TrackerInfoItem).evaluate().length;
     expect(builtItems, greaterThan(0));
     expect(builtItems, lessThan(connections.length));
-    expect(find.textContaining('host-0.com'), findsOneWidget);
+    expect(find.textContaining('host-99.com'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.textContaining('host-99.com'),
-      800,
+      find.textContaining('host-0.com'),
+      -800,
       scrollable: find
           .descendant(
-            of: find.byType(TrackerInfoAnimatedList),
+            of: find.byType(RecordMinuteList<String>),
             matching: find.byType(Scrollable),
           )
           .first,
     );
 
-    expect(find.textContaining('host-99.com'), findsOneWidget);
+    expect(find.textContaining('host-0.com'), findsOneWidget);
     expect(tester.takeException(), null);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('a row blocks its own connection and refreshes the list', (
+  testWidgets(
+    'a row closes its own connection from its menu, and stays where it was, '
+    'closed',
+    (tester) async {
+      final core = _MockCoreHandlerInterface();
+      when(() => core.closeConnection(any())).thenAnswer((_) async {});
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      globalState.container = container;
+      var connections = buildConnections(2);
+      var readCount = 0;
+
+      await pumpConnections(
+        tester,
+        connectionsReader: () async {
+          readCount++;
+          return connections;
+        },
+      );
+      await tester.pump(const Duration(seconds: 1));
+      final reads = readCount;
+
+      expect(find.byTooltip('Close connection'), findsNothing);
+      await tester.longPress(find.textContaining('host-0.com'));
+      await tester.pumpAndSettle();
+      connections = connections.sublist(1);
+      await tester.tap(find.text('Close connection'));
+      await tester.pumpAndSettle();
+
+      verify(() => core.closeConnection('0')).called(1);
+      expect(readCount, greaterThan(reads));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.textContaining('host-0.com'), findsOneWidget);
+      expect(container.read(requestsProvider)['0']!.isActive, isFalse);
+
+      await tester.longPress(find.textContaining('host-0.com'));
+      await tester.pumpAndSettle();
+      expect(find.text('Close connection'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets('a failed close still refreshes the list and raises nothing', (
     tester,
   ) async {
     final core = _MockCoreHandlerInterface();
-    when(() => core.closeConnection(any())).thenAnswer((_) async => true);
+    when(
+      () => core.closeConnection(any()),
+    ).thenAnswer((_) async => throw Exception('closed already'));
     container.dispose();
     container = ProviderContainer(
       overrides: [
@@ -112,47 +162,60 @@ void main() {
       ],
     );
     globalState.container = container;
-    var connections = buildConnections(2);
     var readCount = 0;
 
     await pumpConnections(
       tester,
       connectionsReader: () async {
         readCount++;
-        return connections;
+        return buildConnections(2);
       },
     );
     await tester.pump(const Duration(seconds: 1));
     final reads = readCount;
-    connections = connections.sublist(1);
 
-    await tester.tap(find.byTooltip('Block connection').first);
+    await tester.longPress(find.textContaining('host-0.com'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Close connection'));
     await tester.pumpAndSettle();
 
     verify(() => core.closeConnection('0')).called(1);
     expect(readCount, greaterThan(reads));
-    expect(find.textContaining('host-0.com'), findsNothing);
+    expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('a wide table shows its whole protocol header', (tester) async {
-    await pumpConnections(
-      tester,
-      connectionsReader: () async => buildConnections(2),
-    );
-    tester.view.physicalSize = const Size(1600, 900);
-    await tester.pump(const Duration(seconds: 1));
-
-    final header = tester.renderObject<RenderParagraph>(find.text('Protocol'));
-    expect(header.didExceedMaxLines, isFalse);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
-
-  testWidgets('ConnectionsView polls only while the page is active', (
+  testWidgets('a Core that is not connected is not asked and lists nothing', (
     tester,
   ) async {
+    final core = _MockCoreHandlerInterface();
+    container.dispose();
+    container = ProviderContainer(
+      overrides: [
+        coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+      ],
+    );
+    globalState.container = container;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const _TestApp(child: RequestsView()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    registerConnectionsPresenter<ConnectionPoll>();
+    verifyNever(() => core.getConnectionsWith<ConnectionPoll>(any()));
+    expect(find.byType(NullStatus), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('the list polls only while the page is active', (tester) async {
     var readCount = 0;
 
     Future<List<TrackerInfo>> readConnections() async {
@@ -175,7 +238,7 @@ void main() {
         child: _TestApp(
           child: PageActivityScope(
             isActive: true,
-            child: ConnectionsView(connectionsReader: readConnections),
+            child: RequestsView(connectionsReader: readConnections),
           ),
         ),
       ),
@@ -195,7 +258,7 @@ void main() {
         child: _TestApp(
           child: PageActivityScope(
             isActive: false,
-            child: ConnectionsView(connectionsReader: readConnections),
+            child: RequestsView(connectionsReader: readConnections),
           ),
         ),
       ),
@@ -208,9 +271,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('ConnectionsView stops polling while the app is paused', (
-    tester,
-  ) async {
+  testWidgets('the list stops polling while the app is paused', (tester) async {
     var readCount = 0;
 
     Future<List<TrackerInfo>> readConnections() async {
@@ -246,14 +307,8 @@ class _TestApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return HostApp(
       navigatorKey: globalState.navigatorKey,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        AppUiLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-      ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
       builder: (context, child) {
         return wrapAppScopes(context, child!);
       },

@@ -1,0 +1,29 @@
+package com.hi2shark.hi2nw.common
+
+import com.google.gson.annotations.SerializedName
+
+enum class QuickAction {
+    STOP,
+    START,
+    TOGGLE,
+}
+
+enum class BroadcastAction {
+    VPN_START_REQUESTED,
+    VPN_REVOKED,
+    SERVICE_SUSPENDED_CHANGED,
+    WIFI_WATCH_STATE_CHANGED,
+}
+
+object BroadcastExtra {
+    const val SUSPENDED = "suspended"
+    const val WIFI_WATCH_STATE = "wifiWatchState"
+}
+
+enum class AccessControlMode {
+    @SerializedName("acceptSelected")
+    ACCEPT_SELECTED,
+
+    @SerializedName("rejectSelected")
+    REJECT_SELECTED,
+}

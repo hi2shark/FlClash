@@ -10,11 +10,10 @@ import 'package:fl_clash/views/backup_and_restore.dart';
 import 'package:fl_clash/views/config/general.dart';
 import 'package:fl_clash/views/hotkey.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/advanced.dart';
-import 'config/custom_resources.dart';
 import 'developer.dart';
 import 'disclaimer.dart';
 import 'theme.dart';
@@ -27,6 +26,20 @@ class ToolsView extends ConsumerStatefulWidget {
 }
 
 class _ToolViewState extends ConsumerState<ToolsView> {
+  late final ScrollController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = sheetScrollController(context);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   Widget _buildNavigationMenuItem(NavigationItem navigationItem) {
     return ListItem.open(
       leading: GlyphIcon(navigationItem.glyph),
@@ -48,24 +61,17 @@ class _ToolViewState extends ConsumerState<ToolsView> {
   }
 
   Widget _getSettingList() {
-    final appLocalizations = context.appLocalizations;
     return generateSection(
-      title: appLocalizations.settings,
+      title: context.appLocalizations.settings,
       items: [
         const _LocaleItem(),
         const _ThemeItem(),
-        const _BackupItem(),
         if (system.isDesktop) const _HotkeyItem(),
         if (system.isAndroid) const _AccessItem(),
+        const _BackupItem(),
         const _AdvancedConfigItem(),
-        const _CustomResourcesItem(),
         const _GeneralItem(),
       ],
-      footer: [
-        if (system.isAndroid) appLocalizations.accessControlDesc,
-        appLocalizations.advancedConfigDesc,
-        appLocalizations.customProfileResourcesDesc,
-      ].join('\n'),
     );
   }
 
@@ -89,16 +95,15 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       _getSettingList(),
       _getOtherList(developerMode),
     ];
-    return CommonScaffold(
+    return Scaffold(
       title: context.appLocalizations.tools,
       body: Builder(
-        builder: (context) => ListView.builder(
+        builder: (context) => PrismListView(
           key: toolsStoreKey,
+          controller: _controller,
           itemCount: items.length,
           itemBuilder: (_, index) => items[index],
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
+          padding: context.listInsets.page(
             top: context.sectionsTopPadding,
             bottom: 20 + context.bottomInset,
           ),
@@ -125,14 +130,18 @@ class _LocaleItem extends ConsumerWidget {
     return ListItem<Locale?>.options(
       leading: const GlyphIcon(AppGlyphs.language),
       title: Text(context.appLocalizations.language),
-      options: [null, ...AppLocalizations.delegate.supportedLocales],
+      options: [null, ...AppLocalizations.supportedLocales],
       onChanged: (Locale? locale) {
         ref
             .read(appSettingProvider.notifier)
             .update((state) => state.copyWith(locale: locale?.toString()));
       },
       textBuilder: (locale) => _getLocaleString(context, locale),
-      value: currentLocale,
+      value: currentLocale == null
+          ? null
+          : basicLocaleListResolution([
+              currentLocale,
+            ], AppLocalizations.supportedLocales),
     );
   }
 }
@@ -211,19 +220,6 @@ class _AdvancedConfigItem extends StatelessWidget {
       leading: const GlyphIcon(AppGlyphs.wrench),
       title: Text(context.appLocalizations.advancedConfig),
       widget: const AdvancedConfigView(),
-    );
-  }
-}
-
-class _CustomResourcesItem extends StatelessWidget {
-  const _CustomResourcesItem();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListItem.open(
-      leading: const GlyphIcon(AppGlyphs.customize),
-      title: Text(context.appLocalizations.customProfileResources),
-      widget: const CustomResourcesView(),
     );
   }
 }

@@ -1,8 +1,9 @@
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 void main() {
   Rect rowRect(WidgetTester tester, String title) =>
@@ -13,7 +14,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       TestApp(
-        child: Scaffold(
+        child: HostScaffold(
           body: ListView(
             padding: EdgeInsets.zero,
             children: [
@@ -54,7 +55,7 @@ void main() {
         late double contentTop;
         await tester.pumpWidget(
           TestApp(
-            child: Scaffold(
+            child: HostScaffold(
               body: Builder(
                 builder: (context) {
                   contentTop = context.contentTopPadding;
@@ -86,7 +87,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       TestApp(
-        child: Scaffold(
+        child: HostScaffold(
           body: Column(
             children: [
               generateGroup([const DecorationListItem(title: Text('row'))]),
@@ -97,5 +98,40 @@ void main() {
     );
 
     expect(rowRect(tester, 'row').top, 0);
+  });
+
+  testWidgets('a grouped list item keeps the padding and alignment it is '
+      'given, as one standing alone does', (tester) async {
+    Widget item(String name) => ListItem(
+      leading: SizedBox(key: ValueKey('$name leading'), width: 24, height: 10),
+      title: Text('$name title'),
+      subtitle: const Text('one\ntwo\nthree'),
+      minVerticalPadding: 30,
+      alignment: ListRowAlignment.top,
+    );
+    await tester.pumpWidget(
+      TestApp(
+        child: HostScaffold(
+          body: Column(
+            children: [
+              item('alone'),
+              generateGroup([item('grouped')]),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    Offset inRow(String name, Finder part) =>
+        tester.getTopLeft(part) -
+        tester.getTopLeft(
+          find.ancestor(of: part, matching: find.byType(ListItem<dynamic>)),
+        );
+    for (final part in ['leading', 'title']) {
+      Finder of(String name) => part == 'leading'
+          ? find.byKey(ValueKey('$name leading'))
+          : find.text('$name title');
+      expect(inRow('grouped', of('grouped')), inRow('alone', of('alone')));
+    }
   });
 }

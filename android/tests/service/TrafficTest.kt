@@ -1,4 +1,4 @@
-package com.hi2shark.flclash_nw.service.models
+package com.hi2shark.hi2nw.service.models
 
 import java.util.Locale
 import org.junit.After

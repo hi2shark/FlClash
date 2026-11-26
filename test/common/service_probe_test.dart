@@ -71,12 +71,13 @@ void main() {
   });
 
   group('ServiceCheck.of', () {
-    test('carries the region, node and check time across', () {
+    test('carries the region, address, node and check time across', () {
       final check = ServiceCheck.of(
         const ServiceCheckItem(
           name: 'netflix',
           status: 'originals-only',
           region: 'JP',
+          ip: '198.51.100.9',
           delay: 87,
           chains: ['JP-02', 'auto'],
           checkedAt: 1700000000000,
@@ -88,6 +89,7 @@ void main() {
 
       expect(check.status, ServiceProbeStatus.originalsOnly);
       expect(check.region, 'JP');
+      expect(check.ip, '198.51.100.9');
       expect(check.delay, 87);
       expect(check.node, 'JP-02');
       expect(check.chains, ['JP-02', 'auto']);
@@ -110,6 +112,7 @@ void main() {
       expect(check.status, ServiceProbeStatus.failed);
       expect(check.delay, isNull);
       expect(check.region, isNull);
+      expect(check.ip, isNull);
       expect(check.node, isNull);
       expect(check.checkedAt, isNull);
     });
@@ -212,7 +215,7 @@ void main() {
     });
 
     test('gives up on an error, an empty body or an unparseable one', () async {
-      final answers = <OutboundIpResult?>[
+      final answers = <OutboundIpResult>[
         const OutboundIpResult(error: 'timeout'),
         const OutboundIpResult(url: 'https://api.country.is'),
         const OutboundIpResult(url: 'https://api.country.is', body: 'garbage'),
@@ -220,13 +223,12 @@ void main() {
           url: 'https://unknown.example',
           body: 'ip=1.2.3.4',
         ),
-        null,
       ];
       when(
         () => core.outboundIp(any()),
       ).thenAnswer((_) async => answers.removeAt(0));
 
-      for (var attempt = 0; attempt < 5; attempt++) {
+      for (var attempt = 0; attempt < 4; attempt++) {
         expect(
           parseOutboundIp(await lookupOutboundIp(controller, 'HK-01')),
           isNull,

@@ -10,8 +10,9 @@ import 'clash_config.dart';
 part 'generated/profile.freezed.dart';
 part 'generated/profile.g.dart';
 
+/// Why the config at the path cannot be used, or null.
 typedef ValidateConfig =
-    Future<String> Function(String path, String ageSecretKey);
+    Future<String?> Function(String path, String ageSecretKey);
 
 @freezed
 abstract class SubscriptionInfo with _$SubscriptionInfo {
@@ -75,9 +76,8 @@ abstract class Profile with _$Profile {
     @Default(true) bool autoUpdate,
     @Default({}) Map<String, String> selectedMap,
     @Default({}) Set<String> unfoldSet,
-    @Default(ExtendType.standard) ExtendType extendType,
     int? scriptId,
-    String? matchTarget,
+    @Default({}) Map<String, String> exitTargets,
     int? order,
     @Default(ProfileOverrides())
     @JsonKey(fromJson: ProfileOverrides.safeFromJson)
@@ -205,9 +205,8 @@ extension ProfileExtension on Profile {
     final path = await appPath.tempFilePath;
     final tempFile = File(path);
     await tempFile.safeWriteAsBytes(bytes);
-    final message = await validate(path, ageSecretKey);
-    if (message.isNotEmpty) {
-      throw MessageException(message);
+    if (await validate(path, ageSecretKey) case final issue?) {
+      throw MessageException(issue);
     }
     final mFile = await file;
     await tempFile.copy(mFile.path);

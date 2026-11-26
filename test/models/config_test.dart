@@ -4,8 +4,7 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/ui/color.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_ui.dart';
 import 'package:test/test.dart';
 
 T roundTrip<T>(
@@ -91,12 +90,16 @@ void main() {
     });
 
     test('toUpdateParams sends geoXUrl to the Core under geox-url', () {
-      final params = const PatchClashConfig(
-        geoXUrl: {
-          GeoResource.MMDB: 'https://example.com/geoip.metadb',
-          GeoResource.GEOSITE: 'https://example.com/geosite.dat',
-        },
-      ).toUpdateParams(authentication: const [], skipCertVerify: false);
+      final params =
+          const PatchClashConfig(
+            geoXUrl: {
+              GeoResource.MMDB: 'https://example.com/geoip.metadb',
+              GeoResource.GEOSITE: 'https://example.com/geosite.dat',
+            },
+          ).toUpdateParams(
+            authentication: const [],
+            options: const CoreOptions(testUrl: ''),
+          );
 
       final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
       expect(json['geox-url'], {
@@ -105,14 +108,25 @@ void main() {
       });
     });
 
-    test('toUpdateParams sends skipCertVerify under skip-cert-verify', () {
+    test('toUpdateParams sends the Core options under options', () {
       final params = const PatchClashConfig().toUpdateParams(
         authentication: const [],
-        skipCertVerify: true,
+        options: const CoreOptions(
+          testUrl: 'http://t',
+          skipCertVerify: true,
+          delayTestTimeout: 5000,
+          mitmCapture: true,
+        ),
       );
 
       final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
-      expect(json['skip-cert-verify'], isTrue);
+      expect(json['options'], {
+        'test-url': 'http://t',
+        'skip-cert-verify': true,
+        'delay-test-timeout': 5000,
+        'mitm-capture': true,
+      });
+      expect(json, isNot(contains('mitm')));
     });
   });
 
@@ -413,9 +427,27 @@ void main() {
       expect(props.systemProxy, true);
       expect(props.bypassDomain, defaultBypassDomain);
       expect(props.bypassPrivateRoute, true);
-      expect(props.autoSetSystemDns, true);
       expect(props.appendSystemDns, false);
     });
+
+    test(
+      'the default bypass covers 172.16.0.0/12 and no public 172 address',
+      () {
+        bool bypassed(String host) => defaultBypassDomain.any(
+          (pattern) => RegExp(
+            '^${RegExp.escape(pattern).replaceAll(r'\*', '.*')}\$',
+          ).hasMatch(host),
+        );
+
+        for (var octet = 0; octet < 256; octet++) {
+          expect(
+            bypassed('172.$octet.1.1'),
+            octet >= 16 && octet < 32,
+            reason: '172.$octet.1.1',
+          );
+        }
+      },
+    );
 
     test('round-trip with custom values', () {
       const props = NetworkProps(
@@ -430,6 +462,139 @@ void main() {
     });
   });
 
+  group('Mitm', () {
+    test('speaks the keys of the Core MITM config', () {
+      const props = Mitm(
+        enable: true,
+        hostname: ['*.example.com'],
+        skipServerCertVerify: true,
+        autoQuicBlock: false,
+        h2: true,
+        decryptUntrusted: true,
+        trustedFingerprint: 'AB:CD',
+        capture: true,
+        captureEntries: 5000,
+      );
+
+      final json = jsonDecode(jsonEncode(props)) as Map<String, Object?>;
+
+      expect(json, {
+        'enable': true,
+        'hostname': ['*.example.com'],
+        'skip-server-cert-verify': true,
+        'auto-quic-block': false,
+        'h2': true,
+        'decrypt-untrusted': true,
+        'trusted-fingerprint': 'AB:CD',
+        'capture': true,
+        'capture-entries': 5000,
+      });
+      expect(Mitm.fromJson(json), props);
+    });
+
+    group('the Core section', () {
+      test('decrypts HTTPS only with the CA this device trusts', () {
+        expect(defaultMitm.coreJson(const MitmRules())['decrypt-tls'], isFalse);
+
+        final trusted = const Mitm(
+          trustedFingerprint: 'AB:CD',
+        ).coreJson(const MitmRules());
+
+        expect(trusted['decrypt-tls'], isTrue);
+        expect(trusted['ca-fingerprint'], 'AB:CD');
+        expect(trusted, isNot(contains('trusted-fingerprint')));
+        expect(trusted, isNot(contains('decrypt-untrusted')));
+      });
+
+      test('bounds what decryption holds with the keys the Core reads', () {
+        final limits =
+            defaultMitm.coreJson(const MitmRules())['limits']
+                as Map<String, Object?>;
+
+        expect(limits['max-body-size'], 4 << 20);
+        expect(
+          {
+            'max-body-size',
+            'body-buffer',
+            'certificate-cache',
+            'max-sessions',
+            'script-concurrency',
+            'script-memory',
+            'capture-entries',
+            'capture-bytes',
+          }.containsAll(limits.keys),
+          isTrue,
+        );
+      });
+
+      test('the capture limit reaches the Core among the limits', () {
+        final json = const Mitm(
+          captureEntries: 5000,
+        ).coreJson(const MitmRules());
+
+        expect(json, isNot(contains('capture-entries')));
+        expect((json['limits'] as Map)['capture-entries'], 5000);
+        expect(
+          (defaultMitm.coreJson(const MitmRules())['limits']
+              as Map)['capture-entries'],
+          2000,
+        );
+      });
+
+      test('decrypts with any CA for the LAN', () {
+        final json = const Mitm(
+          decryptUntrusted: true,
+          trustedFingerprint: 'AB:CD',
+        ).coreJson(const MitmRules());
+
+        expect(json['decrypt-tls'], isTrue);
+        expect(json['ca-fingerprint'], '');
+      });
+    });
+
+    test('a clash config saved before MITM existed reads it as off', () {
+      final config = PatchClashConfig.fromJson({'mixed-port': 7890});
+
+      expect(config.mitm, defaultMitm);
+      expect(config.mitm.enable, isFalse);
+      expect(config.mitm.autoQuicBlock, isTrue);
+    });
+
+    test('the Core section takes every list, hostnames included, from the '
+        'rules', () {
+      const rules = MitmRules(
+        hostname: ['-own.a.com', 'a.com'],
+        urlRewrite: ['u'],
+        headerRewrite: ['h'],
+        bodyRewrite: ['b'],
+        mapLocal: ['m'],
+        script: ['s'],
+      );
+
+      final json = const Mitm(hostname: ['ignored.com']).coreJson(rules);
+
+      for (final list in MitmList.values) {
+        expect(json[list.key], rules.linesOf(list));
+      }
+    });
+
+    test('is applied with the profile, so setupOnly keeps it', () {
+      const mitm = Mitm(enable: true, hostname: ['a.com']);
+
+      expect(const PatchClashConfig(mitm: mitm).setupOnly.mitm, mitm);
+    });
+
+    test('capture reaches the Core in its options, so setupOnly drops it', () {
+      const mitm = Mitm(enable: true, capture: true);
+
+      expect(
+        const PatchClashConfig(mitm: mitm).setupOnly.mitm,
+        mitm.copyWith(capture: false),
+      );
+      expect(mitm.coreJson(const MitmRules()), isNot(contains('capture')));
+    });
+  });
+
   group('PatchClashConfig JSON round-trip', () {
     test('defaults match Clash patch defaults', () {
       const config = PatchClashConfig();
@@ -441,7 +606,39 @@ void main() {
       expect(config.geodataLoader, GeodataLoader.memconservative);
       expect(config.interfaceNameMode, InterfaceNameMode.clear);
       expect(config.interfaceName, '');
+      expect(config.geoAutoUpdate, isTrue);
+      expect(config.geoUpdateInterval, 24);
     });
+
+    test(
+      'missing geo auto-update uses the default and saved false stays off',
+      () {
+        expect(PatchClashConfig.fromJson({}).geoAutoUpdate, isTrue);
+        expect(PatchClashConfig.safeFormJson(null).geoAutoUpdate, isTrue);
+        final saved = PatchClashConfig.fromJson({'geo-auto-update': false});
+        expect(saved.geoAutoUpdate, isFalse);
+        expect(
+          roundTrip(saved.toJson, PatchClashConfig.fromJson).geoAutoUpdate,
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'live update params default geo auto-update on and preserve false',
+      () {
+        final params = const PatchClashConfig().toUpdateParams(
+          authentication: const [],
+          options: const CoreOptions(testUrl: ''),
+        );
+        final json = jsonDecode(jsonEncode(params)) as Map<String, Object?>;
+        expect(json.remove('geo-auto-update'), isTrue);
+        expect(UpdateParams.fromJson(json).geoAutoUpdate, isTrue);
+        expect(UpdateParams.fromJson(json).geoUpdateInterval, 24);
+        json['geo-auto-update'] = false;
+        expect(UpdateParams.fromJson(json).geoAutoUpdate, isFalse);
+      },
+    );
 
     test('custom values survive round-trip', () {
       const config = PatchClashConfig(
@@ -487,6 +684,46 @@ void main() {
       });
 
       expect(restored.interfaceNameMode, InterfaceNameMode.clear);
+    });
+
+    test('find process defaults to strict and a saved off reads as strict', () {
+      expect(const PatchClashConfig().findProcessMode, FindProcessMode.strict);
+      for (final saved in ['off', 'strict']) {
+        final restored = PatchClashConfig.fromJson({
+          'find-process-mode': saved,
+        });
+        expect(restored.findProcessMode, FindProcessMode.strict, reason: saved);
+      }
+      final always = PatchClashConfig.fromJson({'find-process-mode': 'always'});
+      expect(always.findProcessMode, FindProcessMode.always);
+    });
+  });
+
+  group('PatchClashConfig mixed port', () {
+    test('a stored 0 or a part of a port reads as the default', () {
+      for (final stored in <Object>[0, 0.5, -1, 70000, '7890']) {
+        expect(
+          PatchClashConfig.fromJson({'mixed-port': stored}).mixedPort,
+          defaultMixedPort,
+          reason: '$stored',
+        );
+        expect(unusableMixedPort({'mixed-port': stored}), stored);
+      }
+    });
+
+    test('a usable port and the other ports at 0 are kept', () {
+      final config = PatchClashConfig.fromJson({
+        'mixed-port': 7899,
+        'port': 0,
+        'socks-port': 0,
+      });
+
+      expect(config.mixedPort, 7899);
+      expect(config.port, 0);
+      expect(config.socksPort, 0);
+      expect(unusableMixedPort({'mixed-port': 7899}), isNull);
+      expect(unusableMixedPort(const <String, Object?>{}), isNull);
+      expect(unusableMixedPort('not a map'), isNull);
     });
   });
 
@@ -537,7 +774,10 @@ void main() {
     test('reaches the Core through the update params', () {
       final params = open
           .copyWith(secret: 'abc')
-          .toUpdateParams(authentication: const [], skipCertVerify: false);
+          .toUpdateParams(
+            authentication: const [],
+            options: const CoreOptions(testUrl: ''),
+          );
 
       expect(params.secret, 'abc');
       expect(params.toJson()['secret'], 'abc');
@@ -585,7 +825,10 @@ void main() {
             tcpConcurrent: false,
             generalOverrideKeys: {GeneralOverrideKey.ipv6},
           )
-          .toUpdateParams(authentication: const [], skipCertVerify: false)
+          .toUpdateParams(
+            authentication: const [],
+            options: const CoreOptions(testUrl: ''),
+          )
           .toJson();
 
       expect(json['ipv6'], true);
@@ -603,8 +846,10 @@ void main() {
   });
 
   group('PatchClashConfig.setupOnly', () {
-    UpdateParams liveParams(PatchClashConfig config) =>
-        config.toUpdateParams(authentication: const [], skipCertVerify: false);
+    UpdateParams liveParams(PatchClashConfig config) => config.toUpdateParams(
+      authentication: const [],
+      options: const CoreOptions(testUrl: ''),
+    );
 
     test('drops every field the update params patch live', () {
       final live = defaultClashConfig.copyWith(
@@ -619,9 +864,10 @@ void main() {
         externalController: ExternalControllerStatus.open,
         secret: 'secret',
         unifiedDelay: false,
-        geoAutoUpdate: true,
+        geoAutoUpdate: false,
         geoUpdateInterval: 6,
         geoXUrl: {...defaultGeoXUrl, GeoResource.MMDB: 'https://mmdb.test'},
+        testUrl: 'https://probe.test/204',
       );
 
       final defaults = defaultClashConfig.toJson();
@@ -648,7 +894,6 @@ void main() {
         defaultClashConfig.copyWith(dns: defaultDns.copyWith(ipv6: true)),
         defaultClashConfig.copyWith(tunOverrideKeys: {TunOverrideKey.gso}),
         defaultClashConfig.copyWith(geodataLoader: GeodataLoader.standard),
-        defaultClashConfig.copyWith(testUrl: 'https://probe.test/204'),
       ];
 
       for (final config in setupOnlyChanges) {
@@ -949,7 +1194,7 @@ void main() {
           'themeProps': const ThemeProps().toJson(),
           'overrideDns': overrideDns,
           'patchClashConfig': {
-            'dns-override-keys': ['nameserver', 'respect-rules'],
+            'dns-override-keys': ['nameserver', 'nameserver-policy'],
           },
         });
 
@@ -1066,6 +1311,24 @@ void main() {
         defaults.map((action) => action.key).toSet(),
         hasLength(defaults.length),
       );
+    });
+
+    test('only a fresh Windows config bypasses hosts without a dot', () {
+      expect(
+        Config.realFromJson(null).networkProps.bypassDomain,
+        Platform.isWindows
+            ? [...defaultBypassDomain, windowsLocalBypass]
+            : defaultBypassDomain,
+      );
+    });
+
+    test('a saved bypass list is kept as saved', () {
+      final config = Config.realFromJson({
+        'themeProps': const ThemeProps().toJson(),
+        'networkProps': {'bypassDomain': defaultBypassDomain},
+      });
+
+      expect(config.networkProps.bypassDomain, defaultBypassDomain);
     });
 
     test('full config round-trip', () {

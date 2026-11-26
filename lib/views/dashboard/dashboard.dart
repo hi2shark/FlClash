@@ -1,20 +1,19 @@
 import 'dart:math' as math;
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
 
 import 'edit.dart';
 import 'layout.dart';
 import 'style.dart';
 import 'widget_registry.dart';
-import 'widgets/core_status_button.dart';
 import 'widgets/widgets.dart';
 
 // Narrower columns leave a pair of service cells too tight for a status, so
@@ -36,6 +35,19 @@ class DashboardView extends ConsumerStatefulWidget {
 class _DashboardViewState extends ConsumerState<DashboardView> {
   var _editing = false;
   final _cardKeys = <DashboardWidget, GlobalKey>{};
+  late final ScrollController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = sheetScrollController(context);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   void _setEditing(bool editing) {
     setState(() => _editing = editing);
@@ -58,12 +70,22 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final editing = _editing;
     final gap = cardSpacingOf(context, ref.watch(viewModeProvider));
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       backgroundColor: DashboardColors.of(context).page,
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
-      actions: [if (!editing && coreLib == null) const CoreStatusButton()],
+      actions: [
+        if (!editing) const LiveStatusButton(),
+        if (editable && !editing)
+          AppBarActionButton(
+            data: IconButtonData(
+              glyph: AppGlyphs.edit,
+              tooltip: appLocalizations.editDashboard,
+              onPressed: () => _setEditing(true),
+            ),
+          ),
+      ],
       confirmationAction: editing
           ? IconButtonData(
               glyph: AppGlyphs.check,
@@ -71,14 +93,6 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               onPressed: () => _setEditing(false),
             )
           : null,
-      iconActions: [
-        if (editable && !editing)
-          IconButtonData(
-            glyph: AppGlyphs.edit,
-            tooltip: appLocalizations.editDashboard,
-            onPressed: () => _setEditing(true),
-          ),
-      ],
       // The providers learn a resize a frame late, too late for the cards.
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -94,6 +108,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                     gap: gap,
                   )
                 : _MobileDashboard(
+                    controller: _controller,
                     platform: platform,
                     gap: gap,
                     editing: editing,
@@ -290,6 +305,7 @@ class _DesktopDashboard extends StatelessWidget {
 
 class _MobileDashboard extends ConsumerWidget {
   const _MobileDashboard({
+    required this.controller,
     required this.platform,
     required this.gap,
     required this.editing,
@@ -297,6 +313,7 @@ class _MobileDashboard extends ConsumerWidget {
     required this.onDone,
   });
 
+  final ScrollController controller;
   final SupportPlatform platform;
   final double gap;
   final bool editing;
@@ -311,6 +328,7 @@ class _MobileDashboard extends ConsumerWidget {
     final top = context.contentTopPadding;
     final bottom = 16 + context.bottomInset;
     return CustomScrollView(
+      controller: controller,
       // A viewport per card lays them all out and holds the scroll end still.
       scrollCacheExtent: editing
           ? ScrollCacheExtent.viewport(DashboardWidget.values.length.toDouble())
@@ -339,12 +357,15 @@ class _MobileDashboard extends ConsumerWidget {
               // ones it has; cards this uneven move the scroll end as it goes.
               sliver: SliverToBoxAdapter(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   spacing: gap,
                   children: [
                     for (final widget in widgets)
-                      RepaintBoundary(
-                        key: cardKeyOf(widget),
-                        child: widget.card,
+                      _OnScreen(
+                        child: RepaintBoundary(
+                          key: cardKeyOf(widget),
+                          child: widget.card,
+                        ),
                       ),
                   ],
                 ),
@@ -354,5 +375,75 @@ class _MobileDashboard extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+/// Stops a card's tickers, polls and provider updates out of view, where an
+/// update still costs Impeller a frame of the whole screen.
+class _OnScreen extends StatefulWidget {
+  const _OnScreen({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_OnScreen> createState() => _OnScreenState();
+}
+
+class _OnScreenState extends State<_OnScreen> {
+  ScrollPosition? _position;
+  var _shown = true;
+  var _checkPending = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final position = Scrollable.maybeOf(context)?.position;
+    if (position != _position) {
+      _position?.removeListener(_checkAfterLayout);
+      _position = position?..addListener(_checkAfterLayout);
+    }
+  }
+
+  @override
+  void dispose() {
+    _position?.removeListener(_checkAfterLayout);
+    super.dispose();
+  }
+
+  // Only layout places the card, and a card above can move it unscrolled.
+  void _checkAfterLayout() {
+    if (_checkPending) {
+      return;
+    }
+    _checkPending = true;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _checkPending = false;
+      _check();
+    });
+  }
+
+  void _check() {
+    final box = mounted ? context.findRenderObject() : null;
+    if (box is! RenderBox || !box.hasSize || !box.attached) {
+      return;
+    }
+    final RenderObject? viewport = RenderAbstractViewport.maybeOf(box);
+    if (viewport is! RenderBox) {
+      return;
+    }
+    final rect = MatrixUtils.transformRect(
+      box.getTransformTo(viewport),
+      Offset.zero & box.size,
+    );
+    final shown = rect.overlaps(Offset.zero & viewport.size);
+    if (shown != _shown) {
+      setState(() => _shown = shown);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _checkAfterLayout();
+    return TickerMode(enabled: _shown, child: widget.child);
   }
 }

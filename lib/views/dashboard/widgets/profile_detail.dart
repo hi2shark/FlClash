@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -13,7 +14,7 @@ import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:yaml/yaml.dart';
 
 const _statSpacing = 8.0;
@@ -27,12 +28,12 @@ Future<void> syncProfile(WidgetRef ref, Profile profile) async {
 }
 
 void showProfileDetailSheet(BuildContext context) {
-  showSheet<void>(context: context, builder: (_) => const ProfileDetailSheet());
+  showNestedSheet<void>(context, builder: (_) => const ProfileDetailSheet());
 }
 
 void showProfilesSheet(BuildContext context) {
-  showSheet<void>(
-    context: context,
+  showNestedSheet<void>(
+    context,
     builder: (_) => const ProfilesView(picker: true),
   );
 }
@@ -150,7 +151,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet>
     with ConfigCountsWatch<ProfileDetailSheet> {
   void _handlePreview(Profile profile) {
     unawaited(
-      BaseNavigator.push<String>(context, PreviewProfileView(profile: profile)),
+      pushNestedPage<void>(context, PreviewProfileView(profile: profile)),
     );
   }
 
@@ -163,9 +164,16 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet>
     }
     final providers = ref.watch(providersProvider);
     final isUpdating = ref.watch(isUpdatingProvider(profile.updatingKey));
+    final scriptLabel = ref.watch(
+      scriptsProvider.select(
+        (state) => state.value
+            ?.firstWhereOrNull((item) => item.id == profile.scriptId)
+            ?.label,
+      ),
+    );
     final appLocalizations = context.appLocalizations;
     final subscriptionInfo = profile.subscriptionInfo;
-    return CommonScaffold(
+    return Scaffold(
       title: profile.realLabel,
       iconActions: [
         if (profile.type == ProfileType.url)
@@ -184,7 +192,7 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet>
       body: CustomScrollView(
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+            padding: context.listInsets.page().copyWith(
               top: context.contentTopPadding,
               bottom: 20 + context.bottomInset,
             ),
@@ -221,10 +229,8 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet>
                         ),
                         if (profile.type != ProfileType.custom)
                           _InfoRow(
-                            label: appLocalizations.extendMode,
-                            value: Text(
-                              _extendLabel(context, profile.extendType),
-                            ),
+                            label: appLocalizations.extendScript,
+                            value: Text(scriptLabel ?? appLocalizations.none),
                           ),
                       ],
                     ),
@@ -239,13 +245,6 @@ class _ProfileDetailSheetState extends ConsumerState<ProfileDetailSheet>
       ),
     );
   }
-}
-
-String _extendLabel(BuildContext context, ExtendType type) {
-  return switch (type) {
-    ExtendType.standard => context.appLocalizations.standard,
-    ExtendType.script => context.appLocalizations.script,
-  };
 }
 
 class _StatsGrid extends StatelessWidget {
@@ -280,7 +279,7 @@ class _StatsGrid extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: infoSectionContentGap),
       child: Column(
         spacing: _statSpacing,
         children: [rowOf(tiles.take(2)), rowOf(tiles.skip(2))],
@@ -299,7 +298,10 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: context.listInsets.leading,
+        vertical: listRowVerticalPadding,
+      ),
       decoration: ShapeDecoration(
         color: context.raisedSurfaceLevel.colorOf(colorScheme),
         shape: AppShape.all(AppCorner.lg),

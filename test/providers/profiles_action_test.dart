@@ -4,17 +4,16 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:yaml/yaml.dart';
 
 import '../helpers/app_paths.dart';
@@ -31,7 +30,7 @@ void main() {
   late ProviderContainer container;
 
   setUpAll(() async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     home = Directory.systemTemp.createTempSync('flclash-profiles-action-');
     await useAppPaths(home);
   });
@@ -42,7 +41,7 @@ void main() {
 
   setUp(() {
     core = _MockCoreHandlerInterface();
-    when(() => core.validateConfig(any())).thenAnswer((_) async => '');
+    when(() => core.validateConfig(any())).thenAnswer((_) async => null);
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
@@ -68,7 +67,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(withStatusManager: true, child: SizedBox()),
+        child: const TestApp(child: SizedBox()),
       ),
     );
   }

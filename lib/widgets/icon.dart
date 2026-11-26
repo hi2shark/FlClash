@@ -2,19 +2,24 @@ import 'dart:async';
 
 import 'package:fl_clash/common/cache.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/plugins/app.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+
+export 'package:fl_clash/plugins/app_icon.dart'
+    show appIconBodies, appIconIdOf, hostAppIconBody;
 
 const _maxCachedIconBytes = 16 << 20;
 
-// The precache and the widget must resolve equal providers to share one
-// ImageCache entry; 192 physical pixels cover a 48 dp icon box at 4x.
-const _iconDecodeExtent = 192;
+// The decode size is in dp and follows the pixel ratio an image resolves at,
+// so the precache resolves at the view's ratio to share the widget's
+// ImageCache entry.
+const _iconDecodeExtent = 48;
 
 ImageProvider _iconImage(Uint8List bytes) {
   return ResizeImage(
@@ -22,6 +27,7 @@ ImageProvider _iconImage(Uint8List bytes) {
     width: _iconDecodeExtent,
     height: _iconDecodeExtent,
     policy: ResizeImagePolicy.fit,
+    useLogicalSize: true,
   );
 }
 
@@ -193,10 +199,20 @@ class _BytesImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = IconTheme.of(context).size ?? 24;
     return isSvg
-        ? SvgPicture.memory(bytes, errorBuilder: (_, _, _) => _buildFallback())
+        ? SvgPicture.memory(
+            bytes,
+            width: size,
+            height: size,
+            fit: BoxFit.scaleDown,
+            errorBuilder: (_, _, _) => _buildFallback(),
+          )
         : Image(
             image: _iconImage(bytes),
+            width: size,
+            height: size,
+            fit: BoxFit.scaleDown,
             gaplessPlayback: true,
             errorBuilder: (_, _, _) => _buildFallback(),
           );
@@ -235,7 +251,10 @@ Stream<Uint8List> _loadRemoteIcon(String src) {
 
 Future<void> _decodeAhead(Uint8List bytes) {
   final completer = Completer<void>();
-  final stream = _iconImage(bytes).resolve(ImageConfiguration.empty);
+  final view = WidgetsBinding.instance.platformDispatcher.implicitView;
+  final stream = _iconImage(
+    bytes,
+  ).resolve(ImageConfiguration(devicePixelRatio: view?.devicePixelRatio));
   late final ImageStreamListener listener;
   void finish() {
     stream.removeListener(listener);
@@ -361,67 +380,143 @@ class _ImageCacheWidgetState extends State<ImageCacheWidget> {
   }
 }
 
-class PackageIcon extends StatefulWidget {
+class PackageIcon extends ConsumerStatefulWidget {
   final String packageName;
   final double size;
 
   const PackageIcon({super.key, required this.packageName, required this.size});
 
   @override
-  State<PackageIcon> createState() => _PackageIconState();
+  ConsumerState<PackageIcon> createState() => _PackageIconState();
 }
 
-class _PackageIconState extends State<PackageIcon> {
-  ImageProvider? _icon;
-  int _generation = 0;
+class _PackageIconState extends ConsumerState<PackageIcon>
+    with _PackageIconLoader<PackageIcon> {
+  @override
+  String packageNameOf(PackageIcon widget) => widget.packageName;
 
   @override
-  void initState() {
-    super.initState();
-    _showCachedIcon();
-    _loadIcon();
-  }
-
-  @override
-  void didUpdateWidget(covariant PackageIcon oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.packageName != widget.packageName) {
-      _showCachedIcon();
-      _loadIcon();
-    }
-  }
-
-  void _showCachedIcon() {
-    _generation++;
-    _icon = app?.getCachedPackageIcon(widget.packageName);
-  }
-
-  void _loadIcon() {
-    final generation = _generation;
-    app?.getPackageIcon(widget.packageName).then((icon) {
-      if (!mounted ||
-          generation != _generation ||
-          icon == null ||
-          icon == _icon) {
-        return;
-      }
-      setState(() {
-        _icon = icon;
-      });
-    });
+  (ImageProvider?, Future<ImageProvider?>?) lookUp(String packageName) {
+    final source = ref.read(packageIconSourceProvider);
+    return (
+      source?.getCachedPackageIcon(packageName),
+      source?.getPackageIcon(packageName),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final icon = _icon;
+    final icon = this.icon;
     if (icon == null) {
       return SizedBox(width: widget.size, height: widget.size);
     }
-    return Image(
-      image: icon,
-      gaplessPlayback: true,
-      width: widget.size,
-      height: widget.size,
+    return packageIconImage(icon, widget.size);
+  }
+}
+
+/// Shows a package's cached icon at once and the one [lookUp] loads once it
+/// lands, unless the widget has moved to another package by then.
+mixin _PackageIconLoader<T extends StatefulWidget> on State<T> {
+  ImageProvider? icon;
+  var _generation = 0;
+
+  String packageNameOf(T widget);
+
+  (ImageProvider?, Future<ImageProvider?>?) lookUp(String packageName);
+
+  @override
+  void initState() {
+    super.initState();
+    _resolve();
+  }
+
+  @override
+  void didUpdateWidget(covariant T oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (packageNameOf(oldWidget) != packageNameOf(widget)) {
+      _resolve();
+    }
+  }
+
+  void _resolve() {
+    final generation = ++_generation;
+    final (cached, load) = lookUp(packageNameOf(widget));
+    icon = cached;
+    load?.then((loaded) {
+      if (mounted && generation == _generation) {
+        onLoaded(loaded);
+      }
+    });
+  }
+
+  void onLoaded(ImageProvider? loaded) {
+    if (loaded != null && loaded != icon) {
+      setState(() {
+        icon = loaded;
+      });
+    }
+  }
+}
+
+Widget packageIconImage(ImageProvider icon, double size) =>
+    Image(image: icon, gaplessPlayback: true, width: size, height: size);
+
+/// Shows the icon of [packageName], an id from `appIconIdOf`. Null only where
+/// the app is unknown or known to have no icon; else holds the icon room.
+class OwnPackageIcon extends ConsumerStatefulWidget {
+  final String packageName;
+  final double size;
+  final Widget Function(BuildContext context, Widget? icon) builder;
+
+  const OwnPackageIcon({
+    super.key,
+    required this.packageName,
+    required this.size,
+    required this.builder,
+  });
+
+  @override
+  ConsumerState<OwnPackageIcon> createState() => _OwnPackageIconState();
+}
+
+class _OwnPackageIconState extends ConsumerState<OwnPackageIcon>
+    with _PackageIconLoader<OwnPackageIcon> {
+  var _holdsRoom = false;
+
+  @override
+  String packageNameOf(OwnPackageIcon widget) => widget.packageName;
+
+  @override
+  (ImageProvider?, Future<ImageProvider?>?) lookUp(String packageName) {
+    final source = packageName.isEmpty
+        ? null
+        : ref.read(packageIconSourceProvider);
+    final cached = source?.getCachedOwnPackageIcon(packageName);
+    final load = cached == null ? source?.getOwnPackageIcon(packageName) : null;
+    _holdsRoom = load != null;
+    return (cached?.icon, load);
+  }
+
+  @override
+  void onLoaded(ImageProvider? loaded) {
+    if (loaded != null) {
+      super.onLoaded(loaded);
+      return;
+    }
+    setState(() => _holdsRoom = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = widget.size;
+    final icon = this.icon;
+    return widget.builder(
+      context,
+      icon != null
+          ? packageIconImage(icon, size)
+          : _holdsRoom
+          ? SizedBox.square(dimension: size)
+          : null,
     );
   }
 }

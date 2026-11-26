@@ -10,3 +10,32 @@ final class MessageException implements Exception {
 final class AgeSecretKeyRequiredException implements Exception {
   const AgeSecretKeyRequiredException();
 }
+
+/// [reason] is DownloadManager's COLUMN_REASON, null without a download.
+final class SystemDownloadException implements Exception {
+  final int? reason;
+
+  const SystemDownloadException(this.reason);
+
+  @override
+  String toString() => 'SystemDownloadException: $reason';
+}
+
+/// The release lacks [name], or its checksum file does not list it.
+final class ReleaseFileMissingException implements Exception {
+  final String name;
+
+  const ReleaseFileMissingException(this.name);
+
+  @override
+  String toString() => 'ReleaseFileMissingException: $name';
+}
+
+final class ReleaseNotVerifiedException implements Exception {
+  final String name;
+
+  const ReleaseNotVerifiedException(this.name);
+
+  @override
+  String toString() => 'ReleaseNotVerifiedException: $name';
+}

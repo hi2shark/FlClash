@@ -3,16 +3,16 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
 
 const _group = ProxyGroup(id: 1, name: 'g', type: GroupType.Selector);
 
@@ -40,7 +40,7 @@ class _ProbeFormState extends ConsumerState<_ProbeForm> {
     final height = isBottomSheet
         ? ref.read(viewSizeProvider).height * 0.6
         : double.maxFinite;
-    return CommonScaffold(
+    return Scaffold(
       body: Container(
         constraints: BoxConstraints(maxHeight: height),
         child: ListView(
@@ -48,7 +48,7 @@ class _ProbeFormState extends ConsumerState<_ProbeForm> {
           padding: const EdgeInsets.all(16),
           children: [
             for (var index = 0; index < 8; index++)
-              ListTile(title: Text('row $index')),
+              TestRow(title: Text('row $index')),
             Text(name),
             FilledButton(
               onPressed: () {
@@ -179,7 +179,7 @@ void main() {
   testWidgets('closing with changes asks before saving them', (tester) async {
     final harness = _NestedSheetHarness();
     await harness.pump(tester);
-    final l = AppLocalizations.current;
+    final l = currentAppLocalizations;
 
     await harness.mutate(tester);
     await harness.closeBySystemBack(tester);
@@ -197,7 +197,7 @@ void main() {
   testWidgets('declining the save closes without saving', (tester) async {
     final harness = _NestedSheetHarness();
     await harness.pump(tester);
-    final l = AppLocalizations.current;
+    final l = currentAppLocalizations;
 
     await harness.mutate(tester);
     await tester.tap(find.byTooltip(l.close));
@@ -212,7 +212,7 @@ void main() {
   testWidgets('dismissing the save prompt keeps the form open', (tester) async {
     final harness = _NestedSheetHarness();
     await harness.pump(tester);
-    final l = AppLocalizations.current;
+    final l = currentAppLocalizations;
 
     await harness.mutate(tester);
     await harness.closeBySystemBack(tester);
@@ -220,7 +220,7 @@ void main() {
 
     await harness.closeBySystemBack(tester);
 
-    expect(find.byType(CommonDialog), findsNothing);
+    expect(find.byType(AlertDialog), findsNothing);
     expect(harness.saveCalls, 0);
     expect(find.byType(NestedFormSheet<ProxyGroup>), findsOneWidget);
   });
@@ -230,7 +230,7 @@ void main() {
   ) async {
     final harness = _NestedSheetHarness();
     await harness.pump(tester, size: const Size(400, 800));
-    final l = AppLocalizations.current;
+    final l = currentAppLocalizations;
 
     harness.container
         .read(proxyGroupProvider.notifier)
@@ -254,7 +254,7 @@ void main() {
   ) async {
     final harness = _NestedSheetHarness()..saves = false;
     await harness.pump(tester);
-    final l = AppLocalizations.current;
+    final l = currentAppLocalizations;
 
     await harness.mutate(tester);
     await harness.closeBySystemBack(tester);
@@ -262,7 +262,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(harness.saveCalls, 1);
-    expect(find.byType(CommonDialog), findsNothing);
+    expect(find.byType(AlertDialog), findsNothing);
     expect(find.byType(NestedFormSheet<ProxyGroup>), findsOneWidget);
   });
 
@@ -286,21 +286,21 @@ void main() {
         child: TestApp(
           homeBuilder: (child) => Navigator(
             key: pageNavigator,
-            pages: [MaterialPage(child: child)],
+            pages: [RootPage(child: child)],
             onDidRemovePage: (_) {},
           ),
-          child: const Scaffold(body: SizedBox.shrink()),
+          child: const HostScaffold(body: SizedBox.shrink()),
         ),
       ),
     );
     unawaited(
       pageNavigator.currentState!.push(
         FormSheetRoute<void>(
-          barrierColor: Colors.black26,
+          barrierColor: const Color(0x42000000),
           barrierLabel: 'sheet',
           builder: (_) => Navigator(
             onGenerateRoute: (_) => PagedSheetRoute<void>(
-              builder: (_) => const Material(child: TextField(autofocus: true)),
+              builder: (_) => const Surface(child: TextField(autofocus: true)),
             ),
           ),
         ),

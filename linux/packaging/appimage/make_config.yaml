@@ -20,7 +20,3 @@ categories:
   - Network
 
 startup_notify: true
-
-startup_wm_class: com.hi2shark.flclash_nw
-
-include: []

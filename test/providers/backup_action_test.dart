@@ -8,7 +8,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
@@ -17,12 +17,8 @@ import 'package:riverpod/riverpod.dart';
 import '../helpers/app_paths.dart';
 import '../helpers/preferences.dart';
 
-Profile _profile(int id, String label) => Profile(
-  id: id,
-  label: label,
-  autoUpdateDuration: Duration.zero,
-  extendType: ExtendType.standard,
-);
+Profile _profile(int id, String label) =>
+    Profile(id: id, label: label, autoUpdateDuration: Duration.zero);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +28,7 @@ void main() {
 
   setUpAll(() async {
     await mockPreferences({'version': 1});
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     home = Directory.systemTemp.createTempSync('flclash-backup-action-');
     await useAppPaths(home);
   });
@@ -50,8 +46,9 @@ void main() {
     await testDatabase.close();
   });
 
+  // AppStateManager's listen keeps the settings alive while a restore awaits.
   ProviderContainer buildContainer() {
-    final container = ProviderContainer();
+    final container = ProviderContainer()..listen(configProvider, (_, _) {});
     addTearDown(container.dispose);
     return container;
   }
@@ -94,13 +91,13 @@ void main() {
       final profileFile = File(await appPath.getProfilePath('1'))
         ..createSync(recursive: true)
         ..writeAsStringSync('proxies: []');
-      final source = buildContainer()..listen(configProvider, (_, _) {});
+      final source = buildContainer();
       source.read(excludeSSIDsProvider.notifier).value = ['home-wifi'];
       final archivePath = await backupToKept(actionOf(source));
 
       await testDatabase.delete(testDatabase.profiles).go();
       profileFile.deleteSync();
-      final target = buildContainer()..listen(configProvider, (_, _) {});
+      final target = buildContainer();
       final restored = await actionOf(
         target,
       ).restore(RestoreOption.all, (_) async => archivePath);
@@ -111,6 +108,36 @@ void main() {
       expect(profileFile.readAsStringSync(), 'proxies: []');
       expect(target.read(excludeSSIDsProvider), ['home-wifi']);
       expect(workDirs(), isEmpty);
+    });
+
+    test('brings back the attachments of local modules and cleans the '
+        'rest', () async {
+      final module = MitmModule(
+        id: 9,
+        name: 'Mine',
+        resources: const {'own.json': 'own.json'},
+        lastUpdateTime: DateTime(2026),
+      );
+      await testDatabase.mitmModulesDao.putAll([module.toCompanion()]);
+      File(join(home.path, 'mitm', 'modules', module.fileName))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('[Map Local]\n^https://a data="own.json"\n');
+      final resources = join(home.path, 'mitm', 'resources');
+      final own = File(join(resources, 'own.json'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('{}');
+      final archivePath = await backupToKept(actionOf(buildContainer()));
+
+      own.deleteSync();
+      final stale = File(join(resources, 'stale.json'))..writeAsStringSync('');
+      final target = buildContainer();
+      final restored = await actionOf(
+        target,
+      ).restore(RestoreOption.all, (_) async => archivePath);
+
+      expect(restored, isTrue);
+      expect(own.readAsStringSync(), '{}');
+      expect(stale.existsSync(), isFalse);
     });
 
     test('removes the work directory when delivery fails', () async {
@@ -354,6 +381,38 @@ void main() {
       expect(target.read(appSettingProvider).autoLaunch, isTrue);
       expect(target.read(patchClashConfigProvider).mixedPort, 7899);
     });
+
+    test(
+      'a backup holding a mixed port of 0 restores the default and says so',
+      () async {
+        final configMap = configMapOf(buildContainer());
+        (configMap['patchClashConfig']! as Map<String, Object?>)['mixed-port'] =
+            0;
+        final banners = <String>[];
+        final print = debugPrint;
+        debugPrint = (message, {wrapWidth}) => banners.add(message ?? '');
+        addTearDown(() => debugPrint = print);
+        final target = buildContainer();
+        target
+            .read(patchClashConfigProvider.notifier)
+            .update((state) => state.copyWith(mixedPort: 7899));
+
+        await actionOf(
+          target,
+        ).applyRestore(MigrationData(configMap: configMap), RestoreOption.all);
+
+        expect(
+          target.read(patchClashConfigProvider).mixedPort,
+          defaultMixedPort,
+        );
+        expect(
+          banners,
+          contains(
+            '[APP] banner: The mixed port cannot be 0, so it was set back to 7890',
+          ),
+        );
+      },
+    );
 
     test('keeps the bound WebDAV account when the backup has none', () async {
       final configMap = configMapOf(buildContainer());

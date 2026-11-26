@@ -9,8 +9,10 @@ import (
 	mihomoHttp "github.com/metacubex/mihomo/component/http"
 	"github.com/metacubex/mihomo/component/proxydialer"
 	"github.com/metacubex/mihomo/component/updater"
+	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/hub/executor"
+	"github.com/metacubex/mihomo/tunnel"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 )
 
@@ -35,13 +37,20 @@ func init() {
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
 		notifyProbeRoute(c)
 		if shouldEmitBulkEvents() {
-			sendMessage(RequestMessage, c)
+			sendMessage(RequestMessage, newRequestInfo(c))
 			watchRequestTraffic(c)
+		}
+	}
+	tunnel.DefaultDialFailureNotify = func(metadata *C.Metadata, rule C.Rule, proxy C.Proxy, err error) {
+		if shouldEmitBulkEvents() {
+			sendMessage(RequestMessage, newFailedRequest(metadata, rule, proxy, err, time.Now()))
 		}
 	}
 	dns.DefaultQueryNotify = func(record dns.QueryRecord) {
 		if shouldEmitBulkEvents() {
-			sendMessage(DnsMessage, newDnsQuery(record))
+			query := newDnsQuery(record)
+			query.Id = currentDnsTrail.note(record)
+			sendMessage(DnsMessage, query)
 		}
 	}
 	executor.DefaultProviderLoadedHook = func(providerName string) {

@@ -6,7 +6,7 @@ import 'package:fl_clash/local_rules/services/local_rule_store.dart';
 import 'package:fl_clash/local_rules/services/local_rule_targets.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 class LocalRulesView extends StatefulWidget {
   const LocalRulesView({super.key});
@@ -69,7 +69,7 @@ class _LocalRulesViewState extends State<LocalRulesView> {
       await localRuleStore.saveConfig(previous);
       await applyLocalRuleChanges();
       if (mounted) {
-        context.showNotifier(context.appLocalizations.localRuleReloadFailed);
+        dialogs.showBanner(context.appLocalizations.localRuleReloadFailed);
       }
     } finally {
       _saving = false;
@@ -79,7 +79,7 @@ class _LocalRulesViewState extends State<LocalRulesView> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.localRules,
       body: ListView(
         padding: const EdgeInsets.all(
@@ -99,7 +99,7 @@ class _LocalRulesViewState extends State<LocalRulesView> {
                   return Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CommonCard(
+                      Card(
                         child: ListItem.toggle(
                           title: Text(appLocalizations.localRuleMixin),
                           subtitle: Column(
@@ -132,7 +132,7 @@ class _LocalRulesViewState extends State<LocalRulesView> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      CommonCard(
+                      Card(
                         onPressed: () async {
                           await BaseNavigator.push(
                             context,

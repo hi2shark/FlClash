@@ -1,13 +1,15 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/features/form/form.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
+import 'package:prism_ui/prism_ui.dart';
+import '../helpers/host_scaffold.dart';
 
 class _EditorHarness extends StatelessWidget {
   final ValueNotifier<List<String>?> items;
@@ -29,7 +31,7 @@ class _EditorHarness extends StatelessWidget {
       itemsOf: (_) => items.value,
       itemBuilder:
           (context, ref, item, index, isEditing, isSelected, onToggleSelected) {
-            return ListTile(
+            return TestRow(
               title: Text(item),
               onTap: onToggleSelected,
               trailing: isSelected ? const GlyphIcon(AppGlyphs.check) : null,
@@ -48,7 +50,7 @@ class _EditorHarness extends StatelessWidget {
         viewSizeProvider.overrideWithBuild((_, _) => const Size(1200, 800)),
       ],
       child: inBottomSheet
-          ? Material(
+          ? Surface(
               child: SheetProvider(type: SheetType.bottomSheet, child: page),
             )
           : page,
@@ -70,7 +72,7 @@ Future<void> _tapBarAction(WidgetTester tester, String tooltip) async {
 
 Future<void> _answerDialog(WidgetTester tester, {required bool confirm}) async {
   await tester.pumpAndSettle();
-  final localizations = AppLocalizations.current;
+  final localizations = currentAppLocalizations;
   await tester.tap(
     find.text(confirm ? localizations.delete : localizations.cancel),
   );
@@ -122,7 +124,7 @@ void main() {
     await tester.tap(find.text('a'));
     await tester.pump();
     expect(find.byGlyph(AppGlyphs.delete), findsOneWidget);
-    expect(find.byTooltip(AppLocalizations.current.selectAll), findsOneWidget);
+    expect(find.byTooltip(currentAppLocalizations.selectAll), findsOneWidget);
 
     await tester.tap(find.text('a'));
     await tester.pump();
@@ -139,11 +141,11 @@ void main() {
 
     await tester.tap(find.text('a'));
     await tester.pump();
-    await tester.tap(find.byTooltip(AppLocalizations.current.selectAll));
+    await tester.tap(find.byTooltip(currentAppLocalizations.selectAll));
     await tester.pump();
     expect(find.byGlyph(AppGlyphs.check), findsNWidgets(3));
 
-    await tester.tap(find.byTooltip(AppLocalizations.current.selectAll));
+    await tester.tap(find.byTooltip(currentAppLocalizations.selectAll));
     await tester.pump();
     expect(find.byGlyph(AppGlyphs.check), findsNothing);
 
@@ -177,7 +179,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      tester.getBottomLeft(find.widgetWithText(ListTile, 'item 39')).dy,
+      tester.getBottomLeft(find.widgetWithText(TestRow, 'item 39')).dy,
       lessThanOrEqualTo(tester.getTopLeft(find.byType(SearchField)).dy),
     );
 
@@ -191,22 +193,22 @@ void main() {
     addTearDown(items.dispose);
     await tester.pumpWidget(_EditorHarness(items: items, searchable: true));
     await tester.pump();
-    expect(find.byType(ReorderableListView), findsOneWidget);
+    expect(find.byType(PrismReorderableListView), findsOneWidget);
 
     await _search(tester, 'MA');
     expect(find.text('gamma'), findsOneWidget);
     expect(find.text('alpha'), findsNothing);
     expect(find.text('beta'), findsNothing);
-    expect(find.byType(ReorderableListView), findsNothing);
+    expect(find.byType(PrismReorderableListView), findsNothing);
 
     await tester.enterText(find.byType(TextField), 'zeta');
     await tester.pump();
-    expect(find.text(AppLocalizations.current.noSearchResults), findsOneWidget);
+    expect(find.text(currentAppLocalizations.noSearchResults), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), '');
     await tester.pump();
     expect(find.text('alpha'), findsOneWidget);
-    expect(find.byType(ReorderableListView), findsOneWidget);
+    expect(find.byType(PrismReorderableListView), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -231,8 +233,8 @@ void main() {
     await tester.pump();
     await tester.enterText(find.byType(TextField), 'ma');
     await tester.pump();
-    await _tapBarAction(tester, AppLocalizations.current.selectAll);
-    await _tapBarAction(tester, AppLocalizations.current.delete);
+    await _tapBarAction(tester, currentAppLocalizations.selectAll);
+    await _tapBarAction(tester, currentAppLocalizations.delete);
     await _answerDialog(tester, confirm: true);
 
     expect(deleted, {'gamma'});
@@ -258,7 +260,7 @@ void main() {
     await tester.pump();
     await tester.enterText(find.byType(TextField), 'ma');
     await tester.pump();
-    await _tapBarAction(tester, AppLocalizations.current.delete);
+    await _tapBarAction(tester, currentAppLocalizations.delete);
     await _answerDialog(tester, confirm: true);
 
     expect(deleted.single, {'gamma'});
@@ -268,7 +270,7 @@ void main() {
     expect(find.byGlyph(AppGlyphs.check), findsOneWidget);
     expect(
       find.descendant(
-        of: find.widgetWithText(ListTile, 'beta'),
+        of: find.widgetWithText(TestRow, 'beta'),
         matching: find.byGlyph(AppGlyphs.check),
       ),
       findsOneWidget,
@@ -406,7 +408,7 @@ void main() {
     await tester.pump();
 
     expect(find.byGlyph(AppGlyphs.delete), findsNothing);
-    expect(find.byTooltip(AppLocalizations.current.selectAll), findsOneWidget);
+    expect(find.byTooltip(currentAppLocalizations.selectAll), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -421,7 +423,7 @@ void main() {
       itemBuilder:
           (context, ref, item, index, isEditing, isSelected, onToggleSelected) {
             builds[index] = (builds[index] ?? 0) + 1;
-            return ListTile(title: Text(item));
+            return TestRow(title: Text(item));
           },
       itemExtent: 50,
       onReorder: (oldIndex, newIndex) {},
@@ -454,7 +456,7 @@ void main() {
           .getTopLeft(
             find.ancestor(
               of: find.text('item ${arrived.length - 1}'),
-              matching: find.byType(ListTile),
+              matching: find.byType(TestRow),
             ),
           )
           .dy,
@@ -464,5 +466,108 @@ void main() {
     await tester.pumpAndSettle();
     expect(builds.length, greaterThan(arrived.length));
     expect([for (final index in arrived) builds[index]], everyElement(1));
+  });
+
+  testWidgets('a pushed page builds its rows a held frame after the rest', (
+    tester,
+  ) async {
+    var built = 0;
+    final page = ListEditorPage<String, String>(
+      title: 'Editor',
+      itemsOf: (_) => const ['a', 'b'],
+      itemBuilder:
+          (context, ref, item, index, isEditing, isSelected, onToggleSelected) {
+            built++;
+            return TestRow(title: Text(item));
+          },
+      onReorder: (oldIndex, newIndex) {},
+      onAdd: () {},
+      emptyLabel: 'Empty',
+      idOf: (item) => item,
+    );
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        overrides: [
+          viewSizeProvider.overrideWithBuild((_, _) => const Size(400, 600)),
+        ],
+        child: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => BaseNavigator.push(context, page),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    double pushed() =>
+        ModalRoute.of(tester.element(find.text('Editor')))!.animation!.value;
+
+    await tester.tap(find.text('open'));
+    await tester.pump();
+    expect(find.text('Editor'), findsOneWidget);
+    expect(built, 0);
+
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(built, 2);
+    expect(pushed(), 0);
+
+    await tester.pumpAndSettle();
+    expect(pushed(), 1);
+    expect(find.text('b'), findsOneWidget);
+  });
+
+  testWidgets('a page pushed over the editor and popped rebuilds none of it', (
+    tester,
+  ) async {
+    final page = ListEditorPage<String, String>(
+      title: 'Editor',
+      itemsOf: (_) => const ['a', 'b'],
+      itemBuilder:
+          (context, ref, item, index, isEditing, isSelected, onToggleSelected) {
+            return Builder(
+              builder: (context) => TextButton(
+                onPressed: () =>
+                    BaseNavigator.push(context, const Text('child')),
+                child: Text(item),
+              ),
+            );
+          },
+      onReorder: (oldIndex, newIndex) {},
+      onAdd: () {},
+      emptyLabel: 'Empty',
+      idOf: (item) => item,
+    );
+    await tester.pumpWidget(
+      TestApp(
+        wrapInProviderScope: true,
+        overrides: [
+          viewSizeProvider.overrideWithBuild((_, _) => const Size(400, 600)),
+        ],
+        child: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => BaseNavigator.push(context, page),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    var rebuilds = 0;
+    debugOnRebuildDirtyWidget = (element, builtOnce) {
+      if (element.widget is ListEditorPage) {
+        rebuilds++;
+      }
+    };
+    addTearDown(() => debugOnRebuildDirtyWidget = null);
+    await tester.tap(find.text('a'));
+    await tester.pumpAndSettle();
+    expect(find.text('child'), findsOneWidget);
+    Navigator.of(tester.element(find.text('child'))).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('child'), findsNothing);
+
+    expect(rebuilds, 0);
   });
 }

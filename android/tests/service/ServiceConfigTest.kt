@@ -1,9 +1,9 @@
-package com.hi2shark.flclash_nw.service
+package com.hi2shark.hi2nw.service
 
-import com.hi2shark.flclash_nw.common.AccessControlMode
-import com.hi2shark.flclash_nw.service.models.AccessControlProps
-import com.hi2shark.flclash_nw.service.models.NotificationParams
-import com.hi2shark.flclash_nw.service.models.VpnOptions
+import com.hi2shark.hi2nw.common.AccessControlMode
+import com.hi2shark.hi2nw.service.models.AccessControlProps
+import com.hi2shark.hi2nw.service.models.NotificationParams
+import com.hi2shark.hi2nw.service.models.VpnOptions
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame

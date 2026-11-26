@@ -11,16 +11,22 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/general.dart';
+import 'package:fl_clash/views/dashboard/dashboard.dart';
+import 'package:fl_clash/views/navigation.dart';
 import 'package:fl_clash/views/tools.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:fl_clash/views/navigation.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/fake_desktop_window.dart';
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
+import '../helpers/host_scaffold.dart';
+import '../helpers/test_profiles.dart';
 
 Finder _glyph(Glyph glyph) => find.byGlyph(glyph);
 
@@ -84,6 +90,30 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('the frame before the view size is known paints the page', (
+    tester,
+  ) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    globalState.container = container;
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const _ThemeManagedTestApp(),
+      ),
+    );
+
+    final home = find.byType(HomePage);
+    final fill = tester.widget<ColoredBox>(
+      find.descendant(of: home, matching: find.byType(ColoredBox)).first,
+    );
+    expect(
+      fill.color,
+      SurfaceLevel.page.colorOf(tester.element(home).colorScheme),
+    );
+  });
+
   testWidgets(
     'screen-size transition preserves current content and animates navigation',
     (tester) async {
@@ -100,9 +130,7 @@ void main() {
                 NavigationItem(
                   glyph: AppGlyphs.dashboard,
                   label: PageLabel.dashboard,
-                  builder: (_) => const _StatefulContent(
-                    key: GlobalObjectKey(PageLabel.dashboard),
-                  ),
+                  builder: (_) => const _StatefulContent(),
                 ),
                 NavigationItem(
                   glyph: AppGlyphs.tools,
@@ -139,11 +167,11 @@ void main() {
         tester.element(find.byType(AppSidebarContainer)),
       ).colorScheme;
       expect(sidebarContainer.color, SurfaceLevel.page.colorOf(colorScheme));
-      final sidebarSurface = tester.widget<Material>(
+      final sidebarSurface = tester.widget<Surface>(
         find
             .ancestor(
               of: find.byType(NavigationSidebar),
-              matching: find.byType(Material),
+              matching: find.byType(Surface),
             )
             .first,
       );
@@ -287,9 +315,7 @@ void main() {
                 NavigationItem(
                   glyph: AppGlyphs.dashboard,
                   label: PageLabel.dashboard,
-                  builder: (_) => const ToolsView(
-                    key: GlobalObjectKey(PageLabel.dashboard),
-                  ),
+                  builder: (_) => const ToolsView(),
                 ),
                 NavigationItem(
                   glyph: AppGlyphs.tools,
@@ -351,7 +377,7 @@ void main() {
                 ),
                 NavigationItem(
                   glyph: AppGlyphs.connections,
-                  label: PageLabel.connections,
+                  label: PageLabel.requests,
                   modes: const [
                     NavigationItemMode.desktop,
                     NavigationItemMode.more,
@@ -361,8 +387,7 @@ void main() {
                 NavigationItem(
                   glyph: AppGlyphs.tools,
                   label: PageLabel.tools,
-                  builder: (_) =>
-                      const ToolsView(key: GlobalObjectKey(PageLabel.tools)),
+                  builder: (_) => const ToolsView(),
                 ),
               ],
             ),
@@ -412,6 +437,7 @@ void main() {
   testWidgets(
     'profile trailing controls stay valid while a maximized window restores',
     (tester) async {
+      FakeDesktopWindow().install();
       tester.view.physicalSize = const Size(1440, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -525,7 +551,7 @@ void main() {
                     alignment: Alignment.topLeft,
                     child: IconButton(
                       onPressed: () {},
-                      icon: const Icon(Icons.more_horiz),
+                      icon: const SizedBox.square(dimension: 24),
                     ),
                   ),
                 ),
@@ -536,7 +562,7 @@ void main() {
                     alignment: Alignment.topLeft,
                     child: IconButton(
                       onPressed: () {},
-                      icon: const Icon(Icons.more_vert),
+                      icon: const SizedBox.square(dimension: 24),
                     ),
                   ),
                 ),
@@ -635,7 +661,7 @@ void main() {
                 child: IconButton(
                   key: const ValueKey('content-action'),
                   onPressed: () {},
-                  icon: const Icon(Icons.more_horiz),
+                  icon: const SizedBox.square(dimension: 24),
                 ),
               ),
             ),
@@ -804,6 +830,67 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('a page inserted before the current one leaves it on screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(500, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    NavigationItem item(Glyph glyph, PageLabel label) => NavigationItem(
+      glyph: glyph,
+      label: label,
+      builder: (_) => Center(child: Text('page:${label.name}')),
+    );
+    final dashboard = item(AppGlyphs.dashboard, PageLabel.dashboard);
+    final proxies = item(AppGlyphs.proxies, PageLabel.proxies);
+    final profiles = item(AppGlyphs.profiles, PageLabel.profiles);
+    final tools = item(AppGlyphs.tools, PageLabel.tools);
+    final container = ProviderContainer(
+      overrides: [
+        navigationItemsStateProvider.overrideWith(
+          (ref) =>
+              NavigationItemsState(value: ref.watch(_navigationItemsProvider)),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(500, 800);
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(tabAnimation: TabAnimation.fade));
+    final items = container.read(_navigationItemsProvider.notifier)
+      ..set([dashboard, profiles, tools]);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(_glyph(AppGlyphs.tools));
+    await tester.pumpAndSettle();
+
+    items.set([dashboard, proxies, profiles, tools]);
+    await tester.pumpAndSettle();
+
+    final page = find.text('page:tools');
+    expect(page.hitTestable(), findsOneWidget);
+    expect(
+      tester
+          .widget<Opacity>(
+            find.ancestor(of: page, matching: find.byType(Opacity)).first,
+          )
+          .opacity,
+      1,
+    );
+    expect(tester.getCenter(page).dx, 250);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a non-floating bottom bar leaves the page no bottom inset', (
     tester,
   ) async {
@@ -898,7 +985,7 @@ void main() {
                 NavigationItem(
                   glyph: glyph,
                   label: label,
-                  builder: (_) => CommonScaffold(
+                  builder: (_) => Scaffold(
                     title: label.name,
                     body: Builder(
                       builder: (context) {
@@ -1003,6 +1090,214 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final animation in TabAnimation.values) {
+    testWidgets('a ${animation.name} tab switch draws moving pages from '
+        'snapshots and resting ones live', (tester) async {
+      tester.view.physicalSize = const Size(500, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final container = ProviderContainer(
+        overrides: [
+          navigationItemsStateProvider.overrideWithValue(
+            NavigationItemsState(
+              value: [
+                NavigationItem(
+                  glyph: AppGlyphs.dashboard,
+                  label: PageLabel.dashboard,
+                  builder: (_) => const Text('page:dashboard'),
+                ),
+                NavigationItem(
+                  glyph: AppGlyphs.tools,
+                  label: PageLabel.tools,
+                  builder: (_) => const Text('page:tools'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      globalState.container = container;
+      container.read(viewSizeProvider.notifier).value = const Size(500, 800);
+      container
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(tabAnimation: animation));
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+        ),
+      );
+      await tester.pump();
+
+      bool snapshots(String text) => tester
+          .widget<SnapshotWidget>(
+            find
+                .ancestor(
+                  of: find.text(text),
+                  matching: find.byType(SnapshotWidget),
+                )
+                .first,
+          )
+          .controller
+          .allowSnapshotting;
+
+      expect(snapshots('page:dashboard'), isFalse);
+
+      container.read(currentPageLabelProvider.notifier).toPage(PageLabel.tools);
+      await tester.pump();
+      expect(tester.getTopLeft(find.text('page:dashboard')).dx, 0);
+      expect(snapshots('page:dashboard'), isTrue);
+
+      await tester.pump(const Duration(milliseconds: 60));
+      expect(snapshots('page:dashboard'), isTrue);
+      expect(snapshots('page:tools'), isTrue);
+
+      await tester.pumpAndSettle();
+      expect(snapshots('page:tools'), isFalse);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('mobile pages scroll on controllers of their own, not the '
+      'route\'s primary one they would share', (tester) async {
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              NavigationItem(
+                glyph: AppGlyphs.dashboard,
+                label: PageLabel.dashboard,
+                builder: (_) =>
+                    const DashboardView(platform: SupportPlatform.Android),
+              ),
+              NavigationItem(
+                glyph: AppGlyphs.tools,
+                label: PageLabel.tools,
+                builder: (_) => const ToolsView(),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = const Size(400, 800);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      ),
+    );
+    await tester.pump();
+    container.read(currentPageLabelProvider.notifier).toPage(PageLabel.tools);
+    await tester.pumpAndSettle();
+
+    final primary = PrimaryScrollController.of(
+      tester.element(find.byType(ToolsView)),
+    );
+    expect(find.byType(DashboardView, skipOffstage: false), findsOneWidget);
+    expect(primary.hasClients, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 5));
+  });
+
+  for (final animation in TabAnimation.values) {
+    testWidgets('tools opens at the top with fractional safe areas during a '
+        '${animation.name} tab switch and retains user scrolling', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      tester.view.physicalSize = const Size(1184, 2560);
+      tester.view.devicePixelRatio = 3;
+      tester.view.padding = const FakeViewPadding(top: 85.2, bottom: 60);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPadding);
+
+      final container = ProviderContainer(
+        overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          navigationItemsStateProvider.overrideWithValue(
+            NavigationItemsState(
+              value: navigation
+                  .getItems(openLogs: true, hasProxies: true)
+                  .map(
+                    (item) => item.label == PageLabel.tools
+                        ? item
+                        : item.copyWith(
+                            builder: (_) => const SizedBox.shrink(),
+                          ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      globalState.container = container;
+      container.read(viewSizeProvider.notifier).value = const Size(
+        1184 / 3,
+        2560 / 3,
+      );
+      container
+          .read(appSettingProvider.notifier)
+          .update((state) => state.copyWith(tabAnimation: animation));
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+        ),
+      );
+      await tester.pump();
+
+      final scrollable = find.descendant(
+        of: find.byType(ToolsView),
+        matching: find.byType(Scrollable),
+      );
+      ScrollPosition position() =>
+          tester.state<ScrollableState>(scrollable).position;
+      await tester.tap(_glyph(AppGlyphs.tools));
+      await tester.pump();
+      for (var frame = 0; frame < 40; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        if (scrollable.evaluate().isNotEmpty) {
+          expect(position().pixels, 0, reason: 'frame $frame');
+        }
+      }
+      await tester.pumpAndSettle();
+      expect(scrollable, findsOneWidget);
+      expect(position().pixels, 0);
+      expect(position().maxScrollExtent, greaterThan(0));
+
+      await tester.drag(find.byType(PrismListView), const Offset(0, -80));
+      await tester.pumpAndSettle();
+      final savedOffset = position().pixels;
+      expect(savedOffset, greaterThan(0));
+      await tester.tap(_glyph(AppGlyphs.dashboard));
+      await tester.pumpAndSettle();
+      await tester.tap(_glyph(AppGlyphs.tools));
+      await tester.pumpAndSettle();
+
+      expect(position().pixels, savedOffset);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('a far mobile page switch builds no page in between', (
     tester,
   ) async {
@@ -1079,7 +1374,7 @@ void main() {
               NavigationItem(
                 glyph: AppGlyphs.dashboard,
                 label: PageLabel.dashboard,
-                builder: (_) => CommonScaffold(
+                builder: (_) => Scaffold(
                   title: 'Search page',
                   searchState: AppBarSearchState(
                     onSearch: (value) {
@@ -1147,8 +1442,7 @@ void main() {
               NavigationItem(
                 glyph: AppGlyphs.profiles,
                 label: PageLabel.profiles,
-                builder: (_) =>
-                    const Center(child: CircularProgressIndicator()),
+                builder: (_) => const Center(child: ActivityIndicator()),
               ),
             ],
           ),
@@ -1180,10 +1474,7 @@ void main() {
     await tester.tap(railIcon(AppGlyphs.dashboard));
     await tester.pumpAndSettle();
 
-    expect(
-      find.byType(CircularProgressIndicator, skipOffstage: false),
-      findsOneWidget,
-    );
+    expect(find.byType(ActivityIndicator, skipOffstage: false), findsOneWidget);
     expect(tester.binding.hasScheduledFrame, isFalse);
   });
 
@@ -1275,10 +1566,7 @@ void main() {
               NavigationItem(
                 glyph: AppGlyphs.dashboard,
                 label: PageLabel.dashboard,
-                builder: (_) => _PageOpener(
-                  key: const GlobalObjectKey(PageLabel.dashboard),
-                  onClosed: results.add,
-                ),
+                builder: (_) => _PageOpener(onClosed: results.add),
               ),
               NavigationItem(
                 glyph: AppGlyphs.tools,
@@ -1306,7 +1594,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       ModalRoute.of(tester.element(find.text('Sub page'))),
-      isA<CommonDesktopRoute<String>>(),
+      isA<FadePageRoute<String>>(),
     );
 
     tester.view.physicalSize = const Size(500, 800);
@@ -1315,7 +1603,7 @@ void main() {
 
     expect(find.text('Sub page'), findsOneWidget);
     final reopened = tester.element(find.text('Sub page'));
-    expect(ModalRoute.of(reopened), isA<CommonRoute<String>>());
+    expect(ModalRoute.of(reopened), isA<CardPageRoute<String>>());
     expect(results, isEmpty);
 
     Navigator.of(reopened).pop('done');
@@ -1424,14 +1712,14 @@ class _ThemeManagedTestApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return PrismApp(
       navigatorKey: globalState.navigatorKey,
       localizationsDelegates: const [
-        AppLocalizations.delegate,
+        appLocalizationsDelegate,
         AppUiLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
+        GlobalWidgetsLocalizations.delegate,
       ],
-      supportedLocales: AppLocalizations.delegate.supportedLocales,
+      supportedLocales: AppLocalizations.supportedLocales,
       builder: (_, child) => ThemeManager(child: child!),
       home: const HomePage(),
     );
@@ -1439,7 +1727,7 @@ class _ThemeManagedTestApp extends StatelessWidget {
 }
 
 class _StatefulContent extends StatefulWidget {
-  const _StatefulContent({super.key});
+  const _StatefulContent();
 
   @override
   State<_StatefulContent> createState() => _StatefulContentState();
@@ -1450,7 +1738,7 @@ class _StatefulContentState extends State<_StatefulContent> {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
+    return TestRow(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: const SizedBox(width: 80),
       title: TextButton(
@@ -1476,8 +1764,8 @@ class _NestedSearchLauncher extends StatelessWidget {
       child: FilledButton(
         onPressed: () {
           Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => CommonScaffold(
+            HostPageRoute(
+              builder: (_) => Scaffold(
                 title: 'Nested search',
                 searchState: AppBarSearchState(onSearch: onSearch),
                 body: const SizedBox(),
@@ -1494,7 +1782,7 @@ class _NestedSearchLauncher extends StatelessWidget {
 class _PageOpener extends StatelessWidget {
   final ValueChanged<String?> onClosed;
 
-  const _PageOpener({super.key, required this.onClosed});
+  const _PageOpener({required this.onClosed});
 
   @override
   Widget build(BuildContext context) {
@@ -1504,7 +1792,7 @@ class _PageOpener extends StatelessWidget {
           onClosed(
             await BaseNavigator.push<String>(
               context,
-              const Scaffold(body: Center(child: Text('Sub page'))),
+              const HostScaffold(body: Center(child: Text('Sub page'))),
             ),
           );
         },

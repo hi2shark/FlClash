@@ -1,4 +1,4 @@
-package com.hi2shark.flclash_nw.common
+package com.hi2shark.hi2nw.common
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

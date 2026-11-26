@@ -2,7 +2,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 extension DashboardWidgetView on DashboardWidget {
   Widget get card => switch (this) {
@@ -26,9 +26,9 @@ extension DashboardWidgetView on DashboardWidget {
     DashboardWidget.outboundMode => AppGlyphs.split,
     DashboardWidget.vpnButton => AppGlyphs.vpn,
     DashboardWidget.networkTakeover => AppGlyphs.shuffle,
-    DashboardWidget.serviceStatus => AppGlyphs.verified,
+    DashboardWidget.serviceStatus => AppGlyphs.radar,
     DashboardWidget.profiles => AppGlyphs.profiles,
-    DashboardWidget.proxyGroups => AppGlyphs.layers,
+    DashboardWidget.proxyGroups => AppGlyphs.nodeGroup,
     DashboardWidget.connectionStats => AppGlyphs.connections,
     DashboardWidget.intranetIp => AppGlyphs.devices,
     DashboardWidget.memoryInfo => AppGlyphs.memory,

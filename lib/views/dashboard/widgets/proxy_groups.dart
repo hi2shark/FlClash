@@ -7,9 +7,9 @@ import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/views/proxies/proxies.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_new_shapes/material_new_shapes.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/shapes/shapes.dart';
 
 import 'card.dart';
 import 'connections_table.dart';
@@ -31,8 +31,8 @@ Future<void> showProxiesSheet(BuildContext context, {String? groupName}) async {
   final query = queryProvider(QueryTag.proxies);
   final pageQuery = container.read(query);
   container.read(query.notifier).value = '';
-  await showSheet<void>(
-    context: context,
+  await showNestedSheet<void>(
+    context,
     builder: (_) => const ProxiesView(picker: true),
   );
   container.read(query.notifier).value = pageQuery;
@@ -176,7 +176,7 @@ class _GroupsEmpty extends ConsumerWidget {
             color: DashboardColors.of(context).tone,
             size: 64,
             child: GlyphIcon(
-              AppGlyphs.layers,
+              AppGlyphs.nodeGroup,
               size: 26,
               color: colorScheme.onSurfaceVariant,
             ),
@@ -279,7 +279,7 @@ class _GroupsHeader extends StatelessWidget {
     final appLocalizations = context.appLocalizations;
     final mobile = !DashboardDensityScope.of(context).isDesktop;
     return DashboardCardHeader(
-      glyph: AppGlyphs.layers,
+      glyph: AppGlyphs.nodeGroup,
       title: appLocalizations.proxyGroup,
       chevron: mobile && groups.isNotEmpty,
       leading: [

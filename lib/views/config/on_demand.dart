@@ -4,14 +4,14 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/app.dart';
+import 'package:fl_clash/plugins/wifi_ssid.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:wifi_ssid/wifi_ssid.dart';
 
 class OnDemandView extends ConsumerStatefulWidget {
   const OnDemandView({super.key, this.isAndroid, this.isMacOS, this.isWindows});
@@ -39,7 +39,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     }
     await Clipboard.setData(ClipboardData(text: ssid));
     if (context.mounted) {
-      context.showNotifier(context.appLocalizations.copySuccess);
+      dialogs.showBanner(context.appLocalizations.copySuccess);
     }
   }
 
@@ -195,8 +195,8 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
           ? context.colorScheme.primary
           : context.colorScheme.outline;
     }
-    if (rssi >= -60) return Colors.green;
-    if (rssi >= -75) return Colors.orange;
+    if (rssi >= -60) return context.colorScheme.success;
+    if (rssi >= -75) return context.colorScheme.warning;
     return context.colorScheme.error;
   }
 
@@ -265,7 +265,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
               size: AppTextStyle.subheadline.size,
               leading: AppTextStyle.subheadline.leading,
               weight: FontWeight.w700,
-            ).copyWith(color: Colors.green);
+            ).copyWith(color: context.colorScheme.success);
             return generateSection(
               title: appLocalizations.currentWifiConnection,
               items: [
@@ -331,11 +331,11 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     required bool isEditing,
   }) {
     final position = ItemPosition.get(index, length);
-    return ReorderableDelayedDragStartListener(
+    return ReorderDragStartListener(
       key: ValueKey(ssid),
       index: index,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: context.listInsets.page(),
         child: ItemPositionProvider(
           position: position,
           child: SelectedDecorationListItem(
@@ -381,10 +381,10 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     required VoidCallback onPressed,
   }) {
     final appLocalizations = context.appLocalizations;
-    return CommonMinFilledButtonTheme(
+    return MinFilledButtonTheme(
       child: ElasticButton(
         child: FilledButton(
-          style: FilledButton.styleFrom(
+          style: ButtonStyle.from(
             backgroundColor: authorized
                 ? null
                 : context.colorScheme.errorContainer,
@@ -448,7 +448,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
               onPressed: _handleRequestIgnoreBatteryOptimization,
             ),
           ),
-          if (isLoading) const CommonCircleLoading(size: 24),
+          if (isLoading) const ActivityIndicator(size: 24),
         ],
       ),
     );
@@ -496,7 +496,6 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
         if (_isAndroid) _buildBackgroundLocationPermissionItem(),
       ],
       footer: [
-        if (_isAndroid) appLocalizations.batteryOptimizationDesc,
         if (_needsLocationPermission) appLocalizations.locationPermissionDesc,
         if (_isAndroid) appLocalizations.backgroundLocationPermissionDesc,
       ].join('\n'),
@@ -510,7 +509,6 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
       items: [
         ListItem.toggle(
           title: Text(appLocalizations.onDemand),
-          subtitle: Text(appLocalizations.onDemandDesc),
           value: enabled,
           onChanged: (value) {
             ref.read(onDemandEnabledProvider.notifier).update((_) => value);
@@ -553,7 +551,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
   ) {
     if (excludeSSIDs.isEmpty) {
       return SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(top: 12),
+        padding: context.listInsets.page().copyWith(top: 12),
         sliver: SliverToBoxAdapter(
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 48),
@@ -574,7 +572,7 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
     );
     return SliverPadding(
       padding: const EdgeInsets.only(top: 12),
-      sliver: SliverReorderableList(
+      sliver: SliverPrismReorderableList(
         itemBuilder: (_, index) => itemAt(index),
         proxyDecorator: (child, index, animation) =>
             commonProxyDecorator(itemAt(index), index, animation),
@@ -588,32 +586,33 @@ class _OnDemandViewState extends ConsumerState<OnDemandView>
   Widget build(BuildContext context) {
     final excludeSSIDs = ref.watch(excludeSSIDsProvider);
     final selectedItems = ref.watch(itemsProvider(key));
-    return CommonScaffold(
+    return Scaffold(
       body: CustomScrollView(
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-            ).copyWith(top: context.sectionsTopPadding),
+            padding: context.listInsets.page().copyWith(
+              top: context.sectionsTopPadding,
+            ),
             sliver: SliverToBoxAdapter(child: _buildPrerequisites()),
           ),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: context.listInsets.page(),
             sliver: SliverToBoxAdapter(child: _buildOnDemandSection()),
           ),
           _buildCurrentWifiSection(),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: context.listInsets.page(),
             sliver: SliverToBoxAdapter(child: _buildExcludeSsidsHeader()),
           ),
           _buildExcludeSsidsList(excludeSSIDs, selectedItems),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-            ).copyWith(bottom: 16 + context.bottomInset),
+            padding: context.listInsets.page().copyWith(
+              bottom: 16 + context.bottomInset,
+            ),
             sliver: SliverToBoxAdapter(
               child: ListFooter(
                 text: context.appLocalizations.excludeSsidsDesc,
+                last: true,
               ),
             ),
           ),

@@ -138,7 +138,7 @@ class BackgroundResourceManager {
     await Future.delayed(const Duration(milliseconds: 250));
     if (!isBackground) return;
     if (_isAndroidOverride == null) {
-      await coreController.requestGc();
+      await coreController.forceGc();
     }
     commonPrint.log('background soft reclaim completed');
   }

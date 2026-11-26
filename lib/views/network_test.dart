@@ -4,8 +4,9 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/services.dart' show TextInputAction;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
 
 @visibleForTesting
 class NetworkTestSpeedPreset {
@@ -105,9 +106,11 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
   String _quicTestTarget = _quicTestTargets.first;
   bool _useCustomQuicTarget = false;
   late final TextEditingController _customSpeedTestUrlController;
-  late final ExpansibleController _customSpeedTestUrlExpansionController;
   late final TextEditingController _customQuicTargetController;
-  late final ExpansibleController _customQuicTargetExpansionController;
+  bool _speedSelectorExpanded = false;
+  bool _customSpeedExpanded = false;
+  bool _quicSelectorExpanded = false;
+  bool _customQuicExpanded = false;
   int _speedTestGeneration = 0;
   int _quicTestGeneration = 0;
   int? _activeSpeedTestGeneration;
@@ -120,17 +123,13 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
   void initState() {
     super.initState();
     _customSpeedTestUrlController = TextEditingController();
-    _customSpeedTestUrlExpansionController = ExpansibleController();
     _customQuicTargetController = TextEditingController();
-    _customQuicTargetExpansionController = ExpansibleController();
   }
 
   @override
   void dispose() {
     _customSpeedTestUrlController.dispose();
-    _customSpeedTestUrlExpansionController.dispose();
     _customQuicTargetController.dispose();
-    _customQuicTargetExpansionController.dispose();
     super.dispose();
   }
 
@@ -402,10 +401,8 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
   }
 
   void _selectSpeedTestPreset(NetworkTestSpeedPreset preset) {
-    if (_customSpeedTestUrlExpansionController.isExpanded) {
-      _customSpeedTestUrlExpansionController.collapse();
-    }
     setState(() {
+      _customSpeedExpanded = false;
       _useCustomSpeedTestUrl = false;
       _speedTestPreset = preset;
       _clearSpeedTestResult();
@@ -413,15 +410,42 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
   }
 
   void _selectCustomSpeedTestUrl() {
-    if (!_useCustomSpeedTestUrl) {
-      setState(() {
+    setState(() {
+      if (!_useCustomSpeedTestUrl) {
         _useCustomSpeedTestUrl = true;
         _clearSpeedTestResult();
-      });
-    }
-    if (!_customSpeedTestUrlExpansionController.isExpanded) {
-      _customSpeedTestUrlExpansionController.expand();
-    }
+      }
+      _customSpeedExpanded = true;
+    });
+  }
+
+  Widget _buildOptionRow({
+    required String title,
+    String? subtitle,
+    required bool selected,
+    required VoidCallback onTap,
+    Widget? trailing,
+  }) {
+    return ListItem(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      leading: selected
+          ? GlyphIcon(
+              AppGlyphs.checkCircle,
+              size: 20,
+              color: context.colorScheme.primary,
+            )
+          : const GlyphIcon(
+              AppGlyphs.check,
+              size: 20,
+              color: Colors.transparent,
+            ),
+      title: Text(title),
+      subtitle: subtitle == null
+          ? null
+          : Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+      trailing: trailing,
+      onTap: onTap,
+    );
   }
 
   Widget _buildSpeedTestPackageSelector() {
@@ -435,93 +459,79 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
         : _useCustomSpeedTestUrl
         ? customUrl
         : _speedTestPreset.label;
-    return ExpansionTile(
-      initiallyExpanded: false,
-      title: Text(appLocalizations.speedTestPackageSize),
-      subtitle: Text(
-        sourceSubtitle,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        RadioGroup<String>(
-          groupValue: groupValue,
-          onChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            if (value == _customSpeedTestUrlValue) {
-              _selectCustomSpeedTestUrl();
-              return;
-            }
-            final preset = _speedTestPresets
-                .where((item) => item.url == value)
-                .firstOrNull;
-            if (preset != null) {
-              _selectSpeedTestPreset(preset);
-            }
-          },
-          child: Column(
-            children: [
-              for (final preset in _speedTestPresets)
-                RadioListTile<String>(
-                  value: preset.url,
-                  title: Text(preset.label),
-                  contentPadding: EdgeInsets.zero,
+        ListItem(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          title: Text(appLocalizations.speedTestPackageSize),
+          subtitle: Text(
+            sourceSubtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: GlyphIcon(
+            _speedSelectorExpanded
+                ? AppGlyphs.chevronUp
+                : AppGlyphs.chevronDown,
+          ),
+          onTap: () => setState(() {
+            _speedSelectorExpanded = !_speedSelectorExpanded;
+          }),
+        ),
+        if (_speedSelectorExpanded) ...[
+          for (final preset in _speedTestPresets)
+            _buildOptionRow(
+              title: preset.label,
+              selected: groupValue == preset.url,
+              onTap: () => _selectSpeedTestPreset(preset),
+            ),
+          _buildOptionRow(
+            title: appLocalizations.speedTestCustomUrl,
+            subtitle: customUrl.isEmpty
+                ? appLocalizations.speedTestCustomUrlHint
+                : customUrl,
+            selected: groupValue == _customSpeedTestUrlValue,
+            trailing: GlyphIcon(
+              _customSpeedExpanded
+                  ? AppGlyphs.chevronUp
+                  : AppGlyphs.chevronDown,
+            ),
+            onTap: () {
+              if (_customSpeedExpanded && _useCustomSpeedTestUrl) {
+                setState(() => _customSpeedExpanded = false);
+              } else {
+                _selectCustomSpeedTestUrl();
+              }
+            },
+          ),
+          if (_customSpeedExpanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: TextField(
+                controller: _customSpeedTestUrlController,
+                keyboardType: TextInputType.url,
+                textInputAction: TextInputAction.done,
+                autocorrect: false,
+                maxLines: 1,
+                decoration: InputDecoration(
+                  hintText: appLocalizations.speedTestCustomUrlHint,
                 ),
-              ExpansionTile(
-                controller: _customSpeedTestUrlExpansionController,
-                initiallyExpanded: false,
-                maintainState: true,
-                leading: const Radio<String>(value: _customSpeedTestUrlValue),
-                title: Text(appLocalizations.speedTestCustomUrl),
-                subtitle: Text(
-                  customUrl.isEmpty
-                      ? appLocalizations.speedTestCustomUrlHint
-                      : customUrl,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                onExpansionChanged: (expanded) {
-                  if (expanded) {
-                    _selectCustomSpeedTestUrl();
+                onChanged: (_) {
+                  if (_useCustomSpeedTestUrl) {
+                    setState(_clearSpeedTestResult);
                   }
                 },
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: TextField(
-                      controller: _customSpeedTestUrlController,
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.done,
-                      autocorrect: false,
-                      maxLines: 1,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: appLocalizations.speedTestCustomUrl,
-                        hintText: appLocalizations.speedTestCustomUrlHint,
-                      ),
-                      onChanged: (_) {
-                        if (_useCustomSpeedTestUrl) {
-                          setState(_clearSpeedTestResult);
-                        }
-                      },
-                    ),
-                  ),
-                ],
               ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ],
     );
   }
 
   void _selectQuicPreset(String target) {
-    if (_customQuicTargetExpansionController.isExpanded) {
-      _customQuicTargetExpansionController.collapse();
-    }
     setState(() {
+      _customQuicExpanded = false;
       _useCustomQuicTarget = false;
       _quicTestTarget = target;
       _clearQuicTestResult();
@@ -529,15 +539,13 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
   }
 
   void _selectCustomQuicTarget() {
-    if (!_useCustomQuicTarget) {
-      setState(() {
+    setState(() {
+      if (!_useCustomQuicTarget) {
         _useCustomQuicTarget = true;
         _clearQuicTestResult();
-      });
-    }
-    if (!_customQuicTargetExpansionController.isExpanded) {
-      _customQuicTargetExpansionController.expand();
-    }
+      }
+      _customQuicExpanded = true;
+    });
   }
 
   Widget _buildQuicTargetSelector() {
@@ -549,79 +557,68 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
     final targetSubtitle = _useCustomQuicTarget && customTarget.isEmpty
         ? appLocalizations.quicTestCustomTargetHint
         : _effectiveQuicTarget;
-    return ExpansionTile(
-      initiallyExpanded: false,
-      title: Text(appLocalizations.quicTestTarget),
-      subtitle: Text(
-        targetSubtitle,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        RadioGroup<String>(
-          groupValue: groupValue,
-          onChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            if (value == _customQuicTargetValue) {
-              _selectCustomQuicTarget();
-            } else {
-              _selectQuicPreset(value);
-            }
-          },
-          child: Column(
-            children: [
-              for (final target in _quicTestTargets)
-                RadioListTile<String>(
-                  value: target,
-                  title: Text(target),
-                  contentPadding: EdgeInsets.zero,
+        ListItem(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          title: Text(appLocalizations.quicTestTarget),
+          subtitle: Text(
+            targetSubtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: GlyphIcon(
+            _quicSelectorExpanded ? AppGlyphs.chevronUp : AppGlyphs.chevronDown,
+          ),
+          onTap: () => setState(() {
+            _quicSelectorExpanded = !_quicSelectorExpanded;
+          }),
+        ),
+        if (_quicSelectorExpanded) ...[
+          for (final target in _quicTestTargets)
+            _buildOptionRow(
+              title: target,
+              selected: groupValue == target,
+              onTap: () => _selectQuicPreset(target),
+            ),
+          _buildOptionRow(
+            title: appLocalizations.quicTestCustomTarget,
+            subtitle: customTarget.isEmpty
+                ? appLocalizations.quicTestCustomTargetHint
+                : customTarget,
+            selected: groupValue == _customQuicTargetValue,
+            trailing: GlyphIcon(
+              _customQuicExpanded ? AppGlyphs.chevronUp : AppGlyphs.chevronDown,
+            ),
+            onTap: () {
+              if (_customQuicExpanded && _useCustomQuicTarget) {
+                setState(() => _customQuicExpanded = false);
+              } else {
+                _selectCustomQuicTarget();
+              }
+            },
+          ),
+          if (_customQuicExpanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: TextField(
+                controller: _customQuicTargetController,
+                keyboardType: TextInputType.url,
+                textInputAction: TextInputAction.done,
+                autocorrect: false,
+                maxLines: 1,
+                decoration: InputDecoration(
+                  hintText: appLocalizations.quicTestCustomTargetHint,
                 ),
-              ExpansionTile(
-                controller: _customQuicTargetExpansionController,
-                initiallyExpanded: false,
-                maintainState: true,
-                leading: const Radio<String>(value: _customQuicTargetValue),
-                title: Text(appLocalizations.quicTestCustomTarget),
-                subtitle: Text(
-                  customTarget.isEmpty
-                      ? appLocalizations.quicTestCustomTargetHint
-                      : customTarget,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                onExpansionChanged: (expanded) {
-                  if (expanded) {
-                    _selectCustomQuicTarget();
+                onChanged: (_) {
+                  if (_useCustomQuicTarget) {
+                    setState(_clearQuicTestResult);
                   }
                 },
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: TextField(
-                      controller: _customQuicTargetController,
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.done,
-                      autocorrect: false,
-                      maxLines: 1,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: appLocalizations.quicTestCustomTarget,
-                        hintText: appLocalizations.quicTestCustomTargetHint,
-                      ),
-                      onChanged: (_) {
-                        if (_useCustomQuicTarget) {
-                          setState(_clearQuicTestResult);
-                        }
-                      },
-                    ),
-                  ),
-                ],
               ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ],
     );
   }
@@ -637,7 +634,7 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
     final appLocalizations = context.appLocalizations;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: CommonCard(
+      child: Card(
         radius: 18,
         onPressed: () {},
         child: Padding(
@@ -664,7 +661,7 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CommonCircleLoading(size: 16),
+                        child: ActivityIndicator(size: 16),
                       )
                     : const GlyphIcon(AppGlyphs.bolt, fill: 1),
                 label: Text(
@@ -684,7 +681,7 @@ class _NetworkTestViewState extends ConsumerState<NetworkTestView> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.networkTest,
       body: ListView(
         padding: EdgeInsets.only(top: context.appBarInset, bottom: 20),
@@ -781,23 +778,27 @@ class _NodeSelectionViewState extends ConsumerState<NodeSelectionView> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.selectNode,
       body: FutureBuilder<List<Proxy>>(
         future: _proxiesFuture,
         builder: (_, snapshot) {
           if (snapshot.hasError) {
             return NullStatus(
+              illustration: NullStatusIllustration.error,
               label: '${appLocalizations.testFailed}: ${snapshot.error}',
             );
           }
           final proxies = snapshot.data;
           if (proxies == null) {
-            return const Center(child: CommonCircleLoading(size: 24));
+            return const Center(child: ActivityIndicator(size: 24));
           }
           final testableProxies = filterNetworkTestProxies(proxies);
           if (testableProxies.isEmpty) {
-            return NullStatus(label: appLocalizations.noData);
+            return NullStatus(
+              illustration: NullStatusIllustration.proxies,
+              label: appLocalizations.noData,
+            );
           }
           final localProxies = testableProxies
               .where((proxy) => _localNodeNames.contains(proxy.name))

@@ -715,6 +715,43 @@ void main() {
       expect(map.containsKey('alpn'), isFalse);
     });
 
+    test('validates Nowhere 3.4.0 cipher strictly and strips it from NW2', () {
+      for (final cipher in ['chacha', 'aes']) {
+        final config = _validNowhere3Config()
+          ..addAll({'cipher': cipher, 'morph': false});
+        final map = _firstProxy(
+          generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+        );
+        expect(map['cipher'], cipher);
+        expect(map['morph'], isFalse);
+      }
+
+      for (final badCipher in ['AES', 'ChaCha', 'aes-128-ctr', 'rc4', 123]) {
+        final config = _validNowhere3Config()
+          ..addAll({'cipher': badCipher, 'morph': false});
+        expect(
+          () =>
+              generator.generateYaml([_proxy(type: 'nowhere', config: config)]),
+          throwsA(
+            isA<ArgumentError>().having(
+              (error) => error.toString(),
+              'message',
+              contains('cipher'),
+            ),
+          ),
+          reason: '$badCipher',
+        );
+      }
+
+      final nw2WithCipher = _validNowhereConfig()..['cipher'] = 'aes';
+      final nw2Map = _firstProxy(
+        generator.generateYaml([
+          _proxy(type: 'nowhere', config: nw2WithCipher),
+        ]),
+      );
+      expect(nw2Map.containsKey('cipher'), isFalse);
+    });
+
     test('rejects ALPN values other than nw2 or nw3', () {
       for (final alpn in [
         'h2',

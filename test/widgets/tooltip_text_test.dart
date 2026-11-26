@@ -1,59 +1,82 @@
-import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:fl_clash/ui/ui.dart';
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/host_scaffold.dart';
 import '../helpers/test_app.dart';
 
+const _long = 'a run of text far too long for the box it is given';
+
 void main() {
-  testWidgets('TooltipText derives tooltip message from rich text', (
+  Future<void> pumpText(WidgetTester tester, double width) async {
+    await tester.pumpWidget(
+      TestApp(
+        child: HostScaffold(
+          body: Center(
+            child: SizedBox(
+              width: width,
+              child: const TooltipText(text: Text(_long, maxLines: 1)),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+  }
+
+  testWidgets('a text cut short gains a tooltip of its whole string', (
     tester,
   ) async {
-    // The narrow box forces a single-line overflow, which is the only
-    // condition under which TooltipText attaches its tooltip.
-    const richText = Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(text: 'Home'),
-          TextSpan(text: ' · Excluded'),
-          TextSpan(text: ' — trusted network, proxy suspended'),
-        ],
-      ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
+    await pumpText(tester, 2000);
+    expect(find.byType(Tooltip), findsNothing);
 
-    await tester.pumpWidget(
-      const TestApp(
-        child: Center(
-          child: SizedBox(width: 20, child: TooltipText(text: richText)),
-        ),
-      ),
-    );
+    await pumpText(tester, 80);
+    expect(find.byTooltip(_long), findsOneWidget);
 
-    // Settle so the overflow measurement completes before the assertion.
-    await tester.pumpAndSettle();
-
-    final tooltip = tester.widget<Tooltip>(find.byType(Tooltip));
-    expect(
-      tooltip.message,
-      'Home · Excluded — trusted network, proxy suspended',
-    );
+    await pumpText(tester, 2000);
+    expect(find.byType(Tooltip), findsNothing);
   });
 
-  testWidgets('TooltipText omits Tooltip when text fits', (tester) async {
-    const text = Text('Short', maxLines: 1);
-
+  testWidgets('a hover tooltip waits for a pointer', (tester) async {
+    final handle = tester.ensureSemantics();
     await tester.pumpWidget(
-      const TestApp(
-        child: Center(
-          child: SizedBox(width: 1000, child: TooltipText(text: text)),
+      TestApp(
+        child: HostScaffold(
+          body: Center(
+            child: HoverTooltip(
+              message: 'Test delay',
+              child: GestureDetector(
+                onTap: () {},
+                child: const SizedBox(width: 24, height: 24),
+              ),
+            ),
+          ),
         ),
       ),
     );
-
-    await tester.pumpAndSettle();
-
     expect(find.byType(Tooltip), findsNothing);
-    expect(find.byType(Text), findsOneWidget);
+    expect(
+      find.semantics.byPredicate((node) => node.tooltip == 'Test delay'),
+      findsOne,
+    );
+
+    final touch = await tester.startGesture(
+      tester.getCenter(find.byType(HoverTooltip)),
+    );
+    await tester.pump(const Duration(seconds: 1));
+    await touch.up();
+    await tester.pumpAndSettle();
+    expect(find.text('Test delay'), findsNothing);
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(tester.getCenter(find.byType(HoverTooltip)));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Test delay'), findsOneWidget);
+    handle.dispose();
   });
 }

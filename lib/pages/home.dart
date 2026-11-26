@@ -6,8 +6,9 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -17,8 +18,10 @@ class HomePage extends ConsumerWidget {
     final hasViewSize = ref.watch(
       viewSizeProvider.select((size) => !size.isEmpty),
     );
+    // The window is revealed on this frame; under the Windows sidebar
+    // material an unpainted body shows black until the next frame lands.
     if (!hasViewSize) {
-      return const SizedBox.shrink();
+      return ColoredBox(color: SurfaceLevel.page.colorOf(context.colorScheme));
     }
     return HomeBackScopeContainer(
       child: AppSidebarContainer(
@@ -66,7 +69,7 @@ class _HomeShell extends ConsumerWidget {
     final floating = ref.watch(
       appSettingProvider.select((state) => state.floatingNavigationBar),
     );
-    return Material(
+    return Surface(
       color: SurfaceLevel.page.colorOf(context.colorScheme),
       child: Column(
         children: [
@@ -90,19 +93,21 @@ class _HomeShell extends ConsumerWidget {
                   bottom: 0,
                   child: AnimatedVisibility.bottomNavigation(
                     visible: isMobile && floating,
-                    child: _NavigationPadding(
-                      child: NavigationDock(
-                        destinations: [
-                          for (final item in navigationItems)
-                            NavigationDockDestination(
-                              glyph: item.glyph,
-                              label: item.label.label,
-                            ),
-                        ],
-                        selectedIndex: state.currentIndex,
-                        onSelected: (index) {
-                          _handleToPage(navigationItems[index].label, ref);
-                        },
+                    child: BarItemPresence.held(
+                      child: _NavigationPadding(
+                        child: NavigationDock(
+                          destinations: [
+                            for (final item in navigationItems)
+                              NavigationDockDestination(
+                                glyph: item.glyph,
+                                label: item.label.label,
+                              ),
+                          ],
+                          selectedIndex: state.currentIndex,
+                          onSelected: (index) {
+                            _handleToPage(navigationItems[index].label, ref);
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -188,14 +193,18 @@ class _NavigationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scopedView = PageFocusScope(child: view);
+    // The global key lives here, not on the view: the same view also opens as
+    // a pushed page, which may overlap a pop of itself.
+    final scopedView = PageFocusScope(
+      child: KeyedSubtree(key: GlobalObjectKey(item.label), child: view),
+    );
     final keptView = KeepScope(
       key: ValueKey(item.label),
       child: isMobile
           ? scopedView
           : Navigator(
               key: ValueKey('${item.label.name}_navigator'),
-              pages: [MaterialPage(child: scopedView)],
+              pages: [RootPage(child: scopedView)],
               onDidRemovePage: (_) {},
             ),
     );
@@ -237,6 +246,7 @@ class _HomePageView extends ConsumerStatefulWidget {
 
 class _HomePageViewState extends ConsumerState<_HomePageView> {
   late PageController _pageController;
+  final _switching = ValueNotifier(false);
 
   List<int>? _order;
   int _slide = 0;
@@ -298,6 +308,7 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
       _pageController.jumpToPage(current);
     }
     if (!isMobile || ignoreAnimateTo) {
+      _switching.value = false;
       _pageController.jumpToPage(index);
       return;
     }
@@ -312,12 +323,17 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
       _pageController.jumpToPage(adjacent);
     }
     final fade = tabAnimation == TabAnimation.fade;
+    _switching.value = true;
     await _pageController.animateToPage(
       index,
       duration: fade ? fadeTabDuration : kTabScrollDuration,
       curve: fade ? fadeTabCurve : Curves.easeOut,
     );
-    if (mounted && slide == _slide && _order != null) {
+    if (!mounted || slide != _slide) {
+      return;
+    }
+    _switching.value = false;
+    if (_order != null) {
       setState(() => _order = null);
     }
   }
@@ -330,6 +346,7 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
   @override
   void dispose() {
     _pageController.dispose();
+    _switching.dispose();
     super.dispose();
   }
 
@@ -364,6 +381,7 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
         return _FadeTabPage(
           key: page.key,
           controller: _pageController,
+          switching: _switching,
           position: index,
           enabled: fade,
           child: page,
@@ -373,43 +391,80 @@ class _HomePageViewState extends ConsumerState<_HomePageView> {
   }
 }
 
+const _restingDelta = 0.001;
+
 /// Cancels the page view's slide so a tab switch cross-fades in place, and
 /// wraps every page even when off so switching the setting keeps their state.
-class _FadeTabPage extends StatelessWidget {
+/// A page off its resting place is drawn from a snapshot, as a moving route is.
+class _FadeTabPage extends StatefulWidget {
   const _FadeTabPage({
     super.key,
     required this.controller,
+    required this.switching,
     required this.position,
     required this.enabled,
     required this.child,
   });
 
   final PageController controller;
+
+  /// While set, the page at rest also draws from its snapshot.
+  final ValueListenable<bool> switching;
   final int position;
   final bool enabled;
   final Widget child;
 
+  @override
+  State<_FadeTabPage> createState() => _FadeTabPageState();
+}
+
+class _FadeTabPageState extends State<_FadeTabPage> {
+  final _snapshot = SnapshotController();
+
+  @override
+  void dispose() {
+    _snapshot.dispose();
+    super.dispose();
+  }
+
+  // Not controller.page: it clamps to the extent of the last layout, which a
+  // page inserted before the current one outgrows before the next layout.
   double get _delta {
-    if (!controller.hasClients || !controller.position.hasContentDimensions) {
+    final controller = widget.controller;
+    if (!controller.hasClients) {
       return 0;
     }
-    final page = controller.page ?? position.toDouble();
-    return (position - page).clamp(-1.0, 1.0);
+    final metrics = controller.position;
+    if (!metrics.hasContentDimensions || metrics.viewportDimension == 0) {
+      return 0;
+    }
+    final page = metrics.pixels / metrics.viewportDimension;
+    return (widget.position - page).clamp(-1.0, 1.0);
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: controller,
+      animation: Listenable.merge([widget.controller, widget.switching]),
       builder: (_, child) {
         final offset = _delta;
-        final delta = enabled ? offset : 0.0;
+        _snapshot.allowSnapshotting =
+            widget.switching.value || offset.abs() > _restingDelta;
+        final delta = widget.enabled ? offset : 0.0;
         return FractionalTranslation(
           translation: Offset(-delta, 0),
           child: Opacity(opacity: 1 - delta.abs(), child: child),
         );
       },
-      child: child,
+      child: SnapshotWidget(
+        controller: _snapshot,
+        mode: SnapshotMode.permissive,
+        autoresize: true,
+        child: LiquidGlassHost(
+          enabled: LiquidGlassScope.of(context),
+          child: widget.child,
+        ),
+      ),
     );
   }
 }
@@ -421,7 +476,7 @@ class HomeBackScopeContainer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    return CommonPopScope(
+    return PopGuard(
       onPop: (context) async {
         final pageLabel = ref.read(shownPageLabelProvider);
         final realContext =

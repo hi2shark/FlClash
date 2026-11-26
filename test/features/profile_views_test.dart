@@ -11,13 +11,14 @@ import 'package:fl_clash/views/profiles/custom/custom.dart';
 import 'package:fl_clash/views/profiles/custom/providers.dart';
 import 'package:fl_clash/views/profiles/extend/extend.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_database_providers.dart';
 import '../helpers/test_profiles.dart';
+import '../helpers/host_scaffold.dart';
 
 class _TestProfileRules extends ProfileRules {
   final List<Rule> initial;
@@ -29,6 +30,15 @@ class _TestProfileRules extends ProfileRules {
 
   @override
   void order(int oldIndex, int newIndex) {}
+}
+
+class _StreamedProfileRules extends ProfileRules {
+  final Stream<List<Rule>> rules;
+
+  _StreamedProfileRules(this.rules);
+
+  @override
+  Stream<List<Rule>> build(int profileId) => rules;
 }
 
 class _TestDisabledRuleIds extends ProfileDisabledRuleIds {
@@ -153,7 +163,11 @@ void main() {
           profileDisabledRuleIdsProvider.overrideWith2(
             (_) => _TestDisabledRuleIds(),
           ),
-          scriptsProvider.overrideWith(() => TestScripts(const [])),
+          scriptsProvider.overrideWith(
+            () => TestScripts([
+              Script(id: 10, label: 'alpha', lastUpdateTime: DateTime(2026)),
+            ]),
+          ),
           clashConfigProvider(profile.id).overrideWithValue(
             const AsyncData(
               ClashConfig(
@@ -173,12 +187,11 @@ void main() {
         UncontrolledProviderScope(
           container: container,
           child: TestApp(
-            withStatusManager: true,
-            child: Scaffold(
+            child: HostScaffold(
               body: Builder(
                 builder: (context) => TextButton(
                   onPressed: () => Navigator.of(context).push(
-                    CommonRoute<void>(
+                    CardPageRoute<void>(
                       builder: (_) => ExtendView(profileId: profile.id),
                     ),
                   ),
@@ -194,42 +207,35 @@ void main() {
       return setupAction;
     }
 
-    Future<void> switchToScript(WidgetTester tester) async {
-      await tester.tap(find.text(currentAppLocalizations.script));
+    Future<void> selectScript(WidgetTester tester) async {
+      await tester.tap(find.text(currentAppLocalizations.extendScript));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('alpha'));
       await tester.pumpAndSettle();
     }
 
     Finder applyNowButton() =>
         find.widgetWithText(FilledButton, currentAppLocalizations.applyNow);
 
-    testWidgets('lists every mode and marks the chosen one', (tester) async {
+    testWidgets('runs the script ahead of the added rules', (tester) async {
       await pumpExtendView(tester);
       final l10n = currentAppLocalizations;
-      expect(find.text(l10n.standardModeDesc), findsOneWidget);
-      expect(find.text(l10n.scriptModeDesc), findsOneWidget);
+      expect(find.text(l10n.none), findsOneWidget);
+      expect(find.text(l10n.addedRulesAfterScript), findsOneWidget);
       expect(
-        find.ancestor(
-          of: find.byType(SelectionBadge),
-          matching: find.widgetWithText(DecorationListItem, l10n.standard),
-        ),
-        findsOneWidget,
+        tester.getTopLeft(find.text(l10n.extendScript)).dy,
+        lessThan(tester.getTopLeft(find.text(l10n.addedRules)).dy),
       );
 
-      await switchToScript(tester);
-      expect(
-        find.ancestor(
-          of: find.byType(SelectionBadge),
-          matching: find.widgetWithText(DecorationListItem, l10n.script),
-        ),
-        findsOneWidget,
-      );
+      await selectScript(tester);
+      expect(find.text('alpha'), findsOneWidget);
     });
 
     testWidgets('offers applying at once only after a change', (tester) async {
       final setupAction = await pumpExtendView(tester);
       expect(applyNowButton(), findsNothing);
 
-      await switchToScript(tester);
+      await selectScript(tester);
       expect(setupAction.applyCalls, 0);
       await tester.tap(applyNowButton());
       await tester.pumpAndSettle();
@@ -253,19 +259,19 @@ void main() {
 
     testWidgets('applies on leaving without asking', (tester) async {
       final setupAction = await pumpExtendView(tester);
-      await switchToScript(tester);
+      await selectScript(tester);
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
 
       expect(find.text('open'), findsOneWidget);
-      expect(find.byType(CommonDialog), findsNothing);
+      expect(find.byType(AlertDialog), findsNothing);
       expect(setupAction.autoApplyCalls, 1);
     });
 
     testWidgets('offers no apply for a profile not in use', (tester) async {
       final setupAction = await pumpExtendView(tester, current: false);
-      await switchToScript(tester);
+      await selectScript(tester);
 
       expect(applyNowButton(), findsNothing);
       expect(setupAction.applyCalls, 0);
@@ -470,7 +476,7 @@ void main() {
       await pumpCustom(tester);
       final l = currentAppLocalizations;
       Finder row(String title) =>
-          find.ancestor(of: find.text(title), matching: find.byType(ListTile));
+          find.ancestor(of: find.text(title), matching: find.byType(ListRow));
       Finder state(String title, String text) =>
           find.descendant(of: row(title), matching: find.text(text));
 
@@ -532,11 +538,16 @@ void main() {
     ProviderContainer buildContainer(
       List<Profile> profiles, {
       List<ProxyGroup> groups = const [],
+      Stream<List<Rule>>? rules,
     }) {
       final container = ProviderContainer(
         overrides: [
           profilesProvider.overrideWith(() => TestProfiles(profiles)),
-          profileRulesProvider.overrideWith2((_) => _TestProfileRules([])),
+          profileRulesProvider.overrideWith2(
+            (_) => rules == null
+                ? _TestProfileRules([])
+                : _StreamedProfileRules(rules),
+          ),
           proxyGroupsProvider.overrideWith2((_) => _TestProxyGroups(groups)),
           customProfileDataProvider.overrideWith(
             (_, _) => CustomProfileData(
@@ -635,7 +646,7 @@ void main() {
           child: TestApp(
             child: Navigator(
               key: tabNavigator,
-              pages: [MaterialPage(child: addMenu())],
+              pages: [RootPage(child: addMenu())],
               onDidRemovePage: (_) {},
             ),
           ),
@@ -658,6 +669,98 @@ void main() {
       expect(find.text('home'), findsOneWidget);
       expect(container.read(profilesProvider), isEmpty);
     });
+
+    testWidgets(
+      'opens immediately while its rules load and reveals once settled',
+      (tester) async {
+        final profile = Profile.custom(label: 'mine');
+        final rules = StreamController<List<Rule>>();
+        addTearDown(rules.close);
+        final container = buildContainer([profile], rules: rules.stream);
+        setViewport(tester);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: TestApp(
+              child: Builder(
+                builder: (context) => FilledButton(
+                  onPressed: () => BaseNavigator.push(
+                    context,
+                    CustomProfileView(profileId: profile.id),
+                  ),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('open'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        final route = ModalRoute.of(tester.element(editor))!;
+        expect(route.animation!.value, greaterThan(0));
+        expect(find.byType(ActivityIndicator), findsOneWidget);
+
+        rules.add(const []);
+        await tester.pump();
+        expect(find.text(currentAppLocalizations.rule), findsNothing);
+
+        await tester.pumpAndSettle();
+        expect(find.text(currentAppLocalizations.rule), findsOneWidget);
+        expect(find.byType(ActivityIndicator), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'builds its proxy groups a frame after the overview once settled',
+      (tester) async {
+        final profile = Profile.custom(label: 'mine');
+        final rules = StreamController<List<Rule>>();
+        addTearDown(rules.close);
+        final container = buildContainer(
+          [profile],
+          groups: [
+            for (var id = 1; id <= 8; id++)
+              ProxyGroup(id: id, name: 'G$id', type: GroupType.Selector),
+          ],
+          rules: rules.stream,
+        );
+        setViewport(tester);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: TestApp(
+              child: Builder(
+                builder: (context) => FilledButton(
+                  onPressed: () => BaseNavigator.push(
+                    context,
+                    CustomProfileView(profileId: profile.id),
+                  ),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('open'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        final overview = find.text(currentAppLocalizations.rule);
+        Finder group(int id) => find.text('G$id', skipOffstage: false);
+
+        rules.add(const []);
+        for (var i = 0; i < 30 && overview.evaluate().isEmpty; i++) {
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+        expect(overview, findsOneWidget);
+        expect(group(1), findsNothing);
+
+        await tester.pump();
+        expect(group(1), findsOneWidget);
+        await tester.pumpAndSettle();
+      },
+    );
 
     testWidgets('is dropped on leaving it as it was created', (tester) async {
       final profile = Profile.custom(label: 'Unnamed');

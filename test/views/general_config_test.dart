@@ -6,12 +6,14 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/general.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+
+import 'package:prism_ui/prism_ui.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +46,20 @@ void main() {
   }
 
   PatchClashConfig config() => container.read(patchClashConfigProvider);
+
+  testWidgets('keeps the update settings off the requests group', (
+    tester,
+  ) async {
+    await pumpGeneralView(tester);
+    final l = currentAppLocalizations;
+
+    expect(find.widgetWithText(ListHeader, l.requests), findsOneWidget);
+    expect(find.text(l.userAgent), findsOneWidget);
+    expect(find.text(l.checkCertificate), findsOneWidget);
+    expect(find.text(l.checkCertificateDesc), findsOneWidget);
+    expect(find.text(l.autoCheckUpdate), findsNothing);
+    expect(find.text(l.updateChannel), findsNothing);
+  });
 
   testWidgets('lists no override until one is added', (tester) async {
     await pumpGeneralView(tester);

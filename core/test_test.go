@@ -61,7 +61,7 @@ func (c *fakePacketConn) SetReadDeadline(_ time.Time) error  { return nil }
 func (c *fakePacketConn) SetWriteDeadline(_ time.Time) error { return nil }
 
 func TestSpeedTestRejectsInvalidParams(t *testing.T) {
-	frame := handleMethodCall(&MethodCall{Method: speedTestMethod, Arguments: json.RawMessage("not-a-json")})
+	frame := handleMethodCall(&MethodCall{Method: probeSpeedTestMethod, Arguments: json.RawMessage("not-a-json")})
 
 	var envelope struct {
 		Error *MethodError `json:"error"`
@@ -75,7 +75,7 @@ func TestSpeedTestRejectsInvalidParams(t *testing.T) {
 }
 
 func TestQuicTestRejectsInvalidParams(t *testing.T) {
-	frame := handleMethodCall(&MethodCall{Method: quicTestMethod, Arguments: json.RawMessage("{")})
+	frame := handleMethodCall(&MethodCall{Method: probeQuicTestMethod, Arguments: json.RawMessage("{")})
 
 	var envelope struct {
 		Error *MethodError `json:"error"`

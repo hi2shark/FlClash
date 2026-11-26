@@ -8,14 +8,12 @@ import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
-import 'package:fl_clash/views/connection/connections.dart';
 import 'package:fl_clash/views/connection/requests.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
-import 'package:fl_clash/views/dns_queries.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
 
 import 'card.dart';
 import 'current_outbound.dart';
@@ -52,26 +50,27 @@ enum DashboardFeed {
   requests,
   dns;
 
-  PageLabel get page => switch (this) {
-    connections => PageLabel.connections,
-    requests => PageLabel.requests,
-    dns => PageLabel.dns,
+  String get label => switch (this) {
+    connections => currentAppLocalizations.liveConnections,
+    requests => currentAppLocalizations.recentRequests,
+    dns => PageLabel.dns.label,
   };
 }
 
 void openDashboardFeed(BuildContext context, DashboardFeed feed) {
   showSnapSheet(
     context,
-    initialScrollOffset: feed == DashboardFeed.connections
-        ? 0
-        : double.maxFinite,
     builder: (_, controller) => NestedPagedSheet(
       builder: (_) => switch (feed) {
-        DashboardFeed.connections => ConnectionsView(
+        DashboardFeed.connections => RequestsView(
           scrollController: controller,
+          status: ConnectionStatus.active,
         ),
         DashboardFeed.requests => RequestsView(scrollController: controller),
-        DashboardFeed.dns => DnsQueriesView(scrollController: controller),
+        DashboardFeed.dns => RequestsView(
+          scrollController: controller,
+          segment: RequestsSegment.dns,
+        ),
       },
     ),
   );
@@ -120,13 +119,26 @@ mixin ConnectionsPolling<T extends ConsumerStatefulWidget>
     }
     try {
       if (pollsConnections) {
-        final next = [...await _core.getConnections()];
+        final lineage = ref.read(requestsProvider).lineage;
+        final requestedAt = DateTime.now();
+        final snapshot = await _core.getConnectionsWith(_asListed);
         if (!isCurrent()) return;
-        next.sort((a, b) => b.start.compareTo(a.start));
+        final requests = ref.read(requestsProvider.notifier);
+        if (!requests.sync(
+          snapshot,
+          requestedAt: requestedAt,
+          lineage: lineage,
+        )) {
+          return;
+        }
+        connectionCount.value = snapshot.length;
+        final next = [
+          for (final trackerInfo in requests.value.list.reversed)
+            if (trackerInfo.isActive) trackerInfo,
+        ];
         final tcp = next
             .where((item) => item.metadata.network.toLowerCase() == 'tcp')
             .length;
-        connectionCount.value = next.length;
         updateWhenRouteSettled(
           () => setState(() {
             connections = next;
@@ -298,23 +310,22 @@ class _ConnectionsTableCardState extends ConsumerState<ConnectionsTableCard>
     final headerHeight = _tabHeightOf(density) * scale;
     final tabInset = _tabInsetOf(density);
     final cellStart = dashboardCardPadding(density).left - _cellInset;
-    Widget segment(DashboardFeed feed, Widget count) =>
-        DashboardConnectedButton(
-          selected: _feed == feed,
-          first: feed == DashboardFeed.values.first,
-          last: feed == DashboardFeed.values.last,
-          outer: headerHeight / 2,
-          inner: 8,
-          background: DashboardColors.of(context).tone,
-          semanticLabel: feed.page.label,
-          onTap: () => _select(feed),
-          builder: (foreground) => _FeedSegment(
-            label: feed.page.label,
-            count: count,
-            height: headerHeight,
-            foreground: foreground,
-          ),
-        );
+    Widget segment(DashboardFeed feed, Widget count) => ConnectedButton(
+      selected: _feed == feed,
+      first: feed == DashboardFeed.values.first,
+      last: feed == DashboardFeed.values.last,
+      outer: headerHeight / 2,
+      inner: 8,
+      background: DashboardColors.of(context).tone,
+      semanticLabel: feed.label,
+      onTap: () => _select(feed),
+      builder: (foreground) => _FeedSegment(
+        label: feed.label,
+        count: count,
+        height: headerHeight,
+        foreground: foreground,
+      ),
+    );
     return DashboardCard(
       semanticLabel: appLocalizations.liveConnections,
       padding: EdgeInsets.fromLTRB(cellStart, tabInset, cellStart, 0),
@@ -330,7 +341,7 @@ class _ConnectionsTableCardState extends ConsumerState<ConnectionsTableCard>
                 start: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: AlignmentDirectional.centerStart,
-                  child: DashboardConnectedGroup(
+                  child: ConnectedButtonGroup(
                     children: [
                       segment(
                         DashboardFeed.connections,
@@ -523,7 +534,7 @@ class _TableState<T> extends ConsumerState<_Table<T>>
           color: DashboardColors.of(context).tone,
           shape: shape,
         );
-        final body = ListView.builder(
+        final body = PrismListView(
           padding: const EdgeInsets.only(top: 2),
           itemExtent: rowHeight,
           itemCount: items.length,
@@ -553,8 +564,7 @@ class _TableState<T> extends ConsumerState<_Table<T>>
           children: [
             DecoratedBox(
               decoration: fill,
-              child: Material(
-                type: MaterialType.transparency,
+              child: Surface.transparent(
                 shape: shape,
                 clipBehavior: Clip.antiAlias,
                 child: TableColumnResizer(
@@ -699,7 +709,7 @@ class _Exit extends StatelessWidget {
   }
 }
 
-String _timeOf(DateTime time) => time.showTime.trim();
+String _timeOf(DateTime time) => time.showTime;
 
 String _ruleKey(TrackerInfo info) =>
     '${info.rule} ${info.rulePayload}'.toLowerCase();
@@ -921,3 +931,5 @@ class _DnsResult extends StatelessWidget {
     );
   }
 }
+
+List<TrackerInfo> _asListed(List<TrackerInfo> trackerInfos) => trackerInfos;

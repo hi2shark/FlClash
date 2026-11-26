@@ -23,9 +23,11 @@ final class FakeDesktopCoreTransport implements DesktopCoreTransport {
   TransportConnected? _connection;
   TransportFailed? _failure;
   Object? closeError;
+  Object? resetError;
   Future<void>? _closeOperation;
   final Completer<void> _closed = Completer<void>();
   int closeCount = 0;
+  int resetCount = 0;
 
   FakeDesktopCoreTransport({
     this.address = 'test-address',
@@ -45,10 +47,18 @@ final class FakeDesktopCoreTransport implements DesktopCoreTransport {
   }
 
   @override
+  TransportConnected? get connection => _connection;
+
+  @override
   Stream<DesktopTransportEvent> get events => _eventController.stream;
 
   @override
   Stream<Uint8List> get frames => _frameController.stream;
+
+  /// Makes the next bind hang, as one that never returns does; an open while
+  /// the transport is starting gets the bind already under way.
+  bool hangOpen = false;
+  Future<void>? _opening;
 
   @override
   Future<void> open() async {
@@ -59,12 +69,36 @@ final class FakeDesktopCoreTransport implements DesktopCoreTransport {
         state == DesktopTransportState.connected) {
       return;
     }
+    if (state == DesktopTransportState.starting && _opening != null) {
+      return _opening;
+    }
     state = DesktopTransportState.starting;
+    await (_opening = hangOpen ? Completer<void>().future : _awaitReady());
+  }
+
+  Future<void> _awaitReady() async {
     final event = await events.firstWhere(
       (event) => event is TransportReady || event is TransportFailed,
     );
     if (event case TransportFailed(:final error, :final stackTrace)) {
       Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+
+  @override
+  Future<void> reset() async {
+    resetCount++;
+    _opening = null;
+    final connection = _connection;
+    _connection = null;
+    _failure = null;
+    state = DesktopTransportState.idle;
+    if (connection != null) {
+      _eventController.add(TransportDisconnected(connection.generation));
+    }
+    final error = resetError;
+    if (error != null) {
+      Error.throwWithStackTrace(error, StackTrace.current);
     }
   }
 

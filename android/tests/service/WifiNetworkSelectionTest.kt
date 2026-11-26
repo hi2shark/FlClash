@@ -1,4 +1,4 @@
-package com.hi2shark.flclash_nw.service
+package com.hi2shark.hi2nw.service
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

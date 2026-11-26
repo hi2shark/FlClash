@@ -10,11 +10,17 @@ NavigationItemsState navigationItemsState(Ref ref) {
     currentGroupsStateProvider.select((state) => state.value.isNotEmpty),
   );
   final isInit = ref.watch(initProvider);
+  final capturing =
+      rsFeature &&
+      ref.watch(
+        patchClashConfigProvider.select((state) => state.mitm.capturesHttp),
+      );
   return NavigationItemsState(
     value:
         navigationPort?.getItems(
           openLogs: openLogs,
           hasProxies: !isInit ? hasProfiles : hasProxies,
+          capturing: capturing,
         ) ??
         const [],
   );
@@ -120,5 +126,6 @@ double overlayTopOffset(Ref ref) {
     version: version,
     isMobileView: isMobileView,
   );
-  return pageToolbarHeight + (showsHeader ? kHeaderHeight : 0);
+  // The window controls over a page sit within its app bar.
+  return (showsHeader ? kHeaderHeight : 0) + bannerBarClearance;
 }

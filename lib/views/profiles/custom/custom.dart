@@ -10,13 +10,14 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/dns.dart';
+import 'package:fl_clash/views/profiles/extend/added_rules.dart';
 import 'package:fl_clash/views/config/ntp.dart';
 import 'package:fl_clash/views/config/sniffer.dart';
 import 'package:fl_clash/views/config/tun.dart';
 import 'package:fl_clash/views/profiles/edit.dart';
 import 'package:fl_clash/views/profiles/preview.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'dialers.dart';
@@ -25,21 +26,10 @@ import 'providers.dart';
 import 'rules.dart';
 
 void showCustomProfileSheet(BuildContext context, int profileId) {
-  showSheet<void>(
-    context: context,
-    props: nestedPagedSheetProps,
-    builder: (_) => NestedPagedSheet(
-      builder: (_) => CustomProfileView(profileId: profileId),
-    ),
+  showNestedSheet<void>(
+    context,
+    builder: (_) => CustomProfileView(profileId: profileId),
   );
-}
-
-void _push(BuildContext context, Widget view) {
-  if (isSheetPage(context)) {
-    Navigator.of(context).push(PagedSheetRoute<void>(builder: (_) => view));
-    return;
-  }
-  BaseNavigator.push(context, view);
 }
 
 Widget _sectionRow(
@@ -69,7 +59,7 @@ Widget _sectionRow(
         const GlyphIcon(AppGlyphs.chevronForward),
       ],
     ),
-    onTap: () => _push(context, view),
+    onTap: () => unawaited(pushNestedPage<void>(context, view)),
   );
 }
 
@@ -244,7 +234,9 @@ class _CustomProfileViewState extends ConsumerState<CustomProfileView> {
   void _handlePreview() {
     final profile = ref.read(profileProvider(widget.profileId));
     if (profile != null) {
-      _push(context, PreviewProfileView(profile: profile));
+      unawaited(
+        pushNestedPage<void>(context, PreviewProfileView(profile: profile)),
+      );
     }
   }
 
@@ -272,20 +264,20 @@ class _CustomProfileViewState extends ConsumerState<CustomProfileView> {
     if (_loaded) {
       _loadedInputs ??= _inputs;
     }
-    return CommonPopScope(
+    return PopGuard(
       onPop: widget.isNew ? _nameBeforeLeaving : null,
       onPopSuccess: _discardIfUntouched,
       child: ProfileIdProvider(
         profileId: profileId,
-        child: CommonScaffold(
+        child: Scaffold(
           title: label,
           titleMenuItems: [
-            CommonPopupMenuItem(
+            PopupMenuItem(
               glyph: AppGlyphs.textShort,
               label: appLocalizations.rename,
               onPressed: _handleRename,
             ),
-            CommonPopupMenuItem(
+            PopupMenuItem(
               glyph: AppGlyphs.eye,
               label: appLocalizations.runtimeConfig,
               onPressed: _handlePreview,
@@ -293,19 +285,19 @@ class _CustomProfileViewState extends ConsumerState<CustomProfileView> {
           ],
           isLoading: _importing,
           actions: [
-            CommonPopupBox(
+            PopupAnchor(
               targetBuilder: (open) => FilledButton(
                 onPressed: _loaded && !_importing ? open : null,
                 child: Text(appLocalizations.import),
               ),
-              popupBuilder: (_) => CommonPopupMenu(
+              popupBuilder: (_) => PopupMenu(
                 items: [
-                  CommonPopupMenuItem(
+                  PopupMenuItem(
                     glyph: AppGlyphs.cloudDownload,
                     label: appLocalizations.importUrl,
                     onPressed: _handleImportFromUrl,
                   ),
-                  CommonPopupMenuItem(
+                  PopupMenuItem(
                     glyph: AppGlyphs.importFile,
                     label: appLocalizations.importFile,
                     onPressed: _handleImportFromFile,
@@ -316,28 +308,28 @@ class _CustomProfileViewState extends ConsumerState<CustomProfileView> {
           ],
           body: NullStatusSwitcher(
             isLoading: !_loaded,
-            loadingStatus: const NullStatus(
-              illustration: NullStatusIllustration.profile,
-            ),
             child: ScrollConfiguration(
               behavior: const ShowBarScrollBehavior(),
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: SizedBox(height: context.sectionsTopPadding),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                    ).copyWith(bottom: 24 + context.bottomInset),
-                    sliver: SliverMainAxisGroup(
-                      slivers: [
-                        SliverToBoxAdapter(child: _overview),
-                        _groups,
-                      ],
+              child: ArrivalCacheExtentBuilder(
+                builder: (cacheExtent) => CustomScrollView(
+                  scrollCacheExtent: cacheExtent,
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: SizedBox(height: context.sectionsTopPadding),
                     ),
-                  ),
-                ],
+                    SliverPadding(
+                      padding: context.listInsets.page().copyWith(
+                        bottom: 24 + context.bottomInset,
+                      ),
+                      sliver: SliverMainAxisGroup(
+                        slivers: [
+                          SliverToBoxAdapter(child: _overview),
+                          NextFrame.sliver(child: _groups),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -422,7 +414,7 @@ class _Overview extends ConsumerWidget {
         issueCounts.dns +
         issueCounts.ntp;
     final dialerCount = ref.watch(_dialerCount(profileId));
-    final providers = referencedProviders(ref, profileId);
+    final providers = ref.watch(customReferencedProvidersProvider(profileId));
     final missingProviders = ref.watch(
       customProfileDataProvider(profileId).select(
         (state) => state != null
@@ -527,10 +519,10 @@ class _MoreSectionsView extends ConsumerWidget {
         ),
       ),
     );
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.more,
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        padding: context.listInsets.page().copyWith(
           top: context.sectionsTopPadding,
           bottom: 16 + context.bottomInset,
         ),
@@ -587,6 +579,7 @@ class _MoreSectionsView extends ConsumerWidget {
                 ),
             ],
           ),
+          ExitsSection(profileId, modulesOnly: true),
         ],
       ),
     );

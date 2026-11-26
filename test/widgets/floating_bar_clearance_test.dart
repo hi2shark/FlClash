@@ -4,22 +4,24 @@ import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/spill.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_list_page.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/local_rules/pages/local_rule_list_page.dart';
 import 'package:fl_clash/local_rules/services/local_rule_store.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/views/local_proxies.dart';
 import 'package:fl_clash/views/local_rules.dart';
 import 'package:fl_clash/views/network_test.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/app_paths.dart';
 import '../helpers/test_app.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
@@ -57,10 +59,11 @@ class _FakePathProvider extends PathProviderPlatform {
 
 class _RecordingCoreHandler extends CoreHandlerInterface {
   @override
-  Future<T?> invokeMethod<T>({
+  Future<Object?> invokeMethod({
     required CoreMethod method,
     Object? arguments,
     Duration? timeout,
+    CoreResultModel? model,
   }) async {
     return null;
   }
@@ -154,7 +157,7 @@ void main() {
     await tester.pumpWidget(_testApp(container, const LocalRulesView()));
     await _pumpFrames(tester);
 
-    _expectContentBelowBar(tester, find.byType(CommonCard));
+    _expectContentBelowBar(tester, find.byType(Card));
     expect(tester.takeException(), isNull);
   });
 
@@ -164,7 +167,7 @@ void main() {
     await tester.pumpWidget(_testApp(container, const LocalProxiesView()));
     await _pumpFrames(tester);
 
-    _expectContentBelowBar(tester, find.byType(CommonCard));
+    _expectContentBelowBar(tester, find.byType(Card));
     expect(tester.takeException(), isNull);
   });
 

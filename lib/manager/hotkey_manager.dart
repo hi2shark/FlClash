@@ -9,7 +9,7 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/ui.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rust_api/rust_api.dart';
@@ -44,7 +44,7 @@ extension HotKeyActionExt on HotKeyAction {
 }
 
 typedef HotKeyRegistrar =
-    Future<List<HotKeyFailure>> Function({required List<HotKeySpec> specs});
+    List<HotKeyFailure> Function({required List<HotKeySpec> specs});
 
 class HotKeyManager extends ConsumerStatefulWidget {
   final HotKeyRegistrar? registerHotKeys;
@@ -170,15 +170,15 @@ class _HotKeyManagerState extends ConsumerState<HotKeyManager> {
         for (final hotKeyAction in ref.read(hotKeyActionsProvider))
           ?hotKeyAction.toHotKeySpec(),
     ];
-    final failed = await _register(specs);
+    final failed = _register(specs);
     if (!isRecording && mounted) {
       ref.read(hotKeyFailuresProvider.notifier).value = failed;
     }
   }
 
-  Future<Map<HotAction, String>> _register(List<HotKeySpec> specs) async {
+  Map<HotAction, String> _register(List<HotKeySpec> specs) {
     try {
-      final failures = await _registerHotKeys(specs: specs);
+      final failures = _registerHotKeys(specs: specs);
       final failed = {
         for (final failure in failures)
           if (failure.id >= 0 && failure.id < HotAction.values.length)

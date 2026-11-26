@@ -26,11 +26,12 @@ _SharedState _$SharedStateFromJson(Map<String, dynamic> json) => _SharedState(
           ?.map((e) => e as String)
           .toList() ??
       const [],
+  mitm: json['mitm'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$SharedStateToJson(_SharedState instance) =>
     <String, dynamic>{
-      'setupParams': instance.setupParams,
+      'setupParams': ?instance.setupParams,
       'vpnOptions': instance.vpnOptions,
       'stopTip': instance.stopTip,
       'startTip': instance.startTip,
@@ -41,4 +42,5 @@ Map<String, dynamic> _$SharedStateToJson(_SharedState instance) =>
       'onlyStatisticsProxy': instance.onlyStatisticsProxy,
       'showStopAction': instance.showStopAction,
       'suspendOnWifiSsids': instance.suspendOnWifiSsids,
+      'mitm': instance.mitm,
     };

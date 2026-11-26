@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/plugins/wifi_ssid.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
-import 'package:wifi_ssid/wifi_ssid.dart';
 
 void main() {
   late ProviderContainer container;

@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'build_cache.dart';
 import 'fingerprint.dart';
 import 'options.dart';
+import 'path_remap.dart';
 import 'target.dart';
 import 'util.dart';
 
@@ -18,15 +19,20 @@ class RustBuilder {
     required this.cache,
     required this.notice,
     this.harnessInputs = const [],
-  });
+    this.cargo = runCommandStream,
+    Map<String, String>? environment,
+  }) : _environment = environment ?? Platform.environment;
 
   final String rootDir;
   final BuildConfig config;
   final BuildCache cache;
   final BuildNotice notice;
   final List<String> harnessInputs;
+  final StreamedCommand cargo;
+  final Map<String, String> _environment;
 
   String get _helperPath => p.join(rootDir, config.helperDir);
+  String get _targetDir => cargoTargetDir(_helperPath, _environment);
   String get _outputPath => p.join(rootDir, config.outputDir);
 
   Future<BuildExecution> build(Target target, String coreSha256) async {
@@ -41,11 +47,15 @@ class RustBuilder {
     final env = {
       'CORE_SHA256': coreSha256,
       'CORE_NAME': '${config.coreName}${target.executableExtension}',
+      ...trimmedPathEnvironment(
+        checkoutDir: rootDir,
+        toolchainDir: _helperPath,
+        targetTriple: triple,
+      ),
     };
 
     final srcPath = p.join(
-      _helperPath,
-      'target',
+      _targetDir,
       triple,
       'release',
       'helper${target.executableExtension}',
@@ -61,13 +71,14 @@ class RustBuilder {
         target: target,
         coreSha256: coreSha256,
         args: args,
+        env: env,
       ),
       primaryOutput: destPath,
       notice: notice,
       build: () async {
         _log.info('Building Rust helper: $target');
 
-        await runCommandStream(
+        await cargo(
           'cargo',
           args,
           workingDirectory: _helperPath,
@@ -87,6 +98,7 @@ class RustBuilder {
     required Target target,
     required String coreSha256,
     required List<String> args,
+    required Map<String, String> env,
   }) async {
     final builder = FingerprintBuilder(rootDir: rootDir)
       ..addValue('cache_schema', BuildCache.schemaVersion)
@@ -94,7 +106,7 @@ class RustBuilder {
       ..addValue('target', {'goos': target.goos, 'goarch': target.goarch})
       ..addValue('arguments', args)
       ..addValue('core_sha256', coreSha256)
-      ..addValue('environment', _rustEnvironment())
+      ..addValue('environment', {..._rustEnvironment(), ...env})
       ..addValue('config', config.toFingerprintMap());
 
     final cargoVersion = runCommand('cargo', [

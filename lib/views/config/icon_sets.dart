@@ -3,14 +3,14 @@ import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/profiles/custom/icon.dart';
-import 'package:fl_clash/features/form/form.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class IconSetsView extends ConsumerStatefulWidget {
@@ -119,25 +119,25 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
     unawaited(BaseNavigator.push(context, _IconSetPreviewView(iconSet.id)));
   }
 
-  List<CommonPopupMenuItem> _buildMenuItems(IconSet iconSet) {
+  List<PopupMenuItem> _buildMenuItems(IconSet iconSet) {
     final appLocalizations = context.appLocalizations;
     return [
       if (iconSet.isRemote)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.sync,
           label: appLocalizations.sync,
           onPressed: () {
             _run(() => _iconSetsAction.sync(iconSet), title: iconSet.name);
           },
         ),
-      CommonPopupMenuItem(
+      PopupMenuItem(
         glyph: AppGlyphs.settings,
         label: appLocalizations.options,
         onPressed: () {
           _handleEditOptions(iconSet);
         },
       ),
-      CommonPopupMenuItem(
+      PopupMenuItem(
         danger: true,
         glyph: AppGlyphs.delete,
         label: appLocalizations.delete,
@@ -159,7 +159,9 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
         child: ItemPositionProvider(
           position: ItemPosition.get(index, iconSets.length),
           child: DecorationListItem(
-            contentPadding: const EdgeInsets.only(left: 16),
+            contentPadding: EdgeInsetsDirectional.only(
+              start: context.listInsets.leading,
+            ),
             leading: SizedBox.square(
               dimension: 32,
               child: IconTheme.merge(
@@ -196,12 +198,13 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
         label: appLocalizations.nullTip(appLocalizations.iconSets),
         illustration: NullStatusIllustration.icons,
       ),
-      child: ReorderableListView.builder(
-        padding: const EdgeInsets.all(16).copyWith(
-          top: context.contentTopPadding,
-          bottom: 16 + context.bottomInset,
-        ),
-        buildDefaultDragHandles: false,
+      child: PrismReorderableListView(
+        padding: context.listInsets
+            .page(top: 16, bottom: 16)
+            .copyWith(
+              top: context.contentTopPadding,
+              bottom: 16 + context.bottomInset,
+            ),
         itemCount: iconSets.length,
         itemBuilder: (_, index) => _buildItem(iconSets, index),
         proxyDecorator: (_, index, animation) {
@@ -221,11 +224,11 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
     final appLocalizations = context.appLocalizations;
     final state = ref.watch(iconSetsProvider);
     final iconSets = state.value ?? [];
-    return CommonScaffold(
+    return Scaffold(
       canSort: iconSets.length > 1,
       isLoading: ref.watch(loadingProvider(LoadingTag.iconSets)),
       actions: [
-        CommonPopupBox(
+        PopupAnchor(
           targetBuilder: (open) {
             return IconButton(
               tooltip: appLocalizations.add,
@@ -233,14 +236,14 @@ class _IconSetsViewState extends ConsumerState<IconSetsView> {
               icon: const GlyphIcon(AppGlyphs.addCircle),
             );
           },
-          popupBuilder: (_) => CommonPopupMenu(
+          popupBuilder: (_) => PopupMenu(
             items: [
-              CommonPopupMenuItem(
+              PopupMenuItem(
                 glyph: AppGlyphs.cloudDownload,
                 label: appLocalizations.importUrl,
                 onPressed: _handleImportFromUrl,
               ),
-              CommonPopupMenuItem(
+              PopupMenuItem(
                 glyph: AppGlyphs.importFile,
                 label: appLocalizations.importFile,
                 onPressed: _handleImportFromFile,
@@ -280,7 +283,7 @@ class _IconSetPreviewViewState extends ConsumerState<_IconSetPreviewView> {
     final icons = (iconSet?.icons ?? const <IconSetIcon>[])
         .whereMatches(_query, (icon) => [icon.label])
         .toList();
-    return CommonScaffold(
+    return Scaffold(
       title: iconSet?.name ?? context.appLocalizations.iconSets,
       searchState: AppBarSearchState(
         onSearch: (query) {

@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:collection/collection.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/mitm_module.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:path/path.dart' show join;
 
 part 'clash_providers.dart';
 part 'converter.dart';
@@ -18,6 +21,7 @@ part 'generated/database.g.dart';
 part 'groups.dart';
 part 'icons.dart';
 part 'ip_qualities.dart';
+part 'mitm_modules.dart';
 part 'profiles.dart';
 part 'rules.dart';
 part 'scripts.dart';
@@ -35,6 +39,7 @@ part 'scripts.dart';
     CustomProxies,
     ProxyDialers,
     IpQualities,
+    MitmModules,
   ],
   daos: [
     ProfilesDao,
@@ -47,19 +52,118 @@ part 'scripts.dart';
     CustomProxiesDao,
     ProxyDialersDao,
     IpQualitiesDao,
+    MitmModulesDao,
   ],
 )
 class Database extends _$Database {
-  Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
+  Database([QueryExecutor? executor])
+    : _filePath = executor == null ? _appDatabasePath : null,
+      super(executor ?? _openConnection());
+
+  @visibleForTesting
+  Database.onFile(File file)
+    : _filePath = (() async => file.path),
+      super(_openFile(file));
+
+  final Future<String> Function()? _filePath;
+  Future<String?>? _resolvedPath;
+
+  static Future<String> _appDatabasePath() => appPath.databasePath;
 
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 26;
+
+  static QueryExecutor _openFile(File file) {
+    return NativeDatabase.createInBackground(
+      file,
+      setup: (raw) {
+        raw.execute('PRAGMA journal_mode = WAL');
+        raw.execute('PRAGMA busy_timeout = 5000');
+      },
+    );
+  }
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
       final databaseFile = File(await appPath.databasePath);
-      return NativeDatabase.createInBackground(databaseFile);
+      return _openFile(databaseFile);
     });
+  }
+
+  /// Runs [read] on a short-lived read-only connection in a worker isolate
+  /// when backed by a file, keeping large row mappings off the UI isolate.
+  Future<T> readApart<T>(Future<T> Function(Database db) read) async {
+    final filePath = _filePath;
+    if (filePath == null) {
+      return read(this);
+    }
+    final path = await (_resolvedPath ??= _resolvePath(filePath));
+    if (path == null) {
+      return read(this);
+    }
+    return Isolate.run(() => _readFile(path, read));
+  }
+
+  Future<String?> _resolvePath(Future<String> Function() filePath) async {
+    await doWhenOpened((_) {});
+    return filePath();
+  }
+
+  /// Watches [tables] and reads again through [readApart] after each change,
+  /// one read at a time. A read that a change overtook is dropped for the next,
+  /// as its own connection may have read before the change landed.
+  Stream<T> watchApart<T>(
+    Iterable<ResultSetImplementation<dynamic, dynamic>> tables,
+    Future<T> Function(Database db) read,
+  ) {
+    late final StreamController<T> controller;
+    StreamSubscription<Set<TableUpdate>>? updates;
+    var running = false;
+    var pending = false;
+    var canceled = false;
+
+    Future<void> fetch() async {
+      if (running) {
+        pending = true;
+        return;
+      }
+      running = true;
+      try {
+        do {
+          pending = false;
+          try {
+            final value = await readApart(read);
+            if (!pending && !canceled && !controller.isClosed) {
+              controller.add(value);
+            }
+          } catch (error, stackTrace) {
+            if (!pending && !canceled && !controller.isClosed) {
+              controller.addError(error, stackTrace);
+            }
+          }
+        } while (pending && !canceled && !controller.isClosed);
+      } finally {
+        running = false;
+      }
+    }
+
+    controller = StreamController<T>(
+      onListen: () {
+        updates = tableUpdates(
+          TableUpdateQuery.onAllTables(tables),
+        ).listen((_) => unawaited(fetch()));
+        unawaited(fetch());
+      },
+      onCancel: () async {
+        canceled = true;
+        await updates?.cancel();
+        updates = null;
+        if (!controller.isClosed) {
+          await controller.close();
+        }
+      },
+    );
+    return controller.stream;
   }
 
   @override
@@ -116,9 +220,32 @@ class Database extends _$Database {
         }
         if (from < 22) {
           await customStatement('DROP TABLE IF EXISTS unlock_test_runs');
+          await _createTableIfMissing(m, mitmModules);
         }
         if (from < 23) {
           await _createTableIfMissing(m, ipQualities);
+          if ((await _columnsOf(mitmModules.actualTableName)).isNotEmpty) {
+            await m.alterTable(
+              TableMigration(
+                mitmModules,
+                newColumns: [mitmModules.asksConsent, mitmModules.accepted],
+              ),
+            );
+          }
+        }
+        if (from < 24) {
+          await _mergeExtendModes();
+        }
+        if (from < 25) {
+          await _addColumnIfMissing(m, rules, rules.customExit);
+          await _addColumnIfMissing(m, profiles, profiles.exitTargets);
+          await _matchTargetToExit();
+        }
+        if (from < 26) {
+          await _createTableIfMissing(m, mitmModules);
+          await _addColumnIfMissing(m, mitmModules, mitmModules.asksConsent);
+          await _addColumnIfMissing(m, mitmModules, mitmModules.accepted);
+          await _recordMitmConsent();
         }
       }),
       beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),
@@ -161,6 +288,72 @@ class Database extends _$Database {
       return;
     }
     await m.renameColumn(table, oldName, column);
+  }
+
+  /// A profile keeps the rules it applied when it ran a script or added rules.
+  Future<void> _mergeExtendModes() async {
+    await customStatement(
+      'INSERT OR IGNORE INTO disabled_rules (profile_id, rule_id) '
+      'SELECT profiles.id, rules.id FROM profiles, rules '
+      "WHERE rules.profile_id IS NULL AND profiles.extend_type = 'script'",
+    );
+    await customStatement(
+      'UPDATE profiles SET script_id = NULL '
+      "WHERE extend_type != 'script' "
+      'OR script_id NOT IN (SELECT id FROM scripts)',
+    );
+    await customStatement(
+      'UPDATE profiles SET extend_type = '
+      "CASE WHEN script_id IS NULL THEN 'standard' ELSE 'script' END",
+    );
+  }
+
+  Future<void> _recordMitmConsent() async {
+    final rows = await select(mitmModules).get();
+    if (rows.isEmpty) {
+      return;
+    }
+    final directory = await appPath.mitmModulesDirPath;
+    for (final row in rows) {
+      final fileAsks = await _fileAsksConsent(directory, row);
+      bool? accepted = row.enabled ? null : false;
+      if (row.enabled && (row.scripts > 0 || fileAsks == true)) {
+        accepted = true;
+      }
+      await (update(mitmModules)..where((t) => t.id.equals(row.id))).write(
+        MitmModulesCompanion(
+          asksConsent: Value(fileAsks ?? true),
+          accepted: Value(accepted),
+        ),
+      );
+    }
+  }
+
+  Future<bool?> _fileAsksConsent(String directory, RawMitmModule row) async {
+    try {
+      final file = File(join(directory, row.toMitmModule().fileName));
+      return parseMitmModule(
+        await file.readAsString(),
+        values: row.arguments,
+      ).asksConsent;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _matchTargetToExit() async {
+    await customStatement(
+      'UPDATE rules SET custom_exit = 1 '
+      "WHERE upper(trim(rule_target)) = 'MATCH' AND rule_action != 'SUB_RULE' "
+      'AND (profile_id IS NULL OR profile_id IN '
+      "(SELECT id FROM profiles WHERE type != 'custom'))",
+    );
+    await customStatement(
+      "UPDATE profiles SET exit_targets = json_object('MATCH', "
+      'trim(match_target)) '
+      "WHERE trim(coalesce(match_target, '')) != '' AND type != 'custom'",
+    );
+    await customStatement('UPDATE profiles SET match_target = NULL');
   }
 
   /// alterTable re-creates the old index, which names the dropped column.
@@ -416,6 +609,7 @@ class Database extends _$Database {
     List<ClashProvider> clashProviders = const [],
     List<CustomProxy> customProxies = const [],
     List<ProxyDialer> proxyDialers = const [],
+    List<MitmModule> mitmModules = const [],
     bool isOverride = false,
   }) async {
     if (profiles.isEmpty &&
@@ -425,7 +619,8 @@ class Database extends _$Database {
         proxyGroups.isEmpty &&
         clashProviders.isEmpty &&
         customProxies.isEmpty &&
-        proxyDialers.isEmpty) {
+        proxyDialers.isEmpty &&
+        mitmModules.isEmpty) {
       return;
     }
     await transaction(() async {
@@ -441,6 +636,7 @@ class Database extends _$Database {
           clashProvidersDao.setAllWithBatch(b, clashProviders);
           // Rewriting profiles or custom proxies cascades into these.
           proxyDialersDao.setAllWithBatch(b, proxyDialers);
+          mitmModulesDao.setAllWithBatch(b, mitmModules);
           return;
         }
         profilesDao.putAllWithBatch(
@@ -453,6 +649,7 @@ class Database extends _$Database {
         customProxiesDao.putAllWithBatch(b, customProxies);
         clashProvidersDao.putAllWithBatch(b, clashProviders);
         proxyDialersDao.putAllWithBatch(b, proxyDialers);
+        mitmModulesDao.putAllWithBatch(b, mitmModules);
       });
       await _purgeOrphans();
     });
@@ -613,6 +810,26 @@ extension JoinedSelectStatementExt<T extends HasResultSet, D>
     final countExp = countAll();
     addColumns([countExp]);
     return map((row) => row.read(countExp)!);
+  }
+}
+
+Future<T> _readFile<T>(
+  String path,
+  Future<T> Function(Database db) read,
+) async {
+  final db = Database(
+    NativeDatabase(
+      File(path),
+      setup: (raw) {
+        raw.execute('PRAGMA busy_timeout = 5000');
+        raw.execute('PRAGMA query_only = ON');
+      },
+    ),
+  );
+  try {
+    return await read(db);
+  } finally {
+    await db.close();
   }
 }
 

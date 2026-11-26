@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:fl_clash/bootstrap.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/window.dart';
-import 'package:fl_clash/bootstrap.dart';
-import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
@@ -14,16 +12,17 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/ui.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rust_api/rust_api.dart' show NetworkState;
 
 import 'pages/pages.dart';
 
 Widget buildManagerStack({
   required bool isDesktop,
-  required Future<void> Function(List<ConnectivityResult> results)
-  onConnectivityChanged,
+  required Future<void> Function(NetworkState state) onConnectivityChanged,
   Stream<ProcessSignal>? terminateSignals,
   required Widget child,
 }) {
@@ -47,9 +46,7 @@ Widget buildManagerStack({
         )
       : AndroidManager(child: TileManager(child: state));
   return AppEnvManager(
-    child: LocaleManager(
-      child: StatusManager(child: ThemeManager(child: platformState)),
-    ),
+    child: LocaleManager(child: ThemeManager(child: platformState)),
   );
 }
 
@@ -119,6 +116,7 @@ class ApplicationState extends ConsumerState<Application> {
     _autoUpdateProfilesTaskTimer = Timer(const Duration(minutes: 20), () async {
       await ref.read(profilesActionProvider.notifier).autoUpdateProfiles();
       await ref.read(resourcesActionProvider.notifier).autoUpdate();
+      await ref.read(mitmModulesActionProvider.notifier).autoUpdate();
       if (!mounted) {
         return;
       }
@@ -126,20 +124,19 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
-  Future<void> _handleConnectivityChanged(
-    List<ConnectivityResult> results,
-  ) async {
-    commonPrint.log('connectivityChanged ${results.toString()}');
-    unawaited(systemDnsCoordinator?.resync() ?? Future.value());
+  Future<void> _handleConnectivityChanged(NetworkState state) async {
+    commonPrint.log(
+      'connectivityChanged wifi: ${state.wifi} vpn: ${state.vpn}',
+    );
     unawaited(ref.read(systemActionProvider.notifier).updateLocalIp());
-    final hasVpn = results.contains(ConnectivityResult.vpn);
+    final hasVpn = state.vpn;
     if (_preHasVpn == hasVpn) {
       ref.read(routeTrackerProvider.notifier).bumpHostEpoch();
       // Android's NetworkObserver tells the Core about a new network itself.
       if (system.isDesktop) {
         debouncer.call(
-          FunctionTag.clearDnsCache,
-          ref.read(coreActionProvider.notifier).clearDnsCacheOnNetworkChange,
+          FunctionTag.networkChange,
+          ref.read(coreActionProvider.notifier).reportNetworkChange,
           duration: const Duration(milliseconds: 200),
         );
       }
@@ -155,39 +152,55 @@ class ApplicationState extends ConsumerState<Application> {
           appSettingProvider.select((state) => state.locale),
         );
         final themeProps = ref.watch(themeSettingProvider);
-        return MaterialApp(
+        final textScale = themeProps.textScale;
+        final prismApp = PrismApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: globalState.navigatorKey,
           onNavigationNotification: (_) => true,
           localizationsDelegates: const [
-            AppLocalizations.delegate,
+            appLocalizationsDelegate,
             AppUiLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
+            GlobalWidgetsLocalizations.delegate,
           ],
           builder: (context, child) {
-            return ThemeCrossFade(
-              child: buildManagerStack(
-                isDesktop: system.isDesktop,
-                onConnectivityChanged: _handleConnectivityChanged,
-                terminateSignals: _terminateSignals,
-                child: RemoteFocusAdapter(
-                  enabled: system.isTV,
-                  floatingKeyboard: app?.floatingKeyboard,
-                  child: child!,
-                ),
-              ),
+            return buildManagerStack(
+              isDesktop: system.isDesktop,
+              onConnectivityChanged: _handleConnectivityChanged,
+              terminateSignals: _terminateSignals,
+              child: child!,
             );
           },
-          scrollBehavior: const BaseScrollBehavior(),
           title: appName,
           locale: getLocaleForString(locale),
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          supportedLocales: AppLocalizations.supportedLocales,
           themeMode: themeProps.themeMode,
           theme: watchAppTheme(ref, Brightness.light),
           darkTheme: watchAppTheme(ref, Brightness.dark),
-          themeAnimationStyle: AnimationStyle.noAnimation,
-          home: KeyboardInsetHold(child: child!),
+          textScale: textScale.enable ? textScale.scale : null,
+          minTextScale: minTextScale,
+          maxTextScale: maxTextScale,
+          liquidGlass: switch (themeProps.liquidGlass) {
+            LiquidGlassMode.none => null,
+            LiquidGlassMode.ultra => LiquidGlassQuality.ultra,
+            LiquidGlassMode.standard => LiquidGlassQuality.standard,
+          },
+          emojiFont: (family: FontFamily.twEmoji.value, pattern: emojiPattern),
+          stackedBanners: !ref.watch(isMobileViewProvider),
+          bannerTopInset: ref.watch(overlayTopOffsetProvider),
+          remoteFocus: system.isTV,
+          floatingKeyboard: app?.floatingKeyboard,
+          onGenerateRoute: (settings) => HomeRoute(
+            settings: settings,
+            builder: (_) => KeyboardInsetHold(child: child!),
+          ),
         );
+        final desktopWindow = window;
+        return desktopWindow == null
+            ? prismApp
+            : HiddenWindowFocusGuard(
+                shown: desktopWindow.shown,
+                child: prismApp,
+              );
       },
       child: const HomePage(),
     );

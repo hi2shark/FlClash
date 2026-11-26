@@ -4,11 +4,13 @@ import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/spill.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/views/network_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -28,15 +30,17 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
   Duration? timeout;
 
   @override
-  Future<T?> invokeMethod<T>({
+  Future<Object?> invokeMethod({
     required CoreMethod method,
     Object? arguments,
     Duration? timeout,
+    CoreResultModel? model,
   }) async {
     this.method = method;
     this.arguments = arguments;
     this.timeout = timeout;
-    return <String, dynamic>{'name': 'P'} as T?;
+    const result = <String, dynamic>{'name': 'P'};
+    return model == null ? result : model(result);
   }
 
   @override
@@ -54,15 +58,16 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
 
 class _UnansweredCoreHandler extends _RecordingCoreHandler {
   @override
-  Future<T?> invokeMethod<T>({
+  Future<Object?> invokeMethod({
     required CoreMethod method,
     Object? arguments,
     Duration? timeout,
+    CoreResultModel? model,
   }) async {
     this.method = method;
     this.arguments = arguments;
     this.timeout = timeout;
-    return null;
+    throw TimeoutException('core did not answer');
   }
 }
 
@@ -211,7 +216,7 @@ void main() {
         timeout: 20000,
       ),
     );
-    expect(handler.method, CoreMethod.speedTest);
+    expect(handler.method, CoreMethod.probeSpeedTest);
     expect(handler.timeout, const Duration(seconds: 45));
     expect(handler.arguments, {
       'proxy-name': 'P',
@@ -226,7 +231,7 @@ void main() {
         timeout: 10000,
       ),
     );
-    expect(handler.method, CoreMethod.quicTest);
+    expect(handler.method, CoreMethod.probeQuicTest);
     expect(handler.timeout, const Duration(seconds: 25));
     expect(handler.arguments, {
       'proxy-name': 'P',
@@ -287,25 +292,11 @@ void main() {
     expect(find.text('Custom target'), findsNothing);
     expect(find.byType(TextField), findsNothing);
 
-    final speedTargetTile = find.widgetWithText(
-      ExpansionTile,
-      'Test package size',
-    );
+    final speedTargetTile = find.text('Test package size');
     expect(speedTargetTile, findsOneWidget);
-    expect(
-      tester.widget<ExpansionTile>(speedTargetTile).initiallyExpanded,
-      isFalse,
-    );
 
-    final quicTargetTile = find.widgetWithText(
-      ExpansionTile,
-      'QUIC test target',
-    );
+    final quicTargetTile = find.text('QUIC test target');
     expect(quicTargetTile, findsOneWidget);
-    expect(
-      tester.widget<ExpansionTile>(quicTargetTile).initiallyExpanded,
-      isFalse,
-    );
     await _tapVisible(tester, quicTargetTile);
     await tester.pumpAndSettle();
 
@@ -327,10 +318,7 @@ void main() {
     await tester.pumpWidget(_wrap(NetworkTestView(controller: controller)));
     await tester.pumpAndSettle();
 
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ExpansionTile, 'Test package size'),
-    );
+    await _tapVisible(tester, find.text('Test package size'));
     await tester.pumpAndSettle();
     expect(find.text('Cloudflare 100 MB'), findsNothing);
     expect(find.text('Cloudflare 50 MB'), findsOneWidget);
@@ -361,10 +349,7 @@ void main() {
     await tester.pumpWidget(_wrap(NetworkTestView(controller: controller)));
     await tester.pumpAndSettle();
 
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ExpansionTile, 'Test package size'),
-    );
+    await _tapVisible(tester, find.text('Test package size'));
     await tester.pumpAndSettle();
     await _tapVisible(tester, find.text('Custom download URL'));
     await tester.pumpAndSettle();
@@ -396,10 +381,7 @@ void main() {
     await tester.pumpWidget(_wrap(NetworkTestView(controller: controller)));
     await tester.pumpAndSettle();
 
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ExpansionTile, 'QUIC test target'),
-    );
+    await _tapVisible(tester, find.text('QUIC test target'));
     await tester.pumpAndSettle();
     await _tapVisible(tester, find.text('nghttp2.org:443'));
     await tester.pumpAndSettle();
@@ -435,10 +417,7 @@ void main() {
     await tester.pumpWidget(_wrap(NetworkTestView(controller: controller)));
     await tester.pumpAndSettle();
 
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ExpansionTile, 'Test package size'),
-    );
+    await _tapVisible(tester, find.text('Test package size'));
     await tester.pumpAndSettle();
 
     final speedButton = find.byKey(const ValueKey('speed-test-start'));
@@ -477,10 +456,7 @@ void main() {
     await tester.pumpWidget(_wrap(NetworkTestView(controller: controller)));
     await tester.pumpAndSettle();
 
-    await _tapVisible(
-      tester,
-      find.widgetWithText(ExpansionTile, 'QUIC test target'),
-    );
+    await _tapVisible(tester, find.text('QUIC test target'));
     await tester.pumpAndSettle();
 
     final quicButton = find.byKey(const ValueKey('quic-test-start'));

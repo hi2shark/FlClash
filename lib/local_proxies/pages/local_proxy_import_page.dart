@@ -4,7 +4,7 @@ import 'package:fl_clash/local_proxies/services/local_proxy_parser.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 class LocalProxyImportPage extends StatefulWidget {
   final String? initialText;
@@ -68,7 +68,7 @@ class _LocalProxyImportPageState extends State<LocalProxyImportPage> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.pasteShareLink,
       confirmationAction: _parsed
           ? IconButtonData(
@@ -101,7 +101,6 @@ class _LocalProxyImportPageState extends State<LocalProxyImportPage> {
           minLines: 6,
           decoration: InputDecoration(
             hintText: appLocalizations.pasteNodeLinkHint,
-            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: 16),
@@ -133,15 +132,15 @@ class _LocalProxyImportPageState extends State<LocalProxyImportPage> {
         ),
         const SizedBox(height: 12),
         Expanded(
-          child: ListView.separated(
+          child: PrismListView(
             itemCount: _results.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
+            gap: 8,
             itemBuilder: (_, index) {
               final result = _results[index];
               final proxy = result.proxy;
               final hasError = result.error != null;
-              return CommonCard(
-                child: CheckboxListTile(
+              return Card(
+                child: ListItem.checkbox(
                   value: _selected.contains(index),
                   onChanged: hasError || proxy == null
                       ? null

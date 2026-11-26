@@ -2,16 +2,14 @@ import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'added_rules.dart';
 import 'script.dart';
-import 'standard.dart';
 
 /// Long enough that a quick apply still reads as one, not as a flicker.
 const _minApplyingDuration = Duration(milliseconds: 600);
@@ -53,9 +51,9 @@ class _ExtendViewState extends ConsumerState<ExtendView> {
   List<Object?>? _watchInputs() {
     final profileId = widget.profileId;
     final profile = ref.watch(
-      profileProvider(profileId).select(
-        (state) => (state?.extendType, state?.scriptId, state?.matchTarget),
-      ),
+      profileProvider(
+        profileId,
+      ).select((state) => (state?.scriptId, state?.exitTargets)),
     );
     final rules = ref.watch(profileRulesProvider(profileId)).value;
     final disabledRuleIds = ref
@@ -82,10 +80,7 @@ class _ExtendViewState extends ConsumerState<ExtendView> {
       }
       _applied = inputs;
       _unappliedOnOpen = false;
-      context.showNotifier(
-        appLocalizations.applied,
-        level: MessageLevel.success,
-      );
+      dialogs.showBanner(appLocalizations.applied, level: BannerLevel.success);
     } finally {
       if (mounted) {
         setState(() {
@@ -110,7 +105,7 @@ class _ExtendViewState extends ConsumerState<ExtendView> {
             !const DeepCollectionEquality().equals(_applied, inputs));
     return ProfileIdProvider(
       profileId: widget.profileId,
-      child: CommonScaffold(
+      child: Scaffold(
         title: appLocalizations.extend,
         isLoading: _applying,
         actions: [
@@ -122,17 +117,22 @@ class _ExtendViewState extends ConsumerState<ExtendView> {
               child: Text(appLocalizations.applyNow),
             ),
         ],
-        body: ScrollConfiguration(
-          behavior: const ShowBarScrollBehavior(),
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: SizedBox(height: context.sectionsTopPadding),
-              ),
-              const _ModeSection(),
-              const _Content(),
-              SliverToBoxAdapter(child: SizedBox(height: context.bottomInset)),
-            ],
+        body: NullStatusSwitcher(
+          isLoading: inputs == null,
+          child: ScrollConfiguration(
+            behavior: const ShowBarScrollBehavior(),
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.sectionsTopPadding),
+                ),
+                const ScriptContent(),
+                const AddedRulesContent(),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.bottomInset),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -143,66 +143,5 @@ class _ExtendViewState extends ConsumerState<ExtendView> {
   void dispose() {
     _setupAction.autoApplyProfile();
     super.dispose();
-  }
-}
-
-class _ModeSection extends ConsumerWidget {
-  const _ModeSection();
-
-  String _label(AppLocalizations l, ExtendType type) => switch (type) {
-    ExtendType.standard => l.standard,
-    ExtendType.script => l.script,
-  };
-
-  String _description(AppLocalizations l, ExtendType type) => switch (type) {
-    ExtendType.standard => l.standardModeDesc,
-    ExtendType.script => l.scriptModeDesc,
-  };
-
-  void _handleChangeType(WidgetRef ref, int profileId, ExtendType type) {
-    ref.read(profilesProvider.notifier).updateProfile(profileId, (state) {
-      return state.copyWith(extendType: type);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final appLocalizations = context.appLocalizations;
-    final profileId = ProfileIdProvider.of(context)!.profileId;
-    final extendType = ref.watch(extendTypeProvider(profileId));
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      sliver: SliverToBoxAdapter(
-        child: generateSection(
-          title: appLocalizations.extendMode,
-          items: [
-            for (final type in ExtendType.values)
-              DecorationListItem(
-                isSelected: type == extendType,
-                title: Text(_label(appLocalizations, type)),
-                subtitle: Text(_description(appLocalizations, type)),
-                trailing: type == extendType
-                    ? const SelectionBadge(size: 24)
-                    : null,
-                onPressed: () => _handleChangeType(ref, profileId, type),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Content extends ConsumerWidget {
-  const _Content();
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final profileId = ProfileIdProvider.of(context)!.profileId;
-    final extendType = ref.watch(extendTypeProvider(profileId));
-    return switch (extendType) {
-      ExtendType.standard => const StandardContent(),
-      ExtendType.script => const ScriptContent(),
-    };
   }
 }

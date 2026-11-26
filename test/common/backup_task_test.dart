@@ -374,19 +374,29 @@ void main() {
       );
 
       expect(data.profiles.single.scriptId, data.scripts.single.id);
-      expect(data.profiles.single.extendType, ExtendType.script);
     });
 
-    test('falls a custom overwrite back to a standard one', () async {
+    test('keeps the global rules out of a script overwrite', () async {
       writeFile(join(source.path, 'profiles', 'p1.yaml'), '');
 
       final data = await migrateLegacyConfig(
         configMap: legacyConfig(
+          rules: [
+            <String, Object?>{'id': 'g1', 'value': 'DOMAIN,global.com,DIRECT'},
+          ],
           profiles: [
             {
               'id': 'p1',
               'autoUpdateDuration': 0,
-              'overwrite': {'type': 'custom'},
+              'overwrite': {
+                'type': 'script',
+                'standardOverwrite': {
+                  'addedRules': [
+                    {'id': 'r1', 'value': 'DOMAIN,own.com,DIRECT'},
+                  ],
+                  'disabledRuleIds': ['r1'],
+                },
+              },
             },
           ],
         ),
@@ -394,7 +404,36 @@ void main() {
         targetPath: target.path,
       );
 
-      expect(data.profiles.single.extendType, ExtendType.standard);
+      final global = data.rules.singleWhere((rule) => rule.profileId == null);
+      expect(data.disabledRules, [
+        DisabledRule(profileId: data.profiles.single.id, ruleId: global.id),
+      ]);
+    });
+
+    test('drops the script a standard overwrite left unused', () async {
+      writeFile(join(source.path, 'profiles', 'p1.yaml'), '');
+
+      final data = await migrateLegacyConfig(
+        configMap: legacyConfig(
+          scripts: [
+            {'id': 's1', 'label': 'S', 'content': 'body'},
+          ],
+          profiles: [
+            {
+              'id': 'p1',
+              'autoUpdateDuration': 0,
+              'overwrite': {
+                'type': 'standard',
+                'scriptOverwrite': {'scriptId': 's1'},
+              },
+            },
+          ],
+        ),
+        sourcePath: source.path,
+        targetPath: target.path,
+      );
+
+      expect(data.profiles.single.scriptId, isNull);
     });
 
     test('remaps currentProfileId and nulls it when there is none', () async {
@@ -594,6 +633,58 @@ void main() {
           ).readAsStringSync(),
         ),
         ['proxies: []', 'body', 'payload: []'],
+      );
+    });
+
+    test('local modules and their attachments are kept, '
+        'and nothing else under mitm', () async {
+      final database = db.Database(NativeDatabase(File(databasePath)));
+      final local = MitmModule(
+        id: 4,
+        name: 'Local',
+        resources: const {'own.json': 'own.json', 'key': '../ca.key'},
+        lastUpdateTime: DateTime(2026),
+      );
+      final remote = local.copyWith(
+        id: 5,
+        url: 'https://a.example.com/m',
+        resources: const {'https://a.example.com/a.js': 'a.js', 'b.js': 'b.js'},
+      );
+      await database.mitmModulesDao.putAll([
+        local.toCompanion(),
+        remote.toCompanion(),
+      ]);
+      await database.close();
+      writeFile(join(home.path, 'mitm', 'modules', '4.txt'), 'local module');
+      writeFile(join(home.path, 'mitm', 'modules', '5.txt'), 'remote module');
+      writeFile(join(home.path, 'mitm', 'resources', 'own.json'), '{}');
+      writeFile(join(home.path, 'mitm', 'resources', 'a.js'), 'a');
+      writeFile(join(home.path, 'mitm', 'resources', 'b.js'), 'b');
+      writeFile(join(home.path, 'mitm', 'ca.key'), 'secret');
+
+      final archivePath = await backup(
+        configMap: const {'version': 1},
+        entries: BackupEntries.of(
+          profileIds: const [],
+          scriptIds: const [],
+          providers: const [],
+          mitmModules: [local, remote],
+        ),
+      );
+      final data = await restore(archivePath);
+
+      expect(data.mitmModules.map((module) => module.id), [4, 5]);
+      expect(BackupEntries.ofData(data), [
+        'mitm/modules/4.txt',
+        'mitm/resources/own.json',
+      ]);
+      expect(
+        BackupEntries.ofData(data).map(
+          (entry) => File(
+            BackupEntries.resolve(staging.path, entry),
+          ).readAsStringSync(),
+        ),
+        ['local module', '{}'],
       );
     });
 

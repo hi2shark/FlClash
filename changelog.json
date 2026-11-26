@@ -2,19 +2,562 @@
   "schemaVersion": 2,
   "versions": [
     {
-      "version": "0.9.201",
-      "tag": "v0.9.201",
-      "date": "2026-10-25",
+      "version": "0.9.5",
+      "tag": "v0.9.5",
+      "date": "2026-11-26",
       "prerelease": false,
       "groups": [
         {
           "type": "feat",
           "entries": [
             {
-              "id": "39913bf",
-              "scope": "core",
-              "text": "align the Nowhere core with clash-meta-nw 3.1.1"
+              "id": "1951468",
+              "scope": "about",
+              "text": "Icons and even spacing for the update settings on the About page"
             },
+            {
+              "id": "0981835",
+              "scope": "window",
+              "text": "Pause live updates on desktop while the screen is asleep or locked"
+            },
+            {
+              "id": "73a0182",
+              "scope": "update",
+              "text": "Install macOS updates from inside the app"
+            },
+            {
+              "id": "94288d7",
+              "scope": "proxies",
+              "text": "Proxy groups unfold smoothly as one block"
+            },
+            {
+              "id": "a27fab5",
+              "scope": "connection",
+              "text": "Connection, request, DNS, outbound IP and log details use smaller text with more room"
+            },
+            {
+              "id": "83214b6",
+              "scope": "prism_ui",
+              "text": "List rows follow a smaller text size, as they already did a larger one"
+            },
+            {
+              "id": "219bc95",
+              "scope": "prism_ui",
+              "text": "The phone tab bar spaces five tabs and sets out icons and labels as iOS does",
+              "merges": [
+                "6df8325"
+              ]
+            },
+            {
+              "id": "7b97a68",
+              "scope": "about",
+              "text": "The automatic update check and the update channel moved from General settings to the About page"
+            },
+            {
+              "id": "0db670d",
+              "scope": "logs",
+              "text": "Filter logs from a button beside search"
+            },
+            {
+              "id": "ef7dc6e",
+              "scope": "logs",
+              "text": "Set the log level from the Logs page"
+            },
+            {
+              "id": "9c931f7",
+              "scope": "requests",
+              "text": "Connections become Requests: connections by minute with All, Active and Failed counts, conditions on app, exit, rule or protocol, a timeline for each connection, DNS queries, segments that keep their place, and new rows held under a desktop pointer",
+              "merges": [
+                "2d1126f",
+                "617223a",
+                "bf6c3c2"
+              ]
+            },
+            {
+              "id": "562e11f",
+              "scope": "update",
+              "text": "Choose between stable and prerelease updates in the settings; the prerelease check finds the newest release and names the installed prerelease",
+              "merges": [
+                "14e87f4"
+              ]
+            },
+            {
+              "id": "8fc8909",
+              "scope": "ui",
+              "text": "Lists and cards share one set of margins, so rows line up across pages"
+            },
+            {
+              "id": "0eb1e11",
+              "scope": "dashboard",
+              "text": "The dashboard's outbound mode card is titled Outbound, leaving its mode buttons more room"
+            },
+            {
+              "id": "79d5a59",
+              "scope": "ui",
+              "text": "Grouped lists match iOS 27: row heights, margins, corners and section spacing"
+            },
+            {
+              "id": "46522eb",
+              "scope": "logs",
+              "text": "On desktop, Logs moves from the sidebar into Tools"
+            },
+            {
+              "id": "888a1df",
+              "scope": "connections",
+              "text": "Connections on macOS, Windows and Linux show the icon of the app that made them"
+            },
+            {
+              "id": "f18f92e",
+              "scope": "navigation",
+              "text": "Requests sits right after Proxies in the desktop sidebar"
+            },
+            {
+              "id": "8736f48",
+              "scope": "connections",
+              "text": "Connections that failed to connect now show in the requests list, with the reason"
+            },
+            {
+              "id": "afe7136",
+              "scope": "update",
+              "text": "When an update has no file to download, the app opens the release page to download it by hand"
+            }
+          ]
+        },
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "0105a4f",
+              "scope": "proxies",
+              "text": "A rounder, larger delay test icon on proxy cards"
+            },
+            {
+              "id": "4abbd15",
+              "scope": "prism_ui",
+              "text": "Navigation bar tabs fit their titles, and a tap near a tab's edge selects it"
+            },
+            {
+              "id": "8682368",
+              "scope": "dashboard",
+              "text": "Live connections on the dashboard open on the active ones"
+            },
+            {
+              "id": "9b01010",
+              "scope": "rules",
+              "text": "The rule type picker and rule lists show rule types as profiles write them, such as DOMAIN-KEYWORD, and rule search finds a rule by that name",
+              "merges": [
+                "da96bd0"
+              ]
+            },
+            {
+              "id": "06643c3",
+              "scope": "core",
+              "text": "A stop whose answer is lost with the connection to the core no longer turns the proxy back on when the core comes back"
+            },
+            {
+              "id": "932826b",
+              "scope": "setup",
+              "text": "Restarting the core with TUN on no longer hangs when it has to ask for authorization again"
+            },
+            {
+              "id": "f95f0f1",
+              "scope": "core",
+              "text": "On desktop, a restart asked for while the core is still starting, such as after installing the helper, now restarts it, and the core can start again after a start whose local connection setup hung"
+            },
+            {
+              "id": "7a63bb4",
+              "scope": "core",
+              "text": "On Android, stopping while the core is still starting no longer leaves it running, and a start that failed while sending settings to the core no longer blocks the next start"
+            },
+            {
+              "id": "fee1b89",
+              "scope": "probes",
+              "text": "Recheck watched service failures with backoff",
+              "merges": [
+                "a588140"
+              ]
+            },
+            {
+              "id": "1a57072",
+              "scope": "probes",
+              "text": "Service checks recover automatically when a chain switches to a working front proxy"
+            },
+            {
+              "id": "fac7b07",
+              "scope": "setup",
+              "text": "Dashboard checks wait for startup to finish when you tap Start as the app opens"
+            },
+            {
+              "id": "18eaaea",
+              "scope": "l10n",
+              "text": "Shorter descriptions in network, DNS and general settings"
+            },
+            {
+              "id": "a47cac5",
+              "scope": "segmented-control",
+              "text": "Segmented controls follow the system's reduce motion setting"
+            },
+            {
+              "id": "d45da9d",
+              "scope": "connected-button",
+              "text": "Screen readers can now switch the dashboard's outbound mode"
+            },
+            {
+              "id": "21846fc",
+              "scope": "scaffold",
+              "text": "On wider phones the top bar buttons line up with the list cards below them"
+            },
+            {
+              "id": "e3b13e7",
+              "scope": "scaffold",
+              "text": "Opening search puts the cursor in its field even when something else on the page has the focus"
+            },
+            {
+              "id": "e3ebcf1",
+              "scope": "android",
+              "text": "App icons in access control and connections load from the cache instead of being redrawn every day"
+            },
+            {
+              "id": "30817b4",
+              "scope": "core",
+              "text": "On macOS, connections show the app that opened them again"
+            },
+            {
+              "id": "6611671",
+              "scope": "window",
+              "text": "A hidden window no longer takes the foreground from a full-screen game on Windows"
+            },
+            {
+              "id": "0ff56e5",
+              "scope": "linux",
+              "text": "The Linux window is no longer drawn shifted toward the bottom left on NVIDIA and other drivers without glBlitFramebuffer"
+            },
+            {
+              "id": "746f7b0",
+              "scope": "tray",
+              "text": "When the menu bar or tray icon cannot be shown, the log says why"
+            },
+            {
+              "id": "0d3a33f",
+              "scope": "macos",
+              "text": "Intel Macs render with Skia again, fixing the hang at launch on older GPUs"
+            },
+            {
+              "id": "b16e2db",
+              "scope": "dashboard",
+              "text": "Service checks show the address Claude and ChatGPT actually saw, not only the node's exit address"
+            },
+            {
+              "id": "80a86bc",
+              "scope": "core",
+              "text": "Gemini check no longer reports Hong Kong and Macau nodes as unsupported"
+            },
+            {
+              "id": "e7b017e",
+              "scope": "core",
+              "text": "macOS no longer collects defunct dscacheutil processes each time TUN is turned on or off"
+            },
+            {
+              "id": "80cc61b",
+              "scope": "config",
+              "text": "The default bypass list no longer skips the proxy for public 172.2* addresses, and the default fake-ip filter names Windows' real connectivity check hosts"
+            },
+            {
+              "id": "ce13953",
+              "scope": "ui",
+              "text": "Pages open and close again after the display sleeps or changes"
+            }
+          ]
+        },
+        {
+          "type": "perf",
+          "entries": [
+            {
+              "id": "c5c7ef0",
+              "scope": "code_forge",
+              "text": "Large files open in the editor without a pause"
+            },
+            {
+              "id": "c8d1e9d",
+              "scope": "db",
+              "text": "Profiles with many rules, groups or proxies open and update without stalling the screen"
+            },
+            {
+              "id": "b2267cb",
+              "scope": "route",
+              "text": "Pages that load their data open at once with a spinner instead of pausing before they slide in"
+            },
+            {
+              "id": "7393ea4",
+              "scope": "android",
+              "text": "Use less battery on Android in the background"
+            },
+            {
+              "id": "8eb40a9",
+              "scope": "ui",
+              "text": "Open list editors and pages over others more smoothly"
+            },
+            {
+              "id": "edc6709",
+              "scope": "dashboard",
+              "text": "Smoother dashboard and tab switches, with one redraw a second while connected"
+            },
+            {
+              "id": "e21abb4",
+              "scope": "proxies",
+              "text": "Smoother proxy pages when switching groups, sorting and scrolling"
+            },
+            {
+              "id": "49df9ea",
+              "scope": "prism_ui",
+              "text": "Swiping back on phones drops fewer frames"
+            }
+          ]
+        }
+      ],
+      "omit": [
+        "9281e12",
+        "32e40e4",
+        "a8c4144"
+      ]
+    },
+    {
+      "version": "0.9.4",
+      "tag": "v0.9.4",
+      "date": "2026-11-19",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "feat",
+          "entries": [
+            {
+              "id": "a89b339",
+              "scope": "dashboard",
+              "text": "One status button gathers core, update and resource states, with counts, download progress and new card icons",
+              "merges": [
+                "c6d1b4d",
+                "aacc062"
+              ]
+            },
+            {
+              "id": "c8b34f2",
+              "scope": "rules",
+              "text": "Added rules can go to named custom exits; a profile's script and added rules run together and open from the extend page",
+              "merges": [
+                "79a6f91",
+                "e409406"
+              ]
+            },
+            {
+              "id": "7633c3c",
+              "scope": "proxy",
+              "text": "PAC mode for the desktop system proxy; new Windows installs bypass <local>; GTK apps on KDE Plasma follow the proxy",
+              "merges": [
+                "ea458b5"
+              ]
+            },
+            {
+              "id": "ca2693a",
+              "scope": "dns",
+              "text": "respect-rules, hosts and cache-algorithm in the DNS overrides; macOS system DNS through tun.dns-mode native",
+              "merges": [
+                "695bd9e"
+              ]
+            },
+            {
+              "id": "c85bf3a",
+              "scope": "logs",
+              "text": "Open a log on a phone to select and copy it"
+            },
+            {
+              "id": "1b2ea11",
+              "scope": "resources",
+              "text": "Geo resources update automatically by default"
+            },
+            {
+              "id": "848583d",
+              "scope": "desktop",
+              "text": "Impeller on Windows and Intel Macs; the Apple Silicon download no longer carries Intel code"
+            },
+            {
+              "id": "e57e5ac",
+              "text": "Update the core to mihomo v1.19.34, with editor completion for its new keys"
+            }
+          ]
+        },
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "8298573",
+              "scope": "core",
+              "text": "A start that fails or a lost Core says why; a mixed port of 0 is replaced; the mixed port opens without a profile",
+              "merges": [
+                "65de33a",
+                "153a04b",
+                "396f2b5",
+                "609dfc3",
+                "26747be"
+              ]
+            },
+            {
+              "id": "044f5b5",
+              "scope": "config",
+              "text": "Process rules match by default; picked override keys are written as set, empty included",
+              "merges": [
+                "e1669a6"
+              ]
+            },
+            {
+              "id": "b13cf52",
+              "scope": "android",
+              "text": "WireGuard, Hysteria2 and TUIC reconnect after a network change; core sockets opened before the VPN are protected",
+              "merges": [
+                "43a7af8"
+              ]
+            },
+            {
+              "id": "408aaa9",
+              "scope": "dashboard",
+              "text": "Service and exit IP checks no longer fail while the proxy starts, stops or changes network"
+            },
+            {
+              "id": "47824d4",
+              "scope": "core",
+              "text": "HTTPUpgrade share links no longer import as WebSocket"
+            },
+            {
+              "id": "5c5964f",
+              "scope": "connections",
+              "text": "App icons show whenever the app is known and keep their place while loading",
+              "merges": [
+                "474920c"
+              ]
+            },
+            {
+              "id": "c620dc9",
+              "scope": "desktop",
+              "text": "macOS tray windows stay on the current Space; windows use the target display's scale; AppImage without a bundled libstdc++; cleaner deb removal; the Windows installer only stops its own processes",
+              "merges": [
+                "fad47df",
+                "39a54ac",
+                "99bc411",
+                "fc3e8bb"
+              ]
+            },
+            {
+              "id": "b08bcd9",
+              "scope": "ui",
+              "text": "Pages open at the top and on the selected profile; sheets open from sheets as pages; the editor shows its spinner and grows its sheet; calmer success and warning colors; remote icons hold their size",
+              "merges": [
+                "1a0ab61",
+                "e750293",
+                "49becb3",
+                "fa5663f",
+                "e56d779",
+                "cafc288",
+                "4f4bff8",
+                "6be6fde",
+                "0fdd955",
+                "f124cf6",
+                "c1c9332"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "perf",
+          "entries": [
+            {
+              "id": "19fb1b0",
+              "scope": "connections",
+              "text": "Connections rank and sort off the UI thread; proxy and group icons use less memory",
+              "merges": [
+                "df8b684"
+              ]
+            }
+          ]
+        }
+      ],
+      "omit": [
+        "f3df1b6",
+        "016dc8b",
+        "7140e37",
+        "7801976",
+        "f29013b",
+        "f1623e1",
+        "0a55a31",
+        "2d31f10",
+        "3d05b37",
+        "96b405f",
+        "57b9b6c",
+        "a0eda19",
+        "036f462",
+        "3ddcdf6",
+        "5766b05",
+        "2f3a2ca",
+        "fe7ef13",
+        "bc1ac73",
+        "bc58d86"
+      ]
+    },
+    {
+      "version": "0.9.3",
+      "tag": "v0.9.3",
+      "date": "2026-11-04",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "feat",
+          "entries": [
+            {
+              "id": "52b975f",
+              "scope": "connections",
+              "text": "Merged requests and connections; quick edit lists"
+            },
+            {
+              "id": "bb47f2c",
+              "scope": "ui",
+              "text": "iOS 27 transitions, press and text selection; smoother pages"
+            },
+            {
+              "id": "b8f84b3",
+              "scope": "update",
+              "text": "Download and install updates in the app"
+            },
+            {
+              "id": "2a5a42c",
+              "scope": "core",
+              "text": "One delay test timeout; VPN crash and startup fixes"
+            }
+          ]
+        },
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "7d5db7e",
+              "scope": "core",
+              "text": "Auto-select leaves an unusable first node at once"
+            },
+            {
+              "id": "63aaf6d",
+              "scope": "access",
+              "text": "Keep selections a filter hides"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.9.2",
+      "tag": "v0.9.2",
+      "date": "2026-10-24",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "feat",
+          "entries": [
             {
               "id": "e8aac17",
               "scope": "access",
@@ -104,73 +647,9 @@
       ]
     },
     {
-      "version": "0.9.104",
-      "tag": "v0.9.104",
-      "date": "2026-10-25",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "f3529c9",
-              "scope": "core",
-              "text": "Updated the Nowhere core to 3.1.0 with TLS certificate file path support"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.9.103",
-      "tag": "v0.9.103",
-      "date": "2026-10-25",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "5061e72",
-              "scope": "core",
-              "text": "update the embedded clash-meta-nw core to Nowhere 3.1.0 (nw3) with the 3.0.1 wire fixes"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.9.102",
-      "tag": "v0.9.102",
-      "date": "2026-10-24",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "breaking",
-          "entries": [
-            {
-              "id": "cb9f165",
-              "scope": "unlock-test",
-              "text": "The unlock test page, the unlock detection and core memory dashboard widgets are gone, and the database upgrade deletes stored unlock test run history."
-            }
-          ]
-        },
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "cb9f165",
-              "scope": "unlock-test",
-              "text": "Removed the unlock test feature, its dashboard widgets and stored run history"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.9.101",
-      "tag": "v0.9.101",
-      "date": "2026-10-23",
+      "version": "0.9.1",
+      "tag": "v0.9.1",
+      "date": "2026-10-17",
       "prerelease": false,
       "groups": [
         {
@@ -186,11 +665,6 @@
         {
           "type": "feat",
           "entries": [
-            {
-              "id": "bd621a8",
-              "scope": "local-proxies",
-              "text": "Pick protocols from a two-column grid and add Sudoku"
-            },
             {
               "id": "f43755c",
               "scope": "l10n",
@@ -271,870 +745,6 @@
       ]
     },
     {
-      "version": "0.9.2",
-      "tag": "v0.9.0002",
-      "date": "2026-10-19",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "06f5fe2",
-              "scope": "nowhere",
-              "text": "Switch core to clash-meta-nw and support Nowhere 3"
-            },
-            {
-              "id": "31c2d8c",
-              "scope": "localization",
-              "text": "Add new localization strings and enhance validation for Nowhere proxy"
-            },
-            {
-              "id": "80b6e2b",
-              "scope": "notification",
-              "text": "Add show stop action feature and enhance localization"
-            },
-            {
-              "id": "0506324",
-              "scope": "localization",
-              "text": "Add new localization strings for EasyTier and related network settings"
-            },
-            {
-              "id": "ae38b87",
-              "scope": "local-proxy",
-              "text": "Enhance local proxy configuration with new parameters and localization"
-            },
-            {
-              "id": "b3ed41c",
-              "scope": "memory",
-              "text": "Add core memory management and localization support"
-            },
-            {
-              "id": "474c383",
-              "scope": "core",
-              "text": "Implement AIDL payload size limit and optimize traffic speed caching"
-            },
-            {
-              "id": "d927f57",
-              "scope": "vpn",
-              "text": "Enhance service start/stop handling and add retry logic"
-            },
-            {
-              "id": "bbedfb4",
-              "scope": "effective_config",
-              "text": "Add Effective Config feature and localization"
-            },
-            {
-              "id": "a7967ae",
-              "scope": "vpn",
-              "text": "Add dnsEnable option and enhance DNS handling"
-            },
-            {
-              "id": "3f322a7",
-              "scope": "network_test",
-              "text": "Add custom download URL functionality and localization"
-            },
-            {
-              "id": "53508b5",
-              "scope": "unlock_test",
-              "text": "Enhance unlock test functionality and localization"
-            },
-            {
-              "id": "98f45c2",
-              "scope": "unlock_test",
-              "text": "Implement unlock detection functionality and localization"
-            },
-            {
-              "id": "b819366",
-              "scope": "local_proxy",
-              "text": "Enhance local proxy configuration with new fields and localization"
-            },
-            {
-              "id": "4968b4e",
-              "scope": "quic_test",
-              "text": "Enhance QUIC test results with additional metrics and localization"
-            },
-            {
-              "id": "d5a7cbc",
-              "scope": "network_tests",
-              "text": "Add speed and QUIC testing functionality"
-            },
-            {
-              "id": "3f2c7ba",
-              "scope": "local_proxy",
-              "text": "Add new configuration options for ECH and local proxy settings"
-            },
-            {
-              "id": "4f8e0a7",
-              "scope": "local_proxy",
-              "text": "Enhance LocalProxyStore with migration and unique ID handling"
-            },
-            {
-              "id": "81f2b8f",
-              "scope": "service",
-              "text": "Enhance WifiWatchSuspendController with persistent force resume handling"
-            },
-            {
-              "id": "71a1c76",
-              "text": "Add on-demand feature toggle to config"
-            },
-            {
-              "id": "d6d22c1",
-              "scope": "setup",
-              "text": "Enhance resolveRepository to accept environment parameter and improve fallback logic"
-            },
-            {
-              "id": "4d50bb8",
-              "scope": "setup",
-              "text": "Add repository option for in-app updates and enhance argument parsing"
-            },
-            {
-              "id": "284085b",
-              "scope": "local_proxy",
-              "text": "Add resetMixinOnProfileSwitch method and update profile handling"
-            },
-            {
-              "id": "b28179c",
-              "scope": "service",
-              "text": "Implement lifecycle locking and enhance service suspension handling"
-            },
-            {
-              "id": "43e8ea0",
-              "scope": "local_proxy",
-              "text": "Enhance local proxy configuration and localization support"
-            },
-            {
-              "id": "1a38d72",
-              "scope": "local_proxies",
-              "text": "Add LocalProxiesView and integrate into navigation"
-            },
-            {
-              "id": "0a7bb50",
-              "scope": "local_proxy",
-              "text": "Add local proxy mix-in functionality and enhance localization support"
-            },
-            {
-              "id": "c722f31",
-              "scope": "wifi-watch",
-              "text": "Implement WifiWatchResumeRetry for handling resume failures with backoff"
-            },
-            {
-              "id": "6fd8109",
-              "scope": "tests",
-              "text": "Refactor TooltipText test layout to use Center widget"
-            },
-            {
-              "id": "b32e77a",
-              "scope": "tests",
-              "text": "Enhance TooltipText tests for rich text handling and overflow behavior"
-            },
-            {
-              "id": "26f7669",
-              "scope": "wifi-watch",
-              "text": "Implement default network monitoring and force resume logic"
-            },
-            {
-              "id": "40f1746",
-              "scope": "wifi-watch",
-              "text": "Add suspended state handling and update notification parameters"
-            },
-            {
-              "id": "1787547",
-              "scope": "wifi-watch",
-              "text": "Implement WiFi watch state handling and broadcast integration"
-            },
-            {
-              "id": "f95ab62",
-              "scope": "ui",
-              "text": "Enhance tooltip message handling and improve wifi display logic"
-            },
-            {
-              "id": "3b360de",
-              "scope": "wifi-watch",
-              "text": "Add prioritization logic for action status and enhance state management"
-            },
-            {
-              "id": "948bf95",
-              "scope": "ui",
-              "text": "Tap current wifi ssid to copy in on demand view"
-            },
-            {
-              "id": "35e1af7",
-              "scope": "wifi-watch",
-              "text": "Enhance WiFi information retrieval and update UI components"
-            },
-            {
-              "id": "d04fbeb",
-              "scope": "wifi-watch",
-              "text": "Add permissions for nearby WiFi devices and change network state"
-            },
-            {
-              "id": "26e2192",
-              "scope": "wifi-watch",
-              "text": "Add background location permission handling and update related UI components"
-            },
-            {
-              "id": "3da20b7",
-              "scope": "wifi-watch",
-              "text": "Add current WiFi connection details and update UI components"
-            },
-            {
-              "id": "42fd6fc",
-              "scope": "build",
-              "text": "Add version parameter to setup script for better version tracking"
-            },
-            {
-              "id": "45cd2d5",
-              "scope": "wifi-watch",
-              "text": "Add rawSsid to WifiWatchState and update UI to display it"
-            },
-            {
-              "id": "0f783f5",
-              "scope": "wifi-watch",
-              "text": "Update getWifiWatchState to use runBlocking for synchronous execution"
-            },
-            {
-              "id": "771a863",
-              "scope": "wifi-watch",
-              "text": "Add getWifiWatchState method and refine signal strength icons"
-            },
-            {
-              "id": "a8a39dd",
-              "scope": "wifi-watch",
-              "text": "Implement WiFi watch functionality and UI integration"
-            },
-            {
-              "id": "c1bcc02",
-              "scope": "local_proxy",
-              "text": "Add local proxy mix-in functionality and enhance localization support"
-            },
-            {
-              "id": "4c28d4c",
-              "scope": "ci",
-              "text": "Expand build matrix for additional platforms and architectures"
-            },
-            {
-              "id": "f7a22d3",
-              "scope": "wifi_ssid",
-              "text": "Reconcile unresolved SSID and expose network status"
-            },
-            {
-              "id": "278adbb",
-              "scope": "android",
-              "text": "Reconcile unresolved SSID in WiFi-watch module"
-            },
-            {
-              "id": "16a03c6",
-              "scope": "android",
-              "text": "WiFi-watch SSID resolution grace period"
-            },
-            {
-              "id": "7c4a7f2",
-              "scope": "android/service",
-              "text": "Ignore transient null SSID during AP switches"
-            },
-            {
-              "id": "d7a01da",
-              "scope": "android",
-              "text": "Use RSSI fallback to judge trusted WiFi while VPN is active"
-            },
-            {
-              "id": "7ea6af6",
-              "scope": "ui",
-              "text": "Wire Android service suspension through app layers"
-            },
-            {
-              "id": "f22c8f7",
-              "scope": "state",
-              "text": "Add suspendOnWifiSsids to SharedState and AndroidServiceSuspended provider"
-            },
-            {
-              "id": "207ecfa",
-              "scope": "android/app",
-              "text": "Propagate service suspended state to Flutter"
-            },
-            {
-              "id": "efe8027",
-              "scope": "android/service",
-              "text": "Add WiFi-watch auto-suspend and suspension reasons"
-            },
-            {
-              "id": "0afa604",
-              "scope": "wifi_ssid",
-              "text": "Add validated WiFi SSID stream for Android"
-            },
-            {
-              "id": "4e300bd",
-              "text": "精简构建工作流，移除不必要的平台配置和步骤"
-            },
-            {
-              "id": "9c71477",
-              "text": "添加版本覆盖选项以更新 pubspec.yaml 中的应用版本"
-            },
-            {
-              "id": "1df0036",
-              "text": "添加 VPN 暂停控制器并重构服务暂停逻辑"
-            },
-            {
-              "id": "c0660b6",
-              "text": "添加 wifiSuspended 属性以支持 WiFi 监控功能"
-            },
-            {
-              "id": "45ab907",
-              "text": "Implement service suspension functionality"
-            },
-            {
-              "id": "989f797",
-              "text": "Migrate Clash.Meta core to hi2shark fork with compatibility patches"
-            }
-          ]
-        },
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "b33a8c4",
-              "scope": "dart",
-              "text": "Local proxies, local rules and network test pages no longer sit under the floating top bar"
-            },
-            {
-              "id": "bc3080e",
-              "scope": "tests",
-              "text": "Update fakePacketConn and enhance quicUDPAddr resolution"
-            },
-            {
-              "id": "4bc14e6",
-              "scope": "ci",
-              "text": "Clone private mihomo submodule with a dedicated checkout token"
-            },
-            {
-              "id": "ce2e4ba",
-              "scope": "tests",
-              "text": "Update truncate behavior tests for list handling"
-            },
-            {
-              "id": "a53dc28",
-              "scope": "task",
-              "text": "Improve type checks and handling for configuration properties"
-            },
-            {
-              "id": "06701b3",
-              "scope": "core",
-              "text": "Reset Clash.Meta to origin/Alpha"
-            },
-            {
-              "id": "22e3fbe",
-              "scope": "network_test",
-              "text": "Update delegate type check for node selection"
-            },
-            {
-              "id": "e6c07fd",
-              "scope": "wifi_watch",
-              "text": "Adjust icon size and spacing in WifiWatchCard widget"
-            },
-            {
-              "id": "1c39f9c",
-              "scope": "wifi",
-              "text": "Improve fallback handling for current WiFi network status during AP switch"
-            },
-            {
-              "id": "897fefb",
-              "scope": "localization",
-              "text": "Update 'nowhereShareKey' string for clarity across multiple languages"
-            },
-            {
-              "id": "2242b4b",
-              "scope": "ui",
-              "text": "Make wifi watch dashboard card full width"
-            },
-            {
-              "id": "a436ea7",
-              "scope": "ui",
-              "text": "Add bottom padding to on demand view"
-            },
-            {
-              "id": "e8cf052",
-              "scope": "core",
-              "text": "Update subproject commit reference in Clash.Meta"
-            },
-            {
-              "id": "fd213b1",
-              "scope": "on-demand",
-              "text": "Adjust padding in current WiFi section for better layout"
-            },
-            {
-              "id": "897466a",
-              "scope": "wifi-watch",
-              "text": "Correct ssid display logic in WifiWatchCard fix(dismissible): update alignment property in SizeTransition"
-            },
-            {
-              "id": "5670aa5",
-              "scope": "app_manager",
-              "text": "Simplify listener control by removing unnecessary await"
-            },
-            {
-              "id": "6b780d2",
-              "scope": "core",
-              "text": "Update subproject commit reference in Clash.Meta"
-            },
-            {
-              "id": "39c6e8f",
-              "scope": "core",
-              "text": "Update subproject commit reference in Clash.Meta"
-            },
-            {
-              "id": "babdfdb",
-              "scope": "android/service",
-              "text": "Correct return statement in SSID resolution grace handling"
-            },
-            {
-              "id": "43c1ffe",
-              "scope": "android",
-              "text": "Add kotlin-parcelize plugin for @Parcelize support"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.9.1",
-      "tag": "v0.9.01",
-      "date": "2026-10-18",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.9.1",
-      "tag": "v0.9.0001",
-      "date": "2026-10-18",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "58357ad",
-              "scope": "dart",
-              "text": "merge local proxy/rule, unlock test and wifi watch features onto 0.9.0"
-            },
-            {
-              "id": "2c8f7aa",
-              "scope": "core",
-              "text": "Port speedTest, quicTest and unlockTest methods"
-            },
-            {
-              "id": "06f5fe2",
-              "scope": "nowhere",
-              "text": "Switch core to clash-meta-nw and support Nowhere 3"
-            },
-            {
-              "id": "31c2d8c",
-              "scope": "localization",
-              "text": "Add new localization strings and enhance validation for Nowhere proxy"
-            },
-            {
-              "id": "80b6e2b",
-              "scope": "notification",
-              "text": "Add show stop action feature and enhance localization"
-            },
-            {
-              "id": "0506324",
-              "scope": "localization",
-              "text": "Add new localization strings for EasyTier and related network settings"
-            },
-            {
-              "id": "ae38b87",
-              "scope": "local-proxy",
-              "text": "Enhance local proxy configuration with new parameters and localization"
-            },
-            {
-              "id": "b3ed41c",
-              "scope": "memory",
-              "text": "Add core memory management and localization support"
-            },
-            {
-              "id": "474c383",
-              "scope": "core",
-              "text": "Implement AIDL payload size limit and optimize traffic speed caching"
-            },
-            {
-              "id": "d927f57",
-              "scope": "vpn",
-              "text": "Enhance service start/stop handling and add retry logic"
-            },
-            {
-              "id": "bbedfb4",
-              "scope": "effective_config",
-              "text": "Add Effective Config feature and localization"
-            },
-            {
-              "id": "a7967ae",
-              "scope": "vpn",
-              "text": "Add dnsEnable option and enhance DNS handling"
-            },
-            {
-              "id": "3f322a7",
-              "scope": "network_test",
-              "text": "Add custom download URL functionality and localization"
-            },
-            {
-              "id": "53508b5",
-              "scope": "unlock_test",
-              "text": "Enhance unlock test functionality and localization"
-            },
-            {
-              "id": "98f45c2",
-              "scope": "unlock_test",
-              "text": "Implement unlock detection functionality and localization"
-            },
-            {
-              "id": "b819366",
-              "scope": "local_proxy",
-              "text": "Enhance local proxy configuration with new fields and localization"
-            },
-            {
-              "id": "4968b4e",
-              "scope": "quic_test",
-              "text": "Enhance QUIC test results with additional metrics and localization"
-            },
-            {
-              "id": "d5a7cbc",
-              "scope": "network_tests",
-              "text": "Add speed and QUIC testing functionality"
-            },
-            {
-              "id": "3f2c7ba",
-              "scope": "local_proxy",
-              "text": "Add new configuration options for ECH and local proxy settings"
-            },
-            {
-              "id": "4f8e0a7",
-              "scope": "local_proxy",
-              "text": "Enhance LocalProxyStore with migration and unique ID handling"
-            },
-            {
-              "id": "81f2b8f",
-              "scope": "service",
-              "text": "Enhance WifiWatchSuspendController with persistent force resume handling"
-            },
-            {
-              "id": "71a1c76",
-              "text": "Add on-demand feature toggle to config"
-            },
-            {
-              "id": "d6d22c1",
-              "scope": "setup",
-              "text": "Enhance resolveRepository to accept environment parameter and improve fallback logic"
-            },
-            {
-              "id": "4d50bb8",
-              "scope": "setup",
-              "text": "Add repository option for in-app updates and enhance argument parsing"
-            },
-            {
-              "id": "284085b",
-              "scope": "local_proxy",
-              "text": "Add resetMixinOnProfileSwitch method and update profile handling"
-            },
-            {
-              "id": "b28179c",
-              "scope": "service",
-              "text": "Implement lifecycle locking and enhance service suspension handling"
-            },
-            {
-              "id": "43e8ea0",
-              "scope": "local_proxy",
-              "text": "Enhance local proxy configuration and localization support"
-            },
-            {
-              "id": "1a38d72",
-              "scope": "local_proxies",
-              "text": "Add LocalProxiesView and integrate into navigation"
-            },
-            {
-              "id": "0a7bb50",
-              "scope": "local_proxy",
-              "text": "Add local proxy mix-in functionality and enhance localization support"
-            },
-            {
-              "id": "c722f31",
-              "scope": "wifi-watch",
-              "text": "Implement WifiWatchResumeRetry for handling resume failures with backoff"
-            },
-            {
-              "id": "6fd8109",
-              "scope": "tests",
-              "text": "Refactor TooltipText test layout to use Center widget"
-            },
-            {
-              "id": "b32e77a",
-              "scope": "tests",
-              "text": "Enhance TooltipText tests for rich text handling and overflow behavior"
-            },
-            {
-              "id": "26f7669",
-              "scope": "wifi-watch",
-              "text": "Implement default network monitoring and force resume logic"
-            },
-            {
-              "id": "40f1746",
-              "scope": "wifi-watch",
-              "text": "Add suspended state handling and update notification parameters"
-            },
-            {
-              "id": "1787547",
-              "scope": "wifi-watch",
-              "text": "Implement WiFi watch state handling and broadcast integration"
-            },
-            {
-              "id": "f95ab62",
-              "scope": "ui",
-              "text": "Enhance tooltip message handling and improve wifi display logic"
-            },
-            {
-              "id": "3b360de",
-              "scope": "wifi-watch",
-              "text": "Add prioritization logic for action status and enhance state management"
-            },
-            {
-              "id": "948bf95",
-              "scope": "ui",
-              "text": "Tap current wifi ssid to copy in on demand view"
-            },
-            {
-              "id": "35e1af7",
-              "scope": "wifi-watch",
-              "text": "Enhance WiFi information retrieval and update UI components"
-            },
-            {
-              "id": "d04fbeb",
-              "scope": "wifi-watch",
-              "text": "Add permissions for nearby WiFi devices and change network state"
-            },
-            {
-              "id": "26e2192",
-              "scope": "wifi-watch",
-              "text": "Add background location permission handling and update related UI components"
-            },
-            {
-              "id": "3da20b7",
-              "scope": "wifi-watch",
-              "text": "Add current WiFi connection details and update UI components"
-            },
-            {
-              "id": "42fd6fc",
-              "scope": "build",
-              "text": "Add version parameter to setup script for better version tracking"
-            },
-            {
-              "id": "45cd2d5",
-              "scope": "wifi-watch",
-              "text": "Add rawSsid to WifiWatchState and update UI to display it"
-            },
-            {
-              "id": "0f783f5",
-              "scope": "wifi-watch",
-              "text": "Update getWifiWatchState to use runBlocking for synchronous execution"
-            },
-            {
-              "id": "771a863",
-              "scope": "wifi-watch",
-              "text": "Add getWifiWatchState method and refine signal strength icons"
-            },
-            {
-              "id": "a8a39dd",
-              "scope": "wifi-watch",
-              "text": "Implement WiFi watch functionality and UI integration"
-            },
-            {
-              "id": "c1bcc02",
-              "scope": "local_proxy",
-              "text": "Add local proxy mix-in functionality and enhance localization support"
-            },
-            {
-              "id": "4c28d4c",
-              "scope": "ci",
-              "text": "Expand build matrix for additional platforms and architectures"
-            },
-            {
-              "id": "f7a22d3",
-              "scope": "wifi_ssid",
-              "text": "Reconcile unresolved SSID and expose network status"
-            },
-            {
-              "id": "278adbb",
-              "scope": "android",
-              "text": "Reconcile unresolved SSID in WiFi-watch module"
-            },
-            {
-              "id": "16a03c6",
-              "scope": "android",
-              "text": "WiFi-watch SSID resolution grace period"
-            },
-            {
-              "id": "7c4a7f2",
-              "scope": "android/service",
-              "text": "Ignore transient null SSID during AP switches"
-            },
-            {
-              "id": "d7a01da",
-              "scope": "android",
-              "text": "Use RSSI fallback to judge trusted WiFi while VPN is active"
-            },
-            {
-              "id": "7ea6af6",
-              "scope": "ui",
-              "text": "Wire Android service suspension through app layers"
-            },
-            {
-              "id": "f22c8f7",
-              "scope": "state",
-              "text": "Add suspendOnWifiSsids to SharedState and AndroidServiceSuspended provider"
-            },
-            {
-              "id": "207ecfa",
-              "scope": "android/app",
-              "text": "Propagate service suspended state to Flutter"
-            },
-            {
-              "id": "efe8027",
-              "scope": "android/service",
-              "text": "Add WiFi-watch auto-suspend and suspension reasons"
-            },
-            {
-              "id": "0afa604",
-              "scope": "wifi_ssid",
-              "text": "Add validated WiFi SSID stream for Android"
-            },
-            {
-              "id": "4e300bd",
-              "text": "精简构建工作流，移除不必要的平台配置和步骤"
-            },
-            {
-              "id": "9c71477",
-              "text": "添加版本覆盖选项以更新 pubspec.yaml 中的应用版本"
-            },
-            {
-              "id": "1df0036",
-              "text": "添加 VPN 暂停控制器并重构服务暂停逻辑"
-            },
-            {
-              "id": "c0660b6",
-              "text": "添加 wifiSuspended 属性以支持 WiFi 监控功能"
-            },
-            {
-              "id": "45ab907",
-              "text": "Implement service suspension functionality"
-            },
-            {
-              "id": "989f797",
-              "text": "Migrate Clash.Meta core to hi2shark fork with compatibility patches"
-            }
-          ]
-        },
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "bc3080e",
-              "scope": "tests",
-              "text": "Update fakePacketConn and enhance quicUDPAddr resolution"
-            },
-            {
-              "id": "4bc14e6",
-              "scope": "ci",
-              "text": "Clone private mihomo submodule with a dedicated checkout token"
-            },
-            {
-              "id": "ce2e4ba",
-              "scope": "tests",
-              "text": "Update truncate behavior tests for list handling"
-            },
-            {
-              "id": "a53dc28",
-              "scope": "task",
-              "text": "Improve type checks and handling for configuration properties"
-            },
-            {
-              "id": "06701b3",
-              "scope": "core",
-              "text": "Reset Clash.Meta to origin/Alpha"
-            },
-            {
-              "id": "22e3fbe",
-              "scope": "network_test",
-              "text": "Update delegate type check for node selection"
-            },
-            {
-              "id": "e6c07fd",
-              "scope": "wifi_watch",
-              "text": "Adjust icon size and spacing in WifiWatchCard widget"
-            },
-            {
-              "id": "1c39f9c",
-              "scope": "wifi",
-              "text": "Improve fallback handling for current WiFi network status during AP switch"
-            },
-            {
-              "id": "897fefb",
-              "scope": "localization",
-              "text": "Update 'nowhereShareKey' string for clarity across multiple languages"
-            },
-            {
-              "id": "2242b4b",
-              "scope": "ui",
-              "text": "Make wifi watch dashboard card full width"
-            },
-            {
-              "id": "a436ea7",
-              "scope": "ui",
-              "text": "Add bottom padding to on demand view"
-            },
-            {
-              "id": "e8cf052",
-              "scope": "core",
-              "text": "Update subproject commit reference in Clash.Meta"
-            },
-            {
-              "id": "fd213b1",
-              "scope": "on-demand",
-              "text": "Adjust padding in current WiFi section for better layout"
-            },
-            {
-              "id": "897466a",
-              "scope": "wifi-watch",
-              "text": "Correct ssid display logic in WifiWatchCard fix(dismissible): update alignment property in SizeTransition"
-            },
-            {
-              "id": "5670aa5",
-              "scope": "app_manager",
-              "text": "Simplify listener control by removing unnecessary await"
-            },
-            {
-              "id": "6b780d2",
-              "scope": "core",
-              "text": "Update subproject commit reference in Clash.Meta"
-            },
-            {
-              "id": "39c6e8f",
-              "scope": "core",
-              "text": "Update subproject commit reference in Clash.Meta"
-            },
-            {
-              "id": "babdfdb",
-              "scope": "android/service",
-              "text": "Correct return statement in SSID resolution grace handling"
-            },
-            {
-              "id": "43c1ffe",
-              "scope": "android",
-              "text": "Add kotlin-parcelize plugin for @Parcelize support"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "version": "0.9.0",
       "tag": "v0.9.0",
       "date": "2026-10-14",
@@ -1187,81 +797,6 @@
               "id": "2fa2f7f",
               "scope": "core",
               "text": "Share link import and mrs rule sets"
-            },
-            {
-              "id": "e131675",
-              "scope": "editor",
-              "text": "Editor word wrap and snippets"
-            },
-            {
-              "id": "e62afb7",
-              "scope": "dashboard",
-              "text": "More dashboard cards"
-            },
-            {
-              "id": "8378c70",
-              "scope": "views",
-              "text": "Hide timed-out nodes and search every list"
-            },
-            {
-              "id": "841d603",
-              "scope": "ui",
-              "text": "Sidebar, floating dock and drag to go back"
-            },
-            {
-              "id": "ee6a497",
-              "scope": "ui",
-              "text": "New app glyphs, empty states and theme page"
-            },
-            {
-              "id": "46fb7fe",
-              "scope": "overwrite",
-              "text": "Invalid override warnings and rule presets"
-            },
-            {
-              "id": "a390a42",
-              "scope": "config",
-              "text": "DNS query log and per-key DNS/NTP overrides"
-            },
-            {
-              "id": "8068e68",
-              "scope": "core",
-              "text": "Proxied service checks and outbound IP risk"
-            },
-            {
-              "id": "1e97716",
-              "scope": "platform",
-              "text": "Tray hotkeys, node delays and a delay test"
-            },
-            {
-              "id": "26cfbaf",
-              "scope": "ui",
-              "text": "Rework the app UI and refresh the localization"
-            },
-            {
-              "id": "aaf934c",
-              "scope": "app",
-              "text": "Rework the app layer and window handling, and add proxy authentication"
-            },
-            {
-              "id": "c0fcbc0",
-              "scope": "desktop",
-              "text": "Rework the desktop runners, packaging, and native build"
-            },
-            {
-              "id": "ae29f38",
-              "scope": "android",
-              "text": "Rework the Android VPN service and lifecycle handling"
-            },
-            {
-              "id": "adf715f",
-              "scope": "plugins",
-              "text": "Rework the desktop plugins and add the Helper service and Rust bridge"
-            },
-            {
-              "id": "c6eaa0a",
-              "scope": "core",
-              "text": "Rework the core IPC and process lifecycle"
             }
           ]
         },
@@ -1282,1024 +817,6 @@
               "id": "d780cb8",
               "scope": "core,helper",
               "text": "The elevated Core only answers its owner"
-            },
-            {
-              "id": "ff23f30",
-              "scope": "core",
-              "text": "A changed resource link is now used by the next sync and by auto update"
-            },
-            {
-              "id": "e55f6d1",
-              "scope": "core",
-              "text": "DNS lookups no longer fail on networks that report no DNS servers"
-            },
-            {
-              "id": "786a6ab",
-              "scope": "proxies",
-              "text": "Smaller icons in icon-only group headers"
-            },
-            {
-              "id": "1e9955d",
-              "scope": "core,android",
-              "text": "Push notifications reconnect in Doze"
-            },
-            {
-              "id": "bee8f24",
-              "scope": "backup,database",
-              "text": "Restores never apply halfway"
-            },
-            {
-              "id": "c5bf5bd",
-              "scope": "resources",
-              "text": "Refresh the geo file size and time after an update finishes"
-            },
-            {
-              "id": "60f371a",
-              "scope": "core",
-              "text": "Keep the core running while Windows sleeps with the app suspended"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9901",
-      "tag": "v0.8.9901",
-      "date": "2026-10-15",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "06f5fe2",
-              "scope": "nowhere",
-              "text": "Switch core to clash-meta-nw and support Nowhere 3"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9825",
-      "tag": "v0.8.9825",
-      "date": "2026-09-23",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.8.9824",
-      "tag": "v0.8.9824",
-      "date": "2026-09-22",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.8.9823",
-      "tag": "v0.8.9823",
-      "date": "2026-09-19",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.8.9822",
-      "tag": "v0.8.9822",
-      "date": "2026-09-18",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.8.9821",
-      "tag": "v0.8.9821",
-      "date": "2026-09-17",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "31c2d8c",
-              "scope": "localization",
-              "text": "Add new localization strings and enhance validation for Nowhere proxy"
-            }
-          ]
-        },
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "bc3080e",
-              "scope": "tests",
-              "text": "Update fakePacketConn and enhance quicUDPAddr resolution"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9820",
-      "tag": "v0.8.9820",
-      "date": "2026-09-17",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "80b6e2b",
-              "scope": "notification",
-              "text": "Add show stop action feature and enhance localization"
-            },
-            {
-              "id": "0506324",
-              "scope": "localization",
-              "text": "Add new localization strings for EasyTier and related network settings"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9819",
-      "tag": "v0.8.9819",
-      "date": "2026-09-10",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "ae38b87",
-              "scope": "local-proxy",
-              "text": "Enhance local proxy configuration with new parameters and localization"
-            }
-          ]
-        },
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "4bc14e6",
-              "scope": "ci",
-              "text": "Clone private mihomo submodule with a dedicated checkout token"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9818",
-      "tag": "v0.8.9818",
-      "date": "2026-08-12",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "b3ed41c",
-              "scope": "memory",
-              "text": "Add core memory management and localization support"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9817",
-      "tag": "v0.8.9817",
-      "date": "2026-08-11",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "474c383",
-              "scope": "core",
-              "text": "Implement AIDL payload size limit and optimize traffic speed caching"
-            }
-          ]
-        },
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "ce2e4ba",
-              "scope": "tests",
-              "text": "Update truncate behavior tests for list handling"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9816",
-      "tag": "v0.8.9816",
-      "date": "2026-08-11",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.8.9815",
-      "tag": "v0.8.9815",
-      "date": "2026-07-27",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "d927f57",
-              "scope": "vpn",
-              "text": "Enhance service start/stop handling and add retry logic"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9813",
-      "tag": "v0.8.9813",
-      "date": "2026-07-26",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "a53dc28",
-              "scope": "task",
-              "text": "Improve type checks and handling for configuration properties"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9812",
-      "tag": "v0.8.9812",
-      "date": "2026-07-26",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "bbedfb4",
-              "scope": "effective_config",
-              "text": "Add Effective Config feature and localization"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9811",
-      "tag": "v0.8.9811",
-      "date": "2026-07-26",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "a7967ae",
-              "scope": "vpn",
-              "text": "Add dnsEnable option and enhance DNS handling"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9810",
-      "tag": "v0.8.9810",
-      "date": "2026-07-21",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "3f322a7",
-              "scope": "network_test",
-              "text": "Add custom download URL functionality and localization"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9809",
-      "tag": "v0.8.9809",
-      "date": "2026-07-21",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "53508b5",
-              "scope": "unlock_test",
-              "text": "Enhance unlock test functionality and localization"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9807",
-      "tag": "v0.8.9807",
-      "date": "2026-07-20",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "98f45c2",
-              "scope": "unlock_test",
-              "text": "Implement unlock detection functionality and localization"
-            }
-          ]
-        },
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "06701b3",
-              "scope": "core",
-              "text": "Reset Clash.Meta to origin/Alpha"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9806",
-      "tag": "v0.8.9806",
-      "date": "2026-07-19",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "b819366",
-              "scope": "local_proxy",
-              "text": "Enhance local proxy configuration with new fields and localization"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9805",
-      "tag": "v0.8.9805",
-      "date": "2026-07-17",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "4968b4e",
-              "scope": "quic_test",
-              "text": "Enhance QUIC test results with additional metrics and localization"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9803",
-      "tag": "v0.8.9803",
-      "date": "2026-07-17",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "22e3fbe",
-              "scope": "network_test",
-              "text": "Update delegate type check for node selection"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9802",
-      "tag": "v0.8.9802",
-      "date": "2026-07-17",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "d5a7cbc",
-              "scope": "network_tests",
-              "text": "Add speed and QUIC testing functionality"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9801",
-      "tag": "v0.8.9801",
-      "date": "2026-07-17",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.8.9702",
-      "tag": "v0.8.9702",
-      "date": "2026-07-15",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "3f2c7ba",
-              "scope": "local_proxy",
-              "text": "Add new configuration options for ECH and local proxy settings"
-            },
-            {
-              "id": "4f8e0a7",
-              "scope": "local_proxy",
-              "text": "Enhance LocalProxyStore with migration and unique ID handling"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9701",
-      "tag": "v0.8.9701",
-      "date": "2026-07-15",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "e6c07fd",
-              "scope": "wifi_watch",
-              "text": "Adjust icon size and spacing in WifiWatchCard widget"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9609",
-      "tag": "v0.8.9609",
-      "date": "2026-07-12",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "81f2b8f",
-              "scope": "service",
-              "text": "Enhance WifiWatchSuspendController with persistent force resume handling"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9608",
-      "tag": "v0.8.9608",
-      "date": "2026-07-10",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "71a1c76",
-              "text": "Add on-demand feature toggle to config"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9607",
-      "tag": "v0.8.9607",
-      "date": "2026-07-10",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "d6d22c1",
-              "scope": "setup",
-              "text": "Enhance resolveRepository to accept environment parameter and improve fallback logic"
-            },
-            {
-              "id": "4d50bb8",
-              "scope": "setup",
-              "text": "Add repository option for in-app updates and enhance argument parsing"
-            }
-          ]
-        },
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "1c39f9c",
-              "scope": "wifi",
-              "text": "Improve fallback handling for current WiFi network status during AP switch"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9606",
-      "tag": "v0.8.9606",
-      "date": "2026-07-09",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "284085b",
-              "scope": "local_proxy",
-              "text": "Add resetMixinOnProfileSwitch method and update profile handling"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9605",
-      "tag": "v0.8.9605",
-      "date": "2026-07-09",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "b28179c",
-              "scope": "service",
-              "text": "Implement lifecycle locking and enhance service suspension handling"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9604",
-      "tag": "v0.8.9604",
-      "date": "2026-07-09",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.8.9603",
-      "tag": "v0.8.9603",
-      "date": "2026-07-09",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "897fefb",
-              "scope": "localization",
-              "text": "Update 'nowhereShareKey' string for clarity across multiple languages"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9602",
-      "tag": "v0.8.9602",
-      "date": "2026-07-09",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "43e8ea0",
-              "scope": "local_proxy",
-              "text": "Enhance local proxy configuration and localization support"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9601",
-      "tag": "v0.8.9601",
-      "date": "2026-07-09",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "1a38d72",
-              "scope": "local_proxies",
-              "text": "Add LocalProxiesView and integrate into navigation"
-            },
-            {
-              "id": "0a7bb50",
-              "scope": "local_proxy",
-              "text": "Add local proxy mix-in functionality and enhance localization support"
-            },
-            {
-              "id": "c722f31",
-              "scope": "wifi-watch",
-              "text": "Implement WifiWatchResumeRetry for handling resume failures with backoff"
-            },
-            {
-              "id": "6fd8109",
-              "scope": "tests",
-              "text": "Refactor TooltipText test layout to use Center widget"
-            },
-            {
-              "id": "b32e77a",
-              "scope": "tests",
-              "text": "Enhance TooltipText tests for rich text handling and overflow behavior"
-            },
-            {
-              "id": "26f7669",
-              "scope": "wifi-watch",
-              "text": "Implement default network monitoring and force resume logic"
-            },
-            {
-              "id": "40f1746",
-              "scope": "wifi-watch",
-              "text": "Add suspended state handling and update notification parameters"
-            },
-            {
-              "id": "1787547",
-              "scope": "wifi-watch",
-              "text": "Implement WiFi watch state handling and broadcast integration"
-            },
-            {
-              "id": "f95ab62",
-              "scope": "ui",
-              "text": "Enhance tooltip message handling and improve wifi display logic"
-            },
-            {
-              "id": "3b360de",
-              "scope": "wifi-watch",
-              "text": "Add prioritization logic for action status and enhance state management"
-            },
-            {
-              "id": "948bf95",
-              "scope": "ui",
-              "text": "Tap current wifi ssid to copy in on demand view"
-            },
-            {
-              "id": "35e1af7",
-              "scope": "wifi-watch",
-              "text": "Enhance WiFi information retrieval and update UI components"
-            },
-            {
-              "id": "d04fbeb",
-              "scope": "wifi-watch",
-              "text": "Add permissions for nearby WiFi devices and change network state"
-            },
-            {
-              "id": "26e2192",
-              "scope": "wifi-watch",
-              "text": "Add background location permission handling and update related UI components"
-            },
-            {
-              "id": "3da20b7",
-              "scope": "wifi-watch",
-              "text": "Add current WiFi connection details and update UI components"
-            },
-            {
-              "id": "42fd6fc",
-              "scope": "build",
-              "text": "Add version parameter to setup script for better version tracking"
-            },
-            {
-              "id": "45cd2d5",
-              "scope": "wifi-watch",
-              "text": "Add rawSsid to WifiWatchState and update UI to display it"
-            },
-            {
-              "id": "0f783f5",
-              "scope": "wifi-watch",
-              "text": "Update getWifiWatchState to use runBlocking for synchronous execution"
-            },
-            {
-              "id": "771a863",
-              "scope": "wifi-watch",
-              "text": "Add getWifiWatchState method and refine signal strength icons"
-            },
-            {
-              "id": "a8a39dd",
-              "scope": "wifi-watch",
-              "text": "Implement WiFi watch functionality and UI integration"
-            },
-            {
-              "id": "c1bcc02",
-              "scope": "local_proxy",
-              "text": "Add local proxy mix-in functionality and enhance localization support"
-            },
-            {
-              "id": "4c28d4c",
-              "scope": "ci",
-              "text": "Expand build matrix for additional platforms and architectures"
-            }
-          ]
-        },
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "2242b4b",
-              "scope": "ui",
-              "text": "Make wifi watch dashboard card full width"
-            },
-            {
-              "id": "a436ea7",
-              "scope": "ui",
-              "text": "Add bottom padding to on demand view"
-            },
-            {
-              "id": "e8cf052",
-              "scope": "core",
-              "text": "Update subproject commit reference in Clash.Meta"
-            },
-            {
-              "id": "fd213b1",
-              "scope": "on-demand",
-              "text": "Adjust padding in current WiFi section for better layout"
-            },
-            {
-              "id": "897466a",
-              "scope": "wifi-watch",
-              "text": "Correct ssid display logic in WifiWatchCard fix(dismissible): update alignment property in SizeTransition"
-            },
-            {
-              "id": "5670aa5",
-              "scope": "app_manager",
-              "text": "Simplify listener control by removing unnecessary await"
-            },
-            {
-              "id": "6b780d2",
-              "scope": "core",
-              "text": "Update subproject commit reference in Clash.Meta"
-            },
-            {
-              "id": "39c6e8f",
-              "scope": "core",
-              "text": "Update subproject commit reference in Clash.Meta"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9509",
-      "tag": "v0.8.9509",
-      "date": "2026-07-03",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "f7a22d3",
-              "scope": "wifi_ssid",
-              "text": "Reconcile unresolved SSID and expose network status"
-            },
-            {
-              "id": "278adbb",
-              "scope": "android",
-              "text": "Reconcile unresolved SSID in WiFi-watch module"
-            },
-            {
-              "id": "16a03c6",
-              "scope": "android",
-              "text": "WiFi-watch SSID resolution grace period"
-            }
-          ]
-        },
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "babdfdb",
-              "scope": "android/service",
-              "text": "Correct return statement in SSID resolution grace handling"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9508",
-      "tag": "v0.8.9508",
-      "date": "2026-07-03",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "7c4a7f2",
-              "scope": "android/service",
-              "text": "Ignore transient null SSID during AP switches"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9507",
-      "tag": "v0.8.9507",
-      "date": "2026-07-03",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "d7a01da",
-              "scope": "android",
-              "text": "Use RSSI fallback to judge trusted WiFi while VPN is active"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9506",
-      "tag": "v0.8.9506",
-      "date": "2026-07-03",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "7ea6af6",
-              "scope": "ui",
-              "text": "Wire Android service suspension through app layers"
-            },
-            {
-              "id": "f22c8f7",
-              "scope": "state",
-              "text": "Add suspendOnWifiSsids to SharedState and AndroidServiceSuspended provider"
-            },
-            {
-              "id": "207ecfa",
-              "scope": "android/app",
-              "text": "Propagate service suspended state to Flutter"
-            },
-            {
-              "id": "efe8027",
-              "scope": "android/service",
-              "text": "Add WiFi-watch auto-suspend and suspension reasons"
-            },
-            {
-              "id": "0afa604",
-              "scope": "wifi_ssid",
-              "text": "Add validated WiFi SSID stream for Android"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9505",
-      "tag": "v0.8.9505",
-      "date": "2026-07-02",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "4e300bd",
-              "text": "精简构建工作流，移除不必要的平台配置和步骤"
-            },
-            {
-              "id": "9c71477",
-              "text": "添加版本覆盖选项以更新 pubspec.yaml 中的应用版本"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9503",
-      "tag": "v0.8.9503",
-      "date": "2026-07-02",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "1df0036",
-              "text": "添加 VPN 暂停控制器并重构服务暂停逻辑"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9502",
-      "tag": "v0.8.9502",
-      "date": "2026-07-02",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.8.9501",
-      "tag": "v0.8.9501",
-      "date": "2026-07-02",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "c0660b6",
-              "text": "添加 wifiSuspended 属性以支持 WiFi 监控功能"
-            },
-            {
-              "id": "45ab907",
-              "text": "Implement service suspension functionality"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9405",
-      "tag": "v0.8.9405",
-      "date": "2026-07-02",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.8.9404",
-      "tag": "v0.8.9404",
-      "date": "2026-07-02",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.8.9403",
-      "tag": "v0.8.9403",
-      "date": "2026-07-02",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "fix",
-          "entries": [
-            {
-              "id": "43c1ffe",
-              "scope": "android",
-              "text": "Add kotlin-parcelize plugin for @Parcelize support"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "version": "0.8.9402",
-      "tag": "v0.8.9402",
-      "date": "2026-07-02",
-      "prerelease": false,
-      "groups": []
-    },
-    {
-      "version": "0.8.9401",
-      "tag": "v0.8.9401",
-      "date": "2026-07-01",
-      "prerelease": false,
-      "groups": [
-        {
-          "type": "feat",
-          "entries": [
-            {
-              "id": "989f797",
-              "text": "Migrate Clash.Meta core to hi2shark fork with compatibility patches"
             }
           ]
         }

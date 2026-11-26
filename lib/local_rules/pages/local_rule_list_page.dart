@@ -6,7 +6,7 @@ import 'package:fl_clash/local_rules/services/local_rule_store.dart';
 import 'package:fl_clash/local_rules/services/local_rule_targets.dart';
 import 'package:fl_clash/models/local_rule.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 class LocalRuleListPage extends StatefulWidget {
   const LocalRuleListPage({super.key});
@@ -93,7 +93,7 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
       );
     }
     if (mounted) {
-      context.showNotifier(appLocalizations.localRuleReloadFailed);
+      dialogs.showBanner(appLocalizations.localRuleReloadFailed);
     }
   }
 
@@ -137,7 +137,7 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
     await localRuleStore.replaceAll(rules: previous);
     await applyLocalRuleChanges();
     if (mounted) {
-      context.showNotifier(appLocalizations.localRuleReloadFailed);
+      dialogs.showBanner(appLocalizations.localRuleReloadFailed);
     }
   }
 
@@ -150,19 +150,39 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
     await localRuleStore.replaceAll(rules: previous);
     await applyLocalRuleChanges();
     if (mounted) {
-      context.showNotifier(appLocalizations.localRuleReloadFailed);
+      dialogs.showBanner(appLocalizations.localRuleReloadFailed);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.localRules,
       body: ValueListenableBuilder<List<LocalRule>>(
         valueListenable: localRuleStore.rulesNotifier,
         builder: (_, rules, child) {
           final enabledCount = rules.where((rule) => rule.enabled).length;
+          Widget itemAt(int index) {
+            final rule = rules[index];
+            return Padding(
+              key: ValueKey(rule.id),
+              padding: EdgeInsets.only(
+                bottom: index == rules.length - 1 ? 0 : 12,
+              ),
+              child: ReorderDragStartListener(
+                index: index,
+                child: _RuleCard(
+                  rule: rule,
+                  invalid: _isInvalid(rule),
+                  onEdit: () => _handleAddOrEdit(rule: rule),
+                  onToggle: () => _handleToggle(rule),
+                  onDelete: () => _handleDelete(rule),
+                ),
+              ),
+            );
+          }
+
           return AppBarClearance(
             child: Column(
               children: [
@@ -185,34 +205,25 @@ class _LocalRuleListPageState extends State<LocalRuleListPage> {
                           label: appLocalizations.noLocalRule,
                           illustration: NullStatusIllustration.rules,
                         )
-                      : ReorderableListView.builder(
-                          padding: const EdgeInsets.all(
-                            16,
-                          ).copyWith(bottom: 88),
-                          buildDefaultDragHandles: false,
-                          itemCount: rules.length,
-                          onReorderItem: _handleReorder,
-                          proxyDecorator: (child, index, animation) =>
-                              commonProxyDecorator(child, index, animation),
-                          itemBuilder: (context, index) {
-                            final rule = rules[index];
-                            return Padding(
-                              key: ValueKey(rule.id),
-                              padding: EdgeInsets.only(
-                                bottom: index == rules.length - 1 ? 0 : 12,
+                      : CustomScrollView(
+                          slivers: [
+                            SliverPadding(
+                              padding: const EdgeInsets.all(
+                                16,
+                              ).copyWith(bottom: 88),
+                              sliver: SliverPrismReorderableList(
+                                itemCount: rules.length,
+                                onReorderItem: _handleReorder,
+                                proxyDecorator: (_, index, animation) =>
+                                    commonProxyDecorator(
+                                      itemAt(index),
+                                      index,
+                                      animation,
+                                    ),
+                                itemBuilder: (_, index) => itemAt(index),
                               ),
-                              child: ReorderableDelayedDragStartListener(
-                                index: index,
-                                child: _RuleCard(
-                                  rule: rule,
-                                  invalid: _isInvalid(rule),
-                                  onEdit: () => _handleAddOrEdit(rule: rule),
-                                  onToggle: () => _handleToggle(rule),
-                                  onDelete: () => _handleDelete(rule),
-                                ),
-                              ),
-                            );
-                          },
+                            ),
+                          ],
                         ),
                 ),
               ],
@@ -248,7 +259,7 @@ class _RuleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final target = rule.ruleTarget ?? '';
-    return CommonCard(
+    return Card(
       isError: invalid,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -232,14 +232,12 @@ void main() {
       expect(proxy.config['alpn'], ['nw2']);
     });
 
-    test('ignores legacy net and network aliases', () {
-      final netResult = parser
+    test('ignores legacy network alias and validates NW3 net', () {
+      final netNonHexResult = parser
           .parseMany('nowhere://key@example.com?net=tcp&network=udp')
           .single;
-      expect(netResult.error, isNull);
-      expect(netResult.proxy!.config['up'], 'udp');
-      expect(netResult.proxy!.config['down'], 'udp');
-      expect(netResult.warnings, isEmpty);
+      expect(netNonHexResult.proxy, isNull);
+      expect(netNonHexResult.error, contains('32 lowercase hex'));
 
       final networkResult = parser
           .parseMany('nowhere://key@example.com?network=tcp')
@@ -360,8 +358,8 @@ void main() {
       expect(muxPoolIgnored.warnings.single, contains('dedicated tcp/tcp'));
     });
 
-    test('forces the share-link ALPN to nw2', () {
-      for (final alpn in ['nw3', 'h2', 'h2+draft']) {
+    test('accepts nw2 or nw3 ALPN and rejects unsupported values', () {
+      for (final alpn in ['h2', 'h2+draft']) {
         final result = parser
             .parseMany('nowhere://key@example.com?alpn=$alpn')
             .single;
@@ -369,11 +367,85 @@ void main() {
         expect(result.error, contains('nw2'), reason: alpn);
       }
 
-      final explicit = parser
+      final explicitNw2 = parser
           .parseMany('nowhere://key@example.com?alpn=nw2')
           .single;
-      expect(explicit.error, isNull);
-      expect(explicit.proxy!.config['alpn'], ['nw2']);
+      expect(explicitNw2.error, isNull);
+      expect(explicitNw2.proxy!.config['alpn'], ['nw2']);
+
+      const hexKey = '0123456789abcdef0123456789abcdef';
+      final explicitNw3 = parser
+          .parseMany('nowhere://$hexKey@example.com?alpn=nw3')
+          .single;
+      expect(explicitNw3.error, isNull);
+      expect(explicitNw3.proxy!.config['alpn'], ['nw3']);
+      expect(explicitNw3.proxy!.config['net'], 'tcp');
+
+      final nw3BadKey = parser
+          .parseMany('nowhere://key@example.com?alpn=nw3')
+          .single;
+      expect(nw3BadKey.proxy, isNull);
+      expect(nw3BadKey.error, contains('32 lowercase hex'));
+    });
+
+    test('parses Nowhere 3.4.0 share links with net, cipher, morph, pin', () {
+      const hexKey = '0123456789abcdef0123456789abcdef';
+      const pin =
+          '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+      final full = parser
+          .parseMany(
+            'nowhere://$hexKey@example.com:2077?net=udp&cipher=aes&morph=1&sni=cdn.example.com&pin=$pin&insecure=1#NW3%20Node',
+          )
+          .single;
+      expect(full.error, isNull);
+      final config = full.proxy!.config;
+      expect(full.proxy!.name, 'NW3 Node');
+      expect(config['password'], hexKey);
+      expect(config.containsKey('alpn'), isFalse);
+      expect(config['net'], 'udp');
+      expect(config['cipher'], 'aes');
+      expect(config['morph'], isTrue);
+      expect(config['sni'], 'cdn.example.com');
+      expect(config['pin'], pin);
+      expect(config['skip-cert-verify'], isTrue);
+      expect(config.containsKey('up'), isFalse);
+      expect(config.containsKey('down'), isFalse);
+
+      final autoDetected = parser
+          .parseMany('nowhere://$hexKey@example.com:2077?cipher=chacha#AutoNW3')
+          .single;
+      expect(autoDetected.error, isNull);
+      expect(autoDetected.proxy!.config.containsKey('alpn'), isFalse);
+      expect(autoDetected.proxy!.config['net'], 'tcp');
+      expect(autoDetected.proxy!.config['cipher'], 'chacha');
+
+      final morphZero = parser
+          .parseMany('nowhere://$hexKey@example.com:2077?morph=0#MorphOff')
+          .single;
+      expect(morphZero.error, isNull);
+      expect(morphZero.proxy!.config['morph'], isFalse);
+    });
+
+    test('rejects invalid Nowhere 3.4.0 parameters and NW2/NW3 mixes', () {
+      const hexKey = '0123456789abcdef0123456789abcdef';
+      for (final uri in [
+        'nowhere://$hexKey@example.com?net=quic',
+        'nowhere://$hexKey@example.com?net=TCP',
+        'nowhere://$hexKey@example.com?cipher=AES',
+        'nowhere://$hexKey@example.com?cipher=aes-128-ctr',
+        'nowhere://$hexKey@example.com?pin=abcd',
+        'nowhere://$hexKey@example.com?alpn=nw2&cipher=aes',
+        'nowhere://$hexKey@example.com?alpn=nw2&net=tcp',
+        'nowhere://$hexKey@example.com?alpn=nw3&up=tcp&down=tcp',
+        'nowhere://$hexKey@example.com?alpn=nw3&pool=2',
+        'nowhere://$hexKey@example.com?alpn=nw3&mux=1',
+        'nowhere://$hexKey@example.com?alpn=nw3&fp=chrome',
+      ]) {
+        final result = parser.parseMany(uri).single;
+        expect(result.proxy, isNull, reason: uri);
+        expect(result.error, isNotNull, reason: uri);
+      }
     });
 
     test('enforces decoded UTF-8 byte limits for the key', () {

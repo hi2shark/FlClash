@@ -12,10 +12,11 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
+import 'traffic_beat.dart';
 
 @immutable
 class MemorySnapshot {
@@ -95,7 +96,10 @@ class MemoryInfo extends ConsumerStatefulWidget {
 }
 
 class _MemoryInfoState extends ConsumerState<MemoryInfo>
-    with WidgetsBindingObserver, ActivePollingMixin<MemoryInfo> {
+    with
+        WidgetsBindingObserver,
+        ActivePollingMixin<MemoryInfo>,
+        TrafficBeatMixin<MemoryInfo> {
   final _memoryStateNotifier = ValueNotifier<MemorySnapshot>(
     const MemorySnapshot(),
   );
@@ -119,7 +123,7 @@ class _MemoryInfoState extends ConsumerState<MemoryInfo>
     if (memory == null || !isCurrent()) {
       return;
     }
-    _memoryStateNotifier.value = memory;
+    showOnBeat(() => _memoryStateNotifier.value = memory);
   }
 
   // The sheet outlives the card when a resize swaps the dashboard layout, so it
@@ -130,8 +134,8 @@ class _MemoryInfoState extends ConsumerState<MemoryInfo>
     }
     _detailOpen = true;
     stopPolling();
-    await showSheet(
-      context: context,
+    await showNestedSheet(
+      context,
       builder: (_) => MemoryDetailSheet(
         initial: _memoryStateNotifier.value,
         memoryReader: widget.memoryReader,
@@ -239,9 +243,9 @@ class _MemorySummary extends StatelessWidget {
           maxLines: 1,
         ),
         if (mobile) const SizedBox(height: 14) else const Spacer(),
-        _MemoryBar(
+        ProportionBar(
           segments: [
-            for (final part in parts) (bytes: part.bytes, color: part.color),
+            for (final part in parts) (value: part.bytes, color: part.color),
           ],
         ),
         SizedBox(height: compact ? 8 : 10),
@@ -313,7 +317,7 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
   /// Resolves to the bytes freed.
   Future<int> _release() async {
     final before = _snapshot.total;
-    await ref.read(coreHandlerProvider).requestGc();
+    await ref.read(coreHandlerProvider).forceGc();
     if (!mounted) {
       return 0;
     }
@@ -332,7 +336,7 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
     setState(() => _isReleasing = true);
     final appLocalizations = context.appLocalizations;
     String message;
-    var level = MessageLevel.success;
+    var level = BannerLevel.success;
     try {
       final (freed, _) = await (
         _release(),
@@ -347,13 +351,13 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
         logLevel: coreFailureLogLevel(error),
       );
       message = appLocalizations.releaseMemoryFailed;
-      level = MessageLevel.error;
+      level = BannerLevel.error;
     }
     if (!mounted) {
       return;
     }
     setState(() => _isReleasing = false);
-    context.showNotifier(message, level: level);
+    dialogs.showBanner(message, level: level);
   }
 
   List<Widget> _appItems(
@@ -411,7 +415,7 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.memoryInfo,
       actions: [
         AppBarActionButton(
@@ -424,7 +428,7 @@ class _MemoryDetailSheetState extends ConsumerState<MemoryDetailSheet>
         ),
       ],
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+        padding: context.listInsets.page().copyWith(
           top: context.contentTopPadding,
           bottom: 20 + context.bottomInset,
         ),
@@ -494,9 +498,6 @@ class _MemorySection extends StatelessWidget {
 class _MemoryOverview extends StatelessWidget {
   const _MemoryOverview({required this.snapshot});
 
-  /// The optical edge of the xl-radius cards, not their geometric one.
-  static const _inset = 5.0;
-
   final MemorySnapshot snapshot;
 
   @override
@@ -505,7 +506,9 @@ class _MemoryOverview extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final total = snapshot.total.traffic;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(_inset, 8, _inset, 0),
+      padding: EdgeInsets.symmetric(
+        horizontal: context.listInsets.leading,
+      ).copyWith(top: infoSectionContentGap),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -536,11 +539,11 @@ class _MemoryOverview extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _MemoryBar(
+          ProportionBar(
             segments: [
-              (bytes: snapshot.app, color: colorScheme.primary),
+              (value: snapshot.app, color: colorScheme.primary),
               (
-                bytes: snapshot.coreTotal,
+                value: snapshot.coreTotal,
                 color: DashboardColors.of(context).series2,
               ),
             ],
@@ -555,65 +558,6 @@ class _MemoryOverview extends StatelessWidget {
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _MemoryBar extends StatelessWidget {
-  const _MemoryBar({required this.segments});
-
-  static const _gap = 2.0;
-
-  final List<({int bytes, Color color})> segments;
-
-  @override
-  Widget build(BuildContext context) {
-    final duration = context.motionDuration(commonDuration);
-    final total = segments.fold(
-      0,
-      (sum, segment) => sum + max(0, segment.bytes),
-    );
-    return ClipRSuperellipse(
-      borderRadius: AppRadius.full,
-      child: SizedBox(
-        height: 8,
-        child: total == 0
-            ? ColoredBox(color: DashboardColors.of(context).tone2)
-            : Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (final (index, segment) in segments.indexed) ...[
-                    if (index > 0)
-                      AnimatedContainer(
-                        duration: duration,
-                        curve: Easing.standard,
-                        width:
-                            segment.bytes > 0 &&
-                                segments
-                                    .take(index)
-                                    .any((previous) => previous.bytes > 0)
-                            ? _gap
-                            : 0,
-                      ),
-                    // Whole percents, so the drift between two polls does not
-                    // replay the animation every time.
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(
-                        end: (max(0, segment.bytes) * 100 / total)
-                            .roundToDouble(),
-                      ),
-                      duration: duration,
-                      curve: Easing.standard,
-                      builder: (_, percent, child) => Expanded(
-                        flex: (percent * 100).round(),
-                        child: child!,
-                      ),
-                      child: ColoredBox(color: segment.color),
-                    ),
-                  ],
-                ],
-              ),
       ),
     );
   }

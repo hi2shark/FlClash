@@ -1,11 +1,10 @@
 import Cocoa
 import FlutterMacOS
-import window
-import LaunchAtLogin
 
 class MainFlutterWindow: NSWindow {
     private var iconMode: String = "auto"
     private var appearanceObservation: NSKeyValueObservation?
+    private var hiddenAtLaunch = false
 
     override func awakeFromNib() {
         let flutterViewController = FlutterViewController()
@@ -14,24 +13,7 @@ class MainFlutterWindow: NSWindow {
         self.setFrame(windowFrame, display: true)
 
         FlutterMethodChannel(
-            name: "launch_at_startup", binaryMessenger: flutterViewController.engine.binaryMessenger
-        )
-        .setMethodCallHandler { (_ call: FlutterMethodCall, result: @escaping FlutterResult) in
-            switch call.method {
-            case "launchAtStartupIsEnabled":
-                result(LaunchAtLogin.isEnabled)
-            case "launchAtStartupSetEnabled":
-                if let arguments = call.arguments as? [String: Any] {
-                    LaunchAtLogin.isEnabled = arguments["setEnabledValue"] as! Bool
-                }
-                result(nil)
-            default:
-                result(FlutterMethodNotImplemented)
-            }
-        }
-
-        FlutterMethodChannel(
-            name: "com.hi2shark.flclash_nw/app",
+            name: "com.hi2shark.hi2nw/app",
             binaryMessenger: flutterViewController.engine.binaryMessenger
         )
         .setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
@@ -74,6 +56,10 @@ class MainFlutterWindow: NSWindow {
 
     override public func order(_ place: NSWindow.OrderingMode, relativeTo otherWin: Int) {
         super.order(place, relativeTo: otherWin)
-        hiddenWindowAtLaunch()
+        // Only the first order hides the window, which Dart shows once it is configured.
+        if !hiddenAtLaunch {
+            hiddenAtLaunch = true
+            setIsVisible(false)
+        }
     }
 }

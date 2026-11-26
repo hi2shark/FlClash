@@ -1,2 +1,2 @@
 -keep class go.** { *; }
--keep class com.hi2shark.flclash_nw.core.mobile.** { *; }
+-keep class com.hi2shark.hi2nw.core.mobile.** { *; }

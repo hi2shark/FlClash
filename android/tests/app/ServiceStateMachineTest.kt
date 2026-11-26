@@ -1,12 +1,12 @@
-package com.hi2shark.flclash_nw
+package com.hi2shark.hi2nw
 
-import com.hi2shark.flclash_nw.common.AccessControlMode
-import com.hi2shark.flclash_nw.models.SetupParams
-import com.hi2shark.flclash_nw.models.SharedState
-import com.hi2shark.flclash_nw.service.models.AccessControlProps
-import com.hi2shark.flclash_nw.service.models.NotificationParams
-import com.hi2shark.flclash_nw.service.models.VpnOptions
+import com.hi2shark.hi2nw.common.AccessControlMode
+import com.hi2shark.hi2nw.models.SharedState
+import com.hi2shark.hi2nw.service.models.AccessControlProps
+import com.hi2shark.hi2nw.service.models.NotificationParams
+import com.hi2shark.hi2nw.service.models.VpnOptions
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
@@ -38,7 +38,9 @@ private fun vpnOptions(enable: Boolean = true, stack: String = "gvisor") = VpnOp
 
 private fun configuredState(enable: Boolean = true, stack: String = "gvisor") = SharedState(
     vpnOptions = vpnOptions(enable, stack),
-    setupParams = SetupParams(testUrl = "https://example.com", selectedMap = emptyMap()),
+    setupParams = JsonParser.parseString(
+        """{"selected-map":{},"options":{"test-url":"https://example.com"}}""",
+    ).asJsonObject,
 )
 
 private const val STARTED_AT = 1_700_000_000_000L
@@ -102,7 +104,7 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
     var lastStartOptions: VpnOptions? = null
 
     override var runtime: ServiceRuntime? = null
-    override val homeDirPath = "/data/user/0/com.hi2shark.flclash_nw/files"
+    override val homeDirPath = "/data/user/0/com.hi2shark.hi2nw/files"
     override val sdkInt = 34
 
     val toasts = mutableListOf<String>()
@@ -111,10 +113,12 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
     val suspendOnWifiSsids = mutableListOf<Set<String>>()
     val suspendedChanges = mutableListOf<Boolean>()
     val wifiWatchStates = mutableListOf<String>()
+    val mitm = mutableListOf<Boolean>()
     var setupCalls = 0
     var startCalls = 0
     var stopCalls = 0
     var stoppedNotifications = 0
+    val stopFailures = mutableListOf<StartFailure?>()
     var lastInitParams: String? = null
     var lastSetupParams: String? = null
 
@@ -134,6 +138,10 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
         suspendOnWifiSsids += value
     }
 
+    override fun updateMitm(enabled: Boolean) {
+        mitm += enabled
+    }
+
     override fun loadSharedState(): SharedState = storedSharedState
 
     override fun isVpnPermissionGranted(): Boolean = vpnPermissionGranted
@@ -144,8 +152,9 @@ private class FakeHost(override val scope: CoroutineScope) : ServiceStateHost {
 
     override fun app(): AppGateway? = app
 
-    override fun notifyStopped() {
+    override fun notifyStopped(failure: StartFailure?) {
         stoppedNotifications++
+        stopFailures += failure
     }
 
     override fun notifySuspendedChanged(suspended: Boolean) {
@@ -214,6 +223,17 @@ class ServiceStateMachineTest {
     }
 
     @Test
+    fun `a synced shared state hands the service its MITM switch`() = runTest {
+        val host = FakeHost(backgroundScope)
+        val machine = ServiceStateMachine(host)
+
+        machine.syncSharedState(configuredState().copy(mitm = true))
+        machine.syncSharedState(configuredState())
+
+        assertEquals(listOf(true, false), host.mitm)
+    }
+
+    @Test
     fun `the run time is reported only while a run is both requested and up`() = runTest {
         val host = FakeHost(backgroundScope)
         val machine = ServiceStateMachine(host)
@@ -264,7 +284,7 @@ class ServiceStateMachineTest {
         assertFalse(machine.requestStart().await())
         assertEquals(RunState.STOPPED, machine.runState.value)
         assertFalse(machine.isRunRequested)
-        assertEquals(1, host.stoppedNotifications)
+        assertEquals(listOf(StartFailure.SERVICE), host.stopFailures)
     }
 
     @Test
@@ -333,7 +353,7 @@ class ServiceStateMachineTest {
 
         assertFalse(machine.requestStart().await())
         assertEquals(0, host.startCalls)
-        assertEquals(1, host.stoppedNotifications)
+        assertEquals(listOf(StartFailure.VPN_PERMISSION), host.stopFailures)
     }
 
     /** Flutter opened the Core's listeners before asking, and may be gone before it hears back. */

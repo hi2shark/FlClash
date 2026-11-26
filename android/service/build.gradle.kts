@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.hi2shark.flclash_nw.service"
+    namespace = "com.hi2shark.hi2nw.service"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -20,6 +20,7 @@ android {
     sourceSets {
         // Unit tests live under android/tests/ instead of each module's src/test.
         getByName("test").java.setSrcDirs(listOf("../tests/service"))
+        getByName("test").kotlin.setSrcDirs(listOf("../tests/service"))
     }
 }
 

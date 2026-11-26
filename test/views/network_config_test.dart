@@ -5,15 +5,18 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/ui/switch.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/config/network.dart';
 import 'package:fl_clash/views/config/tun.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/prism_ui.dart';
 
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import '../helpers/host_scaffold.dart';
 
 class _ToggleCase {
   final String name;
@@ -56,12 +59,6 @@ final _toggleCases = <_ToggleCase>[
   ),
   _ToggleCase('ipv6', const Ipv6Item(), (c) => c.read(vpnSettingProvider).ipv6),
   _ToggleCase(
-    'auto set system dns',
-    const AutoSetSystemDnsItem(),
-    (c) => c.read(networkSettingProvider).autoSetSystemDns,
-    initial: true,
-  ),
-  _ToggleCase(
     'dns hijacking',
     const DNSHijackingItem(),
     (c) => c.read(vpnSettingProvider).dnsHijacking,
@@ -99,7 +96,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: TestApp(
-          child: Scaffold(body: ListView(children: [item])),
+          child: HostScaffold(body: ListView(children: [item])),
         ),
       ),
     );
@@ -113,11 +110,11 @@ void main() {
 
         expect(testCase.read(container), testCase.initial);
 
-        await tester.tap(find.byType(CommonSwitch));
+        await tester.tap(find.byType(Switch));
         await tester.pumpAndSettle();
         expect(testCase.read(container), !testCase.initial);
 
-        await tester.tap(find.byType(CommonSwitch));
+        await tester.tap(find.byType(Switch));
         await tester.pumpAndSettle();
         expect(testCase.read(container), testCase.initial);
       });
@@ -130,7 +127,7 @@ void main() {
       final initial = container.read(patchClashConfigProvider).tun.stack;
       final target = TunStack.values.firstWhere((item) => item != initial);
 
-      await tester.tap(find.byType(ListTile).first);
+      await tester.tap(find.byType(ListRow).first);
       await tester.pumpAndSettle();
       await tester.tap(find.text(target.name).last);
       await tester.pumpAndSettle();
@@ -149,7 +146,7 @@ void main() {
         (item) => item != initial,
       );
 
-      await tester.tap(find.byType(ListTile).first);
+      await tester.tap(find.byType(ListRow).first);
       await tester.pumpAndSettle();
       await tester.tap(find.text(_interfaceNameModeLabel(target)).last);
       await tester.pumpAndSettle();
@@ -161,6 +158,32 @@ void main() {
     });
   });
 
+  testWidgets('the Windows-only bypass entry says so and deletes like any', (
+    tester,
+  ) async {
+    container.read(networkSettingProvider.notifier).value = const NetworkProps(
+      bypassDomain: ['localhost', windowsLocalBypass],
+    );
+    await pumpItem(tester, const BypassDomainItem());
+    final l = currentAppLocalizations;
+
+    await tester.tap(find.text(l.bypassDomain));
+    await tester.pumpAndSettle();
+    expect(find.text(windowsLocalBypass), findsOneWidget);
+    expect(find.text(l.bypassLocalWindowsOnly), findsOneWidget);
+
+    await tester.tap(find.byType(Checkbox).last);
+    await tester.pump();
+    await tester.tap(find.byGlyph(AppGlyphs.delete));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, l.delete));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip(l.save));
+    await tester.pumpAndSettle();
+
+    expect(container.read(networkSettingProvider).bypassDomain, ['localhost']);
+  });
+
   group('network options items', () {
     List<Type> types({
       required bool isDesktop,
@@ -168,7 +191,6 @@ void main() {
     }) {
       return networkOptionsItems(
         isDesktop: isDesktop,
-        isMacOS: false,
         isCustomInterfaceName: isCustomInterfaceName,
       ).map((item) => item.runtimeType).toList();
     }

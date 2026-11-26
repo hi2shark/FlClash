@@ -3,7 +3,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/ui/icons/app_glyphs.dart';
 import 'package:fl_clash/views/views.dart';
-import 'package:material_ui/material_ui.dart';
 
 class Navigation implements NavigationPort {
   static Navigation? _instance;
@@ -12,99 +11,75 @@ class Navigation implements NavigationPort {
   List<NavigationItem> getItems({
     bool openLogs = false,
     bool hasProxies = false,
+    bool capturing = false,
   }) {
     return [
       NavigationItem(
         glyph: AppGlyphs.dashboard,
         label: PageLabel.dashboard,
-        builder: (_) =>
-            const DashboardView(key: GlobalObjectKey(PageLabel.dashboard)),
+        builder: (_) => const DashboardView(),
       ),
       NavigationItem(
         glyph: AppGlyphs.proxies,
         label: PageLabel.proxies,
-        builder: (_) =>
-            const ProxiesView(key: GlobalObjectKey(PageLabel.proxies)),
+        builder: (_) => const ProxiesView(),
         modes: hasProxies
             ? [NavigationItemMode.mobile, NavigationItemMode.desktop]
             : [],
       ),
       NavigationItem(
-        glyph: AppGlyphs.profiles,
-        label: PageLabel.profiles,
-        builder: (_) =>
-            const ProfilesView(key: GlobalObjectKey(PageLabel.profiles)),
-      ),
-      NavigationItem(
         glyph: AppGlyphs.requests,
         label: PageLabel.requests,
-        builder: (_) =>
-            const RequestsView(key: GlobalObjectKey(PageLabel.requests)),
-        modes: [NavigationItemMode.moreFull],
+        builder: (_) => const RequestsView(),
+        modes: capturing
+            ? [NavigationItemMode.desktop, NavigationItemMode.mobile]
+            : [NavigationItemMode.desktop, NavigationItemMode.moreFull],
       ),
       NavigationItem(
-        glyph: AppGlyphs.connections,
-        label: PageLabel.connections,
-        builder: (_) =>
-            const ConnectionsView(key: GlobalObjectKey(PageLabel.connections)),
-        modes: [NavigationItemMode.desktop, NavigationItemMode.moreFull],
-      ),
-      NavigationItem(
-        glyph: AppGlyphs.dns,
-        label: PageLabel.dns,
-        builder: (_) =>
-            const DnsQueriesView(key: GlobalObjectKey(PageLabel.dns)),
-        modes: [NavigationItemMode.moreFull],
+        glyph: AppGlyphs.profiles,
+        label: PageLabel.profiles,
+        builder: (_) => const ProfilesView(),
       ),
       NavigationItem(
         glyph: AppGlyphs.resources,
         label: PageLabel.resources,
-        builder: (_) =>
-            const ResourcesView(key: GlobalObjectKey(PageLabel.resources)),
+        builder: (_) => const ResourcesView(),
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
         glyph: AppGlyphs.code,
         label: PageLabel.effectiveConfig,
-        builder: (_) => const EffectiveConfigView(
-          key: GlobalObjectKey(PageLabel.effectiveConfig),
-        ),
+        builder: (_) => const EffectiveConfigView(),
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
         glyph: AppGlyphs.speed,
         label: PageLabel.networkTest,
-        builder: (_) =>
-            const NetworkTestView(key: GlobalObjectKey(PageLabel.networkTest)),
+        builder: (_) => const NetworkTestView(),
         modes: [NavigationItemMode.more],
       ),
       NavigationItem(
         glyph: AppGlyphs.layers,
         label: PageLabel.localProxies,
-        builder: (_) => const LocalProxiesView(
-          key: GlobalObjectKey(PageLabel.localProxies),
-        ),
+        builder: (_) => const LocalProxiesView(),
         modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       NavigationItem(
         glyph: AppGlyphs.rules,
         label: PageLabel.localRules,
-        builder: (_) =>
-            const LocalRulesView(key: GlobalObjectKey(PageLabel.localRules)),
+        builder: (_) => const LocalRulesView(),
         modes: [NavigationItemMode.desktop, NavigationItemMode.more],
       ),
       NavigationItem(
         glyph: AppGlyphs.logs,
         label: PageLabel.logs,
-        builder: (_) => const LogsView(key: GlobalObjectKey(PageLabel.logs)),
-        modes: openLogs
-            ? [NavigationItemMode.desktop, NavigationItemMode.more]
-            : [],
+        builder: (_) => const LogsView(),
+        modes: openLogs ? [NavigationItemMode.more] : [],
       ),
       NavigationItem(
         glyph: AppGlyphs.tools,
         label: PageLabel.tools,
-        builder: (_) => const ToolsView(key: GlobalObjectKey(PageLabel.tools)),
+        builder: (_) => const ToolsView(),
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
       ),
     ];

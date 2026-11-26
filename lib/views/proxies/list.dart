@@ -6,15 +6,15 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'card.dart';
 import 'common.dart';
+import 'unfold.dart';
 
 const _headerInset = 10.0;
 const _headerButtonInset = 4.0;
-const _groupInset = 16.0;
 const _liftDistance = 16.0;
 const _groupMinWidth = 360.0;
 const _groupMaxColumns = 3;
@@ -186,7 +186,8 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
           child: WidthBuilder(
             builder: (_, maxWidth) {
               final gap = cardSpacingOf(context, viewMode);
-              final width = max(maxWidth - _groupInset * 2, 0.0);
+              final margin = context.listInsets.margin;
+              final width = max(maxWidth - margin * 2, 0.0);
               final groupColumns = viewMode == ViewMode.mobile
                   ? 1
                   : ((width + gap) / (_groupMinWidth + gap)).floor().clamp(
@@ -211,7 +212,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                 onChange: _handleChange,
                 onScrollToSelected: _scrollToGroupSelected,
               );
-              return CommonScrollBar(
+              return Scrollbar(
                 controller: _controller,
                 thumbVisibility: true,
                 child: CustomScrollView(
@@ -222,9 +223,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
                       child: SizedBox(height: context.contentTopPadding),
                     ),
                     SliverPadding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: _groupInset,
-                      ),
+                      padding: EdgeInsets.symmetric(horizontal: margin),
                       sliver: groupColumns == 1
                           ? SliverMainAxisGroup(
                               slivers: groups.map(buildGroup).toList(),
@@ -307,12 +306,12 @@ class _GroupSliver extends ConsumerStatefulWidget {
 class _GroupSliverState extends ConsumerState<_GroupSliver>
     with SingleTickerProviderStateMixin {
   Widget? _rows;
+  (double, double)? _rowsShape;
   double _rowExtent = 0;
   late final _controller = AnimationController(
     vsync: this,
     value: ref.read(unfoldSetProvider).contains(widget.group.name) ? 1 : 0,
   );
-  late final _unfold = UnfoldEntryTransition.curveOf(_controller);
 
   @override
   void initState() {
@@ -326,16 +325,16 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
 
   @override
   void dispose() {
-    _unfold.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   void _handleUnfold(bool isExpand) {
-    _controller.duration = context.motionDuration(
-      UnfoldEntryTransition.duration,
+    UnfoldMotion.run(
+      _controller,
+      open: isExpand,
+      animate: !context.disableAnimations,
     );
-    isExpand ? _controller.forward() : _controller.reverse();
   }
 
   @override
@@ -348,92 +347,59 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     }
   }
 
-  Widget _buildRow(BuildContext context, List<Proxy> proxies) {
+  Widget _buildCard(Proxy proxy) {
     final group = widget.group;
     final cardType = widget.cardType;
-    final groupName = group.name;
-    final children = proxies
-        .map<Widget>(
-          (proxy) => Flexible(
-            child: SizedBox(
-              height: getItemHeight(cardType),
-              child: ProxyCard(
-                testUrl: group.testUrl,
-                type: cardType,
-                groupType: group.type,
-                key: ValueKey('$groupName.${proxy.name}'),
-                proxy: proxy,
-                groupName: groupName,
-              ),
-            ),
+    return MemoBuilder(
+      inputs: [proxy, group.name, group.type, group.testUrl, cardType],
+      builder: (context) => SurfaceScope(
+        level: context.raisedSurfaceLevel,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: proxyGridSpacing),
+          child: ProxyCard(
+            key: ValueKey('${group.name}.${proxy.name}'),
+            testUrl: group.testUrl,
+            type: cardType,
+            groupType: group.type,
+            proxy: proxy,
+            groupName: group.name,
           ),
-        )
-        .fill(widget.columns, filler: (_) => const Flexible(child: SizedBox()))
-        .separated(const SizedBox(width: 8));
-    return SurfaceScope(
-      level: context.raisedSurfaceLevel,
-      child: Padding(
-        padding: const EdgeInsets.only(
-          left: _headerInset,
-          right: _headerInset,
-          bottom: proxyGridSpacing,
         ),
-        child: Row(children: children.toList()),
       ),
     );
   }
 
-  Widget _buildRows(double extent) {
-    final rows = widget.group.all.chunks(widget.columns).toList();
-    return SliverFixedExtentList(
-      itemExtent: extent,
-      delegate: SliverChildBuilderDelegate(
-        (context, index) => _buildRow(context, rows[index]),
-        childCount: rows.length,
-        addAutomaticKeepAlives: false,
+  /// Rows past the [count] the unfolding shows stay hidden until it settles,
+  /// and build one after another behind the ones it shows.
+  Widget _buildRows(double extent, double unfoldingExtent, int count) {
+    final proxies = widget.group.all;
+    final columns = widget.columns;
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: _headerInset),
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: 8,
+          mainAxisExtent: extent,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final row = index ~/ columns;
+            final proxy = proxies[index];
+            return UnfoldRow(
+              key: ValueKey(proxy.name),
+              motion: _controller,
+              buildAfter: row < count
+                  ? max(0.0, 1 - (row + 1) * extent / unfoldingExtent)
+                  : min(0.6 + 0.1 * (row - count), 0.95),
+              builder: (_) => _buildCard(proxy),
+            );
+          },
+          childCount: proxies.length,
+          addAutomaticKeepAlives: false,
+          findChildIndexCallback: proxyIndexFinder(proxies),
+        ),
       ),
-    );
-  }
-
-  /// The card reaches up behind the header's rounded bottom corners, so the
-  /// two read as one while the rows unfold or fold.
-  Widget _buildUnfoldingRows(double extent, ShapeDecoration decoration) {
-    final rows = widget.group.all.chunks(widget.columns).toList();
-    final visible = min(
-      rows.length.toDouble(),
-      MediaQuery.sizeOf(context).height / extent,
-    );
-    final count = min(rows.length, visible.floor() + 1);
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned(
-          top: -AppCorner.xl.ap(context),
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: DecoratedBox(decoration: decoration),
-        ),
-        SizeTransition(
-          sizeFactor: _unfold,
-          alignment: Alignment.topCenter,
-          child: Column(
-            children: [
-              for (var index = 0; index < count; index++)
-                UnfoldEntryTransition(
-                  animation: _unfold,
-                  index: index,
-                  visibleCount: visible,
-                  child: SizedBox(
-                    height: extent,
-                    child: _buildRow(context, rows[index]),
-                  ),
-                ),
-              if (count == rows.length) const SizedBox(height: _lastRowGrowth),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -447,33 +413,40 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
     Widget? rows;
     if (!_controller.isDismissed && widget.group.all.isNotEmpty) {
       final extent = getRowExtent(widget.cardType);
-      final decoration = ShapeDecoration(
-        color: context.raisedSurfaceLevel.colorOf(context.colorScheme),
-        shape: AppShape.vertical(
-          top: AppCorner.none,
-          bottom: AppCorner.xl.ap(context),
+      final columns = widget.columns;
+      final rowCount = (widget.group.all.length + columns - 1) ~/ columns;
+      final visible = min(
+        rowCount.toDouble(),
+        MediaQuery.sizeOf(context).height / extent,
+      );
+      final count = min(rowCount, visible.floor() + 1);
+      final unfoldingExtent =
+          count * extent + (count == rowCount ? _lastRowGrowth : 0);
+      if (_rows == null || _rowsShape != (extent, unfoldingExtent)) {
+        _rows = _buildRows(extent, unfoldingExtent, count);
+        _rowsShape = (extent, unfoldingExtent);
+      }
+      if (unfolded) {
+        _rowExtent = extent;
+      }
+      rows = UnfoldSliver(
+        motion: _controller,
+        unfoldingExtent: unfoldingExtent,
+        reach: AppCorner.xl.ap(context),
+        decoration: ShapeDecoration(
+          color: context.raisedSurfaceLevel.colorOf(context.colorScheme),
+          shape: AppShape.vertical(
+            top: AppCorner.none,
+            bottom: AppCorner.xl.ap(context),
+          ),
+        ),
+        sliver: SliverMainAxisGroup(
+          slivers: [
+            _rows!,
+            const SliverToBoxAdapter(child: SizedBox(height: _lastRowGrowth)),
+          ],
         ),
       );
-      if (!unfolded) {
-        _rows = null;
-        rows = SliverToBoxAdapter(
-          child: _buildUnfoldingRows(extent, decoration),
-        );
-      } else {
-        if (_rows == null || _rowExtent != extent) {
-          _rows = _buildRows(extent);
-          _rowExtent = extent;
-        }
-        rows = DecoratedSliver(
-          decoration: decoration,
-          sliver: SliverMainAxisGroup(
-            slivers: [
-              _rows!,
-              const SliverToBoxAdapter(child: SizedBox(height: _lastRowGrowth)),
-            ],
-          ),
-        );
-      }
     } else {
       _rows = null;
     }
@@ -487,6 +460,7 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
         key: ValueKey(groupName),
         isExpand: isExpand,
         unfolded: unfolded,
+        unfold: _controller,
         group: widget.group,
         onChange: widget.onChange,
       ),
@@ -516,6 +490,7 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
         (_controller.isDismissed
             ? 0.0
             : _rowsExtent(rowCount, getRowExtent(widget.cardType)));
+    final coversRows = !_controller.isDismissed;
     (double, double, double, Color)? headerState;
     Widget? header;
     return SliverLayoutBuilder(
@@ -552,13 +527,14 @@ class _GroupSliverState extends ConsumerState<_GroupSliver>
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                Positioned(
-                  top: -cover,
-                  left: 0,
-                  right: 0,
-                  height: cover + listHeaderHeight / 2,
-                  child: ColoredBox(color: pageColor),
-                ),
+                if (coversRows)
+                  Positioned(
+                    top: -cover,
+                    left: 0,
+                    right: 0,
+                    height: cover + listHeaderHeight / 2,
+                    child: ColoredBox(color: pageColor),
+                  ),
                 buildHeader(floating: floating, lift: lift),
               ],
             ),
@@ -588,6 +564,8 @@ class ListHeader extends ConsumerWidget {
   /// The shadow that lifts the header off the rows under it.
   final double lift;
 
+  final Animation<double> unfold;
+
   const ListHeader({
     super.key,
     this.enterAnimated = true,
@@ -598,6 +576,7 @@ class ListHeader extends ConsumerWidget {
     required this.onScrollToSelected,
     required this.isExpand,
     required this.unfolded,
+    required this.unfold,
   });
 
   @override
@@ -611,11 +590,12 @@ class ListHeader extends ConsumerWidget {
         ? SurfaceLevel.floatingOf(colorScheme)
         : context.raisedSurfaceLevel;
     final radius = AppCorner.xl.ap(context);
-    final card = CommonCard(
+    final card = Card(
       enterActionsOnRight: true,
       enterAnimated: enterAnimated,
       key: key,
       radius: radius - _headerButtonInset,
+      fill: const Color(0x00000000),
       child: Padding(
         padding: const EdgeInsets.all(_headerInset - _headerButtonInset),
         child: Row(
@@ -631,6 +611,7 @@ class ListHeader extends ConsumerWidget {
             ),
             _GroupActions(
               isExpand: isExpand,
+              unfold: unfold,
               isDelayTesting: isDelayTesting,
               groupType: group.type.name,
               onScrollToSelected: () {
@@ -664,7 +645,7 @@ class ListHeader extends ConsumerWidget {
       child: Padding(
         padding: const EdgeInsets.all(_headerButtonInset),
         child: SurfaceScope(
-          // CommonCard fills one level above its scope.
+          // Card fills one level above its scope.
           level: SurfaceLevel.values[level.index - 1],
           child: card,
         ),
@@ -804,6 +785,7 @@ class _SelectedProxyName extends ConsumerWidget {
 class _GroupActions extends StatelessWidget {
   const _GroupActions({
     required this.isExpand,
+    required this.unfold,
     required this.isDelayTesting,
     required this.groupType,
     required this.onScrollToSelected,
@@ -812,6 +794,7 @@ class _GroupActions extends StatelessWidget {
   });
 
   final bool isExpand;
+  final Animation<double> unfold;
   final bool isDelayTesting;
   final String groupType;
   final VoidCallback onScrollToSelected;
@@ -838,7 +821,7 @@ class _GroupActions extends StatelessWidget {
                   tooltip: context.appLocalizations.delayTest,
                   onPressed: isDelayTesting ? null : onDelayTest,
                   icon: isDelayTesting
-                      ? CommonCircleLoading(size: TonalButtonSize.compact.icon)
+                      ? const ActivityIndicator(size: 24)
                       : const GlyphIcon(AppGlyphs.bolt),
                 ),
               ],
@@ -857,7 +840,10 @@ class _GroupActions extends StatelessWidget {
                   ? context.appLocalizations.showLess
                   : context.appLocalizations.showMore,
               onPressed: onToggle,
-              icon: CommonExpandIcon(expand: isExpand),
+              icon: RotationTransition(
+                turns: unfold.drive(UnfoldMotion.chevronTurns),
+                child: const GlyphIcon(Glyphs.caretDown, fill: 1),
+              ),
             ),
           ),
         ],

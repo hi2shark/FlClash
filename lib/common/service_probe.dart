@@ -8,6 +8,9 @@ import 'package:flutter/foundation.dart';
 const directOutbound = 'DIRECT';
 const routedOutbound = '';
 
+/// `probeErrorTimeout` in core/probe.go.
+const probeErrorTimeout = 'timeout';
+
 /// [id] must match the checker name registered in core/service_check.go.
 enum ServiceTarget {
   google('google', 'Google', 'google'),
@@ -75,6 +78,7 @@ class ServiceCheck {
     this.delay,
     this.chains = const [],
     this.region,
+    this.ip,
     this.checkedAt,
     this.coreEpoch = 0,
     this.routeVersion = 0,
@@ -87,6 +91,7 @@ class ServiceCheck {
       delay: item.delay > 0 ? item.delay : null,
       chains: item.chains,
       region: item.region.isEmpty ? null : item.region,
+      ip: item.ip.isEmpty ? null : item.ip,
       checkedAt: item.checkedAt > 0
           ? DateTime.fromMillisecondsSinceEpoch(item.checkedAt)
           : null,
@@ -100,6 +105,10 @@ class ServiceCheck {
   final int? delay;
   final List<String> chains;
   final String? region;
+
+  /// The address the service itself saw, which a node that routes the
+  /// service out another way does not share with its other traffic.
+  final String? ip;
   final DateTime? checkedAt;
   final int coreEpoch;
   final int routeVersion;
@@ -114,6 +123,7 @@ class ServiceCheck {
       other.delay == delay &&
       listEquals(other.chains, chains) &&
       other.region == region &&
+      other.ip == ip &&
       other.checkedAt == checkedAt &&
       other.coreEpoch == coreEpoch &&
       other.routeVersion == routeVersion &&
@@ -125,6 +135,7 @@ class ServiceCheck {
     delay,
     Object.hashAll(chains),
     region,
+    ip,
     checkedAt,
     coreEpoch,
     routeVersion,
@@ -133,7 +144,8 @@ class ServiceCheck {
 
   @override
   String toString() =>
-      'ServiceCheck(${status.id}, delay: $delay, node: $node, region: $region)';
+      'ServiceCheck(${status.id}, delay: $delay, node: $node, region: $region, '
+      'ip: $ip)';
 }
 
 /// An empty [proxyName] lets the Core route by its rules; an empty [targets]
@@ -173,7 +185,7 @@ final Map<String, IpInfo Function(String)> ipInfoSources = {
 };
 
 /// Raw so the route stamp survives; [parseOutboundIp] reads the address.
-Future<OutboundIpResult?> lookupOutboundIp(
+Future<OutboundIpResult> lookupOutboundIp(
   CoreController core,
   String proxyName, {
   Duration timeout = outboundIpTimeoutDuration,
@@ -187,8 +199,8 @@ Future<OutboundIpResult?> lookupOutboundIp(
   );
 }
 
-IpInfo? parseOutboundIp(OutboundIpResult? result) {
-  if (result == null || result.error != null || result.body.isEmpty) {
+IpInfo? parseOutboundIp(OutboundIpResult result) {
+  if (result.error != null || result.body.isEmpty) {
     return null;
   }
   final parse = ipInfoSources[result.url];

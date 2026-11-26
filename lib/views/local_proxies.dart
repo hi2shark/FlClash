@@ -6,7 +6,7 @@ import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class LocalProxiesView extends ConsumerStatefulWidget {
@@ -26,7 +26,7 @@ class _LocalProxiesViewState extends ConsumerState<LocalProxiesView> {
   void _openMixinSettings(BuildContext context) {
     final profile = ref.read(currentProfileProvider);
     if (profile == null) {
-      context.showNotifier(context.appLocalizations.nullProfileDesc);
+      dialogs.showBanner(context.appLocalizations.nullProfileDesc);
       return;
     }
     BaseNavigator.push(
@@ -38,7 +38,7 @@ class _LocalProxiesViewState extends ConsumerState<LocalProxiesView> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.localProxies,
       body: ListView(
         padding: const EdgeInsets.all(
@@ -57,7 +57,7 @@ class _LocalProxiesViewState extends ConsumerState<LocalProxiesView> {
                   return Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CommonCard(
+                      Card(
                         child: ListItem(
                           title: Text(appLocalizations.localProxyMixin),
                           subtitle: Column(
@@ -89,7 +89,7 @@ class _LocalProxiesViewState extends ConsumerState<LocalProxiesView> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      CommonCard(
+                      Card(
                         onPressed: () {
                           BaseNavigator.push(
                             context,
@@ -108,7 +108,7 @@ class _LocalProxiesViewState extends ConsumerState<LocalProxiesView> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      CommonCard(
+                      Card(
                         onPressed: () => _openMixinSettings(context),
                         child: ListItem(
                           title: Text(appLocalizations.mixinSettings),

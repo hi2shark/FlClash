@@ -1,19 +1,26 @@
 import 'dart:async';
 
+import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
-import 'package:fl_clash/views/connection/connections.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:fl_clash/views/connection/requests.dart';
+import 'package:fl_clash/widgets/record.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/core_connections.dart';
+import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
 
@@ -27,6 +34,7 @@ TrackerInfo _tracker({
   int upload = 0,
   int download = 0,
   DateTime? start,
+  bool mitm = false,
 }) {
   return TrackerInfo(
     id: id,
@@ -39,6 +47,7 @@ TrackerInfo _tracker({
       destinationIP: '1.1.1.1',
       destinationPort: '443',
       process: process,
+      mitm: mitm,
     ),
     chains: chains,
     rule: 'DOMAIN',
@@ -65,6 +74,7 @@ void main() {
       ],
     );
     globalState.container = container;
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
   });
 
   tearDown(() => container.dispose());
@@ -81,7 +91,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(child: ConnectionsView()),
+        child: const TestApp(child: RequestsView()),
       ),
     );
     await tester.pump();
@@ -101,7 +111,7 @@ void main() {
   testWidgets('shows the empty state when core reports no connections', (
     tester,
   ) async {
-    when(core.getConnections).thenAnswer((_) async => const <TrackerInfo>[]);
+    whenConnections<ConnectionPoll>(core, () async => const <TrackerInfo>[]);
 
     await pumpConnections(tester);
 
@@ -111,19 +121,18 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('shows nothing until core answers, then its rows at once', (
+  testWidgets('lists a connection the Core reports that no event told of', (
     tester,
   ) async {
     final pending = Completer<List<TrackerInfo>>();
-    when(core.getConnections).thenAnswer((_) => pending.future);
+    whenConnections<ConnectionPoll>(core, () => pending.future);
 
     await pumpConnections(tester);
-    expect(find.byType(NullStatus), findsNothing);
     expect(find.textContaining('alpha.test'), findsNothing);
 
     pending.complete([_tracker(id: 'a', host: 'alpha.test')]);
     await tester.pump();
-    await tester.pump();
+    await pumpSettled(tester);
 
     expect(find.byType(NullStatus), findsNothing);
     expect(find.textContaining('alpha.test'), findsWidgets);
@@ -132,12 +141,16 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('shows its first connections while its page is pushed in', (
+  testWidgets('shows the connections it holds while its page is pushed in', (
     tester,
   ) async {
-    when(
-      core.getConnections,
-    ).thenAnswer((_) async => [_tracker(id: 'a', host: 'alpha.test')]);
+    whenConnections<ConnectionPoll>(
+      core,
+      () async => [_tracker(id: 'a', host: 'alpha.test')],
+    );
+    container
+        .read(requestsProvider.notifier)
+        .addRequest(_tracker(id: 'a', host: 'alpha.test'));
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -149,11 +162,9 @@ void main() {
         child: TestApp(
           child: Builder(
             builder: (context) => TextButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const ConnectionsView(),
-                ),
-              ),
+              onPressed: () => Navigator.of(
+                context,
+              ).push(HostPageRoute<void>(builder: (_) => const RequestsView())),
               child: const Text('open'),
             ),
           ),
@@ -165,7 +176,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     await tester.pump(const Duration(milliseconds: 50));
 
-    final route = ModalRoute.of(tester.element(find.byType(ConnectionsView)))!;
+    final route = ModalRoute.of(tester.element(find.byType(RequestsView)))!;
     expect(route.animation!.isAnimating, isTrue);
     expect(find.textContaining('alpha.test'), findsWidgets);
 
@@ -173,8 +184,9 @@ void main() {
   });
 
   testWidgets('renders one row per reported connection', (tester) async {
-    when(core.getConnections).thenAnswer(
-      (_) async => [
+    whenConnections<ConnectionPoll>(
+      core,
+      () async => [
         _tracker(id: 'a', host: 'alpha.test'),
         _tracker(id: 'b', host: 'beta.test'),
       ],
@@ -191,151 +203,150 @@ void main() {
     await teardownView(tester);
   });
 
-  testWidgets('orders rows by total traffic, then newest first', (
+  testWidgets('lists the newest connection first, whatever its traffic', (
     tester,
   ) async {
-    when(core.getConnections).thenAnswer(
-      (_) async => [
-        _tracker(id: 'a', host: 'alpha.test', download: 100),
-        _tracker(id: 'b', host: 'beta.test', upload: 300, download: 300),
+    whenConnections<ConnectionPoll>(
+      core,
+      () async => [
+        _tracker(id: 'a', host: 'alpha.test', download: 900),
+        _tracker(
+          id: 'b',
+          host: 'beta.test',
+          download: 100,
+          start: DateTime.utc(2026, 2),
+        ),
         _tracker(
           id: 'c',
           host: 'gamma.test',
-          download: 100,
-          start: DateTime.utc(2026, 2),
+          download: 300,
+          start: DateTime.utc(2026, 3),
         ),
       ],
     );
 
-    await pumpConnections(tester);
-    await pumpSettled(tester);
+    for (final width in [1400.0, 600.0]) {
+      await pumpConnections(tester, width: width);
+      await pumpSettled(tester);
 
-    double topOf(String host) =>
-        tester.getTopLeft(find.textContaining(host).first).dy;
-    expect(topOf('beta.test'), lessThan(topOf('gamma.test')));
-    expect(topOf('gamma.test'), lessThan(topOf('alpha.test')));
+      double topOf(String host) =>
+          tester.getTopLeft(find.textContaining(host).first).dy;
+      expect(
+        topOf('gamma.test'),
+        lessThan(topOf('beta.test')),
+        reason: '$width',
+      );
+      expect(
+        topOf('beta.test'),
+        lessThan(topOf('alpha.test')),
+        reason: '$width',
+      );
+    }
     expect(tester.takeException(), null);
 
     await teardownView(tester);
   });
 
-  testWidgets('a wide page lays the connections out as a table and blocks '
-      'a row from it', (tester) async {
+  testWidgets('a wide page closes a row from its menu and keeps the rows '
+      'where they are', (tester) async {
     var connections = [
       _tracker(id: 'a', host: 'alpha.test', chains: const ['Tokyo', 'Proxy']),
       _tracker(id: 'b', host: 'beta.test'),
     ];
-    when(core.getConnections).thenAnswer((_) async => connections);
-    when(() => core.closeConnection(any())).thenAnswer((_) async => true);
+    whenConnections<ConnectionPoll>(core, () async => connections);
+    when(() => core.closeConnection(any())).thenAnswer((_) async {});
 
     await pumpConnections(tester);
     await pumpSettled(tester);
 
-    for (final label in [
-      'Process',
-      'Target',
-      'Protocol',
-      'Rule',
-      'Exit',
-      'Download',
-      'Upload',
-      'Downloaded',
-      'Uploaded',
-      'Duration',
-    ]) {
-      expect(find.text(label), findsOneWidget);
-    }
-    expect(find.byType(TrackerInfoTableRow), findsNWidgets(2));
-    expect(find.byType(Divider), findsNothing);
-    expect(
-      tester
-          .widgetList<TrackerInfoTableRow>(find.byType(TrackerInfoTableRow))
-          .map((row) => row.striped)
-          .toSet(),
-      {true, false},
-    );
-    expect(find.text('Tokyo'), findsOneWidget);
-
-    connections = [connections.last];
-    await tester.tap(
-      find.descendant(
-        of: find.ancestor(
-          of: find.textContaining('alpha.test').first,
-          matching: find.byType(TrackerInfoTableRow),
-        ),
-        matching: find.byTooltip('Block connection'),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    verify(() => core.closeConnection('a')).called(1);
-    expect(find.textContaining('alpha.test'), findsNothing);
-    expect(find.textContaining('beta.test'), findsWidgets);
-    expect(tester.takeException(), null);
-
-    await teardownView(tester);
-  });
-
-  testWidgets('a live table keeps the totals ahead of protocol and duration', (
-    tester,
-  ) async {
-    when(core.getConnections).thenAnswer(
-      (_) async => [
-        _tracker(id: 'a', host: 'alpha.test', upload: 512, download: 1536),
-      ],
-    );
-
-    await pumpConnections(tester, width: 1100);
-    await pumpSettled(tester);
-
-    expect(find.text('Downloaded'), findsOneWidget);
-    expect(find.text('Uploaded'), findsOneWidget);
-    expect(find.text('1.5KB'), findsOneWidget);
-    expect(find.text('512B'), findsOneWidget);
-    expect(find.text('Protocol'), findsNothing);
-    expect(find.text('Duration'), findsNothing);
-
-    tester.view.physicalSize = const Size(900, 1000);
-    await tester.pump();
-
-    expect(find.text('Traffic'), findsOneWidget);
-    expect(find.text('2KB'), findsOneWidget);
-    expect(find.text('Downloaded'), findsNothing);
-    expect(tester.takeException(), null);
-
-    await teardownView(tester);
-  });
-
-  testWidgets('a sorted table keeps its order across polls', (tester) async {
-    when(core.getConnections).thenAnswer(
-      (_) async => [
-        _tracker(id: 'a', host: 'alpha.test', process: 'zsh', download: 300),
-        _tracker(id: 'b', host: 'beta.test', process: 'curl', download: 200),
-        _tracker(id: 'c', host: 'gamma.test', process: 'make', download: 100),
-      ],
-    );
-
-    await pumpConnections(tester);
-    await pumpSettled(tester);
+    expect(find.byType(TrackerInfoItem), findsNWidgets(2));
 
     double topOf(String host) =>
         tester.getTopLeft(find.textContaining(host).first).dy;
-    expect(topOf('alpha.test'), lessThan(topOf('beta.test')));
+    final alphaTop = topOf('alpha.test');
+    final betaTop = topOf('beta.test');
 
-    await tester.tap(find.text('Process'));
+    await tester.longPress(find.textContaining('alpha.test').first);
     await tester.pumpAndSettle();
-    expect(topOf('beta.test'), lessThan(topOf('gamma.test')));
-    expect(topOf('gamma.test'), lessThan(topOf('alpha.test')));
+    connections = [connections.last];
+    await tester.tap(find.text('Close connection'));
+    await tester.pumpAndSettle();
 
+    verify(() => core.closeConnection('a')).called(1);
     await pumpSettled(tester);
-    expect(topOf('beta.test'), lessThan(topOf('gamma.test')));
-    expect(topOf('gamma.test'), lessThan(topOf('alpha.test')));
+    expect(container.read(requestsProvider)['a']!.isActive, isFalse);
+    expect(topOf('alpha.test'), alphaTop);
+    expect(topOf('beta.test'), betaTop);
+    expect(tester.takeException(), null);
+
+    await teardownView(tester);
+  });
+
+  if (rsFeature) {
+    testWidgets('a row marks a decrypted connection', (tester) async {
+      whenConnections<ConnectionPoll>(
+        core,
+        () async => [
+          _tracker(id: 'a', host: 'alpha.test', mitm: true),
+          _tracker(id: 'b', host: 'beta.test'),
+        ],
+      );
+
+      await pumpConnections(tester, width: 900);
+      await pumpSettled(tester);
+
+      expect(find.byType(TrackerInfoItem), findsNWidgets(2));
+      final label = find.widgetWithText(RecordLabel, 'MITM');
+      expect(label, findsOneWidget);
+      expect(
+        find.ancestor(
+          of: label,
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is TrackerInfoItem && widget.trackerInfo.id == 'a',
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), null);
+
+      await teardownView(tester);
+    });
+  }
+
+  testWidgets('the menu closes every open connection once that is confirmed', (
+    tester,
+  ) async {
+    whenConnections<ConnectionPoll>(
+      core,
+      () async => [_tracker(id: 'a', host: 'alpha.test')],
+    );
+    when(() => core.closeConnections()).thenAnswer((_) async {});
+
+    await pumpConnections(tester, width: 600);
+    await pumpSettled(tester);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byGlyph(AppGlyphs.more),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Close all active connections'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Close'));
+    await tester.pumpAndSettle();
+
+    verify(() => core.closeConnections()).called(1);
 
     await teardownView(tester);
   });
 
   testWidgets('keeps the empty state when core throws', (tester) async {
-    when(core.getConnections).thenThrow(StateError('core down'));
+    whenConnections<ConnectionPoll>(
+      core,
+      () async => throw StateError('core down'),
+    );
 
     await pumpConnections(tester);
 
@@ -345,8 +356,36 @@ void main() {
     await teardownView(tester);
   });
 
+  testWidgets('a late snapshot closes only the connections opened before it '
+      'was asked for', (tester) async {
+    final pending = Completer<List<TrackerInfo>>();
+    whenConnections<ConnectionPoll>(core, () => pending.future);
+    final requests = container.read(requestsProvider.notifier);
+    requests.addRequest(
+      _tracker(
+        id: 'before',
+        start: DateTime.now().subtract(const Duration(seconds: 5)),
+      ),
+    );
+
+    await pumpConnections(tester);
+    requests.addRequest(_tracker(id: 'after', start: DateTime.now()));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 1100)),
+    );
+    pending.complete(const []);
+    await tester.pump();
+    await tester.pump();
+
+    final log = container.read(requestsProvider);
+    expect(log['before']!.isActive, isFalse);
+    expect(log['after']!.isActive, isTrue);
+
+    await teardownView(tester);
+  });
+
   testWidgets('stops polling once the view is disposed', (tester) async {
-    when(core.getConnections).thenAnswer((_) async => const <TrackerInfo>[]);
+    whenConnections<ConnectionPoll>(core, () async => const <TrackerInfo>[]);
 
     await pumpConnections(tester);
     await teardownView(tester);
@@ -354,6 +393,6 @@ void main() {
 
     await tester.pump(const Duration(seconds: 3));
 
-    verifyNever(core.getConnections);
+    verifyNever(() => core.getConnectionsWith<ConnectionPoll>(any()));
   });
 }

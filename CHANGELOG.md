@@ -1,10 +1,117 @@
 # Changelog
 
-## v0.9.201 (2026-10-25)
+## v0.9.5 (2026-11-26)
 
 **Features**
 
-- **core** align the Nowhere core with clash-meta-nw 3.1.1 (39913bf)
+- **about** Icons and even spacing for the update settings on the About page (1951468)
+- **window** Pause live updates on desktop while the screen is asleep or locked (0981835)
+- **update** Install macOS updates from inside the app (73a0182)
+- **proxies** Proxy groups unfold smoothly as one block (94288d7)
+- **connection** Connection, request, DNS, outbound IP and log details use smaller text with more room (a27fab5)
+- **prism_ui** List rows follow a smaller text size, as they already did a larger one (83214b6)
+- **prism_ui** The phone tab bar spaces five tabs and sets out icons and labels as iOS does (219bc95)
+- **about** The automatic update check and the update channel moved from General settings to the About page (7b97a68)
+- **logs** Filter logs from a button beside search (0db670d)
+- **logs** Set the log level from the Logs page (ef7dc6e)
+- **requests** Connections become Requests: connections by minute with All, Active and Failed counts, conditions on app, exit, rule or protocol, a timeline for each connection, DNS queries, segments that keep their place, and new rows held under a desktop pointer (9c931f7)
+- **update** Choose between stable and prerelease updates in the settings; the prerelease check finds the newest release and names the installed prerelease (562e11f)
+- **ui** Lists and cards share one set of margins, so rows line up across pages (8fc8909)
+- **dashboard** The dashboard's outbound mode card is titled Outbound, leaving its mode buttons more room (0eb1e11)
+- **ui** Grouped lists match iOS 27: row heights, margins, corners and section spacing (79d5a59)
+- **logs** On desktop, Logs moves from the sidebar into Tools (46522eb)
+- **connections** Connections on macOS, Windows and Linux show the icon of the app that made them (888a1df)
+- **navigation** Requests sits right after Proxies in the desktop sidebar (f18f92e)
+- **connections** Connections that failed to connect now show in the requests list, with the reason (8736f48)
+- **update** When an update has no file to download, the app opens the release page to download it by hand (afe7136)
+
+**Bug Fixes**
+
+- **proxies** A rounder, larger delay test icon on proxy cards (0105a4f)
+- **prism_ui** Navigation bar tabs fit their titles, and a tap near a tab's edge selects it (4abbd15)
+- **dashboard** Live connections on the dashboard open on the active ones (8682368)
+- **rules** The rule type picker and rule lists show rule types as profiles write them, such as DOMAIN-KEYWORD, and rule search finds a rule by that name (9b01010)
+- **core** A stop whose answer is lost with the connection to the core no longer turns the proxy back on when the core comes back (06643c3)
+- **setup** Restarting the core with TUN on no longer hangs when it has to ask for authorization again (932826b)
+- **core** On desktop, a restart asked for while the core is still starting, such as after installing the helper, now restarts it, and the core can start again after a start whose local connection setup hung (f95f0f1)
+- **core** On Android, stopping while the core is still starting no longer leaves it running, and a start that failed while sending settings to the core no longer blocks the next start (7a63bb4)
+- **probes** Recheck watched service failures with backoff (fee1b89)
+- **probes** Service checks recover automatically when a chain switches to a working front proxy (1a57072)
+- **setup** Dashboard checks wait for startup to finish when you tap Start as the app opens (fac7b07)
+- **l10n** Shorter descriptions in network, DNS and general settings (18eaaea)
+- **segmented-control** Segmented controls follow the system's reduce motion setting (a47cac5)
+- **connected-button** Screen readers can now switch the dashboard's outbound mode (d45da9d)
+- **scaffold** On wider phones the top bar buttons line up with the list cards below them (21846fc)
+- **scaffold** Opening search puts the cursor in its field even when something else on the page has the focus (e3b13e7)
+- **android** App icons in access control and connections load from the cache instead of being redrawn every day (e3ebcf1)
+- **core** On macOS, connections show the app that opened them again (30817b4)
+- **window** A hidden window no longer takes the foreground from a full-screen game on Windows (6611671)
+- **linux** The Linux window is no longer drawn shifted toward the bottom left on NVIDIA and other drivers without glBlitFramebuffer (0ff56e5)
+- **tray** When the menu bar or tray icon cannot be shown, the log says why (746f7b0)
+- **macos** Intel Macs render with Skia again, fixing the hang at launch on older GPUs (0d3a33f)
+- **dashboard** Service checks show the address Claude and ChatGPT actually saw, not only the node's exit address (b16e2db)
+- **core** Gemini check no longer reports Hong Kong and Macau nodes as unsupported (80a86bc)
+- **core** macOS no longer collects defunct dscacheutil processes each time TUN is turned on or off (e7b017e)
+- **config** The default bypass list no longer skips the proxy for public 172.2* addresses, and the default fake-ip filter names Windows' real connectivity check hosts (80cc61b)
+- **ui** Pages open and close again after the display sleeps or changes (ce13953)
+
+**Performance**
+
+- **code_forge** Large files open in the editor without a pause (c5c7ef0)
+- **db** Profiles with many rules, groups or proxies open and update without stalling the screen (c8d1e9d)
+- **route** Pages that load their data open at once with a spinner instead of pausing before they slide in (b2267cb)
+- **android** Use less battery on Android in the background (7393ea4)
+- **ui** Open list editors and pages over others more smoothly (8eb40a9)
+- **dashboard** Smoother dashboard and tab switches, with one redraw a second while connected (edc6709)
+- **proxies** Smoother proxy pages when switching groups, sorting and scrolling (e21abb4)
+- **prism_ui** Swiping back on phones drops fewer frames (49df9ea)
+
+## v0.9.4 (2026-11-19)
+
+**Features**
+
+- **dashboard** One status button gathers core, update and resource states, with counts, download progress and new card icons (a89b339)
+- **rules** Added rules can go to named custom exits; a profile's script and added rules run together and open from the extend page (c8b34f2)
+- **proxy** PAC mode for the desktop system proxy; new Windows installs bypass <local>; GTK apps on KDE Plasma follow the proxy (7633c3c)
+- **dns** respect-rules, hosts and cache-algorithm in the DNS overrides; macOS system DNS through tun.dns-mode native (ca2693a)
+- **logs** Open a log on a phone to select and copy it (c85bf3a)
+- **resources** Geo resources update automatically by default (1b2ea11)
+- **desktop** Impeller on Windows and Intel Macs; the Apple Silicon download no longer carries Intel code (848583d)
+- Update the core to mihomo v1.19.34, with editor completion for its new keys (e57e5ac)
+
+**Bug Fixes**
+
+- **core** A start that fails or a lost Core says why; a mixed port of 0 is replaced; the mixed port opens without a profile (8298573)
+- **config** Process rules match by default; picked override keys are written as set, empty included (044f5b5)
+- **android** WireGuard, Hysteria2 and TUIC reconnect after a network change; core sockets opened before the VPN are protected (b13cf52)
+- **dashboard** Service and exit IP checks no longer fail while the proxy starts, stops or changes network (408aaa9)
+- **core** HTTPUpgrade share links no longer import as WebSocket (47824d4)
+- **connections** App icons show whenever the app is known and keep their place while loading (5c5964f)
+- **desktop** macOS tray windows stay on the current Space; windows use the target display's scale; AppImage without a bundled libstdc++; cleaner deb removal; the Windows installer only stops its own processes (c620dc9)
+- **ui** Pages open at the top and on the selected profile; sheets open from sheets as pages; the editor shows its spinner and grows its sheet; calmer success and warning colors; remote icons hold their size (b08bcd9)
+
+**Performance**
+
+- **connections** Connections rank and sort off the UI thread; proxy and group icons use less memory (19fb1b0)
+
+## v0.9.3 (2026-11-04)
+
+**Features**
+
+- **connections** Merged requests and connections; quick edit lists (52b975f)
+- **ui** iOS 27 transitions, press and text selection; smoother pages (bb47f2c)
+- **update** Download and install updates in the app (b8f84b3)
+- **core** One delay test timeout; VPN crash and startup fixes (2a5a42c)
+
+**Bug Fixes**
+
+- **core** Auto-select leaves an unusable first node at once (7d5db7e)
+- **access** Keep selections a filter hides (63aaf6d)
+
+## v0.9.2 (2026-10-24)
+
+**Features**
+
 - **access** Access control state shown in a bar at the bottom (e8aac17)
 - **config** Optional general overrides; settings apply sooner (5d6552d)
 - **dashboard** IP quality cached for 3 days; simpler Android dashboard (8176cce)
@@ -27,29 +134,7 @@
 
 - **editor** Smoother editor for large files and in sheets (7035edd)
 
-## v0.9.104 (2026-10-25)
-
-**Bug Fixes**
-
-- **core** Updated the Nowhere core to 3.1.0 with TLS certificate file path support (f3529c9)
-
-## v0.9.103 (2026-10-25)
-
-**Features**
-
-- **core** update the embedded clash-meta-nw core to Nowhere 3.1.0 (nw3) with the 3.0.1 wire fixes (5061e72)
-
-## v0.9.102 (2026-10-24)
-
-**Breaking Changes**
-
-- **unlock-test** The unlock test page, the unlock detection and core memory dashboard widgets are gone, and the database upgrade deletes stored unlock test run history. (cb9f165)
-
-**Features**
-
-- **unlock-test** Removed the unlock test feature, its dashboard widgets and stored run history (cb9f165)
-
-## v0.9.101 (2026-10-23)
+## v0.9.1 (2026-10-17)
 
 **Breaking Changes**
 
@@ -57,7 +142,6 @@
 
 **Features**
 
-- **local-proxies** Pick protocols from a two-column grid and add Sudoku (bd621a8)
 - **l10n** French, Spanish and Korean translations (f43755c)
 - **android** No more Firebase analytics or crash reporting (bc72bba)
 - **network** Per-key desktop TUN settings; system proxy and tray fixes (cb08088)
@@ -78,193 +162,6 @@
 
 - **android** Smoother Android UI while the proxy is busy (2201c19)
 
-## v0.9.0002 (2026-10-19)
-
-**Features**
-
-- **nowhere** Switch core to clash-meta-nw and support Nowhere 3 (06f5fe2)
-- **localization** Add new localization strings and enhance validation for Nowhere proxy (31c2d8c)
-- **notification** Add show stop action feature and enhance localization (80b6e2b)
-- **localization** Add new localization strings for EasyTier and related network settings (0506324)
-- **local-proxy** Enhance local proxy configuration with new parameters and localization (ae38b87)
-- **memory** Add core memory management and localization support (b3ed41c)
-- **core** Implement AIDL payload size limit and optimize traffic speed caching (474c383)
-- **vpn** Enhance service start/stop handling and add retry logic (d927f57)
-- **effective_config** Add Effective Config feature and localization (bbedfb4)
-- **vpn** Add dnsEnable option and enhance DNS handling (a7967ae)
-- **network_test** Add custom download URL functionality and localization (3f322a7)
-- **unlock_test** Enhance unlock test functionality and localization (53508b5)
-- **unlock_test** Implement unlock detection functionality and localization (98f45c2)
-- **local_proxy** Enhance local proxy configuration with new fields and localization (b819366)
-- **quic_test** Enhance QUIC test results with additional metrics and localization (4968b4e)
-- **network_tests** Add speed and QUIC testing functionality (d5a7cbc)
-- **local_proxy** Add new configuration options for ECH and local proxy settings (3f2c7ba)
-- **local_proxy** Enhance LocalProxyStore with migration and unique ID handling (4f8e0a7)
-- **service** Enhance WifiWatchSuspendController with persistent force resume handling (81f2b8f)
-- Add on-demand feature toggle to config (71a1c76)
-- **setup** Enhance resolveRepository to accept environment parameter and improve fallback logic (d6d22c1)
-- **setup** Add repository option for in-app updates and enhance argument parsing (4d50bb8)
-- **local_proxy** Add resetMixinOnProfileSwitch method and update profile handling (284085b)
-- **service** Implement lifecycle locking and enhance service suspension handling (b28179c)
-- **local_proxy** Enhance local proxy configuration and localization support (43e8ea0)
-- **local_proxies** Add LocalProxiesView and integrate into navigation (1a38d72)
-- **local_proxy** Add local proxy mix-in functionality and enhance localization support (0a7bb50)
-- **wifi-watch** Implement WifiWatchResumeRetry for handling resume failures with backoff (c722f31)
-- **tests** Refactor TooltipText test layout to use Center widget (6fd8109)
-- **tests** Enhance TooltipText tests for rich text handling and overflow behavior (b32e77a)
-- **wifi-watch** Implement default network monitoring and force resume logic (26f7669)
-- **wifi-watch** Add suspended state handling and update notification parameters (40f1746)
-- **wifi-watch** Implement WiFi watch state handling and broadcast integration (1787547)
-- **ui** Enhance tooltip message handling and improve wifi display logic (f95ab62)
-- **wifi-watch** Add prioritization logic for action status and enhance state management (3b360de)
-- **ui** Tap current wifi ssid to copy in on demand view (948bf95)
-- **wifi-watch** Enhance WiFi information retrieval and update UI components (35e1af7)
-- **wifi-watch** Add permissions for nearby WiFi devices and change network state (d04fbeb)
-- **wifi-watch** Add background location permission handling and update related UI components (26e2192)
-- **wifi-watch** Add current WiFi connection details and update UI components (3da20b7)
-- **build** Add version parameter to setup script for better version tracking (42fd6fc)
-- **wifi-watch** Add rawSsid to WifiWatchState and update UI to display it (45cd2d5)
-- **wifi-watch** Update getWifiWatchState to use runBlocking for synchronous execution (0f783f5)
-- **wifi-watch** Add getWifiWatchState method and refine signal strength icons (771a863)
-- **wifi-watch** Implement WiFi watch functionality and UI integration (a8a39dd)
-- **local_proxy** Add local proxy mix-in functionality and enhance localization support (c1bcc02)
-- **ci** Expand build matrix for additional platforms and architectures (4c28d4c)
-- **wifi_ssid** Reconcile unresolved SSID and expose network status (f7a22d3)
-- **android** Reconcile unresolved SSID in WiFi-watch module (278adbb)
-- **android** WiFi-watch SSID resolution grace period (16a03c6)
-- **android/service** Ignore transient null SSID during AP switches (7c4a7f2)
-- **android** Use RSSI fallback to judge trusted WiFi while VPN is active (d7a01da)
-- **ui** Wire Android service suspension through app layers (7ea6af6)
-- **state** Add suspendOnWifiSsids to SharedState and AndroidServiceSuspended provider (f22c8f7)
-- **android/app** Propagate service suspended state to Flutter (207ecfa)
-- **android/service** Add WiFi-watch auto-suspend and suspension reasons (efe8027)
-- **wifi_ssid** Add validated WiFi SSID stream for Android (0afa604)
-- 精简构建工作流，移除不必要的平台配置和步骤 (4e300bd)
-- 添加版本覆盖选项以更新 pubspec.yaml 中的应用版本 (9c71477)
-- 添加 VPN 暂停控制器并重构服务暂停逻辑 (1df0036)
-- 添加 wifiSuspended 属性以支持 WiFi 监控功能 (c0660b6)
-- Implement service suspension functionality (45ab907)
-- Migrate Clash.Meta core to hi2shark fork with compatibility patches (989f797)
-
-**Bug Fixes**
-
-- **dart** Local proxies, local rules and network test pages no longer sit under the floating top bar (b33a8c4)
-- **tests** Update fakePacketConn and enhance quicUDPAddr resolution (bc3080e)
-- **ci** Clone private mihomo submodule with a dedicated checkout token (4bc14e6)
-- **tests** Update truncate behavior tests for list handling (ce2e4ba)
-- **task** Improve type checks and handling for configuration properties (a53dc28)
-- **core** Reset Clash.Meta to origin/Alpha (06701b3)
-- **network_test** Update delegate type check for node selection (22e3fbe)
-- **wifi_watch** Adjust icon size and spacing in WifiWatchCard widget (e6c07fd)
-- **wifi** Improve fallback handling for current WiFi network status during AP switch (1c39f9c)
-- **localization** Update 'nowhereShareKey' string for clarity across multiple languages (897fefb)
-- **ui** Make wifi watch dashboard card full width (2242b4b)
-- **ui** Add bottom padding to on demand view (a436ea7)
-- **core** Update subproject commit reference in Clash.Meta (e8cf052)
-- **on-demand** Adjust padding in current WiFi section for better layout (fd213b1)
-- **wifi-watch** Correct ssid display logic in WifiWatchCard fix(dismissible): update alignment property in SizeTransition (897466a)
-- **app_manager** Simplify listener control by removing unnecessary await (5670aa5)
-- **core** Update subproject commit reference in Clash.Meta (6b780d2)
-- **core** Update subproject commit reference in Clash.Meta (39c6e8f)
-- **android/service** Correct return statement in SSID resolution grace handling (babdfdb)
-- **android** Add kotlin-parcelize plugin for @Parcelize support (43c1ffe)
-
-## v0.9.01 (2026-10-18)
-
-Internal improvements only.
-
-## v0.9.0001 (2026-10-18)
-
-**Features**
-
-- **dart** merge local proxy/rule, unlock test and wifi watch features onto 0.9.0 (58357ad)
-- **core** Port speedTest, quicTest and unlockTest methods (2c8f7aa)
-- **nowhere** Switch core to clash-meta-nw and support Nowhere 3 (06f5fe2)
-- **localization** Add new localization strings and enhance validation for Nowhere proxy (31c2d8c)
-- **notification** Add show stop action feature and enhance localization (80b6e2b)
-- **localization** Add new localization strings for EasyTier and related network settings (0506324)
-- **local-proxy** Enhance local proxy configuration with new parameters and localization (ae38b87)
-- **memory** Add core memory management and localization support (b3ed41c)
-- **core** Implement AIDL payload size limit and optimize traffic speed caching (474c383)
-- **vpn** Enhance service start/stop handling and add retry logic (d927f57)
-- **effective_config** Add Effective Config feature and localization (bbedfb4)
-- **vpn** Add dnsEnable option and enhance DNS handling (a7967ae)
-- **network_test** Add custom download URL functionality and localization (3f322a7)
-- **unlock_test** Enhance unlock test functionality and localization (53508b5)
-- **unlock_test** Implement unlock detection functionality and localization (98f45c2)
-- **local_proxy** Enhance local proxy configuration with new fields and localization (b819366)
-- **quic_test** Enhance QUIC test results with additional metrics and localization (4968b4e)
-- **network_tests** Add speed and QUIC testing functionality (d5a7cbc)
-- **local_proxy** Add new configuration options for ECH and local proxy settings (3f2c7ba)
-- **local_proxy** Enhance LocalProxyStore with migration and unique ID handling (4f8e0a7)
-- **service** Enhance WifiWatchSuspendController with persistent force resume handling (81f2b8f)
-- Add on-demand feature toggle to config (71a1c76)
-- **setup** Enhance resolveRepository to accept environment parameter and improve fallback logic (d6d22c1)
-- **setup** Add repository option for in-app updates and enhance argument parsing (4d50bb8)
-- **local_proxy** Add resetMixinOnProfileSwitch method and update profile handling (284085b)
-- **service** Implement lifecycle locking and enhance service suspension handling (b28179c)
-- **local_proxy** Enhance local proxy configuration and localization support (43e8ea0)
-- **local_proxies** Add LocalProxiesView and integrate into navigation (1a38d72)
-- **local_proxy** Add local proxy mix-in functionality and enhance localization support (0a7bb50)
-- **wifi-watch** Implement WifiWatchResumeRetry for handling resume failures with backoff (c722f31)
-- **tests** Refactor TooltipText test layout to use Center widget (6fd8109)
-- **tests** Enhance TooltipText tests for rich text handling and overflow behavior (b32e77a)
-- **wifi-watch** Implement default network monitoring and force resume logic (26f7669)
-- **wifi-watch** Add suspended state handling and update notification parameters (40f1746)
-- **wifi-watch** Implement WiFi watch state handling and broadcast integration (1787547)
-- **ui** Enhance tooltip message handling and improve wifi display logic (f95ab62)
-- **wifi-watch** Add prioritization logic for action status and enhance state management (3b360de)
-- **ui** Tap current wifi ssid to copy in on demand view (948bf95)
-- **wifi-watch** Enhance WiFi information retrieval and update UI components (35e1af7)
-- **wifi-watch** Add permissions for nearby WiFi devices and change network state (d04fbeb)
-- **wifi-watch** Add background location permission handling and update related UI components (26e2192)
-- **wifi-watch** Add current WiFi connection details and update UI components (3da20b7)
-- **build** Add version parameter to setup script for better version tracking (42fd6fc)
-- **wifi-watch** Add rawSsid to WifiWatchState and update UI to display it (45cd2d5)
-- **wifi-watch** Update getWifiWatchState to use runBlocking for synchronous execution (0f783f5)
-- **wifi-watch** Add getWifiWatchState method and refine signal strength icons (771a863)
-- **wifi-watch** Implement WiFi watch functionality and UI integration (a8a39dd)
-- **local_proxy** Add local proxy mix-in functionality and enhance localization support (c1bcc02)
-- **ci** Expand build matrix for additional platforms and architectures (4c28d4c)
-- **wifi_ssid** Reconcile unresolved SSID and expose network status (f7a22d3)
-- **android** Reconcile unresolved SSID in WiFi-watch module (278adbb)
-- **android** WiFi-watch SSID resolution grace period (16a03c6)
-- **android/service** Ignore transient null SSID during AP switches (7c4a7f2)
-- **android** Use RSSI fallback to judge trusted WiFi while VPN is active (d7a01da)
-- **ui** Wire Android service suspension through app layers (7ea6af6)
-- **state** Add suspendOnWifiSsids to SharedState and AndroidServiceSuspended provider (f22c8f7)
-- **android/app** Propagate service suspended state to Flutter (207ecfa)
-- **android/service** Add WiFi-watch auto-suspend and suspension reasons (efe8027)
-- **wifi_ssid** Add validated WiFi SSID stream for Android (0afa604)
-- 精简构建工作流，移除不必要的平台配置和步骤 (4e300bd)
-- 添加版本覆盖选项以更新 pubspec.yaml 中的应用版本 (9c71477)
-- 添加 VPN 暂停控制器并重构服务暂停逻辑 (1df0036)
-- 添加 wifiSuspended 属性以支持 WiFi 监控功能 (c0660b6)
-- Implement service suspension functionality (45ab907)
-- Migrate Clash.Meta core to hi2shark fork with compatibility patches (989f797)
-
-**Bug Fixes**
-
-- **tests** Update fakePacketConn and enhance quicUDPAddr resolution (bc3080e)
-- **ci** Clone private mihomo submodule with a dedicated checkout token (4bc14e6)
-- **tests** Update truncate behavior tests for list handling (ce2e4ba)
-- **task** Improve type checks and handling for configuration properties (a53dc28)
-- **core** Reset Clash.Meta to origin/Alpha (06701b3)
-- **network_test** Update delegate type check for node selection (22e3fbe)
-- **wifi_watch** Adjust icon size and spacing in WifiWatchCard widget (e6c07fd)
-- **wifi** Improve fallback handling for current WiFi network status during AP switch (1c39f9c)
-- **localization** Update 'nowhereShareKey' string for clarity across multiple languages (897fefb)
-- **ui** Make wifi watch dashboard card full width (2242b4b)
-- **ui** Add bottom padding to on demand view (a436ea7)
-- **core** Update subproject commit reference in Clash.Meta (e8cf052)
-- **on-demand** Adjust padding in current WiFi section for better layout (fd213b1)
-- **wifi-watch** Correct ssid display logic in WifiWatchCard fix(dismissible): update alignment property in SizeTransition (897466a)
-- **app_manager** Simplify listener control by removing unnecessary await (5670aa5)
-- **core** Update subproject commit reference in Clash.Meta (6b780d2)
-- **core** Update subproject commit reference in Clash.Meta (39c6e8f)
-- **android/service** Correct return statement in SSID resolution grace handling (babdfdb)
-- **android** Add kotlin-parcelize plugin for @Parcelize support (43c1ffe)
-
 ## v0.9.0 (2026-10-14)
 
 **Breaking Changes**
@@ -280,361 +177,12 @@ Internal improvements only.
 - **providers** DNS, Hosts and ports apply without a restart (532ebf0)
 - **android** Launcher shortcuts and one-step on-demand access (d3fa225)
 - **core** Share link import and mrs rule sets (2fa2f7f)
-- **editor** Editor word wrap and snippets (e131675)
-- **dashboard** More dashboard cards (e62afb7)
-- **views** Hide timed-out nodes and search every list (8378c70)
-- **ui** Sidebar, floating dock and drag to go back (841d603)
-- **ui** New app glyphs, empty states and theme page (ee6a497)
-- **overwrite** Invalid override warnings and rule presets (46fb7fe)
-- **config** DNS query log and per-key DNS/NTP overrides (a390a42)
-- **core** Proxied service checks and outbound IP risk (8068e68)
-- **platform** Tray hotkeys, node delays and a delay test (1e97716)
-- **ui** Rework the app UI and refresh the localization (26cfbaf)
-- **app** Rework the app layer and window handling, and add proxy authentication (aaf934c)
-- **desktop** Rework the desktop runners, packaging, and native build (c0fcbc0)
-- **android** Rework the Android VPN service and lifecycle handling (ae29f38)
-- **plugins** Rework the desktop plugins and add the Helper service and Rust bridge (adf715f)
-- **core** Rework the core IPC and process lifecycle (c6eaa0a)
 
 **Bug Fixes**
 
 - **database** Unreadable settings no longer block startup or restores (1677024)
 - **desktop** Windows and Linux desktop fixes (94a25f4)
 - **core,helper** The elevated Core only answers its owner (d780cb8)
-- **core** A changed resource link is now used by the next sync and by auto update (ff23f30)
-- **core** DNS lookups no longer fail on networks that report no DNS servers (e55f6d1)
-- **proxies** Smaller icons in icon-only group headers (786a6ab)
-- **core,android** Push notifications reconnect in Doze (1e9955d)
-- **backup,database** Restores never apply halfway (bee8f24)
-- **resources** Refresh the geo file size and time after an update finishes (c5bf5bd)
-- **core** Keep the core running while Windows sleeps with the app suspended (60f371a)
-
-## v0.8.9901 (2026-10-15)
-
-**Features**
-
-- **nowhere** Switch core to clash-meta-nw and support Nowhere 3 (06f5fe2)
-
-## v0.8.9825 (2026-09-23)
-
-Internal improvements only.
-
-## v0.8.9824 (2026-09-22)
-
-Internal improvements only.
-
-## v0.8.9823 (2026-09-19)
-
-Internal improvements only.
-
-## v0.8.9822 (2026-09-18)
-
-Internal improvements only.
-
-## v0.8.9821 (2026-09-17)
-
-**Features**
-
-- **localization** Add new localization strings and enhance validation for Nowhere proxy (31c2d8c)
-
-**Bug Fixes**
-
-- **tests** Update fakePacketConn and enhance quicUDPAddr resolution (bc3080e)
-
-## v0.8.9820 (2026-09-17)
-
-**Features**
-
-- **notification** Add show stop action feature and enhance localization (80b6e2b)
-- **localization** Add new localization strings for EasyTier and related network settings (0506324)
-
-## v0.8.9819 (2026-09-10)
-
-**Features**
-
-- **local-proxy** Enhance local proxy configuration with new parameters and localization (ae38b87)
-
-**Bug Fixes**
-
-- **ci** Clone private mihomo submodule with a dedicated checkout token (4bc14e6)
-
-## v0.8.9818 (2026-08-12)
-
-**Features**
-
-- **memory** Add core memory management and localization support (b3ed41c)
-
-## v0.8.9817 (2026-08-11)
-
-**Features**
-
-- **core** Implement AIDL payload size limit and optimize traffic speed caching (474c383)
-
-**Bug Fixes**
-
-- **tests** Update truncate behavior tests for list handling (ce2e4ba)
-
-## v0.8.9816 (2026-08-11)
-
-Internal improvements only.
-
-## v0.8.9815 (2026-07-27)
-
-**Features**
-
-- **vpn** Enhance service start/stop handling and add retry logic (d927f57)
-
-## v0.8.9813 (2026-07-26)
-
-**Bug Fixes**
-
-- **task** Improve type checks and handling for configuration properties (a53dc28)
-
-## v0.8.9812 (2026-07-26)
-
-**Features**
-
-- **effective_config** Add Effective Config feature and localization (bbedfb4)
-
-## v0.8.9811 (2026-07-26)
-
-**Features**
-
-- **vpn** Add dnsEnable option and enhance DNS handling (a7967ae)
-
-## v0.8.9810 (2026-07-21)
-
-**Features**
-
-- **network_test** Add custom download URL functionality and localization (3f322a7)
-
-## v0.8.9809 (2026-07-21)
-
-**Features**
-
-- **unlock_test** Enhance unlock test functionality and localization (53508b5)
-
-## v0.8.9807 (2026-07-20)
-
-**Features**
-
-- **unlock_test** Implement unlock detection functionality and localization (98f45c2)
-
-**Bug Fixes**
-
-- **core** Reset Clash.Meta to origin/Alpha (06701b3)
-
-## v0.8.9806 (2026-07-19)
-
-**Features**
-
-- **local_proxy** Enhance local proxy configuration with new fields and localization (b819366)
-
-## v0.8.9805 (2026-07-17)
-
-**Features**
-
-- **quic_test** Enhance QUIC test results with additional metrics and localization (4968b4e)
-
-## v0.8.9803 (2026-07-17)
-
-**Bug Fixes**
-
-- **network_test** Update delegate type check for node selection (22e3fbe)
-
-## v0.8.9802 (2026-07-17)
-
-**Features**
-
-- **network_tests** Add speed and QUIC testing functionality (d5a7cbc)
-
-## v0.8.9801 (2026-07-17)
-
-Internal improvements only.
-
-## v0.8.9702 (2026-07-15)
-
-**Features**
-
-- **local_proxy** Add new configuration options for ECH and local proxy settings (3f2c7ba)
-- **local_proxy** Enhance LocalProxyStore with migration and unique ID handling (4f8e0a7)
-
-## v0.8.9701 (2026-07-15)
-
-**Bug Fixes**
-
-- **wifi_watch** Adjust icon size and spacing in WifiWatchCard widget (e6c07fd)
-
-## v0.8.9609 (2026-07-12)
-
-**Features**
-
-- **service** Enhance WifiWatchSuspendController with persistent force resume handling (81f2b8f)
-
-## v0.8.9608 (2026-07-10)
-
-**Features**
-
-- Add on-demand feature toggle to config (71a1c76)
-
-## v0.8.9607 (2026-07-10)
-
-**Features**
-
-- **setup** Enhance resolveRepository to accept environment parameter and improve fallback logic (d6d22c1)
-- **setup** Add repository option for in-app updates and enhance argument parsing (4d50bb8)
-
-**Bug Fixes**
-
-- **wifi** Improve fallback handling for current WiFi network status during AP switch (1c39f9c)
-
-## v0.8.9606 (2026-07-09)
-
-**Features**
-
-- **local_proxy** Add resetMixinOnProfileSwitch method and update profile handling (284085b)
-
-## v0.8.9605 (2026-07-09)
-
-**Features**
-
-- **service** Implement lifecycle locking and enhance service suspension handling (b28179c)
-
-## v0.8.9604 (2026-07-09)
-
-Internal improvements only.
-
-## v0.8.9603 (2026-07-09)
-
-**Bug Fixes**
-
-- **localization** Update 'nowhereShareKey' string for clarity across multiple languages (897fefb)
-
-## v0.8.9602 (2026-07-09)
-
-**Features**
-
-- **local_proxy** Enhance local proxy configuration and localization support (43e8ea0)
-
-## v0.8.9601 (2026-07-09)
-
-**Features**
-
-- **local_proxies** Add LocalProxiesView and integrate into navigation (1a38d72)
-- **local_proxy** Add local proxy mix-in functionality and enhance localization support (0a7bb50)
-- **wifi-watch** Implement WifiWatchResumeRetry for handling resume failures with backoff (c722f31)
-- **tests** Refactor TooltipText test layout to use Center widget (6fd8109)
-- **tests** Enhance TooltipText tests for rich text handling and overflow behavior (b32e77a)
-- **wifi-watch** Implement default network monitoring and force resume logic (26f7669)
-- **wifi-watch** Add suspended state handling and update notification parameters (40f1746)
-- **wifi-watch** Implement WiFi watch state handling and broadcast integration (1787547)
-- **ui** Enhance tooltip message handling and improve wifi display logic (f95ab62)
-- **wifi-watch** Add prioritization logic for action status and enhance state management (3b360de)
-- **ui** Tap current wifi ssid to copy in on demand view (948bf95)
-- **wifi-watch** Enhance WiFi information retrieval and update UI components (35e1af7)
-- **wifi-watch** Add permissions for nearby WiFi devices and change network state (d04fbeb)
-- **wifi-watch** Add background location permission handling and update related UI components (26e2192)
-- **wifi-watch** Add current WiFi connection details and update UI components (3da20b7)
-- **build** Add version parameter to setup script for better version tracking (42fd6fc)
-- **wifi-watch** Add rawSsid to WifiWatchState and update UI to display it (45cd2d5)
-- **wifi-watch** Update getWifiWatchState to use runBlocking for synchronous execution (0f783f5)
-- **wifi-watch** Add getWifiWatchState method and refine signal strength icons (771a863)
-- **wifi-watch** Implement WiFi watch functionality and UI integration (a8a39dd)
-- **local_proxy** Add local proxy mix-in functionality and enhance localization support (c1bcc02)
-- **ci** Expand build matrix for additional platforms and architectures (4c28d4c)
-
-**Bug Fixes**
-
-- **ui** Make wifi watch dashboard card full width (2242b4b)
-- **ui** Add bottom padding to on demand view (a436ea7)
-- **core** Update subproject commit reference in Clash.Meta (e8cf052)
-- **on-demand** Adjust padding in current WiFi section for better layout (fd213b1)
-- **wifi-watch** Correct ssid display logic in WifiWatchCard fix(dismissible): update alignment property in SizeTransition (897466a)
-- **app_manager** Simplify listener control by removing unnecessary await (5670aa5)
-- **core** Update subproject commit reference in Clash.Meta (6b780d2)
-- **core** Update subproject commit reference in Clash.Meta (39c6e8f)
-
-## v0.8.9509 (2026-07-03)
-
-**Features**
-
-- **wifi_ssid** Reconcile unresolved SSID and expose network status (f7a22d3)
-- **android** Reconcile unresolved SSID in WiFi-watch module (278adbb)
-- **android** WiFi-watch SSID resolution grace period (16a03c6)
-
-**Bug Fixes**
-
-- **android/service** Correct return statement in SSID resolution grace handling (babdfdb)
-
-## v0.8.9508 (2026-07-03)
-
-**Features**
-
-- **android/service** Ignore transient null SSID during AP switches (7c4a7f2)
-
-## v0.8.9507 (2026-07-03)
-
-**Features**
-
-- **android** Use RSSI fallback to judge trusted WiFi while VPN is active (d7a01da)
-
-## v0.8.9506 (2026-07-03)
-
-**Features**
-
-- **ui** Wire Android service suspension through app layers (7ea6af6)
-- **state** Add suspendOnWifiSsids to SharedState and AndroidServiceSuspended provider (f22c8f7)
-- **android/app** Propagate service suspended state to Flutter (207ecfa)
-- **android/service** Add WiFi-watch auto-suspend and suspension reasons (efe8027)
-- **wifi_ssid** Add validated WiFi SSID stream for Android (0afa604)
-
-## v0.8.9505 (2026-07-02)
-
-**Features**
-
-- 精简构建工作流，移除不必要的平台配置和步骤 (4e300bd)
-- 添加版本覆盖选项以更新 pubspec.yaml 中的应用版本 (9c71477)
-
-## v0.8.9503 (2026-07-02)
-
-**Features**
-
-- 添加 VPN 暂停控制器并重构服务暂停逻辑 (1df0036)
-
-## v0.8.9502 (2026-07-02)
-
-Internal improvements only.
-
-## v0.8.9501 (2026-07-02)
-
-**Features**
-
-- 添加 wifiSuspended 属性以支持 WiFi 监控功能 (c0660b6)
-- Implement service suspension functionality (45ab907)
-
-## v0.8.9405 (2026-07-02)
-
-Internal improvements only.
-
-## v0.8.9404 (2026-07-02)
-
-Internal improvements only.
-
-## v0.8.9403 (2026-07-02)
-
-**Bug Fixes**
-
-- **android** Add kotlin-parcelize plugin for @Parcelize support (43c1ffe)
-
-## v0.8.9402 (2026-07-02)
-
-Internal improvements only.
-
-## v0.8.9401 (2026-07-01)
-
-**Features**
-
-- Migrate Clash.Meta core to hi2shark fork with compatibility patches (989f797)
 
 ## v0.8.99 (2026-10-03)
 

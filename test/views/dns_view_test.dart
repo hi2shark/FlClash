@@ -9,12 +9,13 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/dns.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 const _profileId = 1;
 
@@ -135,6 +136,16 @@ void main() {
     expect(config().dns.ipv6, defaultDns.ipv6);
   });
 
+  testWidgets('offers Prefer H3 for every subscription', (tester) async {
+    await pumpView(tester);
+
+    await openAddSheet(tester);
+    await tester.tap(find.text('Prefer H3'));
+    await tester.pumpAndSettle();
+
+    expect(config().dnsOverrideKeys, {DnsOverrideKey.preferH3});
+  });
+
   testWidgets('the empty page says where the entries apply and adds from it', (
     tester,
   ) async {
@@ -162,8 +173,18 @@ void main() {
 
     await openAddSheet(tester);
 
-    expect(find.text('Direct Nameserver'), findsOneWidget);
-    expect(find.text(currentAppLocalizations.respectRules), findsNothing);
+    expect(find.text(currentAppLocalizations.respectRules), findsOneWidget);
+    expect(find.text(currentAppLocalizations.fakeipTtl), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Direct Nameserver'),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(SelectionSheet<DnsOverrideKey>),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     expect(find.text('Nameserver Policy'), findsNothing);
     expect(find.text(currentAppLocalizations.fallbackFilter), findsNothing);
   });
@@ -185,7 +206,7 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.dnsMode));
     await tester.pumpAndSettle();
 
-    expect(find.byType(CommonPopupMenu), findsNothing);
+    expect(find.byType(PopupMenu), findsNothing);
     expect(config().dnsOverrideKeys, {DnsOverrideKey.enhancedMode});
     expect(config().dns.enhancedMode, defaultDns.enhancedMode);
     expect(defaultDns.enhancedMode, DnsMode.redirHost);
@@ -200,7 +221,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('IPv6'), findsOneWidget);
-    await tester.tap(find.byType(CommonSwitch).last);
+    await tester.tap(find.byType(Switch).last);
     await tester.pump();
     expect(config().dns.ipv6, isTrue);
 
@@ -266,14 +287,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(config().dnsOverrideKeys, hasLength(3));
-    expect(
-      config().dns.overrideJson(config().dnsOverrideKeys, keepEmpty: true),
-      {
-        'listen': '',
-        'default-nameserver': <String>[],
-        'nameserver': ['1.1.1.1'],
-      },
-    );
+    expect(config().dns.overrideJson(config().dnsOverrideKeys), {
+      'listen': '',
+      'default-nameserver': <String>[],
+      'nameserver': ['1.1.1.1'],
+    });
   });
 
   testWidgets('the DNS mode options read as mihomo writes them and leave '
@@ -366,8 +384,8 @@ void main() {
       );
     });
 
-    testWidgets('a list entry closed unchanged stays and one emptied is '
-        'taken off', (tester) async {
+    testWidgets('a list entry closed unchanged stays and one emptied keeps '
+        'its key', (tester) async {
       await pumpView(tester, profile: true);
       setProfileKeys({DnsOverrideKey.nameserver, DnsOverrideKey.fallback});
       container
@@ -395,8 +413,11 @@ void main() {
           .widget<ConfigListEditItem>(nameserver)
           .onChanged(tester.element(nameserver) as WidgetRef, const []);
       await tester.pumpAndSettle();
-      expect(overrides().dnsOverrideKeys, {DnsOverrideKey.fallback});
-      expect(overrides().dns.nameserver, defaultDns.nameserver);
+      expect(overrides().dnsOverrideKeys, {
+        DnsOverrideKey.nameserver,
+        DnsOverrideKey.fallback,
+      });
+      expect(overrides().dns.nameserver, isEmpty);
     });
 
     testWidgets('a policy entry summarises its rules', (tester) async {

@@ -2,12 +2,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:fl_clash/ui/switch.dart';
 import 'package:fl_clash/local_proxies/pages/local_proxy_edit_page.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/ui.dart';
+import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -54,8 +55,10 @@ Widget _wrap(Widget child) {
     wrapInProviderScope: true,
     homeBuilder: (page) => Navigator(
       onGenerateInitialRoutes: (_, _) => [
-        MaterialPageRoute(builder: (_) => const SizedBox.shrink()),
-        MaterialPageRoute(builder: (_) => page),
+        PageRouteBuilder<void>(
+          pageBuilder: (_, _, _) => const SizedBox.shrink(),
+        ),
+        PageRouteBuilder<void>(pageBuilder: (_, _, _) => page),
       ],
     ),
     child: child,
@@ -87,13 +90,20 @@ LocalProxy _proxy({
 }
 
 Finder _field(String label) {
-  return find.byWidgetPredicate(
-    (widget) => widget is TextField && widget.decoration?.labelText == label,
-  );
+  return find.byKey(ValueKey('field:$label'));
 }
 
 TextEditingController _fieldController(WidgetTester tester, String label) {
-  return tester.widget<TextField>(_field(label)).controller!;
+  return tester.widget<TextFormField>(_field(label)).controller!;
+}
+
+Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
+  await tester.scrollUntilVisible(
+    finder,
+    300,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.ensureVisible(finder);
 }
 
 Future<void> _enterField(
@@ -102,7 +112,7 @@ Future<void> _enterField(
   String value,
 ) async {
   final finder = _field(label);
-  await tester.ensureVisible(finder);
+  await _scrollTo(tester, finder);
   await tester.enterText(finder, value);
 }
 
@@ -218,10 +228,15 @@ void main() {
     await _pumpFrames(tester);
 
     expect(tester.takeException(), isNull);
+    await _scrollTo(tester, _field('Username'));
     expect(_fieldController(tester, 'Username').text, 'alice');
+    await _scrollTo(tester, _field('Password'));
     expect(_fieldController(tester, 'Password').text, 'secret');
+    await _scrollTo(tester, _field('Fingerprint'));
     expect(_fieldController(tester, 'Fingerprint').text, 'chrome');
+    await _scrollTo(tester, _field('Certificate'));
     expect(_fieldController(tester, 'Certificate').text, 'CERTIFICATE');
+    await _scrollTo(tester, _field('Private key'));
     expect(_fieldController(tester, 'Private key').text, 'PRIVATE KEY');
 
     await _tapSave(tester);
@@ -282,11 +297,12 @@ void main() {
     await tester.pumpWidget(_wrap(LocalProxyEditPage(proxy: storedBeforeEdit)));
     await _pumpFrames(tester);
 
+    await _scrollTo(tester, find.text('TLS'));
     final tlsTile = find
-        .ancestor(of: find.text('TLS'), matching: find.byType(ListTile))
+        .ancestor(of: find.text('TLS'), matching: find.byType(ListItem))
         .first;
-    final tlsSwitch = tester.widget<CommonSwitch>(
-      find.descendant(of: tlsTile, matching: find.byType(CommonSwitch)),
+    final tlsSwitch = tester.widget<Switch>(
+      find.descendant(of: tlsTile, matching: find.byType(Switch)),
     );
     tlsSwitch.onChanged!(false);
     await _pumpFrames(tester);
@@ -746,18 +762,24 @@ void main() {
     await _pumpFrames(tester);
 
     final morphTile = find
-        .ancestor(of: find.text('Morph'), matching: find.byType(ListTile))
+        .ancestor(of: find.text('Morph'), matching: find.byType(ListItem))
         .first;
-    final morphSwitch = tester.widget<CommonSwitch>(
-      find.descendant(of: morphTile, matching: find.byType(CommonSwitch)),
+    final morphSwitch = tester.widget<Switch>(
+      find.descendant(of: morphTile, matching: find.byType(Switch)),
     );
     morphSwitch.onChanged!(false);
     await _pumpFrames(tester);
     await _tapSave(tester);
     expect(localProxyStore.proxies.single.config['morph'], isFalse);
+    expect(
+      localProxyStore.proxies.single.config.containsKey('cipher'),
+      isFalse,
+    );
   });
 
-  testWidgets('round-trips Nowhere 3 transport and morph', (tester) async {
+  testWidgets('round-trips Nowhere 3 transport, cipher, and morph', (
+    tester,
+  ) async {
     final original = _proxy(
       id: 23,
       name: 'Nowhere 3 Node',
@@ -771,6 +793,7 @@ void main() {
         'udp': true,
         'alpn': ['nw3'],
         'net': 'udp',
+        'cipher': 'aes',
         'morph': false,
       },
     );
@@ -784,6 +807,8 @@ void main() {
       _fieldController(tester, 'Share key (shared key)').text,
       '0123456789abcdef0123456789abcdef',
     );
+    expect(find.text('Cipher'), findsOneWidget);
+    expect(find.text('AES-128-CTR (aes)'), findsOneWidget);
     expect(find.text('Morph'), findsOneWidget);
     expect(find.text('Up'), findsNothing);
     expect(find.text('Down'), findsNothing);
@@ -792,10 +817,33 @@ void main() {
     final saved = localProxyStore.proxies.single.config;
     expect(saved['alpn'], ['nw3']);
     expect(saved['net'], 'udp');
+    expect(saved['cipher'], 'aes');
     expect(saved['morph'], isFalse);
     expect(saved.containsKey('up'), isFalse);
     expect(saved.containsKey('down'), isFalse);
     expect(saved.containsKey('mux'), isFalse);
+  });
+
+  testWidgets('defaults new Nowhere 3 nodes to chacha cipher', (tester) async {
+    await tester.pumpWidget(
+      _wrap(const LocalProxyEditPage(initialType: 'nowhere')),
+    );
+    await _pumpFrames(tester);
+
+    await _enterField(tester, 'Name', 'Fresh NW3');
+    await _enterField(tester, 'Server', 'example.com');
+    await _enterField(tester, 'Port', '2077');
+    await _enterField(
+      tester,
+      'Share key (shared key)',
+      '0123456789abcdef0123456789abcdef',
+    );
+    expect(find.text('ChaCha20 (chacha)'), findsOneWidget);
+
+    await _tapSave(tester);
+    final saved = localProxyStore.proxies.single.config;
+    expect(saved['alpn'], ['nw3']);
+    expect(saved['cipher'], 'chacha');
   });
 
   testWidgets('rejects Nowhere 3 keys that are not 32 hex characters', (

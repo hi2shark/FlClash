@@ -31,11 +31,14 @@ void main() {
         .setMockMethodCallHandler(channel, null);
   });
 
-  test('returns null for empty package names without a channel call', () async {
-    expect(await client.getPackageIcon(''), isNull);
-    expect(calls, 0);
-    expect(client.hasPackageIcon(''), isFalse);
-  });
+  test(
+    'returns null for empty own package names without a channel call',
+    () async {
+      expect(await client.getOwnPackageIcon(''), isNull);
+      expect(calls, 0);
+      expect(client.hasPackageIcon(''), isFalse);
+    },
+  );
 
   test('deduplicates in-flight and cached package icon loads', () async {
     final first = client.getPackageIcon('com.example.app');

@@ -5,7 +5,7 @@ import 'package:fl_clash/local_rules/services/local_rule_store.dart';
 import 'package:fl_clash/local_rules/services/local_rule_targets.dart';
 import 'package:fl_clash/models/local_rule.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 class LocalRuleEditPage extends StatefulWidget {
   const LocalRuleEditPage({super.key, this.rule, this.catalog});
@@ -60,7 +60,7 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
   Future<void> _handleSelectAction() async {
     final selected = await showFloatingDialog<RuleAction>(
       context: context,
-      child: CommonDialog(
+      child: AlertDialog(
         title: context.appLocalizations.ruleAction,
         padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
         actions: [
@@ -69,18 +69,20 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
             child: Text(context.appLocalizations.cancel),
           ),
         ],
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final action in RuleAction.addedRuleActions)
-              ListTile(
-                title: Text(action.value),
-                trailing: _rule.ruleAction == action
-                    ? const GlyphIcon(AppGlyphs.check)
-                    : null,
-                onTap: () => Navigator.of(context).pop(action),
-              ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final action in RuleAction.addedRuleActions)
+                ListItem(
+                  title: Text(action.value),
+                  trailing: _rule.ruleAction == action
+                      ? const GlyphIcon(AppGlyphs.check)
+                      : null,
+                  onTap: () => Navigator.of(context).pop(action),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -106,7 +108,7 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid) return;
     if ((_rule.ruleTarget ?? '').isEmpty) {
-      context.showNotifier(context.appLocalizations.selectSplitStrategy);
+      dialogs.showBanner(context.appLocalizations.selectSplitStrategy);
       return;
     }
 
@@ -132,7 +134,7 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
     final target = _rule.ruleTarget ?? '';
     final invalidTarget =
         target.isNotEmpty && !_catalog.validTargets.contains(target);
-    return CommonScaffold(
+    return Scaffold(
       title: _isEditing
           ? appLocalizations.editLocalRule
           : appLocalizations.addLocalRule,
@@ -148,7 +150,7 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
             16,
           ).copyWith(top: context.contentTopPadding, bottom: 88),
           children: [
-            CommonCard(
+            Card(
               child: ListItem(
                 title: Text(appLocalizations.ruleAction),
                 subtitle: Text(_rule.ruleAction.value),
@@ -157,31 +159,45 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
               ),
             ),
             const SizedBox(height: 12),
-            CommonCard(
+            Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: TextFormField(
-                  controller: _contentController,
-                  keyboardType: TextInputType.text,
-                  inputFormatters: TextInputLimits.limit(TextInputLimits.rule),
-                  decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                    labelText: appLocalizations.content,
-                    hintText: appLocalizations.inputRuleContent,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return appLocalizations.emptyTip(
-                        appLocalizations.content,
-                      );
-                    }
-                    return null;
-                  },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      appLocalizations.content,
+                      style: AppTextStyle.footnote
+                          .of(context)
+                          .copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: _contentController,
+                      keyboardType: TextInputType.text,
+                      inputFormatters: TextInputLimits.limit(
+                        TextInputLimits.rule,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: appLocalizations.inputRuleContent,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return appLocalizations.emptyTip(
+                            appLocalizations.content,
+                          );
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),
             const SizedBox(height: 12),
-            CommonCard(
+            Card(
               isError: invalidTarget,
               child: ListItem(
                 title: Text(appLocalizations.splitStrategy),
@@ -198,7 +214,7 @@ class _LocalRuleEditPageState extends State<LocalRuleEditPage> {
             ),
             if (_rule.ruleAction.hasParams) ...[
               const SizedBox(height: 12),
-              CommonCard(
+              Card(
                 child: Column(
                   children: [
                     ListItem.toggle(
@@ -263,7 +279,7 @@ class LocalRuleTargetPage extends StatelessWidget {
     final appLocalizations = context.appLocalizations;
     final groups = catalog.groups;
     final localNodes = catalog.localNodes;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.splitStrategy,
       body: ListView(
         padding: const EdgeInsets.all(
@@ -272,7 +288,7 @@ class LocalRuleTargetPage extends StatelessWidget {
         children: [
           InfoHeader(info: Info(label: appLocalizations.basicStrategy)),
           const SizedBox(height: 8),
-          CommonCard(
+          Card(
             child: Column(
               children: [
                 for (var i = 0; i < RuleTarget.values.length; i++)
@@ -288,11 +304,11 @@ class LocalRuleTargetPage extends StatelessWidget {
           InfoHeader(info: Info(label: appLocalizations.proxyGroup)),
           const SizedBox(height: 8),
           if (groups.isEmpty)
-            CommonCard(
+            Card(
               child: ListItem(title: Text(appLocalizations.noLocalRuleGroups)),
             )
           else
-            CommonCard(
+            Card(
               child: Column(
                 children: [
                   for (var i = 0; i < groups.length; i++)
@@ -318,11 +334,9 @@ class LocalRuleTargetPage extends StatelessWidget {
               ),
             ),
           if (localNodes.isEmpty)
-            CommonCard(
-              child: ListItem(title: Text(appLocalizations.noLocalProxy)),
-            )
+            Card(child: ListItem(title: Text(appLocalizations.noLocalProxy)))
           else
-            CommonCard(
+            Card(
               child: Column(
                 children: [
                   for (var i = 0; i < localNodes.length; i++)

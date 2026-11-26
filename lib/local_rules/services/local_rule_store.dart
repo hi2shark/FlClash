@@ -5,7 +5,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/local_rule.dart';
 import 'package:fl_clash/models/local_rule_mixin_config.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 
 class _LocalRuleData {

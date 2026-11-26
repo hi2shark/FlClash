@@ -5,12 +5,13 @@ import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/background_resource_manager.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/widgets/icon.dart';
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AppStateManager extends ConsumerStatefulWidget {
@@ -64,11 +65,8 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
         }
       });
     }
-    final systemDns = systemDnsCoordinator;
-    if (systemDns != null) {
-      ref.listenManual(shouldPatchSystemDnsProvider, (prev, next) {
-        unawaited(systemDns.sync(next));
-      }, fireImmediately: true);
+    if (system.isMacOS && !safeModeBuild) {
+      unawaited(restoreLegacySystemDns());
     }
   }
 
@@ -79,7 +77,7 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
   }
 
   void _updateVisible(AppLifecycleState? state) {
-    ref.read(appVisibleProvider.notifier).value = switch (state) {
+    ref.read(appVisibleProvider.notifier).shown = switch (state) {
       null || AppLifecycleState.resumed || AppLifecycleState.inactive => true,
       AppLifecycleState.hidden ||
       AppLifecycleState.paused ||
@@ -114,6 +112,10 @@ class _AppStateManagerState extends ConsumerState<AppStateManager>
       _lastResumeHandledAt = now;
       unawaited(ref.read(locationPermissionsProvider.notifier).refresh());
       permissions.check();
+      // A certificate removed meanwhile stops decryption before the next start.
+      if (rsFeature && ref.read(patchClashConfigProvider).mitm.enable) {
+        unawaited(ref.read(mitmTrustStateProvider.notifier).refresh());
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
           return;
@@ -260,7 +262,7 @@ class AppSidebarContainer extends ConsumerWidget {
         children: [
           AnimatedVisibility.sidebar(
             visible: hasSidebar,
-            child: Material(
+            child: Surface(
               color: backdropOpacity != null
                   ? chrome.withValues(alpha: backdropOpacity)
                   : chrome,

@@ -580,7 +580,7 @@ as int,
 /// @nodoc
 mixin _$Metadata {
 
- int get uid; String get network; String get sourceIP; String get sourcePort; String get destinationIP; String get destinationPort; String get host; DnsMode? get dnsMode; String get process; String get processPath; String get remoteDestination; List<String> get sourceGeoIP; List<String> get destinationGeoIP; String get destinationIPASN; String get sourceIPASN; String get specialRules; String get specialProxy;
+ int get uid; String get network; String get sourceIP; String get sourcePort; String get destinationIP; String get destinationPort; String get host; DnsMode? get dnsMode; String get process; String get processPath; String get remoteDestination; List<String> get sourceGeoIP; List<String> get destinationGeoIP; String get destinationIPASN; String get sourceIPASN; String get specialRules; String get specialProxy; bool get mitm; bool get mitmRefused;
 /// Create a copy of Metadata
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -594,20 +594,20 @@ $MetadataCopyWith<Metadata> get copyWith => _$MetadataCopyWithImpl<Metadata>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as Metadata;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Metadata&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.network, _this.network) || other.network == _this.network)&&(identical(other.sourceIP, _this.sourceIP) || other.sourceIP == _this.sourceIP)&&(identical(other.sourcePort, _this.sourcePort) || other.sourcePort == _this.sourcePort)&&(identical(other.destinationIP, _this.destinationIP) || other.destinationIP == _this.destinationIP)&&(identical(other.destinationPort, _this.destinationPort) || other.destinationPort == _this.destinationPort)&&(identical(other.host, _this.host) || other.host == _this.host)&&(identical(other.dnsMode, _this.dnsMode) || other.dnsMode == _this.dnsMode)&&(identical(other.process, _this.process) || other.process == _this.process)&&(identical(other.processPath, _this.processPath) || other.processPath == _this.processPath)&&(identical(other.remoteDestination, _this.remoteDestination) || other.remoteDestination == _this.remoteDestination)&&const DeepCollectionEquality().equals(other.sourceGeoIP, _this.sourceGeoIP)&&const DeepCollectionEquality().equals(other.destinationGeoIP, _this.destinationGeoIP)&&(identical(other.destinationIPASN, _this.destinationIPASN) || other.destinationIPASN == _this.destinationIPASN)&&(identical(other.sourceIPASN, _this.sourceIPASN) || other.sourceIPASN == _this.sourceIPASN)&&(identical(other.specialRules, _this.specialRules) || other.specialRules == _this.specialRules)&&(identical(other.specialProxy, _this.specialProxy) || other.specialProxy == _this.specialProxy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Metadata&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.network, _this.network) || other.network == _this.network)&&(identical(other.sourceIP, _this.sourceIP) || other.sourceIP == _this.sourceIP)&&(identical(other.sourcePort, _this.sourcePort) || other.sourcePort == _this.sourcePort)&&(identical(other.destinationIP, _this.destinationIP) || other.destinationIP == _this.destinationIP)&&(identical(other.destinationPort, _this.destinationPort) || other.destinationPort == _this.destinationPort)&&(identical(other.host, _this.host) || other.host == _this.host)&&(identical(other.dnsMode, _this.dnsMode) || other.dnsMode == _this.dnsMode)&&(identical(other.process, _this.process) || other.process == _this.process)&&(identical(other.processPath, _this.processPath) || other.processPath == _this.processPath)&&(identical(other.remoteDestination, _this.remoteDestination) || other.remoteDestination == _this.remoteDestination)&&const DeepCollectionEquality().equals(other.sourceGeoIP, _this.sourceGeoIP)&&const DeepCollectionEquality().equals(other.destinationGeoIP, _this.destinationGeoIP)&&(identical(other.destinationIPASN, _this.destinationIPASN) || other.destinationIPASN == _this.destinationIPASN)&&(identical(other.sourceIPASN, _this.sourceIPASN) || other.sourceIPASN == _this.sourceIPASN)&&(identical(other.specialRules, _this.specialRules) || other.specialRules == _this.specialRules)&&(identical(other.specialProxy, _this.specialProxy) || other.specialProxy == _this.specialProxy)&&(identical(other.mitm, _this.mitm) || other.mitm == _this.mitm)&&(identical(other.mitmRefused, _this.mitmRefused) || other.mitmRefused == _this.mitmRefused));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as Metadata;
-  return Object.hash(runtimeType,_this.uid,_this.network,_this.sourceIP,_this.sourcePort,_this.destinationIP,_this.destinationPort,_this.host,_this.dnsMode,_this.process,_this.processPath,_this.remoteDestination,const DeepCollectionEquality().hash(_this.sourceGeoIP),const DeepCollectionEquality().hash(_this.destinationGeoIP),_this.destinationIPASN,_this.sourceIPASN,_this.specialRules,_this.specialProxy);
+  return Object.hashAll([runtimeType,_this.uid,_this.network,_this.sourceIP,_this.sourcePort,_this.destinationIP,_this.destinationPort,_this.host,_this.dnsMode,_this.process,_this.processPath,_this.remoteDestination,const DeepCollectionEquality().hash(_this.sourceGeoIP),const DeepCollectionEquality().hash(_this.destinationGeoIP),_this.destinationIPASN,_this.sourceIPASN,_this.specialRules,_this.specialProxy,_this.mitm,_this.mitmRefused]);
 }
 
 @override
 String toString() {
   final _this = this as Metadata;
-  return 'Metadata(uid: ${_this.uid}, network: ${_this.network}, sourceIP: ${_this.sourceIP}, sourcePort: ${_this.sourcePort}, destinationIP: ${_this.destinationIP}, destinationPort: ${_this.destinationPort}, host: ${_this.host}, dnsMode: ${_this.dnsMode}, process: ${_this.process}, processPath: ${_this.processPath}, remoteDestination: ${_this.remoteDestination}, sourceGeoIP: ${_this.sourceGeoIP}, destinationGeoIP: ${_this.destinationGeoIP}, destinationIPASN: ${_this.destinationIPASN}, sourceIPASN: ${_this.sourceIPASN}, specialRules: ${_this.specialRules}, specialProxy: ${_this.specialProxy})';
+  return 'Metadata(uid: ${_this.uid}, network: ${_this.network}, sourceIP: ${_this.sourceIP}, sourcePort: ${_this.sourcePort}, destinationIP: ${_this.destinationIP}, destinationPort: ${_this.destinationPort}, host: ${_this.host}, dnsMode: ${_this.dnsMode}, process: ${_this.process}, processPath: ${_this.processPath}, remoteDestination: ${_this.remoteDestination}, sourceGeoIP: ${_this.sourceGeoIP}, destinationGeoIP: ${_this.destinationGeoIP}, destinationIPASN: ${_this.destinationIPASN}, sourceIPASN: ${_this.sourceIPASN}, specialRules: ${_this.specialRules}, specialProxy: ${_this.specialProxy}, mitm: ${_this.mitm}, mitmRefused: ${_this.mitmRefused})';
 }
 
 
@@ -618,7 +618,7 @@ abstract mixin class $MetadataCopyWith<$Res>  {
   factory $MetadataCopyWith(Metadata value, $Res Function(Metadata) _then) = _$MetadataCopyWithImpl;
 @useResult
 $Res call({
- int uid, String network, String sourceIP, String sourcePort, String destinationIP, String destinationPort, String host, DnsMode? dnsMode, String process, String processPath, String remoteDestination, List<String> sourceGeoIP, List<String> destinationGeoIP, String destinationIPASN, String sourceIPASN, String specialRules, String specialProxy
+ int uid, String network, String sourceIP, String sourcePort, String destinationIP, String destinationPort, String host, DnsMode? dnsMode, String process, String processPath, String remoteDestination, List<String> sourceGeoIP, List<String> destinationGeoIP, String destinationIPASN, String sourceIPASN, String specialRules, String specialProxy, bool mitm, bool mitmRefused
 });
 
 
@@ -635,7 +635,7 @@ class _$MetadataCopyWithImpl<$Res>
 
 /// Create a copy of Metadata
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? uid = null,Object? network = null,Object? sourceIP = null,Object? sourcePort = null,Object? destinationIP = null,Object? destinationPort = null,Object? host = null,Object? dnsMode = freezed,Object? process = null,Object? processPath = null,Object? remoteDestination = null,Object? sourceGeoIP = null,Object? destinationGeoIP = null,Object? destinationIPASN = null,Object? sourceIPASN = null,Object? specialRules = null,Object? specialProxy = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? uid = null,Object? network = null,Object? sourceIP = null,Object? sourcePort = null,Object? destinationIP = null,Object? destinationPort = null,Object? host = null,Object? dnsMode = freezed,Object? process = null,Object? processPath = null,Object? remoteDestination = null,Object? sourceGeoIP = null,Object? destinationGeoIP = null,Object? destinationIPASN = null,Object? sourceIPASN = null,Object? specialRules = null,Object? specialProxy = null,Object? mitm = null,Object? mitmRefused = null,}) {
   return _then(Metadata(
 uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as int,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
@@ -654,7 +654,9 @@ as List<String>,destinationIPASN: null == destinationIPASN ? _self.destinationIP
 as String,sourceIPASN: null == sourceIPASN ? _self.sourceIPASN : sourceIPASN // ignore: cast_nullable_to_non_nullable
 as String,specialRules: null == specialRules ? _self.specialRules : specialRules // ignore: cast_nullable_to_non_nullable
 as String,specialProxy: null == specialProxy ? _self.specialProxy : specialProxy // ignore: cast_nullable_to_non_nullable
-as String,
+as String,mitm: null == mitm ? _self.mitm : mitm // ignore: cast_nullable_to_non_nullable
+as bool,mitmRefused: null == mitmRefused ? _self.mitmRefused : mitmRefused // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -739,10 +741,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy,  bool mitm,  bool mitmRefused)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Metadata() when $default != null:
-return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy);case _:
+return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy,_that.mitm,_that.mitmRefused);case _:
   return orElse();
 
 }
@@ -760,10 +762,10 @@ return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.de
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy,  bool mitm,  bool mitmRefused)  $default,) {final _that = this;
 switch (_that) {
 case _Metadata():
-return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy);case _:
+return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy,_that.mitm,_that.mitmRefused);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -780,10 +782,10 @@ return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.de
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int uid,  String network,  String sourceIP,  String sourcePort,  String destinationIP,  String destinationPort,  String host,  DnsMode? dnsMode,  String process,  String processPath,  String remoteDestination,  List<String> sourceGeoIP,  List<String> destinationGeoIP,  String destinationIPASN,  String sourceIPASN,  String specialRules,  String specialProxy,  bool mitm,  bool mitmRefused)?  $default,) {final _that = this;
 switch (_that) {
 case _Metadata() when $default != null:
-return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy);case _:
+return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.destinationIP,_that.destinationPort,_that.host,_that.dnsMode,_that.process,_that.processPath,_that.remoteDestination,_that.sourceGeoIP,_that.destinationGeoIP,_that.destinationIPASN,_that.sourceIPASN,_that.specialRules,_that.specialProxy,_that.mitm,_that.mitmRefused);case _:
   return null;
 
 }
@@ -795,7 +797,7 @@ return $default(_that.uid,_that.network,_that.sourceIP,_that.sourcePort,_that.de
 @JsonSerializable()
 
 class _Metadata implements Metadata {
-  const _Metadata({this.uid = 0, this.network = '', this.sourceIP = '', this.sourcePort = '', this.destinationIP = '', this.destinationPort = '', this.host = '', this.dnsMode, this.process = '', this.processPath = '', this.remoteDestination = '',  List<String> sourceGeoIP = const [],  List<String> destinationGeoIP = const [], this.destinationIPASN = '', this.sourceIPASN = '', this.specialRules = '', this.specialProxy = ''}): _sourceGeoIP = sourceGeoIP,_destinationGeoIP = destinationGeoIP;
+  const _Metadata({this.uid = 0, this.network = '', this.sourceIP = '', this.sourcePort = '', this.destinationIP = '', this.destinationPort = '', this.host = '', this.dnsMode, this.process = '', this.processPath = '', this.remoteDestination = '',  List<String> sourceGeoIP = const [],  List<String> destinationGeoIP = const [], this.destinationIPASN = '', this.sourceIPASN = '', this.specialRules = '', this.specialProxy = '', this.mitm = false, this.mitmRefused = false}): _sourceGeoIP = sourceGeoIP,_destinationGeoIP = destinationGeoIP;
   factory _Metadata.fromJson(Map<String, dynamic> json) => _$MetadataFromJson(json);
 
 @override@JsonKey() final  int uid;
@@ -827,6 +829,8 @@ class _Metadata implements Metadata {
 @override@JsonKey() final  String sourceIPASN;
 @override@JsonKey() final  String specialRules;
 @override@JsonKey() final  String specialProxy;
+@override@JsonKey() final  bool mitm;
+@override@JsonKey() final  bool mitmRefused;
 
 /// Create a copy of Metadata
 /// with the given fields replaced by the non-null parameter values.
@@ -841,18 +845,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Metadata&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.network, network) || other.network == network)&&(identical(other.sourceIP, sourceIP) || other.sourceIP == sourceIP)&&(identical(other.sourcePort, sourcePort) || other.sourcePort == sourcePort)&&(identical(other.destinationIP, destinationIP) || other.destinationIP == destinationIP)&&(identical(other.destinationPort, destinationPort) || other.destinationPort == destinationPort)&&(identical(other.host, host) || other.host == host)&&(identical(other.dnsMode, dnsMode) || other.dnsMode == dnsMode)&&(identical(other.process, process) || other.process == process)&&(identical(other.processPath, processPath) || other.processPath == processPath)&&(identical(other.remoteDestination, remoteDestination) || other.remoteDestination == remoteDestination)&&const DeepCollectionEquality().equals(other.sourceGeoIP, _sourceGeoIP)&&const DeepCollectionEquality().equals(other.destinationGeoIP, _destinationGeoIP)&&(identical(other.destinationIPASN, destinationIPASN) || other.destinationIPASN == destinationIPASN)&&(identical(other.sourceIPASN, sourceIPASN) || other.sourceIPASN == sourceIPASN)&&(identical(other.specialRules, specialRules) || other.specialRules == specialRules)&&(identical(other.specialProxy, specialProxy) || other.specialProxy == specialProxy));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Metadata&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.network, network) || other.network == network)&&(identical(other.sourceIP, sourceIP) || other.sourceIP == sourceIP)&&(identical(other.sourcePort, sourcePort) || other.sourcePort == sourcePort)&&(identical(other.destinationIP, destinationIP) || other.destinationIP == destinationIP)&&(identical(other.destinationPort, destinationPort) || other.destinationPort == destinationPort)&&(identical(other.host, host) || other.host == host)&&(identical(other.dnsMode, dnsMode) || other.dnsMode == dnsMode)&&(identical(other.process, process) || other.process == process)&&(identical(other.processPath, processPath) || other.processPath == processPath)&&(identical(other.remoteDestination, remoteDestination) || other.remoteDestination == remoteDestination)&&const DeepCollectionEquality().equals(other.sourceGeoIP, _sourceGeoIP)&&const DeepCollectionEquality().equals(other.destinationGeoIP, _destinationGeoIP)&&(identical(other.destinationIPASN, destinationIPASN) || other.destinationIPASN == destinationIPASN)&&(identical(other.sourceIPASN, sourceIPASN) || other.sourceIPASN == sourceIPASN)&&(identical(other.specialRules, specialRules) || other.specialRules == specialRules)&&(identical(other.specialProxy, specialProxy) || other.specialProxy == specialProxy)&&(identical(other.mitm, mitm) || other.mitm == mitm)&&(identical(other.mitmRefused, mitmRefused) || other.mitmRefused == mitmRefused));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,uid,network,sourceIP,sourcePort,destinationIP,destinationPort,host,dnsMode,process,processPath,remoteDestination,const DeepCollectionEquality().hash(_sourceGeoIP),const DeepCollectionEquality().hash(_destinationGeoIP),destinationIPASN,sourceIPASN,specialRules,specialProxy);
+    return Object.hashAll([runtimeType,uid,network,sourceIP,sourcePort,destinationIP,destinationPort,host,dnsMode,process,processPath,remoteDestination,const DeepCollectionEquality().hash(_sourceGeoIP),const DeepCollectionEquality().hash(_destinationGeoIP),destinationIPASN,sourceIPASN,specialRules,specialProxy,mitm,mitmRefused]);
 }
 
 @override
 String toString() {
-    return 'Metadata(uid: $uid, network: $network, sourceIP: $sourceIP, sourcePort: $sourcePort, destinationIP: $destinationIP, destinationPort: $destinationPort, host: $host, dnsMode: $dnsMode, process: $process, processPath: $processPath, remoteDestination: $remoteDestination, sourceGeoIP: $sourceGeoIP, destinationGeoIP: $destinationGeoIP, destinationIPASN: $destinationIPASN, sourceIPASN: $sourceIPASN, specialRules: $specialRules, specialProxy: $specialProxy)';
+    return 'Metadata(uid: $uid, network: $network, sourceIP: $sourceIP, sourcePort: $sourcePort, destinationIP: $destinationIP, destinationPort: $destinationPort, host: $host, dnsMode: $dnsMode, process: $process, processPath: $processPath, remoteDestination: $remoteDestination, sourceGeoIP: $sourceGeoIP, destinationGeoIP: $destinationGeoIP, destinationIPASN: $destinationIPASN, sourceIPASN: $sourceIPASN, specialRules: $specialRules, specialProxy: $specialProxy, mitm: $mitm, mitmRefused: $mitmRefused)';
 }
 
 
@@ -863,7 +867,7 @@ abstract mixin class _$MetadataCopyWith<$Res> implements $MetadataCopyWith<$Res>
   factory _$MetadataCopyWith(_Metadata value, $Res Function(_Metadata) _then) = __$MetadataCopyWithImpl;
 @override @useResult
 $Res call({
- int uid, String network, String sourceIP, String sourcePort, String destinationIP, String destinationPort, String host, DnsMode? dnsMode, String process, String processPath, String remoteDestination, List<String> sourceGeoIP, List<String> destinationGeoIP, String destinationIPASN, String sourceIPASN, String specialRules, String specialProxy
+ int uid, String network, String sourceIP, String sourcePort, String destinationIP, String destinationPort, String host, DnsMode? dnsMode, String process, String processPath, String remoteDestination, List<String> sourceGeoIP, List<String> destinationGeoIP, String destinationIPASN, String sourceIPASN, String specialRules, String specialProxy, bool mitm, bool mitmRefused
 });
 
 
@@ -880,7 +884,7 @@ class __$MetadataCopyWithImpl<$Res>
 
 /// Create a copy of Metadata
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? uid = null,Object? network = null,Object? sourceIP = null,Object? sourcePort = null,Object? destinationIP = null,Object? destinationPort = null,Object? host = null,Object? dnsMode = freezed,Object? process = null,Object? processPath = null,Object? remoteDestination = null,Object? sourceGeoIP = null,Object? destinationGeoIP = null,Object? destinationIPASN = null,Object? sourceIPASN = null,Object? specialRules = null,Object? specialProxy = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? uid = null,Object? network = null,Object? sourceIP = null,Object? sourcePort = null,Object? destinationIP = null,Object? destinationPort = null,Object? host = null,Object? dnsMode = freezed,Object? process = null,Object? processPath = null,Object? remoteDestination = null,Object? sourceGeoIP = null,Object? destinationGeoIP = null,Object? destinationIPASN = null,Object? sourceIPASN = null,Object? specialRules = null,Object? specialProxy = null,Object? mitm = null,Object? mitmRefused = null,}) {
   return _then(_Metadata(
 uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as int,network: null == network ? _self.network : network // ignore: cast_nullable_to_non_nullable
@@ -899,6 +903,851 @@ as List<String>,destinationIPASN: null == destinationIPASN ? _self.destinationIP
 as String,sourceIPASN: null == sourceIPASN ? _self.sourceIPASN : sourceIPASN // ignore: cast_nullable_to_non_nullable
 as String,specialRules: null == specialRules ? _self.specialRules : specialRules // ignore: cast_nullable_to_non_nullable
 as String,specialProxy: null == specialProxy ? _self.specialProxy : specialProxy // ignore: cast_nullable_to_non_nullable
+as String,mitm: null == mitm ? _self.mitm : mitm // ignore: cast_nullable_to_non_nullable
+as bool,mitmRefused: null == mitmRefused ? _self.mitmRefused : mitmRefused // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$ConnectionFailure {
+
+@JsonKey(unknownEnumValue: ConnectionFailureKind.other) ConnectionFailureKind get kind; String get message;
+/// Create a copy of ConnectionFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ConnectionFailureCopyWith<ConnectionFailure> get copyWith => _$ConnectionFailureCopyWithImpl<ConnectionFailure>(this as ConnectionFailure, _$identity);
+
+  /// Serializes this ConnectionFailure to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as ConnectionFailure;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConnectionFailure&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.message, _this.message) || other.message == _this.message));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as ConnectionFailure;
+  return Object.hash(runtimeType,_this.kind,_this.message);
+}
+
+@override
+String toString() {
+  final _this = this as ConnectionFailure;
+  return 'ConnectionFailure(kind: ${_this.kind}, message: ${_this.message})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ConnectionFailureCopyWith<$Res>  {
+  factory $ConnectionFailureCopyWith(ConnectionFailure value, $Res Function(ConnectionFailure) _then) = _$ConnectionFailureCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(unknownEnumValue: ConnectionFailureKind.other) ConnectionFailureKind kind, String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$ConnectionFailureCopyWithImpl<$Res>
+    implements $ConnectionFailureCopyWith<$Res> {
+  _$ConnectionFailureCopyWithImpl(this._self, this._then);
+
+  final ConnectionFailure _self;
+  final $Res Function(ConnectionFailure) _then;
+
+/// Create a copy of ConnectionFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? message = null,}) {
+  return _then(ConnectionFailure(
+kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as ConnectionFailureKind,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ConnectionFailure].
+extension ConnectionFailurePatterns on ConnectionFailure {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ConnectionFailure value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ConnectionFailure() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ConnectionFailure value)  $default,){
+final _that = this;
+switch (_that) {
+case _ConnectionFailure():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ConnectionFailure value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ConnectionFailure() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(unknownEnumValue: ConnectionFailureKind.other)  ConnectionFailureKind kind,  String message)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ConnectionFailure() when $default != null:
+return $default(_that.kind,_that.message);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(unknownEnumValue: ConnectionFailureKind.other)  ConnectionFailureKind kind,  String message)  $default,) {final _that = this;
+switch (_that) {
+case _ConnectionFailure():
+return $default(_that.kind,_that.message);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(unknownEnumValue: ConnectionFailureKind.other)  ConnectionFailureKind kind,  String message)?  $default,) {final _that = this;
+switch (_that) {
+case _ConnectionFailure() when $default != null:
+return $default(_that.kind,_that.message);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _ConnectionFailure implements ConnectionFailure {
+  const _ConnectionFailure({@JsonKey(unknownEnumValue: ConnectionFailureKind.other) required this.kind, this.message = ''});
+  factory _ConnectionFailure.fromJson(Map<String, dynamic> json) => _$ConnectionFailureFromJson(json);
+
+@override@JsonKey(unknownEnumValue: ConnectionFailureKind.other) final  ConnectionFailureKind kind;
+@override@JsonKey() final  String message;
+
+/// Create a copy of ConnectionFailure
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ConnectionFailureCopyWith<_ConnectionFailure> get copyWith => __$ConnectionFailureCopyWithImpl<_ConnectionFailure>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$ConnectionFailureToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConnectionFailure&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.message, message) || other.message == message));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,kind,message);
+}
+
+@override
+String toString() {
+    return 'ConnectionFailure(kind: $kind, message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ConnectionFailureCopyWith<$Res> implements $ConnectionFailureCopyWith<$Res> {
+  factory _$ConnectionFailureCopyWith(_ConnectionFailure value, $Res Function(_ConnectionFailure) _then) = __$ConnectionFailureCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(unknownEnumValue: ConnectionFailureKind.other) ConnectionFailureKind kind, String message
+});
+
+
+
+
+}
+/// @nodoc
+class __$ConnectionFailureCopyWithImpl<$Res>
+    implements _$ConnectionFailureCopyWith<$Res> {
+  __$ConnectionFailureCopyWithImpl(this._self, this._then);
+
+  final _ConnectionFailure _self;
+  final $Res Function(_ConnectionFailure) _then;
+
+/// Create a copy of ConnectionFailure
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? kind = null,Object? message = null,}) {
+  return _then(_ConnectionFailure(
+kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as ConnectionFailureKind,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$ConnectionTiming {
+
+ DateTime get accepted; int? get dnsStart; int? get dnsEnd; int? get routed; int? get dialStart; int? get connected; int? get tls; int? get dialEnd; int? get decrypted;
+/// Create a copy of ConnectionTiming
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ConnectionTimingCopyWith<ConnectionTiming> get copyWith => _$ConnectionTimingCopyWithImpl<ConnectionTiming>(this as ConnectionTiming, _$identity);
+
+  /// Serializes this ConnectionTiming to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as ConnectionTiming;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConnectionTiming&&(identical(other.accepted, _this.accepted) || other.accepted == _this.accepted)&&(identical(other.dnsStart, _this.dnsStart) || other.dnsStart == _this.dnsStart)&&(identical(other.dnsEnd, _this.dnsEnd) || other.dnsEnd == _this.dnsEnd)&&(identical(other.routed, _this.routed) || other.routed == _this.routed)&&(identical(other.dialStart, _this.dialStart) || other.dialStart == _this.dialStart)&&(identical(other.connected, _this.connected) || other.connected == _this.connected)&&(identical(other.tls, _this.tls) || other.tls == _this.tls)&&(identical(other.dialEnd, _this.dialEnd) || other.dialEnd == _this.dialEnd)&&(identical(other.decrypted, _this.decrypted) || other.decrypted == _this.decrypted));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as ConnectionTiming;
+  return Object.hash(runtimeType,_this.accepted,_this.dnsStart,_this.dnsEnd,_this.routed,_this.dialStart,_this.connected,_this.tls,_this.dialEnd,_this.decrypted);
+}
+
+@override
+String toString() {
+  final _this = this as ConnectionTiming;
+  return 'ConnectionTiming(accepted: ${_this.accepted}, dnsStart: ${_this.dnsStart}, dnsEnd: ${_this.dnsEnd}, routed: ${_this.routed}, dialStart: ${_this.dialStart}, connected: ${_this.connected}, tls: ${_this.tls}, dialEnd: ${_this.dialEnd}, decrypted: ${_this.decrypted})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ConnectionTimingCopyWith<$Res>  {
+  factory $ConnectionTimingCopyWith(ConnectionTiming value, $Res Function(ConnectionTiming) _then) = _$ConnectionTimingCopyWithImpl;
+@useResult
+$Res call({
+ DateTime accepted, int? dnsStart, int? dnsEnd, int? routed, int? dialStart, int? connected, int? tls, int? dialEnd, int? decrypted
+});
+
+
+
+
+}
+/// @nodoc
+class _$ConnectionTimingCopyWithImpl<$Res>
+    implements $ConnectionTimingCopyWith<$Res> {
+  _$ConnectionTimingCopyWithImpl(this._self, this._then);
+
+  final ConnectionTiming _self;
+  final $Res Function(ConnectionTiming) _then;
+
+/// Create a copy of ConnectionTiming
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? accepted = null,Object? dnsStart = freezed,Object? dnsEnd = freezed,Object? routed = freezed,Object? dialStart = freezed,Object? connected = freezed,Object? tls = freezed,Object? dialEnd = freezed,Object? decrypted = freezed,}) {
+  return _then(ConnectionTiming(
+accepted: null == accepted ? _self.accepted : accepted // ignore: cast_nullable_to_non_nullable
+as DateTime,dnsStart: freezed == dnsStart ? _self.dnsStart : dnsStart // ignore: cast_nullable_to_non_nullable
+as int?,dnsEnd: freezed == dnsEnd ? _self.dnsEnd : dnsEnd // ignore: cast_nullable_to_non_nullable
+as int?,routed: freezed == routed ? _self.routed : routed // ignore: cast_nullable_to_non_nullable
+as int?,dialStart: freezed == dialStart ? _self.dialStart : dialStart // ignore: cast_nullable_to_non_nullable
+as int?,connected: freezed == connected ? _self.connected : connected // ignore: cast_nullable_to_non_nullable
+as int?,tls: freezed == tls ? _self.tls : tls // ignore: cast_nullable_to_non_nullable
+as int?,dialEnd: freezed == dialEnd ? _self.dialEnd : dialEnd // ignore: cast_nullable_to_non_nullable
+as int?,decrypted: freezed == decrypted ? _self.decrypted : decrypted // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ConnectionTiming].
+extension ConnectionTimingPatterns on ConnectionTiming {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ConnectionTiming value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ConnectionTiming() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ConnectionTiming value)  $default,){
+final _that = this;
+switch (_that) {
+case _ConnectionTiming():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ConnectionTiming value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ConnectionTiming() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateTime accepted,  int? dnsStart,  int? dnsEnd,  int? routed,  int? dialStart,  int? connected,  int? tls,  int? dialEnd,  int? decrypted)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ConnectionTiming() when $default != null:
+return $default(_that.accepted,_that.dnsStart,_that.dnsEnd,_that.routed,_that.dialStart,_that.connected,_that.tls,_that.dialEnd,_that.decrypted);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateTime accepted,  int? dnsStart,  int? dnsEnd,  int? routed,  int? dialStart,  int? connected,  int? tls,  int? dialEnd,  int? decrypted)  $default,) {final _that = this;
+switch (_that) {
+case _ConnectionTiming():
+return $default(_that.accepted,_that.dnsStart,_that.dnsEnd,_that.routed,_that.dialStart,_that.connected,_that.tls,_that.dialEnd,_that.decrypted);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateTime accepted,  int? dnsStart,  int? dnsEnd,  int? routed,  int? dialStart,  int? connected,  int? tls,  int? dialEnd,  int? decrypted)?  $default,) {final _that = this;
+switch (_that) {
+case _ConnectionTiming() when $default != null:
+return $default(_that.accepted,_that.dnsStart,_that.dnsEnd,_that.routed,_that.dialStart,_that.connected,_that.tls,_that.dialEnd,_that.decrypted);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _ConnectionTiming implements ConnectionTiming {
+  const _ConnectionTiming({required this.accepted, this.dnsStart, this.dnsEnd, this.routed, this.dialStart, this.connected, this.tls, this.dialEnd, this.decrypted});
+  factory _ConnectionTiming.fromJson(Map<String, dynamic> json) => _$ConnectionTimingFromJson(json);
+
+@override final  DateTime accepted;
+@override final  int? dnsStart;
+@override final  int? dnsEnd;
+@override final  int? routed;
+@override final  int? dialStart;
+@override final  int? connected;
+@override final  int? tls;
+@override final  int? dialEnd;
+@override final  int? decrypted;
+
+/// Create a copy of ConnectionTiming
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ConnectionTimingCopyWith<_ConnectionTiming> get copyWith => __$ConnectionTimingCopyWithImpl<_ConnectionTiming>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$ConnectionTimingToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConnectionTiming&&(identical(other.accepted, accepted) || other.accepted == accepted)&&(identical(other.dnsStart, dnsStart) || other.dnsStart == dnsStart)&&(identical(other.dnsEnd, dnsEnd) || other.dnsEnd == dnsEnd)&&(identical(other.routed, routed) || other.routed == routed)&&(identical(other.dialStart, dialStart) || other.dialStart == dialStart)&&(identical(other.connected, connected) || other.connected == connected)&&(identical(other.tls, tls) || other.tls == tls)&&(identical(other.dialEnd, dialEnd) || other.dialEnd == dialEnd)&&(identical(other.decrypted, decrypted) || other.decrypted == decrypted));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,accepted,dnsStart,dnsEnd,routed,dialStart,connected,tls,dialEnd,decrypted);
+}
+
+@override
+String toString() {
+    return 'ConnectionTiming(accepted: $accepted, dnsStart: $dnsStart, dnsEnd: $dnsEnd, routed: $routed, dialStart: $dialStart, connected: $connected, tls: $tls, dialEnd: $dialEnd, decrypted: $decrypted)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ConnectionTimingCopyWith<$Res> implements $ConnectionTimingCopyWith<$Res> {
+  factory _$ConnectionTimingCopyWith(_ConnectionTiming value, $Res Function(_ConnectionTiming) _then) = __$ConnectionTimingCopyWithImpl;
+@override @useResult
+$Res call({
+ DateTime accepted, int? dnsStart, int? dnsEnd, int? routed, int? dialStart, int? connected, int? tls, int? dialEnd, int? decrypted
+});
+
+
+
+
+}
+/// @nodoc
+class __$ConnectionTimingCopyWithImpl<$Res>
+    implements _$ConnectionTimingCopyWith<$Res> {
+  __$ConnectionTimingCopyWithImpl(this._self, this._then);
+
+  final _ConnectionTiming _self;
+  final $Res Function(_ConnectionTiming) _then;
+
+/// Create a copy of ConnectionTiming
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? accepted = null,Object? dnsStart = freezed,Object? dnsEnd = freezed,Object? routed = freezed,Object? dialStart = freezed,Object? connected = freezed,Object? tls = freezed,Object? dialEnd = freezed,Object? decrypted = freezed,}) {
+  return _then(_ConnectionTiming(
+accepted: null == accepted ? _self.accepted : accepted // ignore: cast_nullable_to_non_nullable
+as DateTime,dnsStart: freezed == dnsStart ? _self.dnsStart : dnsStart // ignore: cast_nullable_to_non_nullable
+as int?,dnsEnd: freezed == dnsEnd ? _self.dnsEnd : dnsEnd // ignore: cast_nullable_to_non_nullable
+as int?,routed: freezed == routed ? _self.routed : routed // ignore: cast_nullable_to_non_nullable
+as int?,dialStart: freezed == dialStart ? _self.dialStart : dialStart // ignore: cast_nullable_to_non_nullable
+as int?,connected: freezed == connected ? _self.connected : connected // ignore: cast_nullable_to_non_nullable
+as int?,tls: freezed == tls ? _self.tls : tls // ignore: cast_nullable_to_non_nullable
+as int?,dialEnd: freezed == dialEnd ? _self.dialEnd : dialEnd // ignore: cast_nullable_to_non_nullable
+as int?,decrypted: freezed == decrypted ? _self.decrypted : decrypted // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$ConnectionEnd {
+
+@JsonKey(unknownEnumValue: ConnectionEndReason.error) ConnectionEndReason get reason; DateTime get endedAt; String get message;
+/// Create a copy of ConnectionEnd
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ConnectionEndCopyWith<ConnectionEnd> get copyWith => _$ConnectionEndCopyWithImpl<ConnectionEnd>(this as ConnectionEnd, _$identity);
+
+  /// Serializes this ConnectionEnd to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as ConnectionEnd;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ConnectionEnd&&(identical(other.reason, _this.reason) || other.reason == _this.reason)&&(identical(other.endedAt, _this.endedAt) || other.endedAt == _this.endedAt)&&(identical(other.message, _this.message) || other.message == _this.message));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as ConnectionEnd;
+  return Object.hash(runtimeType,_this.reason,_this.endedAt,_this.message);
+}
+
+@override
+String toString() {
+  final _this = this as ConnectionEnd;
+  return 'ConnectionEnd(reason: ${_this.reason}, endedAt: ${_this.endedAt}, message: ${_this.message})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ConnectionEndCopyWith<$Res>  {
+  factory $ConnectionEndCopyWith(ConnectionEnd value, $Res Function(ConnectionEnd) _then) = _$ConnectionEndCopyWithImpl;
+@useResult
+$Res call({
+@JsonKey(unknownEnumValue: ConnectionEndReason.error) ConnectionEndReason reason, DateTime endedAt, String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$ConnectionEndCopyWithImpl<$Res>
+    implements $ConnectionEndCopyWith<$Res> {
+  _$ConnectionEndCopyWithImpl(this._self, this._then);
+
+  final ConnectionEnd _self;
+  final $Res Function(ConnectionEnd) _then;
+
+/// Create a copy of ConnectionEnd
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? reason = null,Object? endedAt = null,Object? message = null,}) {
+  return _then(ConnectionEnd(
+reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as ConnectionEndReason,endedAt: null == endedAt ? _self.endedAt : endedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ConnectionEnd].
+extension ConnectionEndPatterns on ConnectionEnd {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ConnectionEnd value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ConnectionEnd() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ConnectionEnd value)  $default,){
+final _that = this;
+switch (_that) {
+case _ConnectionEnd():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ConnectionEnd value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ConnectionEnd() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(unknownEnumValue: ConnectionEndReason.error)  ConnectionEndReason reason,  DateTime endedAt,  String message)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ConnectionEnd() when $default != null:
+return $default(_that.reason,_that.endedAt,_that.message);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(unknownEnumValue: ConnectionEndReason.error)  ConnectionEndReason reason,  DateTime endedAt,  String message)  $default,) {final _that = this;
+switch (_that) {
+case _ConnectionEnd():
+return $default(_that.reason,_that.endedAt,_that.message);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(unknownEnumValue: ConnectionEndReason.error)  ConnectionEndReason reason,  DateTime endedAt,  String message)?  $default,) {final _that = this;
+switch (_that) {
+case _ConnectionEnd() when $default != null:
+return $default(_that.reason,_that.endedAt,_that.message);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _ConnectionEnd implements ConnectionEnd {
+  const _ConnectionEnd({@JsonKey(unknownEnumValue: ConnectionEndReason.error) required this.reason, required this.endedAt, this.message = ''});
+  factory _ConnectionEnd.fromJson(Map<String, dynamic> json) => _$ConnectionEndFromJson(json);
+
+@override@JsonKey(unknownEnumValue: ConnectionEndReason.error) final  ConnectionEndReason reason;
+@override final  DateTime endedAt;
+@override@JsonKey() final  String message;
+
+/// Create a copy of ConnectionEnd
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ConnectionEndCopyWith<_ConnectionEnd> get copyWith => __$ConnectionEndCopyWithImpl<_ConnectionEnd>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$ConnectionEndToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ConnectionEnd&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.endedAt, endedAt) || other.endedAt == endedAt)&&(identical(other.message, message) || other.message == message));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,reason,endedAt,message);
+}
+
+@override
+String toString() {
+    return 'ConnectionEnd(reason: $reason, endedAt: $endedAt, message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ConnectionEndCopyWith<$Res> implements $ConnectionEndCopyWith<$Res> {
+  factory _$ConnectionEndCopyWith(_ConnectionEnd value, $Res Function(_ConnectionEnd) _then) = __$ConnectionEndCopyWithImpl;
+@override @useResult
+$Res call({
+@JsonKey(unknownEnumValue: ConnectionEndReason.error) ConnectionEndReason reason, DateTime endedAt, String message
+});
+
+
+
+
+}
+/// @nodoc
+class __$ConnectionEndCopyWithImpl<$Res>
+    implements _$ConnectionEndCopyWith<$Res> {
+  __$ConnectionEndCopyWithImpl(this._self, this._then);
+
+  final _ConnectionEnd _self;
+  final $Res Function(_ConnectionEnd) _then;
+
+/// Create a copy of ConnectionEnd
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? reason = null,Object? endedAt = null,Object? message = null,}) {
+  return _then(_ConnectionEnd(
+reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as ConnectionEndReason,endedAt: null == endedAt ? _self.endedAt : endedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -910,7 +1759,8 @@ as String,
 /// @nodoc
 mixin _$TrackerInfo {
 
- String get id; int get upload; int get download; DateTime get start; Metadata get metadata; List<String> get chains; String get rule; String get rulePayload; int? get downloadSpeed; int? get uploadSpeed;
+ String get id; int get upload; int get download; DateTime get start; Metadata get metadata; List<String> get chains; String get rule; String get rulePayload; int? get downloadSpeed; int? get uploadSpeed; DateTime? get closedAt; ConnectionFailure? get failure; ConnectionTiming? get timing; int? get ruleIndex;/// [DnsQuery.id]s of the queries that gave its address.
+ List<int> get dnsQueries; ConnectionEnd? get end;
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -924,20 +1774,20 @@ $TrackerInfoCopyWith<TrackerInfo> get copyWith => _$TrackerInfoCopyWithImpl<Trac
 @override
 bool operator ==(Object other) {
   final _this = this as TrackerInfo;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerInfo&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.upload, _this.upload) || other.upload == _this.upload)&&(identical(other.download, _this.download) || other.download == _this.download)&&(identical(other.start, _this.start) || other.start == _this.start)&&(identical(other.metadata, _this.metadata) || other.metadata == _this.metadata)&&const DeepCollectionEquality().equals(other.chains, _this.chains)&&(identical(other.rule, _this.rule) || other.rule == _this.rule)&&(identical(other.rulePayload, _this.rulePayload) || other.rulePayload == _this.rulePayload)&&(identical(other.downloadSpeed, _this.downloadSpeed) || other.downloadSpeed == _this.downloadSpeed)&&(identical(other.uploadSpeed, _this.uploadSpeed) || other.uploadSpeed == _this.uploadSpeed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerInfo&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.upload, _this.upload) || other.upload == _this.upload)&&(identical(other.download, _this.download) || other.download == _this.download)&&(identical(other.start, _this.start) || other.start == _this.start)&&(identical(other.metadata, _this.metadata) || other.metadata == _this.metadata)&&const DeepCollectionEquality().equals(other.chains, _this.chains)&&(identical(other.rule, _this.rule) || other.rule == _this.rule)&&(identical(other.rulePayload, _this.rulePayload) || other.rulePayload == _this.rulePayload)&&(identical(other.downloadSpeed, _this.downloadSpeed) || other.downloadSpeed == _this.downloadSpeed)&&(identical(other.uploadSpeed, _this.uploadSpeed) || other.uploadSpeed == _this.uploadSpeed)&&(identical(other.closedAt, _this.closedAt) || other.closedAt == _this.closedAt)&&(identical(other.failure, _this.failure) || other.failure == _this.failure)&&(identical(other.timing, _this.timing) || other.timing == _this.timing)&&(identical(other.ruleIndex, _this.ruleIndex) || other.ruleIndex == _this.ruleIndex)&&const DeepCollectionEquality().equals(other.dnsQueries, _this.dnsQueries)&&(identical(other.end, _this.end) || other.end == _this.end));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as TrackerInfo;
-  return Object.hash(runtimeType,_this.id,_this.upload,_this.download,_this.start,_this.metadata,const DeepCollectionEquality().hash(_this.chains),_this.rule,_this.rulePayload,_this.downloadSpeed,_this.uploadSpeed);
+  return Object.hash(runtimeType,_this.id,_this.upload,_this.download,_this.start,_this.metadata,const DeepCollectionEquality().hash(_this.chains),_this.rule,_this.rulePayload,_this.downloadSpeed,_this.uploadSpeed,_this.closedAt,_this.failure,_this.timing,_this.ruleIndex,const DeepCollectionEquality().hash(_this.dnsQueries),_this.end);
 }
 
 @override
 String toString() {
   final _this = this as TrackerInfo;
-  return 'TrackerInfo(id: ${_this.id}, upload: ${_this.upload}, download: ${_this.download}, start: ${_this.start}, metadata: ${_this.metadata}, chains: ${_this.chains}, rule: ${_this.rule}, rulePayload: ${_this.rulePayload}, downloadSpeed: ${_this.downloadSpeed}, uploadSpeed: ${_this.uploadSpeed})';
+  return 'TrackerInfo(id: ${_this.id}, upload: ${_this.upload}, download: ${_this.download}, start: ${_this.start}, metadata: ${_this.metadata}, chains: ${_this.chains}, rule: ${_this.rule}, rulePayload: ${_this.rulePayload}, downloadSpeed: ${_this.downloadSpeed}, uploadSpeed: ${_this.uploadSpeed}, closedAt: ${_this.closedAt}, failure: ${_this.failure}, timing: ${_this.timing}, ruleIndex: ${_this.ruleIndex}, dnsQueries: ${_this.dnsQueries}, end: ${_this.end})';
 }
 
 
@@ -948,11 +1798,11 @@ abstract mixin class $TrackerInfoCopyWith<$Res>  {
   factory $TrackerInfoCopyWith(TrackerInfo value, $Res Function(TrackerInfo) _then) = _$TrackerInfoCopyWithImpl;
 @useResult
 $Res call({
- String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed
+ String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed, DateTime? closedAt, ConnectionFailure? failure, ConnectionTiming? timing, int? ruleIndex, List<int> dnsQueries, ConnectionEnd? end
 });
 
 
-$MetadataCopyWith<$Res> get metadata;
+$MetadataCopyWith<$Res> get metadata;$ConnectionFailureCopyWith<$Res>? get failure;$ConnectionTimingCopyWith<$Res>? get timing;$ConnectionEndCopyWith<$Res>? get end;
 
 }
 /// @nodoc
@@ -965,7 +1815,7 @@ class _$TrackerInfoCopyWithImpl<$Res>
 
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,Object? closedAt = freezed,Object? failure = freezed,Object? timing = freezed,Object? ruleIndex = freezed,Object? dnsQueries = null,Object? end = freezed,}) {
   return _then(TrackerInfo(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
@@ -977,7 +1827,13 @@ as List<String>,rule: null == rule ? _self.rule : rule // ignore: cast_nullable_
 as String,rulePayload: null == rulePayload ? _self.rulePayload : rulePayload // ignore: cast_nullable_to_non_nullable
 as String,downloadSpeed: freezed == downloadSpeed ? _self.downloadSpeed : downloadSpeed // ignore: cast_nullable_to_non_nullable
 as int?,uploadSpeed: freezed == uploadSpeed ? _self.uploadSpeed : uploadSpeed // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,closedAt: freezed == closedAt ? _self.closedAt : closedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as ConnectionFailure?,timing: freezed == timing ? _self.timing : timing // ignore: cast_nullable_to_non_nullable
+as ConnectionTiming?,ruleIndex: freezed == ruleIndex ? _self.ruleIndex : ruleIndex // ignore: cast_nullable_to_non_nullable
+as int?,dnsQueries: null == dnsQueries ? _self.dnsQueries : dnsQueries // ignore: cast_nullable_to_non_nullable
+as List<int>,end: freezed == end ? _self.end : end // ignore: cast_nullable_to_non_nullable
+as ConnectionEnd?,
   ));
 }
 /// Create a copy of TrackerInfo
@@ -988,6 +1844,42 @@ $MetadataCopyWith<$Res> get metadata {
   
   return $MetadataCopyWith<$Res>(_self.metadata, (value) {
     return _then(_self.copyWith(metadata: value));
+  });
+}/// Create a copy of TrackerInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ConnectionFailureCopyWith<$Res>? get failure {
+    if (_self.failure == null) {
+    return null;
+  }
+
+  return $ConnectionFailureCopyWith<$Res>(_self.failure!, (value) {
+    return _then(_self.copyWith(failure: value));
+  });
+}/// Create a copy of TrackerInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ConnectionTimingCopyWith<$Res>? get timing {
+    if (_self.timing == null) {
+    return null;
+  }
+
+  return $ConnectionTimingCopyWith<$Res>(_self.timing!, (value) {
+    return _then(_self.copyWith(timing: value));
+  });
+}/// Create a copy of TrackerInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ConnectionEndCopyWith<$Res>? get end {
+    if (_self.end == null) {
+    return null;
+  }
+
+  return $ConnectionEndCopyWith<$Res>(_self.end!, (value) {
+    return _then(_self.copyWith(end: value));
   });
 }
 }
@@ -1071,10 +1963,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure,  ConnectionTiming? timing,  int? ruleIndex,  List<int> dnsQueries,  ConnectionEnd? end)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TrackerInfo() when $default != null:
-return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed);case _:
+return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed,_that.closedAt,_that.failure,_that.timing,_that.ruleIndex,_that.dnsQueries,_that.end);case _:
   return orElse();
 
 }
@@ -1092,10 +1984,10 @@ return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure,  ConnectionTiming? timing,  int? ruleIndex,  List<int> dnsQueries,  ConnectionEnd? end)  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfo():
-return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed);case _:
+return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed,_that.closedAt,_that.failure,_that.timing,_that.ruleIndex,_that.dnsQueries,_that.end);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1112,10 +2004,10 @@ return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int upload,  int download,  DateTime start,  Metadata metadata,  List<String> chains,  String rule,  String rulePayload,  int? downloadSpeed,  int? uploadSpeed,  DateTime? closedAt,  ConnectionFailure? failure,  ConnectionTiming? timing,  int? ruleIndex,  List<int> dnsQueries,  ConnectionEnd? end)?  $default,) {final _that = this;
 switch (_that) {
 case _TrackerInfo() when $default != null:
-return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed);case _:
+return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,_that.chains,_that.rule,_that.rulePayload,_that.downloadSpeed,_that.uploadSpeed,_that.closedAt,_that.failure,_that.timing,_that.ruleIndex,_that.dnsQueries,_that.end);case _:
   return null;
 
 }
@@ -1127,7 +2019,7 @@ return $default(_that.id,_that.upload,_that.download,_that.start,_that.metadata,
 @JsonSerializable()
 
 class _TrackerInfo implements TrackerInfo {
-  const _TrackerInfo({required this.id, this.upload = 0, this.download = 0, required this.start, required this.metadata, required  List<String> chains, required this.rule, required this.rulePayload, this.downloadSpeed, this.uploadSpeed}): _chains = chains;
+  const _TrackerInfo({required this.id, this.upload = 0, this.download = 0, required this.start, required this.metadata, required  List<String> chains, required this.rule, required this.rulePayload, this.downloadSpeed, this.uploadSpeed, this.closedAt, this.failure, this.timing, this.ruleIndex,  List<int> dnsQueries = const [], this.end}): _chains = chains,_dnsQueries = dnsQueries;
   factory _TrackerInfo.fromJson(Map<String, dynamic> json) => _$TrackerInfoFromJson(json);
 
 @override final  String id;
@@ -1146,6 +2038,20 @@ class _TrackerInfo implements TrackerInfo {
 @override final  String rulePayload;
 @override final  int? downloadSpeed;
 @override final  int? uploadSpeed;
+@override final  DateTime? closedAt;
+@override final  ConnectionFailure? failure;
+@override final  ConnectionTiming? timing;
+@override final  int? ruleIndex;
+/// [DnsQuery.id]s of the queries that gave its address.
+ final  List<int> _dnsQueries;
+/// [DnsQuery.id]s of the queries that gave its address.
+@override@JsonKey() List<int> get dnsQueries {
+  if (_dnsQueries is EqualUnmodifiableListView) return _dnsQueries;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_dnsQueries);
+}
+
+@override final  ConnectionEnd? end;
 
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
@@ -1160,18 +2066,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrackerInfo&&(identical(other.id, id) || other.id == id)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.download, download) || other.download == download)&&(identical(other.start, start) || other.start == start)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&const DeepCollectionEquality().equals(other.chains, _chains)&&(identical(other.rule, rule) || other.rule == rule)&&(identical(other.rulePayload, rulePayload) || other.rulePayload == rulePayload)&&(identical(other.downloadSpeed, downloadSpeed) || other.downloadSpeed == downloadSpeed)&&(identical(other.uploadSpeed, uploadSpeed) || other.uploadSpeed == uploadSpeed));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrackerInfo&&(identical(other.id, id) || other.id == id)&&(identical(other.upload, upload) || other.upload == upload)&&(identical(other.download, download) || other.download == download)&&(identical(other.start, start) || other.start == start)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&const DeepCollectionEquality().equals(other.chains, _chains)&&(identical(other.rule, rule) || other.rule == rule)&&(identical(other.rulePayload, rulePayload) || other.rulePayload == rulePayload)&&(identical(other.downloadSpeed, downloadSpeed) || other.downloadSpeed == downloadSpeed)&&(identical(other.uploadSpeed, uploadSpeed) || other.uploadSpeed == uploadSpeed)&&(identical(other.closedAt, closedAt) || other.closedAt == closedAt)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.timing, timing) || other.timing == timing)&&(identical(other.ruleIndex, ruleIndex) || other.ruleIndex == ruleIndex)&&const DeepCollectionEquality().equals(other.dnsQueries, _dnsQueries)&&(identical(other.end, end) || other.end == end));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,upload,download,start,metadata,const DeepCollectionEquality().hash(_chains),rule,rulePayload,downloadSpeed,uploadSpeed);
+    return Object.hash(runtimeType,id,upload,download,start,metadata,const DeepCollectionEquality().hash(_chains),rule,rulePayload,downloadSpeed,uploadSpeed,closedAt,failure,timing,ruleIndex,const DeepCollectionEquality().hash(_dnsQueries),end);
 }
 
 @override
 String toString() {
-    return 'TrackerInfo(id: $id, upload: $upload, download: $download, start: $start, metadata: $metadata, chains: $chains, rule: $rule, rulePayload: $rulePayload, downloadSpeed: $downloadSpeed, uploadSpeed: $uploadSpeed)';
+    return 'TrackerInfo(id: $id, upload: $upload, download: $download, start: $start, metadata: $metadata, chains: $chains, rule: $rule, rulePayload: $rulePayload, downloadSpeed: $downloadSpeed, uploadSpeed: $uploadSpeed, closedAt: $closedAt, failure: $failure, timing: $timing, ruleIndex: $ruleIndex, dnsQueries: $dnsQueries, end: $end)';
 }
 
 
@@ -1182,11 +2088,11 @@ abstract mixin class _$TrackerInfoCopyWith<$Res> implements $TrackerInfoCopyWith
   factory _$TrackerInfoCopyWith(_TrackerInfo value, $Res Function(_TrackerInfo) _then) = __$TrackerInfoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed
+ String id, int upload, int download, DateTime start, Metadata metadata, List<String> chains, String rule, String rulePayload, int? downloadSpeed, int? uploadSpeed, DateTime? closedAt, ConnectionFailure? failure, ConnectionTiming? timing, int? ruleIndex, List<int> dnsQueries, ConnectionEnd? end
 });
 
 
-@override $MetadataCopyWith<$Res> get metadata;
+@override $MetadataCopyWith<$Res> get metadata;@override $ConnectionFailureCopyWith<$Res>? get failure;@override $ConnectionTimingCopyWith<$Res>? get timing;@override $ConnectionEndCopyWith<$Res>? get end;
 
 }
 /// @nodoc
@@ -1199,7 +2105,7 @@ class __$TrackerInfoCopyWithImpl<$Res>
 
 /// Create a copy of TrackerInfo
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? upload = null,Object? download = null,Object? start = null,Object? metadata = null,Object? chains = null,Object? rule = null,Object? rulePayload = null,Object? downloadSpeed = freezed,Object? uploadSpeed = freezed,Object? closedAt = freezed,Object? failure = freezed,Object? timing = freezed,Object? ruleIndex = freezed,Object? dnsQueries = null,Object? end = freezed,}) {
   return _then(_TrackerInfo(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,upload: null == upload ? _self.upload : upload // ignore: cast_nullable_to_non_nullable
@@ -1211,7 +2117,13 @@ as List<String>,rule: null == rule ? _self.rule : rule // ignore: cast_nullable_
 as String,rulePayload: null == rulePayload ? _self.rulePayload : rulePayload // ignore: cast_nullable_to_non_nullable
 as String,downloadSpeed: freezed == downloadSpeed ? _self.downloadSpeed : downloadSpeed // ignore: cast_nullable_to_non_nullable
 as int?,uploadSpeed: freezed == uploadSpeed ? _self.uploadSpeed : uploadSpeed // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,closedAt: freezed == closedAt ? _self.closedAt : closedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as ConnectionFailure?,timing: freezed == timing ? _self.timing : timing // ignore: cast_nullable_to_non_nullable
+as ConnectionTiming?,ruleIndex: freezed == ruleIndex ? _self.ruleIndex : ruleIndex // ignore: cast_nullable_to_non_nullable
+as int?,dnsQueries: null == dnsQueries ? _self._dnsQueries : dnsQueries // ignore: cast_nullable_to_non_nullable
+as List<int>,end: freezed == end ? _self.end : end // ignore: cast_nullable_to_non_nullable
+as ConnectionEnd?,
   ));
 }
 
@@ -1223,6 +2135,42 @@ $MetadataCopyWith<$Res> get metadata {
   
   return $MetadataCopyWith<$Res>(_self.metadata, (value) {
     return _then(_self.copyWith(metadata: value));
+  });
+}/// Create a copy of TrackerInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ConnectionFailureCopyWith<$Res>? get failure {
+    if (_self.failure == null) {
+    return null;
+  }
+
+  return $ConnectionFailureCopyWith<$Res>(_self.failure!, (value) {
+    return _then(_self.copyWith(failure: value));
+  });
+}/// Create a copy of TrackerInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ConnectionTimingCopyWith<$Res>? get timing {
+    if (_self.timing == null) {
+    return null;
+  }
+
+  return $ConnectionTimingCopyWith<$Res>(_self.timing!, (value) {
+    return _then(_self.copyWith(timing: value));
+  });
+}/// Create a copy of TrackerInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ConnectionEndCopyWith<$Res>? get end {
+    if (_self.end == null) {
+    return null;
+  }
+
+  return $ConnectionEndCopyWith<$Res>(_self.end!, (value) {
+    return _then(_self.copyWith(end: value));
   });
 }
 }
@@ -1506,7 +2454,7 @@ as String,
 /// @nodoc
 mixin _$LogsState {
 
- List<Log> get logs; List<String> get keywords; String get query; bool get autoScrollToEnd;
+ List<Log> get logs; String get query; bool get autoScrollToEnd;
 /// Create a copy of LogsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1518,20 +2466,20 @@ $LogsStateCopyWith<LogsState> get copyWith => _$LogsStateCopyWithImpl<LogsState>
 @override
 bool operator ==(Object other) {
   final _this = this as LogsState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LogsState&&const DeepCollectionEquality().equals(other.logs, _this.logs)&&const DeepCollectionEquality().equals(other.keywords, _this.keywords)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LogsState&&const DeepCollectionEquality().equals(other.logs, _this.logs)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd));
 }
 
 
 @override
 int get hashCode {
   final _this = this as LogsState;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.logs),const DeepCollectionEquality().hash(_this.keywords),_this.query,_this.autoScrollToEnd);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.logs),_this.query,_this.autoScrollToEnd);
 }
 
 @override
 String toString() {
   final _this = this as LogsState;
-  return 'LogsState(logs: ${_this.logs}, keywords: ${_this.keywords}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd})';
+  return 'LogsState(logs: ${_this.logs}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd})';
 }
 
 
@@ -1542,7 +2490,7 @@ abstract mixin class $LogsStateCopyWith<$Res>  {
   factory $LogsStateCopyWith(LogsState value, $Res Function(LogsState) _then) = _$LogsStateCopyWithImpl;
 @useResult
 $Res call({
- List<Log> logs, List<String> keywords, String query, bool autoScrollToEnd
+ List<Log> logs, String query, bool autoScrollToEnd
 });
 
 
@@ -1559,11 +2507,10 @@ class _$LogsStateCopyWithImpl<$Res>
 
 /// Create a copy of LogsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? logs = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? logs = null,Object? query = null,Object? autoScrollToEnd = null,}) {
   return _then(LogsState(
 logs: null == logs ? _self.logs : logs // ignore: cast_nullable_to_non_nullable
-as List<Log>,keywords: null == keywords ? _self.keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as List<Log>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -1650,10 +2597,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Log> logs,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Log> logs,  String query,  bool autoScrollToEnd)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LogsState() when $default != null:
-return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.logs,_that.query,_that.autoScrollToEnd);case _:
   return orElse();
 
 }
@@ -1671,10 +2618,10 @@ return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Log> logs,  List<String> keywords,  String query,  bool autoScrollToEnd)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Log> logs,  String query,  bool autoScrollToEnd)  $default,) {final _that = this;
 switch (_that) {
 case _LogsState():
-return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.logs,_that.query,_that.autoScrollToEnd);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1691,10 +2638,10 @@ return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Log> logs,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Log> logs,  String query,  bool autoScrollToEnd)?  $default,) {final _that = this;
 switch (_that) {
 case _LogsState() when $default != null:
-return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
+return $default(_that.logs,_that.query,_that.autoScrollToEnd);case _:
   return null;
 
 }
@@ -1706,7 +2653,7 @@ return $default(_that.logs,_that.keywords,_that.query,_that.autoScrollToEnd);cas
 
 
 class _LogsState implements LogsState {
-  const _LogsState({ List<Log> logs = const [],  List<String> keywords = const [], this.query = '', this.autoScrollToEnd = true}): _logs = logs,_keywords = keywords;
+  const _LogsState({ List<Log> logs = const [], this.query = '', this.autoScrollToEnd = true}): _logs = logs;
   
 
  final  List<Log> _logs;
@@ -1714,13 +2661,6 @@ class _LogsState implements LogsState {
   if (_logs is EqualUnmodifiableListView) return _logs;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_logs);
-}
-
- final  List<String> _keywords;
-@override@JsonKey() List<String> get keywords {
-  if (_keywords is EqualUnmodifiableListView) return _keywords;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_keywords);
 }
 
 @override@JsonKey() final  String query;
@@ -1736,18 +2676,18 @@ _$LogsStateCopyWith<_LogsState> get copyWith => __$LogsStateCopyWithImpl<_LogsSt
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LogsState&&const DeepCollectionEquality().equals(other.logs, _logs)&&const DeepCollectionEquality().equals(other.keywords, _keywords)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LogsState&&const DeepCollectionEquality().equals(other.logs, _logs)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_logs),const DeepCollectionEquality().hash(_keywords),query,autoScrollToEnd);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_logs),query,autoScrollToEnd);
 }
 
 @override
 String toString() {
-    return 'LogsState(logs: $logs, keywords: $keywords, query: $query, autoScrollToEnd: $autoScrollToEnd)';
+    return 'LogsState(logs: $logs, query: $query, autoScrollToEnd: $autoScrollToEnd)';
 }
 
 
@@ -1758,7 +2698,7 @@ abstract mixin class _$LogsStateCopyWith<$Res> implements $LogsStateCopyWith<$Re
   factory _$LogsStateCopyWith(_LogsState value, $Res Function(_LogsState) _then) = __$LogsStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Log> logs, List<String> keywords, String query, bool autoScrollToEnd
+ List<Log> logs, String query, bool autoScrollToEnd
 });
 
 
@@ -1775,296 +2715,10 @@ class __$LogsStateCopyWithImpl<$Res>
 
 /// Create a copy of LogsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? logs = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? logs = null,Object? query = null,Object? autoScrollToEnd = null,}) {
   return _then(_LogsState(
 logs: null == logs ? _self._logs : logs // ignore: cast_nullable_to_non_nullable
-as List<Log>,keywords: null == keywords ? _self._keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
-as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
-as bool,
-  ));
-}
-
-
-}
-
-/// @nodoc
-mixin _$TrackerInfosState {
-
- List<TrackerInfo> get trackerInfos; List<String> get keywords; String get query; bool get autoScrollToEnd;
-/// Create a copy of TrackerInfosState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$TrackerInfosStateCopyWith<TrackerInfosState> get copyWith => _$TrackerInfosStateCopyWithImpl<TrackerInfosState>(this as TrackerInfosState, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  final _this = this as TrackerInfosState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerInfosState&&const DeepCollectionEquality().equals(other.trackerInfos, _this.trackerInfos)&&const DeepCollectionEquality().equals(other.keywords, _this.keywords)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd));
-}
-
-
-@override
-int get hashCode {
-  final _this = this as TrackerInfosState;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.trackerInfos),const DeepCollectionEquality().hash(_this.keywords),_this.query,_this.autoScrollToEnd);
-}
-
-@override
-String toString() {
-  final _this = this as TrackerInfosState;
-  return 'TrackerInfosState(trackerInfos: ${_this.trackerInfos}, keywords: ${_this.keywords}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd})';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $TrackerInfosStateCopyWith<$Res>  {
-  factory $TrackerInfosStateCopyWith(TrackerInfosState value, $Res Function(TrackerInfosState) _then) = _$TrackerInfosStateCopyWithImpl;
-@useResult
-$Res call({
- List<TrackerInfo> trackerInfos, List<String> keywords, String query, bool autoScrollToEnd
-});
-
-
-
-
-}
-/// @nodoc
-class _$TrackerInfosStateCopyWithImpl<$Res>
-    implements $TrackerInfosStateCopyWith<$Res> {
-  _$TrackerInfosStateCopyWithImpl(this._self, this._then);
-
-  final TrackerInfosState _self;
-  final $Res Function(TrackerInfosState) _then;
-
-/// Create a copy of TrackerInfosState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? trackerInfos = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
-  return _then(TrackerInfosState(
-trackerInfos: null == trackerInfos ? _self.trackerInfos : trackerInfos // ignore: cast_nullable_to_non_nullable
-as List<TrackerInfo>,keywords: null == keywords ? _self.keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
-as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
-as bool,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [TrackerInfosState].
-extension TrackerInfosStatePatterns on TrackerInfosState {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _TrackerInfosState value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _TrackerInfosState() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _TrackerInfosState value)  $default,){
-final _that = this;
-switch (_that) {
-case _TrackerInfosState():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _TrackerInfosState value)?  $default,){
-final _that = this;
-switch (_that) {
-case _TrackerInfosState() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<TrackerInfo> trackerInfos,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _TrackerInfosState() when $default != null:
-return $default(_that.trackerInfos,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<TrackerInfo> trackerInfos,  List<String> keywords,  String query,  bool autoScrollToEnd)  $default,) {final _that = this;
-switch (_that) {
-case _TrackerInfosState():
-return $default(_that.trackerInfos,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<TrackerInfo> trackerInfos,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,) {final _that = this;
-switch (_that) {
-case _TrackerInfosState() when $default != null:
-return $default(_that.trackerInfos,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _TrackerInfosState implements TrackerInfosState {
-  const _TrackerInfosState({ List<TrackerInfo> trackerInfos = const [],  List<String> keywords = const [], this.query = '', this.autoScrollToEnd = true}): _trackerInfos = trackerInfos,_keywords = keywords;
-  
-
- final  List<TrackerInfo> _trackerInfos;
-@override@JsonKey() List<TrackerInfo> get trackerInfos {
-  if (_trackerInfos is EqualUnmodifiableListView) return _trackerInfos;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_trackerInfos);
-}
-
- final  List<String> _keywords;
-@override@JsonKey() List<String> get keywords {
-  if (_keywords is EqualUnmodifiableListView) return _keywords;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_keywords);
-}
-
-@override@JsonKey() final  String query;
-@override@JsonKey() final  bool autoScrollToEnd;
-
-/// Create a copy of TrackerInfosState
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$TrackerInfosStateCopyWith<_TrackerInfosState> get copyWith => __$TrackerInfosStateCopyWithImpl<_TrackerInfosState>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrackerInfosState&&const DeepCollectionEquality().equals(other.trackerInfos, _trackerInfos)&&const DeepCollectionEquality().equals(other.keywords, _keywords)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_trackerInfos),const DeepCollectionEquality().hash(_keywords),query,autoScrollToEnd);
-}
-
-@override
-String toString() {
-    return 'TrackerInfosState(trackerInfos: $trackerInfos, keywords: $keywords, query: $query, autoScrollToEnd: $autoScrollToEnd)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$TrackerInfosStateCopyWith<$Res> implements $TrackerInfosStateCopyWith<$Res> {
-  factory _$TrackerInfosStateCopyWith(_TrackerInfosState value, $Res Function(_TrackerInfosState) _then) = __$TrackerInfosStateCopyWithImpl;
-@override @useResult
-$Res call({
- List<TrackerInfo> trackerInfos, List<String> keywords, String query, bool autoScrollToEnd
-});
-
-
-
-
-}
-/// @nodoc
-class __$TrackerInfosStateCopyWithImpl<$Res>
-    implements _$TrackerInfosStateCopyWith<$Res> {
-  __$TrackerInfosStateCopyWithImpl(this._self, this._then);
-
-  final _TrackerInfosState _self;
-  final $Res Function(_TrackerInfosState) _then;
-
-/// Create a copy of TrackerInfosState
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? trackerInfos = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
-  return _then(_TrackerInfosState(
-trackerInfos: null == trackerInfos ? _self._trackerInfos : trackerInfos // ignore: cast_nullable_to_non_nullable
-as List<TrackerInfo>,keywords: null == keywords ? _self._keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as List<Log>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -2077,7 +2731,7 @@ as bool,
 /// @nodoc
 mixin _$DnsQuery {
 
- String get domain; String get type;@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) DnsQueryInitiator? get initiator; String get upstream; bool get cached; List<String> get answers; String get rcode; String get error; int get delay; DateTime get time;
+ int? get id; String get domain; String get type;@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) DnsQueryInitiator? get initiator; String get upstream; bool get cached; List<String> get answers; String get rcode; String get error; int get delay; DateTime get time;
 /// Create a copy of DnsQuery
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2091,20 +2745,20 @@ $DnsQueryCopyWith<DnsQuery> get copyWith => _$DnsQueryCopyWithImpl<DnsQuery>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as DnsQuery;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DnsQuery&&(identical(other.domain, _this.domain) || other.domain == _this.domain)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.initiator, _this.initiator) || other.initiator == _this.initiator)&&(identical(other.upstream, _this.upstream) || other.upstream == _this.upstream)&&(identical(other.cached, _this.cached) || other.cached == _this.cached)&&const DeepCollectionEquality().equals(other.answers, _this.answers)&&(identical(other.rcode, _this.rcode) || other.rcode == _this.rcode)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.delay, _this.delay) || other.delay == _this.delay)&&(identical(other.time, _this.time) || other.time == _this.time));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DnsQuery&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.domain, _this.domain) || other.domain == _this.domain)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.initiator, _this.initiator) || other.initiator == _this.initiator)&&(identical(other.upstream, _this.upstream) || other.upstream == _this.upstream)&&(identical(other.cached, _this.cached) || other.cached == _this.cached)&&const DeepCollectionEquality().equals(other.answers, _this.answers)&&(identical(other.rcode, _this.rcode) || other.rcode == _this.rcode)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.delay, _this.delay) || other.delay == _this.delay)&&(identical(other.time, _this.time) || other.time == _this.time));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as DnsQuery;
-  return Object.hash(runtimeType,_this.domain,_this.type,_this.initiator,_this.upstream,_this.cached,const DeepCollectionEquality().hash(_this.answers),_this.rcode,_this.error,_this.delay,_this.time);
+  return Object.hash(runtimeType,_this.id,_this.domain,_this.type,_this.initiator,_this.upstream,_this.cached,const DeepCollectionEquality().hash(_this.answers),_this.rcode,_this.error,_this.delay,_this.time);
 }
 
 @override
 String toString() {
   final _this = this as DnsQuery;
-  return 'DnsQuery(domain: ${_this.domain}, type: ${_this.type}, initiator: ${_this.initiator}, upstream: ${_this.upstream}, cached: ${_this.cached}, answers: ${_this.answers}, rcode: ${_this.rcode}, error: ${_this.error}, delay: ${_this.delay}, time: ${_this.time})';
+  return 'DnsQuery(id: ${_this.id}, domain: ${_this.domain}, type: ${_this.type}, initiator: ${_this.initiator}, upstream: ${_this.upstream}, cached: ${_this.cached}, answers: ${_this.answers}, rcode: ${_this.rcode}, error: ${_this.error}, delay: ${_this.delay}, time: ${_this.time})';
 }
 
 
@@ -2115,7 +2769,7 @@ abstract mixin class $DnsQueryCopyWith<$Res>  {
   factory $DnsQueryCopyWith(DnsQuery value, $Res Function(DnsQuery) _then) = _$DnsQueryCopyWithImpl;
 @useResult
 $Res call({
- String domain, String type,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) DnsQueryInitiator? initiator, String upstream, bool cached, List<String> answers, String rcode, String error, int delay, DateTime time
+ int? id, String domain, String type,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) DnsQueryInitiator? initiator, String upstream, bool cached, List<String> answers, String rcode, String error, int delay, DateTime time
 });
 
 
@@ -2132,9 +2786,10 @@ class _$DnsQueryCopyWithImpl<$Res>
 
 /// Create a copy of DnsQuery
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? domain = null,Object? type = null,Object? initiator = freezed,Object? upstream = null,Object? cached = null,Object? answers = null,Object? rcode = null,Object? error = null,Object? delay = null,Object? time = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? domain = null,Object? type = null,Object? initiator = freezed,Object? upstream = null,Object? cached = null,Object? answers = null,Object? rcode = null,Object? error = null,Object? delay = null,Object? time = null,}) {
   return _then(DnsQuery(
-domain: null == domain ? _self.domain : domain // ignore: cast_nullable_to_non_nullable
+id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int?,domain: null == domain ? _self.domain : domain // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as String,initiator: freezed == initiator ? _self.initiator : initiator // ignore: cast_nullable_to_non_nullable
 as DnsQueryInitiator?,upstream: null == upstream ? _self.upstream : upstream // ignore: cast_nullable_to_non_nullable
@@ -2229,10 +2884,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String domain,  String type, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  DnsQueryInitiator? initiator,  String upstream,  bool cached,  List<String> answers,  String rcode,  String error,  int delay,  DateTime time)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? id,  String domain,  String type, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  DnsQueryInitiator? initiator,  String upstream,  bool cached,  List<String> answers,  String rcode,  String error,  int delay,  DateTime time)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DnsQuery() when $default != null:
-return $default(_that.domain,_that.type,_that.initiator,_that.upstream,_that.cached,_that.answers,_that.rcode,_that.error,_that.delay,_that.time);case _:
+return $default(_that.id,_that.domain,_that.type,_that.initiator,_that.upstream,_that.cached,_that.answers,_that.rcode,_that.error,_that.delay,_that.time);case _:
   return orElse();
 
 }
@@ -2250,10 +2905,10 @@ return $default(_that.domain,_that.type,_that.initiator,_that.upstream,_that.cac
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String domain,  String type, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  DnsQueryInitiator? initiator,  String upstream,  bool cached,  List<String> answers,  String rcode,  String error,  int delay,  DateTime time)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? id,  String domain,  String type, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  DnsQueryInitiator? initiator,  String upstream,  bool cached,  List<String> answers,  String rcode,  String error,  int delay,  DateTime time)  $default,) {final _that = this;
 switch (_that) {
 case _DnsQuery():
-return $default(_that.domain,_that.type,_that.initiator,_that.upstream,_that.cached,_that.answers,_that.rcode,_that.error,_that.delay,_that.time);case _:
+return $default(_that.id,_that.domain,_that.type,_that.initiator,_that.upstream,_that.cached,_that.answers,_that.rcode,_that.error,_that.delay,_that.time);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2270,10 +2925,10 @@ return $default(_that.domain,_that.type,_that.initiator,_that.upstream,_that.cac
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String domain,  String type, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  DnsQueryInitiator? initiator,  String upstream,  bool cached,  List<String> answers,  String rcode,  String error,  int delay,  DateTime time)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? id,  String domain,  String type, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  DnsQueryInitiator? initiator,  String upstream,  bool cached,  List<String> answers,  String rcode,  String error,  int delay,  DateTime time)?  $default,) {final _that = this;
 switch (_that) {
 case _DnsQuery() when $default != null:
-return $default(_that.domain,_that.type,_that.initiator,_that.upstream,_that.cached,_that.answers,_that.rcode,_that.error,_that.delay,_that.time);case _:
+return $default(_that.id,_that.domain,_that.type,_that.initiator,_that.upstream,_that.cached,_that.answers,_that.rcode,_that.error,_that.delay,_that.time);case _:
   return null;
 
 }
@@ -2285,9 +2940,10 @@ return $default(_that.domain,_that.type,_that.initiator,_that.upstream,_that.cac
 @JsonSerializable()
 
 class _DnsQuery implements DnsQuery {
-  const _DnsQuery({required this.domain, required this.type, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) this.initiator, this.upstream = '', this.cached = false,  List<String> answers = const [], this.rcode = '', this.error = '', this.delay = 0, required this.time}): _answers = answers;
+  const _DnsQuery({this.id, required this.domain, required this.type, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) this.initiator, this.upstream = '', this.cached = false,  List<String> answers = const [], this.rcode = '', this.error = '', this.delay = 0, required this.time}): _answers = answers;
   factory _DnsQuery.fromJson(Map<String, dynamic> json) => _$DnsQueryFromJson(json);
 
+@override final  int? id;
 @override final  String domain;
 @override final  String type;
 @override@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) final  DnsQueryInitiator? initiator;
@@ -2318,18 +2974,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DnsQuery&&(identical(other.domain, domain) || other.domain == domain)&&(identical(other.type, type) || other.type == type)&&(identical(other.initiator, initiator) || other.initiator == initiator)&&(identical(other.upstream, upstream) || other.upstream == upstream)&&(identical(other.cached, cached) || other.cached == cached)&&const DeepCollectionEquality().equals(other.answers, _answers)&&(identical(other.rcode, rcode) || other.rcode == rcode)&&(identical(other.error, error) || other.error == error)&&(identical(other.delay, delay) || other.delay == delay)&&(identical(other.time, time) || other.time == time));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DnsQuery&&(identical(other.id, id) || other.id == id)&&(identical(other.domain, domain) || other.domain == domain)&&(identical(other.type, type) || other.type == type)&&(identical(other.initiator, initiator) || other.initiator == initiator)&&(identical(other.upstream, upstream) || other.upstream == upstream)&&(identical(other.cached, cached) || other.cached == cached)&&const DeepCollectionEquality().equals(other.answers, _answers)&&(identical(other.rcode, rcode) || other.rcode == rcode)&&(identical(other.error, error) || other.error == error)&&(identical(other.delay, delay) || other.delay == delay)&&(identical(other.time, time) || other.time == time));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,domain,type,initiator,upstream,cached,const DeepCollectionEquality().hash(_answers),rcode,error,delay,time);
+    return Object.hash(runtimeType,id,domain,type,initiator,upstream,cached,const DeepCollectionEquality().hash(_answers),rcode,error,delay,time);
 }
 
 @override
 String toString() {
-    return 'DnsQuery(domain: $domain, type: $type, initiator: $initiator, upstream: $upstream, cached: $cached, answers: $answers, rcode: $rcode, error: $error, delay: $delay, time: $time)';
+    return 'DnsQuery(id: $id, domain: $domain, type: $type, initiator: $initiator, upstream: $upstream, cached: $cached, answers: $answers, rcode: $rcode, error: $error, delay: $delay, time: $time)';
 }
 
 
@@ -2340,7 +2996,7 @@ abstract mixin class _$DnsQueryCopyWith<$Res> implements $DnsQueryCopyWith<$Res>
   factory _$DnsQueryCopyWith(_DnsQuery value, $Res Function(_DnsQuery) _then) = __$DnsQueryCopyWithImpl;
 @override @useResult
 $Res call({
- String domain, String type,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) DnsQueryInitiator? initiator, String upstream, bool cached, List<String> answers, String rcode, String error, int delay, DateTime time
+ int? id, String domain, String type,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) DnsQueryInitiator? initiator, String upstream, bool cached, List<String> answers, String rcode, String error, int delay, DateTime time
 });
 
 
@@ -2357,9 +3013,10 @@ class __$DnsQueryCopyWithImpl<$Res>
 
 /// Create a copy of DnsQuery
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? domain = null,Object? type = null,Object? initiator = freezed,Object? upstream = null,Object? cached = null,Object? answers = null,Object? rcode = null,Object? error = null,Object? delay = null,Object? time = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? domain = null,Object? type = null,Object? initiator = freezed,Object? upstream = null,Object? cached = null,Object? answers = null,Object? rcode = null,Object? error = null,Object? delay = null,Object? time = null,}) {
   return _then(_DnsQuery(
-domain: null == domain ? _self.domain : domain // ignore: cast_nullable_to_non_nullable
+id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int?,domain: null == domain ? _self.domain : domain // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as String,initiator: freezed == initiator ? _self.initiator : initiator // ignore: cast_nullable_to_non_nullable
 as DnsQueryInitiator?,upstream: null == upstream ? _self.upstream : upstream // ignore: cast_nullable_to_non_nullable
@@ -2370,291 +3027,6 @@ as String,error: null == error ? _self.error : error // ignore: cast_nullable_to
 as String,delay: null == delay ? _self.delay : delay // ignore: cast_nullable_to_non_nullable
 as int,time: null == time ? _self.time : time // ignore: cast_nullable_to_non_nullable
 as DateTime,
-  ));
-}
-
-
-}
-
-/// @nodoc
-mixin _$DnsQueriesState {
-
- List<DnsQuery> get dnsQueries; List<String> get keywords; String get query; bool get autoScrollToEnd;
-/// Create a copy of DnsQueriesState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$DnsQueriesStateCopyWith<DnsQueriesState> get copyWith => _$DnsQueriesStateCopyWithImpl<DnsQueriesState>(this as DnsQueriesState, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  final _this = this as DnsQueriesState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DnsQueriesState&&const DeepCollectionEquality().equals(other.dnsQueries, _this.dnsQueries)&&const DeepCollectionEquality().equals(other.keywords, _this.keywords)&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.autoScrollToEnd, _this.autoScrollToEnd) || other.autoScrollToEnd == _this.autoScrollToEnd));
-}
-
-
-@override
-int get hashCode {
-  final _this = this as DnsQueriesState;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.dnsQueries),const DeepCollectionEquality().hash(_this.keywords),_this.query,_this.autoScrollToEnd);
-}
-
-@override
-String toString() {
-  final _this = this as DnsQueriesState;
-  return 'DnsQueriesState(dnsQueries: ${_this.dnsQueries}, keywords: ${_this.keywords}, query: ${_this.query}, autoScrollToEnd: ${_this.autoScrollToEnd})';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $DnsQueriesStateCopyWith<$Res>  {
-  factory $DnsQueriesStateCopyWith(DnsQueriesState value, $Res Function(DnsQueriesState) _then) = _$DnsQueriesStateCopyWithImpl;
-@useResult
-$Res call({
- List<DnsQuery> dnsQueries, List<String> keywords, String query, bool autoScrollToEnd
-});
-
-
-
-
-}
-/// @nodoc
-class _$DnsQueriesStateCopyWithImpl<$Res>
-    implements $DnsQueriesStateCopyWith<$Res> {
-  _$DnsQueriesStateCopyWithImpl(this._self, this._then);
-
-  final DnsQueriesState _self;
-  final $Res Function(DnsQueriesState) _then;
-
-/// Create a copy of DnsQueriesState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? dnsQueries = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
-  return _then(DnsQueriesState(
-dnsQueries: null == dnsQueries ? _self.dnsQueries : dnsQueries // ignore: cast_nullable_to_non_nullable
-as List<DnsQuery>,keywords: null == keywords ? _self.keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
-as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
-as bool,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [DnsQueriesState].
-extension DnsQueriesStatePatterns on DnsQueriesState {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DnsQueriesState value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _DnsQueriesState() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DnsQueriesState value)  $default,){
-final _that = this;
-switch (_that) {
-case _DnsQueriesState():
-return $default(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DnsQueriesState value)?  $default,){
-final _that = this;
-switch (_that) {
-case _DnsQueriesState() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<DnsQuery> dnsQueries,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _DnsQueriesState() when $default != null:
-return $default(_that.dnsQueries,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<DnsQuery> dnsQueries,  List<String> keywords,  String query,  bool autoScrollToEnd)  $default,) {final _that = this;
-switch (_that) {
-case _DnsQueriesState():
-return $default(_that.dnsQueries,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
-  throw StateError('Unexpected subclass');
-
-}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<DnsQuery> dnsQueries,  List<String> keywords,  String query,  bool autoScrollToEnd)?  $default,) {final _that = this;
-switch (_that) {
-case _DnsQueriesState() when $default != null:
-return $default(_that.dnsQueries,_that.keywords,_that.query,_that.autoScrollToEnd);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-
-
-class _DnsQueriesState implements DnsQueriesState {
-  const _DnsQueriesState({ List<DnsQuery> dnsQueries = const [],  List<String> keywords = const [], this.query = '', this.autoScrollToEnd = true}): _dnsQueries = dnsQueries,_keywords = keywords;
-  
-
- final  List<DnsQuery> _dnsQueries;
-@override@JsonKey() List<DnsQuery> get dnsQueries {
-  if (_dnsQueries is EqualUnmodifiableListView) return _dnsQueries;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_dnsQueries);
-}
-
- final  List<String> _keywords;
-@override@JsonKey() List<String> get keywords {
-  if (_keywords is EqualUnmodifiableListView) return _keywords;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_keywords);
-}
-
-@override@JsonKey() final  String query;
-@override@JsonKey() final  bool autoScrollToEnd;
-
-/// Create a copy of DnsQueriesState
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$DnsQueriesStateCopyWith<_DnsQueriesState> get copyWith => __$DnsQueriesStateCopyWithImpl<_DnsQueriesState>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DnsQueriesState&&const DeepCollectionEquality().equals(other.dnsQueries, _dnsQueries)&&const DeepCollectionEquality().equals(other.keywords, _keywords)&&(identical(other.query, query) || other.query == query)&&(identical(other.autoScrollToEnd, autoScrollToEnd) || other.autoScrollToEnd == autoScrollToEnd));
-}
-
-
-@override
-int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_dnsQueries),const DeepCollectionEquality().hash(_keywords),query,autoScrollToEnd);
-}
-
-@override
-String toString() {
-    return 'DnsQueriesState(dnsQueries: $dnsQueries, keywords: $keywords, query: $query, autoScrollToEnd: $autoScrollToEnd)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$DnsQueriesStateCopyWith<$Res> implements $DnsQueriesStateCopyWith<$Res> {
-  factory _$DnsQueriesStateCopyWith(_DnsQueriesState value, $Res Function(_DnsQueriesState) _then) = __$DnsQueriesStateCopyWithImpl;
-@override @useResult
-$Res call({
- List<DnsQuery> dnsQueries, List<String> keywords, String query, bool autoScrollToEnd
-});
-
-
-
-
-}
-/// @nodoc
-class __$DnsQueriesStateCopyWithImpl<$Res>
-    implements _$DnsQueriesStateCopyWith<$Res> {
-  __$DnsQueriesStateCopyWithImpl(this._self, this._then);
-
-  final _DnsQueriesState _self;
-  final $Res Function(_DnsQueriesState) _then;
-
-/// Create a copy of DnsQueriesState
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? dnsQueries = null,Object? keywords = null,Object? query = null,Object? autoScrollToEnd = null,}) {
-  return _then(_DnsQueriesState(
-dnsQueries: null == dnsQueries ? _self._dnsQueries : dnsQueries // ignore: cast_nullable_to_non_nullable
-as List<DnsQuery>,keywords: null == keywords ? _self._keywords : keywords // ignore: cast_nullable_to_non_nullable
-as List<String>,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
-as String,autoScrollToEnd: null == autoScrollToEnd ? _self.autoScrollToEnd : autoScrollToEnd // ignore: cast_nullable_to_non_nullable
-as bool,
   ));
 }
 
@@ -5397,6 +5769,332 @@ as String,lastUpdateTime: null == lastUpdateTime ? _self.lastUpdateTime : lastUp
 as DateTime,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String?,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
 as int?,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$MitmModule {
+
+ int get id; String get name; String get description; String? get url; bool get enabled; int? get order; Map<String, String> get arguments; Map<String, String> get resources; String? get system;/// Its scripts FlClash runs, which turning it on asks about first.
+ int get scripts;/// Network changes, skipped verification or limited clients, which
+/// turning it on also asks about.
+ bool get asksConsent;/// The user's answer to what turning it on asks about: once agreed, its
+/// updates bring new scripts without asking; false once they declined or
+/// turned it off. Null until asked, and again once an update turns it off
+/// for something it was never agreed to.
+ bool? get accepted; DateTime get lastUpdateTime;
+/// Create a copy of MitmModule
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MitmModuleCopyWith<MitmModule> get copyWith => _$MitmModuleCopyWithImpl<MitmModule>(this as MitmModule, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as MitmModule;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MitmModule&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.enabled, _this.enabled) || other.enabled == _this.enabled)&&(identical(other.order, _this.order) || other.order == _this.order)&&const DeepCollectionEquality().equals(other.arguments, _this.arguments)&&const DeepCollectionEquality().equals(other.resources, _this.resources)&&(identical(other.system, _this.system) || other.system == _this.system)&&(identical(other.scripts, _this.scripts) || other.scripts == _this.scripts)&&(identical(other.asksConsent, _this.asksConsent) || other.asksConsent == _this.asksConsent)&&(identical(other.accepted, _this.accepted) || other.accepted == _this.accepted)&&(identical(other.lastUpdateTime, _this.lastUpdateTime) || other.lastUpdateTime == _this.lastUpdateTime));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as MitmModule;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.description,_this.url,_this.enabled,_this.order,const DeepCollectionEquality().hash(_this.arguments),const DeepCollectionEquality().hash(_this.resources),_this.system,_this.scripts,_this.asksConsent,_this.accepted,_this.lastUpdateTime);
+}
+
+@override
+String toString() {
+  final _this = this as MitmModule;
+  return 'MitmModule(id: ${_this.id}, name: ${_this.name}, description: ${_this.description}, url: ${_this.url}, enabled: ${_this.enabled}, order: ${_this.order}, arguments: ${_this.arguments}, resources: ${_this.resources}, system: ${_this.system}, scripts: ${_this.scripts}, asksConsent: ${_this.asksConsent}, accepted: ${_this.accepted}, lastUpdateTime: ${_this.lastUpdateTime})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MitmModuleCopyWith<$Res>  {
+  factory $MitmModuleCopyWith(MitmModule value, $Res Function(MitmModule) _then) = _$MitmModuleCopyWithImpl;
+@useResult
+$Res call({
+ int id, String name, String description, String? url, bool enabled, int? order, Map<String, String> arguments, Map<String, String> resources, String? system, int scripts, bool asksConsent, bool? accepted, DateTime lastUpdateTime
+});
+
+
+
+
+}
+/// @nodoc
+class _$MitmModuleCopyWithImpl<$Res>
+    implements $MitmModuleCopyWith<$Res> {
+  _$MitmModuleCopyWithImpl(this._self, this._then);
+
+  final MitmModule _self;
+  final $Res Function(MitmModule) _then;
+
+/// Create a copy of MitmModule
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? description = null,Object? url = freezed,Object? enabled = null,Object? order = freezed,Object? arguments = null,Object? resources = null,Object? system = freezed,Object? scripts = null,Object? asksConsent = null,Object? accepted = freezed,Object? lastUpdateTime = null,}) {
+  return _then(MitmModule(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String?,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
+as int?,arguments: null == arguments ? _self.arguments : arguments // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,resources: null == resources ? _self.resources : resources // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,system: freezed == system ? _self.system : system // ignore: cast_nullable_to_non_nullable
+as String?,scripts: null == scripts ? _self.scripts : scripts // ignore: cast_nullable_to_non_nullable
+as int,asksConsent: null == asksConsent ? _self.asksConsent : asksConsent // ignore: cast_nullable_to_non_nullable
+as bool,accepted: freezed == accepted ? _self.accepted : accepted // ignore: cast_nullable_to_non_nullable
+as bool?,lastUpdateTime: null == lastUpdateTime ? _self.lastUpdateTime : lastUpdateTime // ignore: cast_nullable_to_non_nullable
+as DateTime,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [MitmModule].
+extension MitmModulePatterns on MitmModule {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _MitmModule value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _MitmModule() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _MitmModule value)  $default,){
+final _that = this;
+switch (_that) {
+case _MitmModule():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _MitmModule value)?  $default,){
+final _that = this;
+switch (_that) {
+case _MitmModule() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String name,  String description,  String? url,  bool enabled,  int? order,  Map<String, String> arguments,  Map<String, String> resources,  String? system,  int scripts,  bool asksConsent,  bool? accepted,  DateTime lastUpdateTime)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _MitmModule() when $default != null:
+return $default(_that.id,_that.name,_that.description,_that.url,_that.enabled,_that.order,_that.arguments,_that.resources,_that.system,_that.scripts,_that.asksConsent,_that.accepted,_that.lastUpdateTime);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String name,  String description,  String? url,  bool enabled,  int? order,  Map<String, String> arguments,  Map<String, String> resources,  String? system,  int scripts,  bool asksConsent,  bool? accepted,  DateTime lastUpdateTime)  $default,) {final _that = this;
+switch (_that) {
+case _MitmModule():
+return $default(_that.id,_that.name,_that.description,_that.url,_that.enabled,_that.order,_that.arguments,_that.resources,_that.system,_that.scripts,_that.asksConsent,_that.accepted,_that.lastUpdateTime);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String name,  String description,  String? url,  bool enabled,  int? order,  Map<String, String> arguments,  Map<String, String> resources,  String? system,  int scripts,  bool asksConsent,  bool? accepted,  DateTime lastUpdateTime)?  $default,) {final _that = this;
+switch (_that) {
+case _MitmModule() when $default != null:
+return $default(_that.id,_that.name,_that.description,_that.url,_that.enabled,_that.order,_that.arguments,_that.resources,_that.system,_that.scripts,_that.asksConsent,_that.accepted,_that.lastUpdateTime);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _MitmModule implements MitmModule {
+  const _MitmModule({required this.id, required this.name, this.description = '', this.url, this.enabled = true, this.order,  Map<String, String> arguments = const {},  Map<String, String> resources = const {}, this.system, this.scripts = 0, this.asksConsent = false, this.accepted, required this.lastUpdateTime}): _arguments = arguments,_resources = resources;
+  
+
+@override final  int id;
+@override final  String name;
+@override@JsonKey() final  String description;
+@override final  String? url;
+@override@JsonKey() final  bool enabled;
+@override final  int? order;
+ final  Map<String, String> _arguments;
+@override@JsonKey() Map<String, String> get arguments {
+  if (_arguments is EqualUnmodifiableMapView) return _arguments;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_arguments);
+}
+
+ final  Map<String, String> _resources;
+@override@JsonKey() Map<String, String> get resources {
+  if (_resources is EqualUnmodifiableMapView) return _resources;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_resources);
+}
+
+@override final  String? system;
+/// Its scripts FlClash runs, which turning it on asks about first.
+@override@JsonKey() final  int scripts;
+/// Network changes, skipped verification or limited clients, which
+/// turning it on also asks about.
+@override@JsonKey() final  bool asksConsent;
+/// The user's answer to what turning it on asks about: once agreed, its
+/// updates bring new scripts without asking; false once they declined or
+/// turned it off. Null until asked, and again once an update turns it off
+/// for something it was never agreed to.
+@override final  bool? accepted;
+@override final  DateTime lastUpdateTime;
+
+/// Create a copy of MitmModule
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$MitmModuleCopyWith<_MitmModule> get copyWith => __$MitmModuleCopyWithImpl<_MitmModule>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MitmModule&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.url, url) || other.url == url)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.order, order) || other.order == order)&&const DeepCollectionEquality().equals(other.arguments, _arguments)&&const DeepCollectionEquality().equals(other.resources, _resources)&&(identical(other.system, system) || other.system == system)&&(identical(other.scripts, scripts) || other.scripts == scripts)&&(identical(other.asksConsent, asksConsent) || other.asksConsent == asksConsent)&&(identical(other.accepted, accepted) || other.accepted == accepted)&&(identical(other.lastUpdateTime, lastUpdateTime) || other.lastUpdateTime == lastUpdateTime));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,id,name,description,url,enabled,order,const DeepCollectionEquality().hash(_arguments),const DeepCollectionEquality().hash(_resources),system,scripts,asksConsent,accepted,lastUpdateTime);
+}
+
+@override
+String toString() {
+    return 'MitmModule(id: $id, name: $name, description: $description, url: $url, enabled: $enabled, order: $order, arguments: $arguments, resources: $resources, system: $system, scripts: $scripts, asksConsent: $asksConsent, accepted: $accepted, lastUpdateTime: $lastUpdateTime)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$MitmModuleCopyWith<$Res> implements $MitmModuleCopyWith<$Res> {
+  factory _$MitmModuleCopyWith(_MitmModule value, $Res Function(_MitmModule) _then) = __$MitmModuleCopyWithImpl;
+@override @useResult
+$Res call({
+ int id, String name, String description, String? url, bool enabled, int? order, Map<String, String> arguments, Map<String, String> resources, String? system, int scripts, bool asksConsent, bool? accepted, DateTime lastUpdateTime
+});
+
+
+
+
+}
+/// @nodoc
+class __$MitmModuleCopyWithImpl<$Res>
+    implements _$MitmModuleCopyWith<$Res> {
+  __$MitmModuleCopyWithImpl(this._self, this._then);
+
+  final _MitmModule _self;
+  final $Res Function(_MitmModule) _then;
+
+/// Create a copy of MitmModule
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? description = null,Object? url = freezed,Object? enabled = null,Object? order = freezed,Object? arguments = null,Object? resources = null,Object? system = freezed,Object? scripts = null,Object? asksConsent = null,Object? accepted = freezed,Object? lastUpdateTime = null,}) {
+  return _then(_MitmModule(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String?,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,order: freezed == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
+as int?,arguments: null == arguments ? _self._arguments : arguments // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,resources: null == resources ? _self._resources : resources // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,system: freezed == system ? _self.system : system // ignore: cast_nullable_to_non_nullable
+as String?,scripts: null == scripts ? _self.scripts : scripts // ignore: cast_nullable_to_non_nullable
+as int,asksConsent: null == asksConsent ? _self.asksConsent : asksConsent // ignore: cast_nullable_to_non_nullable
+as bool,accepted: freezed == accepted ? _self.accepted : accepted // ignore: cast_nullable_to_non_nullable
+as bool?,lastUpdateTime: null == lastUpdateTime ? _self.lastUpdateTime : lastUpdateTime // ignore: cast_nullable_to_non_nullable
+as DateTime,
   ));
 }
 

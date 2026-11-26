@@ -9,12 +9,13 @@ import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/custom/rules.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_app.dart';
 import '../helpers/test_profiles.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 class _RecordingProfileRules extends ProfileRules {
   _RecordingProfileRules(this.initial);
@@ -124,10 +125,7 @@ class _Harness {
     await tester.tap(find.byTooltip(currentAppLocalizations.add));
     await tester.pumpAndSettle();
     await tester.tap(
-      find.descendant(
-        of: find.byType(CommonPopupMenu),
-        matching: find.text(label),
-      ),
+      find.descendant(of: find.byType(PopupMenu), matching: find.text(label)),
     );
     await tester.pumpAndSettle();
   }
@@ -143,17 +141,17 @@ class _Harness {
     await tester.tap(find.text(currentAppLocalizations.proxyType));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text(action.name),
+      find.text(action.value),
       300,
       scrollable: _selectionList,
     );
     // That leaves the row at the viewport's top, under the floating bar.
     await Scrollable.ensureVisible(
-      tester.element(find.text(action.name).last),
+      tester.element(find.text(action.value).last),
       alignment: 0.5,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(action.name).last);
+    await tester.tap(find.text(action.value).last);
     await tester.pumpAndSettle();
   }
 }
@@ -191,14 +189,14 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.proxyType));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text(RuleAction.MATCH.name),
+      find.text(RuleAction.MATCH.value),
       300,
       scrollable: _selectionList,
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(RuleAction.NOT.name), findsOne);
-    expect(find.text(RuleAction.SUB_RULE.name), findsNothing);
+    expect(find.text(RuleAction.NOT.value), findsOne);
+    expect(find.text(RuleAction.SUB_RULE.value), findsNothing);
   });
 
   testWidgets('a SUB-RULE kept from before cannot be saved as one', (
@@ -209,7 +207,7 @@ void main() {
       tester,
       initialRules: [Rule.parse('SUB-RULE,(NETWORK,tcp),streaming')],
     );
-    await tester.tap(find.text(RuleAction.SUB_RULE.name));
+    await tester.tap(find.text(RuleAction.SUB_RULE.value));
     await tester.pumpAndSettle();
     await harness.save(tester);
 
@@ -250,12 +248,12 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.proxyType));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text(RuleAction.MATCH.name),
+      find.text(RuleAction.MATCH.value),
       300,
       scrollable: _selectionList,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(RuleAction.MATCH.name).last);
+    await tester.tap(find.text(RuleAction.MATCH.value).last);
     await tester.pumpAndSettle();
 
     expect(find.text(currentAppLocalizations.content), findsNothing);
@@ -280,12 +278,12 @@ void main() {
     await tester.tap(find.text(currentAppLocalizations.proxyType));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text(RuleAction.NOT.name),
+      find.text(RuleAction.NOT.value),
       300,
       scrollable: _selectionList,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(RuleAction.NOT.name).last);
+    await tester.tap(find.text(RuleAction.NOT.value).last);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text(currentAppLocalizations.proxyType));
@@ -294,7 +292,7 @@ void main() {
     final sheet = find.byType(SelectionSheet<RuleAction>);
     final item = find.descendant(
       of: sheet,
-      matching: find.text(RuleAction.NOT.name),
+      matching: find.text(RuleAction.NOT.value),
     );
     expect(item, findsOne);
     final viewport = tester.getRect(
@@ -371,7 +369,7 @@ void main() {
 
     await tester.tap(find.byTooltip(l10n.add));
     await tester.pumpAndSettle();
-    final menu = find.byType(CommonPopupMenu);
+    final menu = find.byType(PopupMenu);
     for (final label in [l10n.add, l10n.quickActions, l10n.quickEdit]) {
       expect(find.descendant(of: menu, matching: find.text(label)), findsOne);
     }
@@ -411,9 +409,9 @@ void main() {
 
     final l10n = currentAppLocalizations;
     expect(find.text(l10n.additionalParameters), findsOne);
-    final switches = find.byType(CommonSwitch);
+    final switches = find.byType(Switch);
     expect(switches, findsNWidgets(2));
-    expect(tester.widgetList<CommonSwitch>(switches).map((s) => s.value), [
+    expect(tester.widgetList<Switch>(switches).map((s) => s.value), [
       false,
       false,
     ]);
@@ -423,7 +421,7 @@ void main() {
     await tester.tap(switches.at(1));
     await tester.pumpAndSettle();
 
-    expect(tester.widgetList<CommonSwitch>(switches).map((s) => s.value), [
+    expect(tester.widgetList<Switch>(switches).map((s) => s.value), [
       true,
       true,
     ]);
@@ -452,7 +450,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(
       find.descendant(
-        of: find.byType(CommonDialog),
+        of: find.byType(AlertDialog),
         matching: find.text(l10n.delete),
       ),
     );
@@ -475,7 +473,7 @@ void main() {
     await harness.pump(tester, initialRules: rules, size: const Size(360, 800));
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.text(RuleAction.PROCESS_NAME_REGEX.name));
+    await tester.tap(find.text(RuleAction.PROCESS_NAME_REGEX.value));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 

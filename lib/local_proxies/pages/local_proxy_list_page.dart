@@ -8,7 +8,7 @@ import 'package:fl_clash/pages/scan.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 class LocalProxyListPage extends StatefulWidget {
   const LocalProxyListPage({super.key});
@@ -102,7 +102,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
     await _restoreToggle(id, original.enabled);
     await _reapplyPreviousConfig();
     if (mounted) {
-      context.showNotifier(appLocalizations.localProxyReloadFailed);
+      dialogs.showBanner(appLocalizations.localProxyReloadFailed);
     }
   }
 
@@ -197,28 +197,27 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
 
   void _showAddMenu() {
     final appLocalizations = context.appLocalizations;
-    showModalBottomSheet(
+    showSheet<void>(
       context: context,
-      isScrollControlled: true,
-      builder: (_) {
+      builder: (sheetContext) {
         return SafeArea(
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ListTile(
+                ListItem(
                   leading: const GlyphIcon(AppGlyphs.paste),
                   title: Text(appLocalizations.pasteShareLink),
                   onTap: () {
-                    Navigator.of(context).pop();
+                    Navigator.of(sheetContext).pop();
                     _handleAddUri();
                   },
                 ),
-                ListTile(
+                ListItem(
                   leading: const GlyphIcon(AppGlyphs.qrCode),
                   title: Text(appLocalizations.scanQrcode),
                   onTap: () {
-                    Navigator.of(context).pop();
+                    Navigator.of(sheetContext).pop();
                     _handleScanQr();
                   },
                 ),
@@ -230,7 +229,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                     child: Text(
                       appLocalizations.selectProtocol,
                       style: AppTextStyle.subheadline.of(
-                        context,
+                        sheetContext,
                         emphasized: true,
                       ),
                     ),
@@ -249,7 +248,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                                 child: _ProtocolTile(
                                   label: _protocolLabel(manualProxyTypes[i]),
                                   onTap: () {
-                                    Navigator.of(context).pop();
+                                    Navigator.of(sheetContext).pop();
                                     _handleAddManual(manualProxyTypes[i]);
                                   },
                                 ),
@@ -262,7 +261,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                                           manualProxyTypes[i + 1],
                                         ),
                                         onTap: () {
-                                          Navigator.of(context).pop();
+                                          Navigator.of(sheetContext).pop();
                                           _handleAddManual(
                                             manualProxyTypes[i + 1],
                                           );
@@ -287,7 +286,7 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.localProxies,
       body: ValueListenableBuilder<List<LocalProxy>>(
         valueListenable: localProxyStore.proxiesNotifier,
@@ -324,14 +323,16 @@ class _LocalProxyListPageState extends State<LocalProxyListPage> {
                 const SizedBox(height: 8),
                 Expanded(
                   child: filtered.isEmpty
-                      ? NullStatus(label: appLocalizations.noLocalProxy)
-                      : ListView.separated(
+                      ? NullStatus(
+                          illustration: NullStatusIllustration.proxies,
+                          label: appLocalizations.noLocalProxy,
+                        )
+                      : PrismListView(
                           padding: const EdgeInsets.all(
                             16,
                           ).copyWith(bottom: 88),
                           itemCount: filtered.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 12),
+                          gap: 12,
                           itemBuilder: (context, index) {
                             final proxy = filtered[index];
                             return _ProxyCard(
@@ -373,7 +374,7 @@ class _ProxyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
-    return CommonCard(
+    return Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -438,7 +439,7 @@ class _ProtocolTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CommonCard(
+    return Card(
       radius: AppCorner.sm,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       onPressed: onTap,

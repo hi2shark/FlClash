@@ -9,7 +9,8 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ClashProvidersView extends ConsumerStatefulWidget {
@@ -268,12 +269,12 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
   bool _isEditable(ClashProvider provider) =>
       !provider.isRemote && provider.isTextContent;
 
-  List<CommonPopupMenuItem> _buildMenuItems(ClashProvider provider) {
+  List<PopupMenuItem> _buildMenuItems(ClashProvider provider) {
     final appLocalizations = context.appLocalizations;
     final editable = _isEditable(provider);
     return [
       if (editable)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.compose,
           label: appLocalizations.edit,
           onPressed: () {
@@ -281,7 +282,7 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
           },
         ),
       if (!provider.isTextContent)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.eye,
           label: appLocalizations.preview,
           onPressed: () {
@@ -289,21 +290,21 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
           },
         ),
       if (provider.isRemote)
-        CommonPopupMenuItem(
+        PopupMenuItem(
           glyph: AppGlyphs.sync,
           label: appLocalizations.sync,
           onPressed: () {
             _put(provider, previous: provider, refresh: true);
           },
         ),
-      CommonPopupMenuItem(
+      PopupMenuItem(
         glyph: AppGlyphs.settings,
         label: appLocalizations.options,
         onPressed: () {
           _handleEditOptions(provider);
         },
       ),
-      CommonPopupMenuItem(
+      PopupMenuItem(
         danger: true,
         glyph: AppGlyphs.delete,
         label: appLocalizations.delete,
@@ -325,7 +326,9 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
         child: ItemPositionProvider(
           position: ItemPosition.get(index, providers.length),
           child: DecorationListItem(
-            contentPadding: const EdgeInsets.only(left: 16),
+            contentPadding: EdgeInsetsDirectional.only(
+              start: context.listInsets.leading,
+            ),
             title: ChipTitle(
               title: provider.label,
               chip: provider.behavior.name,
@@ -359,12 +362,13 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
         illustration: NullStatusIllustration.rules,
         label: appLocalizations.nullTip(appLocalizations.ruleProviders),
       ),
-      child: ReorderableListView.builder(
-        padding: const EdgeInsets.all(16).copyWith(
-          top: context.contentTopPadding,
-          bottom: 16 + context.bottomInset,
-        ),
-        buildDefaultDragHandles: false,
+      child: PrismReorderableListView(
+        padding: context.listInsets
+            .page(top: 16, bottom: 16)
+            .copyWith(
+              top: context.contentTopPadding,
+              bottom: 16 + context.bottomInset,
+            ),
         itemCount: providers.length,
         itemBuilder: (_, index) => _buildItem(providers, index),
         proxyDecorator: (_, index, animation) {
@@ -384,11 +388,11 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
     final appLocalizations = context.appLocalizations;
     final state = ref.watch(clashProvidersProvider);
     final providers = state.value ?? [];
-    return CommonScaffold(
+    return Scaffold(
       canSort: providers.length > 1,
       isLoading: ref.watch(loadingProvider(LoadingTag.ruleProviders)),
       actions: [
-        CommonPopupBox(
+        PopupAnchor(
           targetBuilder: (open) {
             return IconButton(
               tooltip: appLocalizations.add,
@@ -396,19 +400,19 @@ class _ClashProvidersViewState extends ConsumerState<ClashProvidersView> {
               icon: const GlyphIcon(AppGlyphs.addCircle),
             );
           },
-          popupBuilder: (_) => CommonPopupMenu(
+          popupBuilder: (_) => PopupMenu(
             items: [
-              CommonPopupMenuItem(
+              PopupMenuItem(
                 glyph: AppGlyphs.compose,
                 label: appLocalizations.startFromScratch,
                 onPressed: _handleToEditor,
               ),
-              CommonPopupMenuItem(
+              PopupMenuItem(
                 glyph: AppGlyphs.cloudDownload,
                 label: appLocalizations.importUrl,
                 onPressed: _handleImportFromUrl,
               ),
-              CommonPopupMenuItem(
+              PopupMenuItem(
                 glyph: AppGlyphs.importFile,
                 label: appLocalizations.importFile,
                 onPressed: _handleImportFromFile,
@@ -456,7 +460,7 @@ class _RuleSetUpdateTimeState extends ConsumerState<_RuleSetUpdateTime> {
     });
     // Inset here, not in the row, so the sort handle that replaces it sits flush.
     return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 16),
+      padding: EdgeInsetsDirectional.only(end: context.listInsets.trailing),
       child: FutureBuilder<FileInfo?>(
         future: _fileInfo,
         builder: (context, snapshot) => LastUpdateTimeText(

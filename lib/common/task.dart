@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/common/mitm_module.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_config_injector.dart';
 import 'package:fl_clash/local_rules/services/local_rule_config_injector.dart';
@@ -100,6 +101,64 @@ ConfigCounts configCountsOf(Map<Object?, Object?> config) {
   );
 }
 
+String? lastMatchTarget(List<String> rules) =>
+    matchTargetOf(rules.map(Rule.parse));
+
+String? matchTargetOf(Iterable<Rule> rules) {
+  for (final rule in rules.toList().reversed) {
+    if (rule.ruleAction == RuleAction.MATCH) {
+      final target = rule.ruleTarget;
+      if (target != null && target.isNotEmpty) {
+        return target;
+      }
+    }
+  }
+  return null;
+}
+
+Set<String> outboundNamesOf(Map<dynamic, dynamic> config) => {
+  for (final key in const ['proxies', 'proxy-groups'])
+    if (config[key] case final List<dynamic> items)
+      for (final item in items)
+        if (item case {'name': final String name}) name,
+};
+
+/// mihomo sends DIRECT what no rule matches, MATCH included.
+String Function(String exit) exitTargetResolver({
+  required Map<String, String> targets,
+  required Set<String> outbounds,
+  required String? fallback,
+}) {
+  bool usable(String? target) =>
+      target != null &&
+      (RuleTarget.ruleTargets.contains(target) || outbounds.contains(target));
+  return (exit) {
+    final mapped = targets[exit];
+    if (usable(mapped)) {
+      return mapped!;
+    }
+    if (outbounds.contains(exit)) {
+      return exit;
+    }
+    return fallback ?? RuleTarget.DIRECT.value;
+  };
+}
+
+Map<String, dynamic> inboundConfigOf(
+  PatchClashConfig config, {
+  required List<String> authentication,
+}) => {
+  'mixed-port': config.mixedPort,
+  'port': config.port,
+  'socks-port': config.socksPort,
+  'redir-port': config.redirPort,
+  'tproxy-port': config.tproxyPort,
+  'allow-lan': config.allowLan,
+  // A profile's skip-auth-prefixes could exempt loopback from authentication.
+  'authentication': authentication,
+  'skip-auth-prefixes': const <String>[],
+};
+
 Future<RealProfile> makeRealProfileTask(MakeRealProfileState data) async {
   // The mixin injectors are not isolate-safe, so they run here.
   final rawConfig = await compute<MakeRealProfileState, Map<String, dynamic>>(
@@ -110,19 +169,6 @@ Future<RealProfile> makeRealProfileTask(MakeRealProfileState data) async {
   await localRuleConfigInjector.inject(rawConfig);
   final yaml = await _encodeYaml(Map<String, dynamic>.from(rawConfig));
   return (yaml: yaml, md5: yaml.toMd5(), counts: configCountsOf(rawConfig));
-}
-
-String? lastMatchTarget(List<String> rules) {
-  for (int i = rules.length - 1; i >= 0; i--) {
-    final parsed = Rule.parse(rules[i]);
-    if (parsed.ruleAction == RuleAction.MATCH) {
-      final target = parsed.ruleTarget;
-      if (target != null && target.isNotEmpty) {
-        return target;
-      }
-    }
-  }
-  return null;
 }
 
 Future<Map<String, dynamic>> _makeRealProfileTask(
@@ -202,23 +248,14 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
   rawConfig['external-ui-url'] = '';
   rawConfig.addAll(realPatchConfig.generalOverrideJson);
   rawConfig['log-level'] = realPatchConfig.logLevel.name;
-  rawConfig['port'] = 0;
-  rawConfig['socks-port'] = 0;
   rawConfig['keep-alive-interval'] = realPatchConfig.keepAliveInterval;
   rawConfig['keep-alive-idle'] = realPatchConfig.keepAliveIdle;
   rawConfig['disable-keep-alive'] = realPatchConfig.disableKeepAlive;
   rawConfig['routing-mark'] = realPatchConfig.routingMark;
-  rawConfig['mixed-port'] = realPatchConfig.mixedPort;
-  rawConfig['port'] = realPatchConfig.port;
-  rawConfig['socks-port'] = realPatchConfig.socksPort;
-  rawConfig['redir-port'] = realPatchConfig.redirPort;
-  rawConfig['tproxy-port'] = realPatchConfig.tproxyPort;
+  rawConfig.addAll(
+    inboundConfigOf(realPatchConfig, authentication: data.authentication),
+  );
   rawConfig['find-process-mode'] = realPatchConfig.findProcessMode.name;
-  rawConfig['allow-lan'] = realPatchConfig.allowLan;
-  // The app owns local inbound authentication; a profile-provided
-  // skip-auth-prefixes could silently exempt loopback and defeat it.
-  rawConfig['authentication'] = data.authentication;
-  rawConfig['skip-auth-prefixes'] = [];
   rawConfig['mode'] = realPatchConfig.mode.name;
   // auto-route is always on, so without auto-detect-interface the core sends
   // its own outbound back into the TUN unless interface-name binds it, and
@@ -237,6 +274,10 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
       if (tun['route-exclude-address'] case final List routes) ...routes,
       ...privateRouteAddress,
     ];
+  }
+  if (data.defaultTunDnsMode case final mode?
+      when tun['dns-mode'] == null || tun['dns-mode'] == '') {
+    tun['dns-mode'] = mode;
   }
   rawConfig['tun'] = tun;
   rawConfig['geo-auto-update'] = realPatchConfig.geoAutoUpdate;
@@ -263,6 +304,15 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
       }
     }
   }
+  final mitm = mergeMitmModules(realPatchConfig.mitm.hostname, [
+    for (final module in data.mitmModules)
+      parseMitmModule(
+        module.content,
+        values: module.arguments,
+        resources: module.resources,
+      ),
+  ]);
+  rawConfig['mitm'] = realPatchConfig.mitm.coreJson(mitm.mitm);
   if (rawConfig['profile'] is! Map) {
     rawConfig['profile'] = {};
   }
@@ -280,19 +330,36 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
     };
   }
 
+  final attachedRuleSets = {
+    for (final MapEntry(:key, :value) in mitm.ruleProviders.entries)
+      if (value['type'] == 'file') key: value,
+  };
+  if (mitm.ruleProviders.length > attachedRuleSets.length) {
+    final providers = rawConfig['rule-providers'];
+    rawConfig['rule-providers'] = {
+      if (providers is Map) ...providers.cast<String, dynamic>(),
+      for (final MapEntry(:key, :value) in mitm.ruleProviders.entries)
+        if (!attachedRuleSets.containsKey(key)) key: value,
+    };
+  }
   confineProviders('proxy-providers', proxiesProviderDirectoryName);
   confineProviders('rule-providers', rulesProviderDirectoryName);
   injectUnconfinedProviders('proxy-providers', data.injectedProxyProviders);
-  injectUnconfinedProviders('rule-providers', data.injectedRuleProviders);
+  injectUnconfinedProviders('rule-providers', {
+    ...data.injectedRuleProviders,
+    ...attachedRuleSets,
+  });
   rawConfig['profile']['store-selected'] = false;
   rawConfig['geox-url'] = realPatchConfig.geoXUrl.raw;
   rawConfig['global-ua'] = realPatchConfig.globalUa ?? defaultUA;
-  if (rawConfig['hosts'] is! Map) {
-    rawConfig['hosts'] = {};
-  }
+  final rawHosts = rawConfig['hosts'] is Map
+      ? Map<String, dynamic>.from(rawConfig['hosts'] as Map)
+      : <String, dynamic>{};
   for (final host in realPatchConfig.hosts.entries) {
-    rawConfig['hosts'][host.key] = host.value.splitByMultipleSeparators;
+    rawHosts[host.key] = host.value.splitByMultipleSeparators;
   }
+  rawHosts.addAll(mitm.network.hosts);
+  rawConfig['hosts'] = rawHosts;
   var rawDns = rawConfig['dns'] is Map
       ? Map<String, dynamic>.from(rawConfig['dns'] as Map)
       : <String, dynamic>{};
@@ -306,11 +373,9 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
   }
   rawDns = mergeDnsOverride(
     rawDns,
-    overrides.dns.overrideJson(
-      overrides.dnsOverrideKeys,
-      keepEmpty: data.keepEmptyDnsOverrides,
-    ),
+    overrides.dns.overrideJson(overrides.dnsOverrideKeys),
   );
+  mitm.network.applyToDns(rawDns);
   rawConfig['dns'] = rawDns;
   final proxyServerNameserver = rawDns['proxy-server-nameserver'];
   if (rawDns['respect-rules'] == true &&
@@ -354,34 +419,18 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
       rules = List<String>.from(rawConfig['rules']);
     }
     if (addedRules.isNotEmpty) {
-      final hasMatchPlaceholder = addedRules.any(
-        (item) => item.ruleTarget?.toUpperCase() == 'MATCH',
+      final exitTarget = exitTargetResolver(
+        targets: data.exitTargets,
+        outbounds: data.outboundNames ?? outboundNamesOf(rawConfig),
+        fallback: data.defaultExitTarget ?? lastMatchTarget(rules),
       );
-      String? replacementTarget = data.matchTarget?.trim();
-      if (replacementTarget?.isEmpty == true) {
-        replacementTarget = null;
-      }
-
-      if (hasMatchPlaceholder && replacementTarget == null) {
-        replacementTarget = lastMatchTarget(rules);
-      }
-      final List<String> finalAddedRules;
-
-      if (replacementTarget?.isNotEmpty == true) {
-        finalAddedRules = [];
-        for (int i = 0; i < addedRules.length; i++) {
-          final parsed = addedRules[i];
-          if (parsed.ruleTarget?.toUpperCase() == 'MATCH') {
-            finalAddedRules.add(
-              parsed.copyWith(ruleTarget: replacementTarget).rawValue,
-            );
-          } else {
-            finalAddedRules.add(addedRules[i].rawValue);
-          }
-        }
-      } else {
-        finalAddedRules = addedRules.map((e) => e.rawValue).toList();
-      }
+      final finalAddedRules = [
+        for (final rule in addedRules)
+          (rule.customExit && rule.ruleTarget != null
+                  ? rule.copyWith(ruleTarget: exitTarget(rule.ruleTarget!))
+                  : rule)
+              .rawValue,
+      ];
       rules = [...finalAddedRules, ...rules];
     }
   } else {
@@ -392,7 +441,18 @@ Future<Map<String, dynamic>> _makeRealProfileTask(
         .map((item) => item.definition)
         .toList();
   }
-  rawConfig['rules'] = rules;
+  final mitmRules = mitm.exits.isEmpty
+      ? mitm.rules
+      : mitmRulesWithExits(
+          mitm.rules,
+          mitm.exits,
+          exitTargetResolver(
+            targets: data.exitTargets,
+            outbounds: data.outboundNames ?? outboundNamesOf(rawConfig),
+            fallback: data.defaultExitTarget ?? lastMatchTarget(rules),
+          ),
+        );
+  rawConfig['rules'] = [...mitmRules, ...rules];
   final groups = rawConfig['proxy-groups'];
   if (groups is List && groups.isNotEmpty && groups.first is! Map) {
     rawConfig['proxy-groups'] = groups
@@ -581,6 +641,7 @@ Future<MigrationData> migrateLegacyConfig({
     final value = rawRule['value'] ?? '';
     rules.add(Rule.parse(value, id: id));
   }
+  final globalRuleIds = [for (final rule in rules) rule.id];
   final List rawProfiles = configMap['profiles'] as List<dynamic>? ?? [];
   final List<Profile> profiles = [];
   for (final rawProfile in rawProfiles) {
@@ -592,6 +653,7 @@ Future<MigrationData> migrateLegacyConfig({
     rawProfile['id'] = profileId;
     final overwrite = rawProfile['overwrite'] as Map?;
     if (overwrite != null) {
+      final isScript = overwrite['type'] == 'script';
       final standardOverwrite = overwrite['standardOverwrite'] as Map?;
       if (standardOverwrite != null) {
         final addedRules = standardOverwrite['addedRules'] as List? ?? [];
@@ -601,7 +663,7 @@ Future<MigrationData> migrateLegacyConfig({
           rules.add(Rule.parse(value, id: id).copyWith(profileId: profileId));
         }
         final disabledRuleIds = standardOverwrite['disabledRuleIds'] as List?;
-        if (disabledRuleIds != null) {
+        if (disabledRuleIds != null && !isScript) {
           for (final disabledRuleId in disabledRuleIds) {
             final newDisabledRuleId = idMap[disabledRuleId];
             if (newDisabledRuleId != null) {
@@ -612,14 +674,17 @@ Future<MigrationData> migrateLegacyConfig({
           }
         }
       }
-      final scriptOverwrite = overwrite['scriptOverwrite'] as Map?;
-      if (scriptOverwrite != null) {
-        final scriptId = scriptOverwrite['scriptId'] as String?;
-        rawProfile['scriptId'] = scriptId != null ? idMap[scriptId] : null;
+      // A script profile used to skip the global rules it now runs with.
+      if (isScript) {
+        for (final ruleId in globalRuleIds) {
+          disabledRules.add(DisabledRule(profileId: profileId, ruleId: ruleId));
+        }
+        final scriptId =
+            (overwrite['scriptOverwrite'] as Map?)?['scriptId'] as String?;
+        if (scriptId != null) {
+          rawProfile['scriptId'] = idMap[scriptId];
+        }
       }
-      rawProfile['extendType'] = overwrite['type'] == ExtendType.script.name
-          ? ExtendType.script.name
-          : ExtendType.standard.name;
     }
     final rawUrl = rawProfile['url'];
     rawProfile['type'] = rawUrl is String && rawUrl.isNotEmpty ? 'url' : 'file';

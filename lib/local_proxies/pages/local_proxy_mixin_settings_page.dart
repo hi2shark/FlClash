@@ -7,7 +7,7 @@ import 'package:fl_clash/models/local_proxy_provider_config.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 class LocalProxyMixinSettingsPage extends StatefulWidget {
   final int profileId;
@@ -64,7 +64,7 @@ class _LocalProxyMixinSettingsPageState
 
   Future<void> _loadGroups() async {
     try {
-      final configMap = await coreController.getConfig(widget.profileId);
+      final configMap = await coreController.readConfig(widget.profileId);
       if (!mounted) return;
       final groupsRaw = configMap['proxy-groups'];
       final groups = <_GroupInfo>[];
@@ -89,7 +89,7 @@ class _LocalProxyMixinSettingsPageState
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
-      context.showNotifier(e.toString());
+      dialogs.showBanner(e.toString());
     }
   }
 
@@ -190,7 +190,7 @@ class _LocalProxyMixinSettingsPageState
       if (!success) {
         await _restorePreviousConfig(previous);
         if (mounted) {
-          context.showNotifier(appLocalizations.localProxyReloadFailed);
+          dialogs.showBanner(appLocalizations.localProxyReloadFailed);
         }
         return;
       }
@@ -227,11 +227,37 @@ class _LocalProxyMixinSettingsPageState
     }
   }
 
+  Widget _buildLabeledField({
+    required String label,
+    required TextEditingController controller,
+    required bool enabled,
+    TextInputType? keyboardType,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyle.footnote
+              .of(context)
+              .copyWith(color: context.colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          enabled: enabled,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(hintText: label),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     final healthEnabled = _config.enabled && _config.healthCheckEnabled;
-    return CommonScaffold(
+    return Scaffold(
       title: appLocalizations.localProxyMixin,
       confirmationAction: IconButtonData(
         glyph: AppGlyphs.check,
@@ -239,13 +265,13 @@ class _LocalProxyMixinSettingsPageState
         tooltip: appLocalizations.saveAndReload,
       ),
       body: _loading
-          ? const Center(child: CommonCircleLoading(size: 24))
+          ? const Center(child: ActivityIndicator(size: 24))
           : ListView(
               padding: const EdgeInsets.all(
                 16,
               ).copyWith(top: context.contentTopPadding, bottom: 88),
               children: [
-                CommonCard(
+                Card(
                   child: ListItem.toggle(
                     title: Text(appLocalizations.enableLocalProxyMixin),
                     value: _config.enabled,
@@ -253,7 +279,7 @@ class _LocalProxyMixinSettingsPageState
                   ),
                 ),
                 const SizedBox(height: 12),
-                CommonCard(
+                Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: ValueListenableBuilder<List<LocalProxy>>(
@@ -294,13 +320,13 @@ class _LocalProxyMixinSettingsPageState
                 ),
                 const SizedBox(height: 8),
                 if (_groups.isEmpty)
-                  CommonCard(
+                  Card(
                     child: ListItem(
                       title: Text(appLocalizations.noProxyGroups),
                     ),
                   )
                 else
-                  CommonCard(
+                  Card(
                     child: Column(
                       children: [
                         for (var i = 0; i < _groups.length; i++) ...[
@@ -322,7 +348,7 @@ class _LocalProxyMixinSettingsPageState
                 const SizedBox(height: 16),
                 InfoHeader(info: Info(label: appLocalizations.healthCheck)),
                 const SizedBox(height: 8),
-                CommonCard(
+                Card(
                   child: Column(
                     children: [
                       ListItem.toggle(
@@ -340,37 +366,28 @@ class _LocalProxyMixinSettingsPageState
                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                        child: TextFormField(
+                        child: _buildLabeledField(
+                          label: appLocalizations.healthCheckUrl,
                           controller: _healthCheckUrlController,
                           enabled: healthEnabled,
-                          decoration: InputDecoration(
-                            labelText: appLocalizations.healthCheckUrl,
-                            border: const OutlineInputBorder(),
-                          ),
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                        child: TextFormField(
+                        child: _buildLabeledField(
+                          label: appLocalizations.healthCheckInterval,
                           controller: _healthCheckIntervalController,
                           enabled: healthEnabled,
                           keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: appLocalizations.healthCheckInterval,
-                            border: const OutlineInputBorder(),
-                          ),
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: TextFormField(
+                        child: _buildLabeledField(
+                          label: appLocalizations.healthCheckTimeout,
                           controller: _healthCheckTimeoutController,
                           enabled: healthEnabled,
                           keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: appLocalizations.healthCheckTimeout,
-                            border: const OutlineInputBorder(),
-                          ),
                         ),
                       ),
                     ],

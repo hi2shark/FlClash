@@ -1,6 +1,6 @@
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/ui/color.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
+import 'package:prism_ui/color.dart';
 
 import 'app_localizations.dart';
 
@@ -13,14 +13,23 @@ extension PageLabelL10n on PageLabel {
       PageLabel.profiles => appLocalizations.profiles,
       PageLabel.tools => appLocalizations.tools,
       PageLabel.logs => appLocalizations.logs,
-      PageLabel.requests => appLocalizations.recentRequests,
+      PageLabel.requests => appLocalizations.requests,
       PageLabel.resources => appLocalizations.resources,
-      PageLabel.connections => appLocalizations.liveConnections,
       PageLabel.dns => appLocalizations.dnsQueries,
       PageLabel.localProxies => appLocalizations.localNodes,
       PageLabel.localRules => appLocalizations.localRules,
       PageLabel.networkTest => appLocalizations.networkTest,
       PageLabel.effectiveConfig => appLocalizations.effectiveConfig,
+    };
+  }
+}
+
+extension UpdateChannelL10n on UpdateChannel {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      UpdateChannel.stable => appLocalizations.updateChannelStable,
+      UpdateChannel.pre => appLocalizations.updateChannelPre,
     };
   }
 }
@@ -90,6 +99,23 @@ extension HotActionL10n on HotAction {
   }
 }
 
+extension MitmListL10n on MitmList {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      MitmList.hostname => appLocalizations.hostname,
+      MitmList.urlRewrite => appLocalizations.urlRewrite,
+      MitmList.headerRewrite => appLocalizations.headerRewrite,
+      MitmList.bodyRewrite => appLocalizations.bodyRewrite,
+      MitmList.mapLocal => appLocalizations.mapLocal,
+      MitmList.requestBodyMock => appLocalizations.requestBodyMock,
+      MitmList.clientSourceAddress => appLocalizations.clientSourceAddress,
+      MitmList.skipVerifyHostname => appLocalizations.skipVerifyHostname,
+      MitmList.script => appLocalizations.script,
+    };
+  }
+}
+
 extension RestoreStrategyL10n on RestoreStrategy {
   String get label {
     final appLocalizations = currentAppLocalizations;
@@ -122,8 +148,68 @@ extension LocaleL10n on Locale {
       'ja' => appLocalizations.ja,
       'ko' => appLocalizations.ko,
       'ru' => appLocalizations.ru,
-      'zh_CN' => appLocalizations.zhCN,
+      'zh' => appLocalizations.zhCN,
       final code => code,
+    };
+  }
+}
+
+extension ConnectionFailureKindL10n on ConnectionFailureKind {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      ConnectionFailureKind.timeout => appLocalizations.timeout,
+      ConnectionFailureKind.refused => appLocalizations.failureRefused,
+      ConnectionFailureKind.unreachable => appLocalizations.failureUnreachable,
+      ConnectionFailureKind.dns => appLocalizations.failureDns,
+      ConnectionFailureKind.handshake => appLocalizations.failureHandshake,
+      ConnectionFailureKind.other => appLocalizations.failureOther,
+    };
+  }
+}
+
+extension ConnectionEndReasonL10n on ConnectionEndReason {
+  /// Null for [ConnectionEndReason.failed], which the failure itself names.
+  String? get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      ConnectionEndReason.local => appLocalizations.connectionEndLocal,
+      ConnectionEndReason.remote => appLocalizations.connectionEndRemote,
+      ConnectionEndReason.finished => appLocalizations.connectionEndFinished,
+      ConnectionEndReason.timeout => appLocalizations.timeout,
+      ConnectionEndReason.reset => appLocalizations.connectionEndReset,
+      ConnectionEndReason.core => appLocalizations.connectionEndCore,
+      ConnectionEndReason.error => appLocalizations.error,
+      ConnectionEndReason.failed => null,
+    };
+  }
+}
+
+extension RecordFacetKindL10n on RecordFacetKind {
+  String? get title {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      RecordFacetKind.network => appLocalizations.protocol,
+      RecordFacetKind.rule => appLocalizations.rule,
+      RecordFacetKind.level => appLocalizations.filter,
+      RecordFacetKind.mitm ||
+      RecordFacetKind.app ||
+      RecordFacetKind.proxy ||
+      RecordFacetKind.type ||
+      RecordFacetKind.initiator ||
+      RecordFacetKind.cache ||
+      RecordFacetKind.rcode => null,
+    };
+  }
+}
+
+extension ServiceStartFailureL10n on ServiceStartFailure {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      ServiceStartFailure.vpnPermission =>
+        appLocalizations.vpnPermissionNotGranted,
+      ServiceStartFailure.service => appLocalizations.vpnServiceStartFailed,
     };
   }
 }

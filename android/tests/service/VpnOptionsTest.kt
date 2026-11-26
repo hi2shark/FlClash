@@ -1,6 +1,6 @@
-package com.hi2shark.flclash_nw.service.models
+package com.hi2shark.hi2nw.service.models
 
-import com.hi2shark.flclash_nw.common.AccessControlMode
+import com.hi2shark.hi2nw.common.AccessControlMode
 import com.google.gson.JsonParser
 import java.net.Inet4Address
 import java.net.Inet6Address

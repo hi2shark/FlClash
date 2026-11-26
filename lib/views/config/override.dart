@@ -9,7 +9,7 @@ import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 typedef OverrideState<K extends OverrideKey, M> = ({M model, Set<K> keys});
@@ -18,8 +18,6 @@ abstract interface class OverrideModel<M> {
   ProviderListenable<T> selectModel<T>(T Function(M model) select);
 
   ConfigWriter<T> modelWriter<T>(M Function(M model, T value) update);
-
-  bool get emptyCancels;
 }
 
 /// Where an override page keeps its model and the keys picked from it.
@@ -54,9 +52,6 @@ abstract class OverrideTarget<K extends OverrideKey, M>
         ref,
         (state) => (model: update(state.model, value), keys: state.keys),
       );
-
-  @override
-  bool get emptyCancels => true;
 }
 
 class PatchOverrideTarget<K extends OverrideKey, M>
@@ -84,10 +79,6 @@ class PatchOverrideTarget<K extends OverrideKey, M>
   @override
   ConfigLabel get addEntry =>
       (l) => l.addOverrideEntry;
-
-  /// An emptied entry overrides the profile's own value with nothing.
-  @override
-  bool get emptyCancels => false;
 
   @override
   ProviderListenable<T> select<T>(
@@ -222,10 +213,12 @@ class OptionsOverrideField<M, T extends Object>
     super.select,
     super.update, {
     this.labelOf = _nameOf,
+    this.available,
   });
 
   final List<T> options;
   final String Function(T value) labelOf;
+  final ProviderListenable<bool Function(T option)>? available;
 
   static String _nameOf(Object value) => value is Enum ? value.name : '$value';
 
@@ -240,6 +233,7 @@ class OptionsOverrideField<M, T extends Object>
       title: title,
       options: options,
       textBuilder: labelOf,
+      available: available,
       selector: model.selectModel(select),
       onChanged: model.modelWriter(update),
     );
@@ -287,7 +281,6 @@ class NumberOverrideField<M> extends ValueOverrideField<M, int> {
       keyboardType: TextInputType.number,
       normalize: (value) => value.trim(),
       validator: (value, _) => _validate(value, title),
-      allowEmpty: model.emptyCancels,
     );
   }
 }
@@ -330,10 +323,14 @@ class ListOverrideField<M> extends ValueOverrideField<M, List<String>> {
     super.update, {
     required this.itemMaxLength,
     this.itemValidator,
+    this.description,
   });
 
   final int itemMaxLength;
   final ConfigValidator? itemValidator;
+
+  /// Shown on the list's own page, so long lists do not crowd the section.
+  final ConfigLabel? description;
 
   @override
   Widget build(
@@ -348,6 +345,7 @@ class ListOverrideField<M> extends ValueOverrideField<M, List<String>> {
       onChanged: model.modelWriter(update),
       itemMaxLength: itemMaxLength,
       itemValidator: itemValidator,
+      description: description,
     );
   }
 }
@@ -383,6 +381,10 @@ abstract class OverrideSpec<K extends OverrideKey, M> {
     return (model: model, keys: state.keys.difference(keys));
   }
 
+  /// What of [keys] an enabled MITM module goes over.
+  List<String> notesOf(WidgetRef ref, Iterable<K> keys, AppLocalizations l) =>
+      const [];
+
   String? footerOf(Iterable<K> keys, AppLocalizations l) {
     final lines = [for (final key in keys) ?description(key)?.call(l)];
     return lines.isEmpty ? null : lines.join('\n');
@@ -417,8 +419,8 @@ void showOverrideAddSheet<K extends OverrideKey, M>(
   final appLocalizations = context.appLocalizations;
   final added = spec.target.read(ref).keys;
   final remaining = spec.values.where((key) => !added.contains(key));
-  showSheet<void>(
-    context: context,
+  showNestedSheet<void>(
+    context,
     builder: (_) => SelectionSheet<K>(
       title: spec.target.addEntry(appLocalizations),
       sections: [
@@ -477,8 +479,8 @@ class OverrideView<K extends OverrideKey, M> extends ConsumerWidget {
     );
     return sheetNavigatorOf(context).push(
       context.isMobileView
-          ? CommonRoute(builder: (_) => page)
-          : CommonDesktopRoute(builder: (_) => page),
+          ? CardPageRoute(builder: (_) => page)
+          : FadePageRoute(builder: (_) => page),
     );
   }
 
@@ -499,16 +501,10 @@ class OverrideView<K extends OverrideKey, M> extends ConsumerWidget {
           quickEdit.schema,
           (content) => quickEdit.applyOverrideYaml(state.model, content),
         );
-        final stillSet = quickEdit
-            .applyOverrideYaml(
-              next.model,
-              quickEdit.overrideYaml(next.model, next.keys),
-            )
-            .keys;
         return spec.withoutKeys((
           model: next.model,
           keys: {...next.keys, ...state.keys.difference(listed)},
-        ), listed.difference(stillSet));
+        ), listed.difference(next.keys));
       });
       return true;
     } catch (error) {
@@ -538,7 +534,7 @@ class OverrideView<K extends OverrideKey, M> extends ConsumerWidget {
       ),
     );
     final addEntry = target.addEntry(appLocalizations);
-    return CommonScaffold(
+    return Scaffold(
       title: spec.title(appLocalizations),
       iconActions: [
         if (!isEmpty)
@@ -584,7 +580,7 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
     final keys = ref.watch(spec.target.select((state) => state.keys));
     final entries = spec.values.where(keys.contains);
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+      padding: context.listInsets.page().copyWith(
         top: context.sectionsTopPadding,
         bottom: 16 + context.bottomInset,
       ),
@@ -601,7 +597,10 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
                 key: ValueKey(title),
                 child: generateAnimatedSection(
                   title: title,
-                  footer: spec.footerOf(keys, appLocalizations),
+                  footer: [
+                    ?spec.footerOf(keys, appLocalizations),
+                    ...spec.notesOf(ref, keys, appLocalizations),
+                  ].join('\n').value,
                   items: [
                     for (final key in keys)
                       OverrideEntry(
@@ -616,7 +615,10 @@ class _OverrideList<K extends OverrideKey, M> extends ConsumerWidget {
         ),
         Padding(
           padding: EdgeInsets.only(top: 16.mAp(context)),
-          child: ListFooter(text: spec.target.description(appLocalizations)),
+          child: ListFooter(
+            text: spec.target.description(appLocalizations),
+            last: true,
+          ),
         ),
       ],
     );
@@ -667,6 +669,7 @@ class OverrideSection<K extends OverrideKey, M> extends ConsumerWidget {
         ...footer,
         spec.target.description(appLocalizations),
         ?spec.footerOf(listed, appLocalizations),
+        ...spec.notesOf(ref, listed, appLocalizations),
       ].join('\n'),
     );
   }
@@ -687,46 +690,11 @@ class OverrideEntry<K extends OverrideKey, M> extends StatelessWidget {
   Widget build(BuildContext context) {
     final field = spec.fieldOf(overrideKey);
     return field.build(
-      field is ValueOverrideField && spec.target.emptyCancels
-          ? _ListedValue(spec, overrideKey)
-          : spec.target,
+      spec.target,
       title: (l) => spec.label(overrideKey, l),
       leading: _RemoveButton(spec: spec, overrideKey: overrideKey),
     );
   }
-}
-
-/// A key's own value; emptying it takes the key off the list.
-class _ListedValue<K extends OverrideKey, M> implements OverrideModel<M> {
-  const _ListedValue(this.spec, this.overrideKey);
-
-  final OverrideSpec<K, M> spec;
-  final K overrideKey;
-
-  OverrideTarget<K, M> get target => spec.target;
-
-  @override
-  bool get emptyCancels => true;
-
-  static bool _isEmpty(Object? value) => switch (value) {
-    String() => value.isEmpty,
-    Iterable() => value.isEmpty,
-    Map() => value.isEmpty,
-    _ => false,
-  };
-
-  @override
-  ProviderListenable<T> selectModel<T>(T Function(M model) select) =>
-      target.selectModel(select);
-
-  @override
-  ConfigWriter<T> modelWriter<T>(M Function(M model, T value) update) =>
-      (ref, value) => target.update(
-        ref,
-        (state) => _isEmpty(value)
-            ? spec.withoutKeys(state, {overrideKey})
-            : (model: update(state.model, value), keys: state.keys),
-      );
 }
 
 class _RemoveButton<K extends OverrideKey, M> extends ConsumerWidget {

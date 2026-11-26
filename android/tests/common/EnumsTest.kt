@@ -1,4 +1,4 @@
-package com.hi2shark.flclash_nw.common
+package com.hi2shark.hi2nw.common
 
 import com.google.gson.Gson
 import org.junit.Assert.assertEquals

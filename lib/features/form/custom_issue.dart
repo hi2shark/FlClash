@@ -3,7 +3,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 import 'form_row.dart';
 
@@ -98,7 +98,7 @@ class SliverCustomIssuesBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return PinnedHeaderSliver(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(16, context.sectionsTopPadding, 16, 0),
+        padding: context.listInsets.page(top: context.sectionsTopPadding),
         child: CustomIssuesBanner(issues: issues),
       ),
     );

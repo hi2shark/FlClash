@@ -110,6 +110,37 @@ func TestShareLinksReadBackThroughTheConverter(t *testing.T) {
 		},
 		{
 			proxy: map[string]any{
+				"name": "vmess httpupgrade", "type": "vmess", "server": "c.example", "port": 443,
+				"uuid": "u", "alterId": 64, "cipher": "auto", "network": "ws",
+				"ws-opts": map[string]any{
+					"path": "/up", "headers": map[string]any{"Host": "host.example"},
+					"v2ray-http-upgrade": true, "v2ray-http-upgrade-fast-open": true,
+				},
+			},
+			prefix: "vmess://eyJ",
+			want: map[string]string{
+				"network": "ws", "ws-opts.path": "/up", "ws-opts.headers.Host": "host.example",
+				"ws-opts.v2ray-http-upgrade": "true", "ws-opts.v2ray-http-upgrade-fast-open": "true",
+			},
+		},
+		{
+			proxy: map[string]any{
+				"name": "vless httpupgrade", "type": "vless", "server": "d.example", "port": 443,
+				"uuid": "u", "tls": true, "network": "ws",
+				"ws-opts": map[string]any{
+					"path": "/up", "headers": map[string]any{"Host": "host.example"},
+					"v2ray-http-upgrade": true, "v2ray-http-upgrade-fast-open": true,
+				},
+			},
+			prefix: "vless://u@d.example:443?",
+			want: map[string]string{
+				"network": "ws", "ws-opts.path": "/up", "ws-opts.headers.Host": "host.example",
+				"ws-opts.v2ray-http-upgrade": "true", "ws-opts.v2ray-http-upgrade-fast-open": "true",
+				"ws-opts.max-early-data": "<nil>",
+			},
+		},
+		{
+			proxy: map[string]any{
 				"name": "vless reality", "type": "vless", "server": "d.example", "port": 443,
 				"uuid": "u-1", "flow": "xtls-rprx-vision", "tls": true, "servername": "www.example",
 				"client-fingerprint": "firefox", "network": "tcp",
@@ -150,6 +181,16 @@ func TestShareLinksReadBackThroughTheConverter(t *testing.T) {
 				"password": "p", "network": "ws", "ws-opts": map[string]any{"path": "/ws"},
 			},
 			want: map[string]string{"network": "ws", "ws-opts.path": "/ws"},
+		},
+		{
+			proxy: map[string]any{
+				"name": "trojan httpupgrade", "type": "trojan", "server": "e.example", "port": 443,
+				"password": "p", "network": "ws",
+				"ws-opts": map[string]any{"path": "/up", "v2ray-http-upgrade": true},
+			},
+			want: map[string]string{
+				"network": "ws", "ws-opts.path": "/up", "ws-opts.v2ray-http-upgrade": "true",
+			},
 		},
 		{
 			proxy: map[string]any{
@@ -227,7 +268,7 @@ func TestShareLinksReadBackThroughTheConverter(t *testing.T) {
 	for _, tc := range cases {
 		name, _ := tc.proxy["name"].(string)
 		t.Run(name, func(t *testing.T) {
-			links := handleEncodeShareLinks([]map[string]any{tc.proxy})
+			links := handleEncodeShareLinks(ProxiesParams{Proxies: []map[string]any{tc.proxy}})
 			if !strings.HasPrefix(links[0], tc.prefix) {
 				t.Errorf("link %q does not start with %q", links[0], tc.prefix)
 			}
@@ -245,7 +286,7 @@ func TestShareLinksReadBackThroughTheConverter(t *testing.T) {
 }
 
 func TestShareLinksLeaveOutWhatNoLinkCarries(t *testing.T) {
-	links := handleEncodeShareLinks([]map[string]any{
+	links := handleEncodeShareLinks(ProxiesParams{Proxies: []map[string]any{
 		{"name": "wg", "type": "wireguard", "server": "a.example", "port": 51820},
 		{"name": "no server", "type": "ss", "cipher": "aes-128-gcm", "password": "p"},
 		{"name": "ssr v6", "type": "ssr", "server": "2001:db8::1", "port": 443},
@@ -263,7 +304,14 @@ func TestShareLinksLeaveOutWhatNoLinkCarries(t *testing.T) {
 			"password": "p", "network": "ws",
 			"ws-opts": map[string]any{"path": "/ws", "headers": map[string]any{"Host": "cdn.example"}},
 		},
-	})
+		{
+			"name": "trojan httpupgrade fast open", "type": "trojan", "server": "a.example",
+			"port": 443, "password": "p", "network": "ws",
+			"ws-opts": map[string]any{
+				"path": "/up", "v2ray-http-upgrade": true, "v2ray-http-upgrade-fast-open": true,
+			},
+		},
+	}})
 	for i, link := range links {
 		if link != "" {
 			t.Errorf("mapping %d encoded to %q", i, link)
@@ -272,11 +320,11 @@ func TestShareLinksLeaveOutWhatNoLinkCarries(t *testing.T) {
 }
 
 func TestDecodeShareLinksAnswersEveryLine(t *testing.T) {
-	results := handleDecodeShareLinks([]string{
+	results := handleDecodeShareLinks(LinesParams{Lines: []string{
 		"trojan://pw@a.example:443#one",
 		"not a link",
 		"socks5://b.example:1080#two",
-	})
+	}})
 	if len(results) != 3 || len(results[0]) != 1 || len(results[1]) != 0 || len(results[2]) != 1 {
 		t.Fatalf("results = %v", results)
 	}

@@ -61,7 +61,7 @@ class LocalRuleTargetCatalog {
     try {
       final profile = globalState.container.read(currentProfileProvider);
       if (profile != null) {
-        rawConfig = await coreController.getConfig(profile.id);
+        rawConfig = await coreController.readConfig(profile.id);
       }
     } catch (error, stackTrace) {
       commonPrint.log(

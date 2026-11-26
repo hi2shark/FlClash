@@ -6,19 +6,14 @@ import 'package:fl_clash/providers/ip_quality.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 import 'ip_quality_text.dart';
 import 'labels.dart';
 
 Future<void> showIpQualitySheet(BuildContext context, {required String ip}) {
-  if (isSheetPage(context)) {
-    return Navigator.of(
-      context,
-    ).push(PagedSheetRoute(builder: (_) => _IpQualitySheet(ip: ip)));
-  }
-  return showSheet<void>(
-    context: context,
+  return showNestedSheet<void>(
+    context,
     builder: (_) => _IpQualitySheet(ip: ip),
   );
 }
@@ -34,7 +29,7 @@ class _IpQualitySheet extends ConsumerWidget {
     final isLoading = ref.watch(
       ipQualityProvider(ip).select((result) => result.isLoading),
     );
-    return CommonScaffold(
+    return Scaffold(
       title: localizations.outboundIp,
       actions: [
         AppBarActionButton(
@@ -46,7 +41,10 @@ class _IpQualitySheet extends ConsumerWidget {
           ),
         ),
       ],
-      body: _IpQualityDetail(ip: ip),
+      body: ListTextScope(
+        scale: ListTextScale.compact,
+        child: _IpQualityDetail(ip: ip),
+      ),
     );
   }
 }
@@ -65,16 +63,13 @@ class _HideIpItem extends ConsumerWidget {
     return DecorationListItem(
       title: Text(context.appLocalizations.hideIp),
       onPressed: () => update(!hideIp),
-      trailing: CommonSwitch(value: hideIp, onChanged: update),
+      trailing: Switch(value: hideIp, onChanged: update),
     );
   }
 }
 
 class _IpQualityDetail extends ConsumerWidget {
   const _IpQualityDetail({required this.ip});
-
-  /// The optical edge of the xl-radius cards, as in the memory sheet.
-  static const _tipInset = 5.0;
 
   final String ip;
 
@@ -87,18 +82,18 @@ class _IpQualityDetail extends ConsumerWidget {
     final failed = quality == null && !result.isLoading;
     return ListView(
       shrinkWrap: true,
-      padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+      padding: context.listInsets.page().copyWith(
         bottom: 20 + context.bottomInset,
         top: context.contentTopPadding,
       ),
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(_tipInset, 8, _tipInset, 0),
+          padding: EdgeInsets.symmetric(
+            horizontal: context.listInsets.leading,
+          ).copyWith(top: infoSectionContentGap),
           child: Text(
             localizations.detectionTip,
-            style: AppTextStyle.body
-                .of(context)
-                .copyWith(color: context.colorScheme.onSurfaceVariant),
+            style: context.listCaptionStyle,
           ),
         ),
         generateSection(

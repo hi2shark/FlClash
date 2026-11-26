@@ -2,3 +2,7 @@
 	path = core/Clash.Meta
 	url = https://github.com/hi2shark/meta-core.git
 	branch = main
+[submodule "plugins/prism_ui"]
+	path = plugins/prism_ui
+	url = https://github.com/chen08209/prism_ui.git
+	branch = main

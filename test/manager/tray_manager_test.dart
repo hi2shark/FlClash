@@ -1,23 +1,21 @@
 import 'dart:async';
 
 import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/locale_manager.dart';
 import 'package:fl_clash/manager/tray_manager.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
-import 'package:tray/tray.dart';
+import 'package:rust_api/tray.dart';
 
+import '../helpers/fake_desktop_window.dart';
+import '../helpers/fake_tray_host.dart';
 import '../helpers/test_profiles.dart';
-
-const _trayChannel = MethodChannel('tray');
-const _windowChannel = MethodChannel('window');
-const _codec = StandardMethodCodec();
+import '../helpers/test_app.dart';
 
 class _RecordingSystemAction extends SystemAction {
   static int updateTrayCount = 0;
@@ -34,6 +32,18 @@ class _FailingSystemAction extends SystemAction {
   @override
   Future<void> updateTray() async {
     throw StateError('tray boom');
+  }
+}
+
+class _ShowingSystemAction extends SystemAction {
+  @override
+  Future<void> updateTray() {
+    return Tray.instance.show(
+      const TraySpec(
+        icon: TrayIcon.asset('assets/images/tray/unix/status_1.png'),
+        toolTip: 'FlClash',
+      ),
+    );
   }
 }
 
@@ -54,40 +64,27 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late ProviderContainer container;
-  late List<String> windowCalls;
+  late FakeDesktopWindow fakeWindow;
+  late FakeTrayHost trayHost;
 
   setUpAll(() async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
   });
 
   setUp(() {
     _RecordingSystemAction.updateTrayCount = 0;
     _RecordingSystemAction.updateTrayLocales.clear();
-    windowCalls = <String>[];
-    Tray.instance.resetForTesting();
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_trayChannel, (call) async => true);
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_windowChannel, (call) async {
-          windowCalls.add(call.method);
-          return call.method == 'isMinimized' ? false : null;
-        });
+    trayHost = FakeTrayHost();
+    Tray.instance.resetForTesting(trayHost);
+    fakeWindow = FakeDesktopWindow().install();
   });
 
   tearDown(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      ..setMockMethodCallHandler(_trayChannel, null)
-      ..setMockMethodCallHandler(_windowChannel, null);
     container.dispose();
   });
 
-  Future<void> emitTrayEvent(String event, [Object? arguments]) async {
-    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .handlePlatformMessage(
-          _trayChannel.name,
-          _codec.encodeMethodCall(MethodCall(event, arguments)),
-          null,
-        );
+  void emitTrayEvent(TraySignalKind kind) {
+    trayHost.emit(kind);
   }
 
   Future<void> pumpTrayManager(
@@ -106,7 +103,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(home: TrayManager(child: SizedBox.shrink())),
+        child: const HostApp(home: TrayManager(child: SizedBox.shrink())),
       ),
     );
     await tester.pump();
@@ -119,14 +116,8 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
+        child: HostApp(
           locale: locale,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            AppUiLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
           home: const LocaleManager(
             child: TrayManager(child: SizedBox.shrink()),
           ),
@@ -144,21 +135,21 @@ void main() {
 
   testWidgets('activating the icon brings the window back', (tester) async {
     await pumpTrayManager(tester);
-    windowCalls.clear();
+    fakeWindow.calls.clear();
 
-    await emitTrayEvent('onIconActivated');
+    emitTrayEvent(TraySignalKind.iconActivated);
     await tester.pumpAndSettle();
     // A macOS host arms the Dock settle timer on show; drain it so the binding
     // ends the test with no pending timer.
     await tester.pump(const Duration(seconds: 1));
 
-    expect(windowCalls, containsAll(<String>['show', 'focus']));
+    expect(fakeWindow.methods, containsAll(<String>['show', 'focus']));
   });
 
   testWidgets('a menu request is forwarded to the tray', (tester) async {
     await pumpTrayManager(tester);
 
-    await emitTrayEvent('onMenuRequested');
+    emitTrayEvent(TraySignalKind.menuRequested);
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
@@ -203,6 +194,30 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('a tray the platform refuses is logged with its reason', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    final wasAttached = globalState.isAttach;
+    globalState.isAttach = true;
+    addTearDown(() => globalState.isAttach = wasAttached);
+    trayHost.showFailure = 'called off the main thread';
+    // setUp's queue sits in the real zone, which never runs in a fake-async body.
+    Tray.instance.resetForTesting(trayHost);
+    await pumpTrayManager(tester, systemAction: _ShowingSystemAction.new);
+
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mixedPort: state.mixedPort + 1));
+    await tester.pumpAndSettle();
+    debugDefaultTargetPlatformOverride = null;
+
+    expect(
+      container.read(logsProvider).list.map((log) => log.payload),
+      contains(contains('called off the main thread')),
+    );
+  });
+
   testWidgets('a change made during a failing update still reaches the tray', (
     tester,
   ) async {
@@ -231,7 +246,7 @@ void main() {
   testWidgets('a language switch pushes the tray in the new language', (
     tester,
   ) async {
-    addTearDown(() => AppLocalizations.load(const Locale('en')));
+    addTearDown(() => loadAppLocalizations(const Locale('en')));
     container = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
@@ -246,7 +261,7 @@ void main() {
     await pumpLocalizedTrayManager(tester, const Locale('zh', 'CN'));
 
     expect(_RecordingSystemAction.updateTrayCount, 1);
-    expect(_RecordingSystemAction.updateTrayLocales, <String>['zh_CN']);
+    expect(_RecordingSystemAction.updateTrayLocales, <String>['zh']);
   });
 
   testWidgets('the locale a language switch starts from does not push twice', (
@@ -271,11 +286,11 @@ void main() {
     await pumpTrayManager(tester);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
-    windowCalls.clear();
+    fakeWindow.calls.clear();
 
-    await emitTrayEvent('onIconActivated');
+    emitTrayEvent(TraySignalKind.iconActivated);
     await tester.pumpAndSettle();
 
-    expect(windowCalls, isEmpty);
+    expect(fakeWindow.methods, isEmpty);
   });
 }

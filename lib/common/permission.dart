@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:wifi_ssid/wifi_ssid_manager.dart';
+import 'package:fl_clash/plugins/wifi_ssid.dart';
 
 class Permissions {
   static Permissions? _instance;

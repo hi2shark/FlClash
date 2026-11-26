@@ -11,7 +11,7 @@ plugins {
 }
 
 android {
-    namespace = "com.hi2shark.flclash_nw.core"
+    namespace = "com.hi2shark.hi2nw.core"
     compileSdk = libs.versions.compileSdk.get().toInt()
     ndkVersion = libs.versions.ndkVersion.get()
 
@@ -61,7 +61,7 @@ val goExecutablePath =
 val goModule = rootProject.layout.projectDirectory.dir("../core")
 
 // gomobile names the library gojni, both as the file it builds and in go.Seq's System.loadLibrary, and has no option to change it.
-val coreLibraryName = "clash"
+val coreLibraryName = "nwcore"
 
 val buildConfig =
     providers.fileContents(rootProject.layout.projectDirectory.file("../build_config.yaml")).asText.map { text ->
@@ -148,9 +148,10 @@ abstract class GomobileBind : DefaultTask() {
             commandLine(
                 tools.resolve("gomobile$executableSuffix").path,
                 "bind",
+                "-trimpath",
                 "-target=${targets.get().joinToString(",")}",
                 "-androidapi=${androidApi.get()}",
-                "-javapkg=com.hi2shark.flclash_nw.core",
+                "-javapkg=com.hi2shark.hi2nw.core",
                 "-tags=${tags.get()}",
                 "-ldflags=${ldflags.get()} -X=runtime.godebugDefault=${godebug.toString().trim()}",
                 "-o",

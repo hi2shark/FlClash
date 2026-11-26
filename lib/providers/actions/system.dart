@@ -10,8 +10,15 @@ class SystemAction extends _$SystemAction {
   void build() {}
 
   Future<List<Package>> getPackages() async {
-    ref.read(packagesProvider.notifier).value = await app?.getPackages() ?? [];
+    final packages = await app?.getPackages() ?? [];
+    if (!listEquals(packages, ref.read(packagesProvider))) {
+      ref.read(packagesProvider.notifier).value = packages;
+    }
     return ref.read(packagesProvider);
+  }
+
+  Future<List<String>> getChinaPackageNames() async {
+    return await app?.getChinaPackageNames() ?? [];
   }
 
   Future<bool> isInstalledAppsPermissionGranted() async {
@@ -50,7 +57,6 @@ class SystemAction extends _$SystemAction {
     await Future.wait([
       ?saveOperation,
       bootGuard.markClosed(),
-      if (systemDnsCoordinator != null) systemDnsCoordinator!.shutdown(),
       ?systemProxyQueue?.close(),
     ]);
   }
@@ -146,16 +152,25 @@ class SystemAction extends _$SystemAction {
         .update((state) => state.copyWith(autoLaunch: !state.autoLaunch));
   }
 
+  /// Logs a tray the platform refuses rather than throwing, as the first
+  /// show at startup has no caller to report to.
   Future<void> updateTray() async {
-    await trayPort?.update(
-      trayState: ref.read(trayStateProvider),
-      traffic: ref.read(
-        trafficsProvider.select(
-          (state) => state.list.safeLast(const Traffic()),
+    try {
+      await trayPort?.update(
+        trayState: ref.read(trayStateProvider),
+        traffic: ref.read(
+          trafficsProvider.select(
+            (state) => state.list.safeLast(const Traffic()),
+          ),
         ),
-      ),
-      read: globalState.container.read,
-    );
+        read: globalState.container.read,
+      );
+    } catch (error) {
+      commonPrint.log(
+        'Tray operation failed: ${compactError(error)}',
+        logLevel: LogLevel.error,
+      );
+    }
   }
 
   Future<void> updateLocalIp() async {

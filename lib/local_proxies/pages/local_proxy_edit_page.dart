@@ -5,7 +5,7 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/local_proxies/services/local_proxy_store.dart';
 import 'package:fl_clash/models/local_proxy.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 const manualProxyTypes = [
   'nowhere',
@@ -81,6 +81,7 @@ const _nowhereControlledFields = {
   'net',
   'mux',
   'morph',
+  'cipher',
   'pool',
   'prewarm-on-start',
   'max-concurrent-dials',
@@ -104,6 +105,8 @@ const _nowhereControlledFields = {
 };
 
 const _nowhereVersions = ['nw3', 'nw2'];
+
+const _nowhereCiphers = ['chacha', 'aes'];
 
 const _sudokuAeadMethods = ['aes-128-gcm', 'chacha20-poly1305', 'none'];
 
@@ -405,6 +408,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late String _down;
   late String _nowhereVersion;
   late String _nowhereNet;
+  late String _nowhereCipher;
   late String _sudokuAeadMethod;
   late String _sudokuTableType;
   late String _sudokuMultiplex;
@@ -726,6 +730,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _prewarmOnStart = config['prewarm-on-start'] == true;
     _nowhereVersion = _nowhereVersionFromConfig(config);
     _nowhereNet = _nowhereNetFromConfig(config);
+    _nowhereCipher = _nowhereCipherFromConfig(config);
     _sudokuAeadMethod = config['aead-method']?.toString() ?? '';
     if (!_sudokuAeadMethods.contains(_sudokuAeadMethod)) {
       _sudokuAeadMethod = _sudokuAeadMethods.first;
@@ -1137,6 +1142,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         if (_isNowhere3) {
           base['net'] = _nowhereNet;
           base['morph'] = _morph;
+          base['cipher'] = _nowhereCipher;
           _applyNowhereDialerAndCongestion(base);
         } else {
           _applyNowhereTlsOptions(base);
@@ -1490,6 +1496,13 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     return 'tcp';
   }
 
+  String _nowhereCipherFromConfig(Map<String, dynamic> config) {
+    final cipher = config['cipher'];
+    final value = cipher is String ? cipher : '';
+    if (_nowhereCiphers.contains(value)) return value;
+    return 'chacha';
+  }
+
   void _applyNowhereTlsOptions(Map<String, dynamic> base) {
     if (_clientFingerprintController.text.trim().isNotEmpty) {
       base['client-fingerprint'] = _clientFingerprintController.text.trim();
@@ -1687,7 +1700,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   Future<void> _handleSave() async {
     final error = _validateCommon();
     if (error != null) {
-      context.showNotifier(error);
+      dialogs.showBanner(error);
       return;
     }
     final name = _nameController.text.trim();
@@ -1743,36 +1756,46 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     int? minLines,
     String? hintText,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines ?? 1,
-      minLines: minLines,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-        border: const OutlineInputBorder(),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyle.footnote
+              .of(context)
+              .copyWith(color: context.colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          key: ValueKey('field:$label'),
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines ?? 1,
+          minLines: minLines,
+          decoration: InputDecoration(hintText: hintText ?? label),
+        ),
+      ],
     );
   }
 
   Widget _buildDropdown({
     required String label,
     required String value,
-    required List<DropdownMenuItem<String>> items,
+    required List<({String value, String label})> items,
     required ValueChanged<String?> onChanged,
   }) {
     final effective = items.any((e) => e.value == value)
         ? value
-        : (items.first.value ?? '');
-    return DropdownButtonFormField<String>(
-      initialValue: effective,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
+        : items.first.value;
+    final labelMap = {for (final item in items) item.value: item.label};
+    return Card(
+      child: ListItem<String>.options(
+        title: Text(label),
+        options: [for (final item in items) item.value],
+        value: effective,
+        textBuilder: (v) => labelMap[v] ?? v,
+        onChanged: onChanged,
       ),
-      items: items,
-      onChanged: onChanged,
     );
   }
 
@@ -1924,19 +1947,19 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           value: _encryptionAlgorithmController.text,
           items: [
             for (final algorithm in _easytierEncryptionAlgorithms)
-              DropdownMenuItem(
+              (
                 value: algorithm,
-                child: Text(
-                  algorithm.isEmpty ? appLocalizations.noneOption : algorithm,
-                ),
+                label: algorithm.isEmpty
+                    ? appLocalizations.noneOption
+                    : algorithm,
               ),
             if (!_easytierEncryptionAlgorithms.contains(
                   _encryptionAlgorithmController.text,
                 ) &&
                 _encryptionAlgorithmController.text.isNotEmpty)
-              DropdownMenuItem(
+              (
                 value: _encryptionAlgorithmController.text,
-                child: Text(_encryptionAlgorithmController.text),
+                label: _encryptionAlgorithmController.text,
               ),
           ],
           onChanged: (value) {
@@ -2005,11 +2028,9 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           value: _ipVersion,
           items: [
             for (final version in _easytierIpVersions)
-              DropdownMenuItem(
+              (
                 value: version,
-                child: Text(
-                  version.isEmpty ? appLocalizations.noneOption : version,
-                ),
+                label: version.isEmpty ? appLocalizations.noneOption : version,
               ),
           ],
           onChanged: (value) => setState(() => _ipVersion = value ?? ''),
@@ -2027,14 +2048,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             label: appLocalizations.cipher,
             value: _cipherController.text,
             items: [
-              for (final cipher in _ssCiphers)
-                DropdownMenuItem(value: cipher, child: Text(cipher)),
+              for (final cipher in _ssCiphers) (value: cipher, label: cipher),
               if (!_ssCiphers.contains(_cipherController.text) &&
                   _cipherController.text.isNotEmpty)
-                DropdownMenuItem(
-                  value: _cipherController.text,
-                  child: Text(_cipherController.text),
-                ),
+                (value: _cipherController.text, label: _cipherController.text),
             ],
             onChanged: (value) {
               if (value == null) return;
@@ -2079,14 +2096,8 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             label: appLocalizations.flow,
             value: _flow,
             items: [
-              DropdownMenuItem(
-                value: '',
-                child: Text(appLocalizations.noneOption),
-              ),
-              const DropdownMenuItem(
-                value: 'xtls-rprx-vision',
-                child: Text('xtls-rprx-vision'),
-              ),
+              (value: '', label: appLocalizations.noneOption),
+              (value: 'xtls-rprx-vision', label: 'xtls-rprx-vision'),
             ],
             onChanged: (value) => setState(() => _flow = value ?? ''),
           ),
@@ -2116,7 +2127,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           value: _sudokuAeadMethod,
           items: [
             for (final method in _sudokuAeadMethods)
-              DropdownMenuItem(value: method, child: Text(method)),
+              (value: method, label: method),
           ],
           onChanged: (value) {
             if (value == null) return;
@@ -2129,7 +2140,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           value: _sudokuTableType,
           items: [
             for (final tableType in _sudokuTableTypes)
-              DropdownMenuItem(value: tableType, child: Text(tableType)),
+              (value: tableType, label: tableType),
           ],
           onChanged: (value) {
             if (value == null) return;
@@ -2176,7 +2187,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           value: _sudokuMultiplex,
           items: [
             for (final mode in _sudokuMultiplexModes)
-              DropdownMenuItem(value: mode, child: Text(mode)),
+              (value: mode, label: mode),
           ],
           onChanged: (value) {
             if (value == null) return;
@@ -2195,7 +2206,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             value: _httpMaskMode,
             items: [
               for (final mode in _sudokuHttpMaskModes)
-                DropdownMenuItem(value: mode, child: Text(mode)),
+                (value: mode, label: mode),
             ],
             onChanged: (value) {
               if (value == null) return;
@@ -2285,10 +2296,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           _buildDropdown(
             label: appLocalizations.network,
             value: _network,
-            items: [
-              for (final n in _networks)
-                DropdownMenuItem(value: n, child: Text(n)),
-            ],
+            items: [for (final n in _networks) (value: n, label: n)],
             onChanged: (value) => setState(() => _network = value ?? 'tcp'),
           ),
           const SizedBox(height: 16),
@@ -2296,15 +2304,9 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             label: appLocalizations.security,
             value: _security,
             items: [
-              DropdownMenuItem(
-                value: 'none',
-                child: Text(appLocalizations.noneOption),
-              ),
-              DropdownMenuItem(value: 'tls', child: Text(appLocalizations.tls)),
-              DropdownMenuItem(
-                value: 'reality',
-                child: Text(appLocalizations.reality),
-              ),
+              (value: 'none', label: appLocalizations.noneOption),
+              (value: 'tls', label: appLocalizations.tls),
+              (value: 'reality', label: appLocalizations.reality),
             ],
             onChanged: (value) {
               setState(() {
@@ -2329,17 +2331,17 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               value: _clientFingerprintController.text,
               items: [
                 for (final fp in _clientFingerprints)
-                  DropdownMenuItem(
+                  (
                     value: fp,
-                    child: Text(fp.isEmpty ? appLocalizations.noneOption : fp),
+                    label: fp.isEmpty ? appLocalizations.noneOption : fp,
                   ),
                 if (!_clientFingerprints.contains(
                       _clientFingerprintController.text,
                     ) &&
                     _clientFingerprintController.text.isNotEmpty)
-                  DropdownMenuItem(
+                  (
                     value: _clientFingerprintController.text,
-                    child: Text(_clientFingerprintController.text),
+                    label: _clientFingerprintController.text,
                   ),
               ],
               onChanged: (value) {
@@ -2426,10 +2428,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             _buildDropdown(
               label: appLocalizations.httpMethod,
               value: _httpMethod,
-              items: [
-                for (final m in _httpMethods)
-                  DropdownMenuItem(value: m, child: Text(m)),
-              ],
+              items: [for (final m in _httpMethods) (value: m, label: m)],
               onChanged: (value) =>
                   setState(() => _httpMethod = value ?? 'GET'),
             ),
@@ -2455,16 +2454,16 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               value: _xhttpMode,
               items: [
                 for (final m in _xhttpModes)
-                  DropdownMenuItem(
+                  (
                     value: m,
-                    child: Text(m.isEmpty ? appLocalizations.noneOption : m),
+                    label: m.isEmpty ? appLocalizations.noneOption : m,
                   ),
               ],
               onChanged: (value) => setState(() => _xhttpMode = value ?? ''),
             ),
             const SizedBox(height: 8),
-            ExpansionTile(
-              title: Text(appLocalizations.xhttpAdvanced),
+            _CollapsibleSection(
+              title: appLocalizations.xhttpAdvanced,
               initiallyExpanded: _xhttpAdvancedExpanded,
               onExpansionChanged: (v) =>
                   setState(() => _xhttpAdvancedExpanded = v),
@@ -2496,10 +2495,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             value: _nowhereVersion,
             items: [
               for (final version in _nowhereVersions)
-                DropdownMenuItem(
-                  value: version,
-                  child: Text('Nowhere ${version.substring(2)}'),
-                ),
+                (value: version, label: 'Nowhere ${version.substring(2)}'),
             ],
             onChanged: (value) => setState(() {
               final version = value ?? 'nw3';
@@ -2518,8 +2514,8 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
               label: appLocalizations.network,
               value: _nowhereNet,
               items: const [
-                DropdownMenuItem(value: 'tcp', child: Text('TCP')),
-                DropdownMenuItem(value: 'udp', child: Text('UDP')),
+                (value: 'tcp', label: 'TCP'),
+                (value: 'udp', label: 'UDP'),
               ],
               onChanged: (value) =>
                   setState(() => _nowhereNet = value ?? 'tcp'),
@@ -2568,6 +2564,19 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             value: _morph,
             onChanged: (value) => setState(() => _morph = value),
           ),
+          if (_isNowhere3) ...[
+            const SizedBox(height: 16),
+            _buildDropdown(
+              label: appLocalizations.cipher,
+              value: _nowhereCipher,
+              items: const [
+                (value: 'chacha', label: 'ChaCha20 (chacha)'),
+                (value: 'aes', label: 'AES-128-CTR (aes)'),
+              ],
+              onChanged: (value) =>
+                  setState(() => _nowhereCipher = value ?? 'chacha'),
+            ),
+          ],
           if (!_isNowhere3 && _dedicatedTcpTcp) ...[
             const SizedBox(height: 16),
             _buildTextField(
@@ -2625,16 +2634,10 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     required String value,
     required ValueChanged<String?> onChanged,
   }) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
-      items: const [
-        DropdownMenuItem(value: 'tcp', child: Text('TCP')),
-        DropdownMenuItem(value: 'udp', child: Text('UDP')),
-      ],
+    return _buildDropdown(
+      label: label,
+      value: value,
+      items: const [(value: 'tcp', label: 'TCP'), (value: 'udp', label: 'UDP')],
       onChanged: onChanged,
     );
   }
@@ -2659,17 +2662,14 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           value: _clientFingerprintController.text,
           items: [
             for (final fp in _clientFingerprints)
-              DropdownMenuItem(
-                value: fp,
-                child: Text(fp.isEmpty ? appLocalizations.noneOption : fp),
-              ),
+              (value: fp, label: fp.isEmpty ? appLocalizations.noneOption : fp),
             if (!_clientFingerprints.contains(
                   _clientFingerprintController.text,
                 ) &&
                 _clientFingerprintController.text.isNotEmpty)
-              DropdownMenuItem(
+              (
                 value: _clientFingerprintController.text,
-                child: Text(_clientFingerprintController.text),
+                label: _clientFingerprintController.text,
               ),
           ],
           onChanged: (value) {
@@ -2753,12 +2753,9 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             label: appLocalizations.packetEncoding,
             value: _packetEncoding,
             items: [
-              DropdownMenuItem(
-                value: '',
-                child: Text(appLocalizations.noneOption),
-              ),
-              const DropdownMenuItem(value: 'packet', child: Text('packet')),
-              const DropdownMenuItem(value: 'xudp', child: Text('xudp')),
+              (value: '', label: appLocalizations.noneOption),
+              (value: 'packet', label: 'packet'),
+              (value: 'xudp', label: 'xudp'),
             ],
             onChanged: (value) => setState(() => _packetEncoding = value ?? ''),
           ),
@@ -2853,7 +2850,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     final isManualEditable =
         widget.proxy == null || _manualProxyTypeSet.contains(_type);
     if (!isManualEditable) {
-      return CommonScaffold(
+      return Scaffold(
         title: appLocalizations.editLocalProxy,
         body: AppBarClearance(
           child: Center(
@@ -2877,7 +2874,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         ),
       );
     }
-    return CommonScaffold(
+    return Scaffold(
       title: widget.proxy == null
           ? appLocalizations.addLocalProxy
           : appLocalizations.editLocalProxy,
@@ -2895,10 +2892,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
           children: [
             Align(
               alignment: Alignment.centerLeft,
-              child: Chip(
-                avatar: const GlyphIcon(AppGlyphs.lock, size: 18),
-                label: Text(_protocolLabel()),
-              ),
+              child: Chip(label: _protocolLabel()),
             ),
             const SizedBox(height: 16),
             _buildCommonFields(),
@@ -2931,46 +2925,22 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
                 const SizedBox(height: 12),
                 _buildTlsFields(),
                 const SizedBox(height: 8),
-                ExpansionTile(
-                  initiallyExpanded: false,
-                  tilePadding: EdgeInsets.zero,
-                  title: Text(
-                    appLocalizations.ech,
-                    style: AppTextStyle.subheadline.of(
-                      context,
-                      emphasized: true,
-                    ),
-                  ),
+                _CollapsibleSection(
+                  title: appLocalizations.ech,
                   children: [_buildEchFields(), const SizedBox(height: 8)],
                 ),
               ],
               if (_type == 'nowhere') ...[
                 const SizedBox(height: 24),
-                ExpansionTile(
-                  initiallyExpanded: false,
-                  tilePadding: EdgeInsets.zero,
-                  title: Text(
-                    appLocalizations.tls,
-                    style: AppTextStyle.subheadline.of(
-                      context,
-                      emphasized: true,
-                    ),
-                  ),
+                _CollapsibleSection(
+                  title: appLocalizations.tls,
                   children: [
                     const SizedBox(height: 12),
                     _buildTlsFields(),
                     if (!_isNowhere3) ...[
                       const SizedBox(height: 8),
-                      ExpansionTile(
-                        initiallyExpanded: false,
-                        tilePadding: EdgeInsets.zero,
-                        title: Text(
-                          appLocalizations.ech,
-                          style: AppTextStyle.subheadline.of(
-                            context,
-                            emphasized: true,
-                          ),
-                        ),
+                      _CollapsibleSection(
+                        title: appLocalizations.ech,
                         children: [
                           _buildEchFields(),
                           const SizedBox(height: 8),
@@ -2992,19 +2962,61 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             ],
             if (_type != 'ssh') ...[
               const SizedBox(height: 8),
-              ExpansionTile(
-                initiallyExpanded: false,
-                tilePadding: EdgeInsets.zero,
-                title: Text(
-                  appLocalizations.advancedSettings,
-                  style: AppTextStyle.subheadline.of(context, emphasized: true),
-                ),
+              _CollapsibleSection(
+                title: appLocalizations.advancedSettings,
                 children: [_buildAdvancedFields(), const SizedBox(height: 8)],
               ),
             ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CollapsibleSection extends StatefulWidget {
+  final String title;
+  final bool initiallyExpanded;
+  final ValueChanged<bool>? onExpansionChanged;
+  final List<Widget> children;
+
+  const _CollapsibleSection({
+    required this.title,
+    this.initiallyExpanded = false,
+    this.onExpansionChanged,
+    required this.children,
+  });
+
+  @override
+  State<_CollapsibleSection> createState() => _CollapsibleSectionState();
+}
+
+class _CollapsibleSectionState extends State<_CollapsibleSection> {
+  late bool _expanded = widget.initiallyExpanded;
+
+  void _toggle() {
+    setState(() => _expanded = !_expanded);
+    widget.onExpansionChanged?.call(_expanded);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListItem(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          title: Text(
+            widget.title,
+            style: AppTextStyle.subheadline.of(context, emphasized: true),
+          ),
+          trailing: GlyphIcon(
+            _expanded ? AppGlyphs.chevronUp : AppGlyphs.chevronDown,
+          ),
+          onTap: _toggle,
+        ),
+        if (_expanded) ...widget.children,
+      ],
     );
   }
 }

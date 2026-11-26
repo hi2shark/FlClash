@@ -1,9 +1,15 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart' as fl;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
+import 'package:yaml/yaml.dart';
+
+import '../helpers/app_paths.dart';
 
 /// `proxy_groups`, no `icon_records`, and a `rules` table that still stores the
 /// whole rule in one `value` column.
@@ -84,15 +90,23 @@ void _downgradeToV7(Database raw) {
   raw.execute('PRAGMA user_version = 7');
 }
 
-/// Schema version 20 had neither `unlock_test_runs` nor `ip_qualities`.
+/// Schema version 21 had no `mitm_modules`.
+void _downgradeToV21(Database raw) {
+  raw.execute('DROP TABLE IF EXISTS mitm_modules');
+  raw.execute('PRAGMA user_version = 21');
+}
+
+/// Schema version 20 had neither `mitm_modules`, `unlock_test_runs`, nor `ip_qualities`.
 void _downgradeToV20(Database raw) {
+  _downgradeToV21(raw);
   raw.execute('DROP TABLE IF EXISTS unlock_test_runs');
   raw.execute('DROP TABLE IF EXISTS ip_qualities');
   raw.execute('PRAGMA user_version = 20');
 }
 
-/// Schema version 21 shipped the `unlock_test_runs` table, which 22 dropped.
-void _downgradeToV21(Database raw) {
+/// Fork schema version 21 shipped `unlock_test_runs` without `mitm_modules`.
+void _downgradeToForkV21(Database raw) {
+  _downgradeToV21(raw);
   raw.execute(
     'CREATE TABLE IF NOT EXISTS unlock_test_runs ('
     'run_id TEXT NOT NULL, '
@@ -286,6 +300,9 @@ void main() {
   late int currentSchemaVersion;
 
   setUp(() async {
+    final home = await Directory.systemTemp.createTemp('migration');
+    addTearDown(() => home.delete(recursive: true));
+    await useAppPaths(home);
     raw = sqlite3.openInMemory();
     final seed = fl.Database(
       NativeDatabase.opened(raw, closeUnderlyingOnClose: false),
@@ -561,6 +578,11 @@ void main() {
   test('the v17 upgrade renames overwrite_type and adds overrides', () async {
     _downgradeToV10(raw);
     _insertV10Profile(raw, 1, overwriteType: 'script');
+    raw.execute(
+      'INSERT INTO scripts (id, label, last_update_time) '
+      "VALUES (5, 'Script', 0)",
+    );
+    raw.execute('UPDATE profiles SET script_id = 5');
 
     final database = await openAndMigrate();
 
@@ -571,10 +593,58 @@ void main() {
         isNot(contains('overwrite_type')),
       ),
     );
-    expect(
-      (await database.profilesDao.query().get()).single.extendType,
-      ExtendType.script,
+    expect((await database.profilesDao.query().get()).single.scriptId, 5);
+  });
+
+  test('the v24 upgrade keeps each profile on the rules it applied', () async {
+    raw.execute(
+      'INSERT INTO scripts (id, label, last_update_time) '
+      "VALUES (5, 'Script', 0)",
     );
+    raw.execute(
+      'INSERT INTO profiles (id, type, label, url, extend_type, script_id, '
+      'auto_update_duration_millis, auto_update, selected_map, unfold_set) '
+      "VALUES (1, 'url', 'Script', '', 'script', 5, 0, 1, '{}', '[]'), "
+      "(2, 'url', 'Standard', '', 'standard', 5, 0, 1, '{}', '[]'), "
+      "(3, 'url', 'Gone', '', 'script', 9, 0, 1, '{}', '[]')",
+    );
+    raw.execute(
+      'INSERT INTO rules (id, profile_id, rule_action, content, rule_target) '
+      "VALUES (10, NULL, 'DOMAIN', 'global.com', 'DIRECT'), "
+      "(11, NULL, 'DOMAIN', 'other.com', 'DIRECT'), "
+      "(20, 1, 'DOMAIN', 'own.com', 'REJECT')",
+    );
+    raw.execute(
+      'INSERT INTO disabled_rules (profile_id, rule_id) VALUES (1, 11)',
+    );
+    raw.execute('PRAGMA user_version = 23');
+
+    final database = await openAndMigrate();
+
+    expect(_userVersion(raw), 26);
+    expect(
+      {
+        for (final profile in await database.profilesDao.query().get())
+          profile.id: profile.scriptId,
+      },
+      {1: 5, 2: null, 3: null},
+    );
+    expect(
+      {
+        for (final row in raw.select('SELECT id, extend_type FROM profiles'))
+          row['id']: row['extend_type'],
+      },
+      {1: 'script', 2: 'standard', 3: 'standard'},
+    );
+    expect(
+      (await database.rulesDao.queryAddedRules(1).get()).map((rule) => rule.id),
+      [20],
+    );
+    expect(
+      (await database.rulesDao.queryAddedRules(2).get()).map((rule) => rule.id),
+      [10, 11],
+    );
+    expect(await database.rulesDao.queryAddedRules(3).get(), isEmpty);
   });
 
   test('the v17 upgrade keeps only the app-level custom proxies', () async {
@@ -679,8 +749,8 @@ void main() {
 
     expect(await database.rulesDao.queryAddedRules(2).get(), isEmpty);
     expect(
-      (await database.profilesDao.query().get()).single.matchTarget,
-      isNull,
+      (await database.profilesDao.query().get()).single.exitTargets,
+      isEmpty,
     );
     expect(raw.select('SELECT id FROM rules').map((row) => row['id']), [10]);
   });
@@ -918,7 +988,7 @@ void main() {
   });
 
   test('the v22 upgrade drops the unlock_test_runs table', () async {
-    _downgradeToV21(raw);
+    _downgradeToForkV21(raw);
     raw.execute(
       '''INSERT INTO unlock_test_runs (run_id, created_at, duration_ms, 
       route_mode, proxy_name, catalog_version, results_json) 
@@ -929,9 +999,25 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'unlock_test_runs'), isFalse);
+    expect(_hasTable(raw, 'mitm_modules'), isTrue);
     expect(_userVersion(raw), currentSchemaVersion);
     expect(await database.profilesDao.query().get(), isEmpty);
   });
+
+  test(
+    'a fork v23 database without mitm_modules migrates cleanly to v26',
+    () async {
+      raw.execute('DROP TABLE IF EXISTS mitm_modules');
+      raw.execute('PRAGMA user_version = 23');
+      expect(_hasTable(raw, 'mitm_modules'), isFalse);
+
+      final database = await openAndMigrate();
+
+      expect(_hasTable(raw, 'mitm_modules'), isTrue);
+      expect(_userVersion(raw), currentSchemaVersion);
+      expect(await database.mitmModulesDao.query().get(), isEmpty);
+    },
+  );
 
   test(
     'the v22 upgrade is a no-op without the unlock_test_runs table',
@@ -956,6 +1042,161 @@ void main() {
     expect(_hasTable(raw, 'ip_qualities'), isTrue);
     expect(_userVersion(raw), currentSchemaVersion);
     expect(await database.ipQualities.count.getSingle(), 0);
+  });
+
+  test('the v22 upgrade creates mitm_modules', () async {
+    _downgradeToV21(raw);
+    expect(_hasTable(raw, 'mitm_modules'), isFalse);
+
+    final database = await openAndMigrate();
+
+    expect(_hasTable(raw, 'mitm_modules'), isTrue);
+    expect(_userVersion(raw), 26);
+    expect(await database.mitmModulesDao.query().get(), isEmpty);
+  });
+
+  test('the v23 upgrade drops the per-module update interval', () async {
+    _downgradeToV21(raw);
+    raw.execute(
+      'CREATE TABLE mitm_modules (id INTEGER NOT NULL PRIMARY KEY, '
+      'name TEXT NOT NULL, description TEXT NOT NULL DEFAULT \'\', url TEXT, '
+      'enabled INTEGER NOT NULL DEFAULT 1, "order" INTEGER, '
+      'arguments TEXT NOT NULL DEFAULT \'{}\', '
+      'resources TEXT NOT NULL DEFAULT \'{}\', system TEXT, '
+      'scripts INTEGER NOT NULL DEFAULT 0, '
+      'last_update_time INTEGER NOT NULL, '
+      'update_interval_minutes INTEGER NOT NULL DEFAULT 1440)',
+    );
+    raw.execute(
+      "INSERT INTO mitm_modules (id, name, last_update_time) VALUES (1, 'M', 0)",
+    );
+    raw.execute('PRAGMA user_version = 22');
+
+    final database = await openAndMigrate();
+
+    final modules = await database.mitmModulesDao.query().get();
+    expect(modules.single.name, 'M');
+    final columns = raw.select('PRAGMA table_info(mitm_modules)');
+    expect(
+      columns.map((row) => row['name']),
+      isNot(contains('update_interval_minutes')),
+    );
+  });
+
+  test('the v26 upgrade records what each module asks and whether the user '
+      'agreed to it', () async {
+    final modules = await Directory(
+      await appPath.mitmModulesDirPath,
+    ).create(recursive: true);
+    const plain = '[URL Rewrite]\n^https://a - reject\n';
+    const network = '[General]\ndns-server = 223.5.5.5\n';
+    for (final (id, text) in [
+      (1, plain),
+      (2, plain),
+      (3, network),
+      (4, plain),
+    ]) {
+      await File('${modules.path}/$id.txt').writeAsString(text);
+    }
+    await File('${modules.path}/6.txt').writeAsBytes([0xff, 0xfe, 0xfd]);
+    raw.execute('ALTER TABLE mitm_modules DROP COLUMN accepted');
+    raw.execute('ALTER TABLE mitm_modules DROP COLUMN asks_consent');
+    raw.execute(
+      'INSERT INTO mitm_modules (id, name, enabled, scripts, last_update_time) '
+      "VALUES (1, 'Scripts', 1, 2, 0), (2, 'Plain', 1, 0, 0), "
+      "(3, 'Network', 1, 0, 0), (4, 'Off', 0, 1, 0), "
+      "(5, 'Missing', 1, 0, 0), (6, 'Broken', 0, 0, 0)",
+    );
+    raw.execute('PRAGMA user_version = 25');
+
+    final database = await openAndMigrate();
+
+    expect(_userVersion(raw), 26);
+    expect(
+      {
+        for (final module in await database.mitmModulesDao.query().get())
+          module.name: (module.asksConsent, module.accepted),
+      },
+      {
+        'Scripts': (false, true),
+        'Plain': (false, null),
+        'Network': (true, true),
+        'Off': (false, false),
+        'Missing': (true, null),
+        'Broken': (true, false),
+      },
+    );
+  });
+
+  test('the v25 upgrade turns the MATCH placeholder into a custom exit '
+      'that builds the same rules', () async {
+    raw.execute('ALTER TABLE rules DROP COLUMN custom_exit');
+    raw.execute('ALTER TABLE profiles DROP COLUMN exit_targets');
+    raw.execute(
+      'INSERT INTO profiles (id, type, label, url, extend_type, '
+      'auto_update_duration_millis, auto_update, selected_map, unfold_set, '
+      'match_target) VALUES '
+      "(1, 'url', 'Sub', 'https://example.com/sub', 'standard', 0, 0, "
+      "'{}', '[]', ' HK '), "
+      "(2, 'file', 'File', '', 'standard', 0, 0, '{}', '[]', NULL), "
+      "(3, 'custom', 'Mine', '', 'standard', 0, 0, '{}', '[]', 'X')",
+    );
+    raw.execute(
+      'INSERT INTO rules (id, profile_id, rule_action, content, rule_target) '
+      "VALUES (10, NULL, 'DOMAIN', 'a.example', 'MATCH'), "
+      "(11, 1, 'DOMAIN', 'b.example', 'DIRECT'), "
+      "(12, 3, 'DOMAIN', 'c.example', 'MATCH')",
+    );
+    raw.execute('PRAGMA user_version = 24');
+
+    final database = await openAndMigrate();
+
+    expect(_userVersion(raw), 26);
+    final profiles = {
+      for (final profile in await database.profilesDao.query().get())
+        profile.id: profile.exitTargets,
+    };
+    expect(profiles, {
+      1: {'MATCH': 'HK'},
+      2: isEmpty,
+      3: isEmpty,
+    });
+    expect(
+      raw
+          .select('SELECT match_target FROM profiles')
+          .map((row) => row['match_target']),
+      everyElement(isNull),
+    );
+    final rules = {
+      for (final row in raw.select('SELECT id, custom_exit FROM rules'))
+        row['id']: row['custom_exit'],
+    };
+    expect(rules, {10: 1, 11: 0, 12: 0});
+
+    final real = await makeRealProfileTask(
+      MakeRealProfileState(
+        profilesPath: '/profiles',
+        profileId: 1,
+        rawConfig: {
+          'proxies': [
+            {'name': 'HK', 'type': 'ss'},
+          ],
+          'rules': ['MATCH,DIRECT'],
+        },
+        realPatchConfig: const PatchClashConfig(),
+        appendSystemDns: false,
+        proxyGroups: const [],
+        rules: const [],
+        addedRules: await database.rulesDao.queryAddedRules(1).get(),
+        defaultUA: 'FlClash-Test',
+        exitTargets: profiles[1]!,
+      ),
+    );
+    expect((loadYaml(real.yaml) as YamlMap)['rules'], [
+      'DOMAIN,b.example,DIRECT',
+      'DOMAIN,a.example,HK',
+      'MATCH,DIRECT',
+    ]);
   });
 
   test(

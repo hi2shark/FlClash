@@ -8,7 +8,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/custom/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -353,7 +353,9 @@ void main() {
     await tester.tap(
       find.descendant(
         of: picker,
-        matching: find.textContaining('${l.filters} ('),
+        matching: find.textContaining(
+          RegExp('^${RegExp.escape(l.filters)} \\d+\$'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -403,7 +405,6 @@ void main() {
 
     await tester.tap(find.text('cn'));
     await tester.pumpAndSettle();
-    expect(find.byType(Dialog), findsNothing);
     expect(find.byType(TextFormField), findsNothing);
   });
 

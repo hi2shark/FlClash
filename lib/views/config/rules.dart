@@ -4,7 +4,7 @@ import 'package:fl_clash/models/clash_config.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AddedRulesView extends ConsumerStatefulWidget {
@@ -32,9 +32,10 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
   }
 
   Future<void> _handleAddOrUpdate([Rule? rule]) async {
+    final exits = customExitsOf(ref.read(globalRulesProvider).value ?? []);
     final res = await showFormSheet<Rule>(
       context: context,
-      builder: (_) => RuleForm(rule: rule),
+      builder: (_) => RuleForm(rule: rule, exits: exits),
     );
     if (res == null || !mounted) {
       return;
@@ -43,8 +44,8 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
   }
 
   void _handleQuickActions() {
-    showSheet<void>(
-      context: context,
+    showNestedSheet<void>(
+      context,
       builder: (_) => RulePresetSheet(
         onAdd: (rules) => ref.read(globalRulesProvider.notifier).putAll(rules),
       ),
@@ -111,14 +112,14 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
         tooltip: appLocalizations.selectAll,
       ),
     ];
-    return CommonPopScope(
+    return PopGuard(
       onPop: isSelecting
           ? (_) {
               ref.read(itemsProvider(_key).notifier).value = {};
               return false;
             }
           : null,
-      child: CommonScaffold(
+      child: Scaffold(
         title: appLocalizations.addedRules,
         searchState: AppBarSearchState(onSearch: _handleSearch),
         actions: [
@@ -148,21 +149,20 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
           ),
           child: Builder(
             builder: (context) => isSearching
-                ? ListView.builder(
+                ? PrismListView(
                     padding: _listPadding(context),
                     itemBuilder: (_, index) =>
                         _buildRuleItem(rules, index, selectedRules),
                     itemExtent: ruleItemHeight,
                     itemCount: rules.length,
                   )
-                : ReorderableList(
+                : PrismReorderableListView(
                     padding: _listPadding(context),
-                    itemBuilder: (_, index) =>
-                        ReorderableDelayedDragStartListener(
-                          key: ObjectKey(rules[index]),
-                          index: index,
-                          child: _buildRuleItem(rules, index, selectedRules),
-                        ),
+                    itemBuilder: (_, index) => ReorderDragStartListener(
+                      key: ObjectKey(rules[index]),
+                      index: index,
+                      child: _buildRuleItem(rules, index, selectedRules),
+                    ),
                     proxyDecorator: (child, index, animation) =>
                         commonProxyDecorator(
                           _buildRuleItem(rules, index, selectedRules),
@@ -194,7 +194,6 @@ class _AddedRulesViewState extends ConsumerState<AddedRulesView> {
       key: ObjectKey(rule),
       position: ItemPosition.get(index, rules.length),
       child: RuleItem(
-        hasMatch: true,
         isEditing: selected.isNotEmpty,
         rule: rule,
         isSelected: selected.contains(rule.id),

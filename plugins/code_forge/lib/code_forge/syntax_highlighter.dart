@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:re_highlight/re_highlight.dart';
 
 /// Highlights each line on its own, so a line's spans follow from its text
@@ -14,7 +14,8 @@ class SyntaxHighlighter {
       lineText.length > maxHighlightedLineLength;
 
   static const _maxCachedLines = 8000;
-  static const _maxInlineBatchChars = 2000;
+  static const _maxInlineBatchLines = 2;
+  static const _maxInlineBatchChars = 256;
 
   final Mode language;
   final Map<String, TextStyle> editorTheme;
@@ -25,6 +26,7 @@ class SyntaxHighlighter {
     _resolveTheme(editorTheme),
     baseTextStyle,
   );
+  var _highlightsInline = false;
   Future<void>? _pending;
 
   SyntaxHighlighter({
@@ -39,6 +41,7 @@ class SyntaxHighlighter {
   TextSpan? lineSpan(String lineText) {
     if (isPlain(lineText)) return null;
     if (_spans.containsKey(lineText)) return _spans[lineText];
+    _highlightsInline = true;
     return _remember(lineText, _grammar.highlight(lineText));
   }
 
@@ -133,7 +136,8 @@ class SyntaxHighlighter {
     String? fontFamily,
   ) {
     return ui.TextStyle(
-      color: style?.color ?? editorTheme['root']?.color ?? Colors.black,
+      color:
+          style?.color ?? editorTheme['root']?.color ?? const Color(0xFF000000),
       fontSize: fontSize,
       fontFamily: fontFamily,
       fontFamilyFallback: baseTextStyle?.fontFamilyFallback,
@@ -146,7 +150,10 @@ class SyntaxHighlighter {
     final baseStyle = baseTextStyle ?? editorTheme['root'];
 
     return ui.TextStyle(
-      color: baseStyle?.color ?? editorTheme['root']?.color ?? Colors.black,
+      color:
+          baseStyle?.color ??
+          editorTheme['root']?.color ??
+          const Color(0xFF000000),
       fontSize: fontSize,
       fontFamily: fontFamily,
       fontFamilyFallback: baseTextStyle?.fontFamilyFallback,
@@ -172,8 +179,13 @@ class SyntaxHighlighter {
       for (final line in lines)
         if (getLineText(line) case final text when !hasLineSpan(text)) text,
     }.toList();
+    if (pending.isEmpty) {
+      return;
+    }
     final chars = pending.fold(0, (sum, text) => sum + text.length);
-    if (chars < _maxInlineBatchChars) {
+    if (_highlightsInline &&
+        pending.length <= _maxInlineBatchLines &&
+        chars < _maxInlineBatchChars) {
       for (final text in pending) {
         lineSpan(text);
       }
@@ -183,6 +195,8 @@ class SyntaxHighlighter {
     for (final (index, text) in pending.indexed) {
       _remember(text, spans[index]);
     }
+    // Only the opening batch keeps building the grammar off this isolate.
+    _highlightsInline = true;
   }
 
   void dispose() => _spans.clear();

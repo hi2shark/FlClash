@@ -2,8 +2,8 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 
 import '../helpers/glyph_finders.dart';
 import '../helpers/test_app.dart';
@@ -15,8 +15,17 @@ const _desktop = Size(1200, 900);
 
 final _views = {'a mobile view': _mobile, 'a desktop view': _desktop};
 
-Finder _container(Finder button) =>
-    find.descendant(of: button, matching: find.byType(Material)).first;
+Finder _container(Finder button) => find
+    .descendant(
+      of: find.descendant(of: button, matching: find.byType(CardSurface)).first,
+      matching: find.byType(Focus),
+    )
+    .first;
+
+final _back = find.ancestor(
+  of: find.byTooltip('Back'),
+  matching: find.byType(IconButton),
+);
 
 final _markPainter = find.descendant(
   of: find.descendant(
@@ -67,8 +76,8 @@ Future<Rect> _pumpBar(
       overrides: [viewSizeProvider.overrideWithBuild((_, _) => view)],
       homeBuilder: (page) => Navigator(
         onGenerateInitialRoutes: (_, _) => [
-          MaterialPageRoute<void>(builder: (_) => const SizedBox()),
-          MaterialPageRoute<void>(builder: (_) => page),
+          HostPageRoute<void>(builder: (_) => const SizedBox()),
+          HostPageRoute<void>(builder: (_) => page),
         ],
       ),
       child: Theme(
@@ -81,9 +90,14 @@ Future<Rect> _pumpBar(
   return tester.getRect(find.byType(NavigationToolbar).first);
 }
 
+double _insetOf(WidgetTester tester, bool compact) => appBarActionInset(
+  tester.element(find.byType(NavigationToolbar).first),
+  compact,
+);
+
 void main() {
   for (final view in _views.entries) {
-    final inset = appBarActionInset(view.value == _mobile);
+    final compact = view.value == _mobile;
 
     for (final platform in [TargetPlatform.android, TargetPlatform.macOS]) {
       testWidgets(
@@ -93,7 +107,7 @@ void main() {
             tester,
             view: view.value,
             platform: platform,
-            child: const CommonScaffold(
+            child: const Scaffold(
               title: 'Title',
               actions: [
                 IconButton(onPressed: _noop, icon: GlyphIcon(AppGlyphs.sync)),
@@ -101,13 +115,13 @@ void main() {
               body: SizedBox(),
             ),
           );
-          final leading = tester.getRect(_container(find.byType(BackButton)));
+          final leading = tester.getRect(_container(_back));
           final action = tester.getRect(
             _container(find.widgetWithGlyph(IconButton, AppGlyphs.sync)),
           );
 
-          expect(leading.left, inset);
-          expect(bar.right - action.right, inset);
+          expect(leading.left, _insetOf(tester, compact));
+          expect(bar.right - action.right, _insetOf(tester, compact));
         },
       );
 
@@ -121,7 +135,7 @@ void main() {
             platform: platform,
             child: const SheetProvider(
               type: SheetType.page,
-              child: CommonScaffold(
+              child: Scaffold(
                 title: 'Providers',
                 actions: [
                   AppBarActionButton(
@@ -135,13 +149,13 @@ void main() {
               ),
             ),
           );
-          final leading = tester.getRect(_container(find.byType(BackButton)));
+          final leading = tester.getRect(_container(_back));
           final action = tester.getRect(
             _container(find.widgetWithGlyph(IconButton, AppGlyphs.sync)),
           );
 
-          expect(leading.left, inset);
-          expect(bar.right - action.right, inset);
+          expect(leading.left, _insetOf(tester, compact));
+          expect(bar.right - action.right, _insetOf(tester, compact));
         },
       );
     }
@@ -153,19 +167,19 @@ void main() {
           tester,
           view: view.value,
           platform: TargetPlatform.android,
-          child: const CommonScaffold(
+          child: const Scaffold(
             title: 'Title',
-            actions: [FilledButton.tonal(onPressed: _noop, child: Text('Add'))],
+            actions: [FilledButton(onPressed: _noop, child: Text('Add'))],
             body: SizedBox(),
           ),
         );
-        final leading = tester.getRect(_container(find.byType(BackButton)));
+        final leading = tester.getRect(_container(_back));
         final action = tester.getRect(find.byType(FilledButton));
 
         expect(leading.width, leading.height);
         expect(action.height, leading.height);
         expect(action.width, greaterThan(action.height));
-        expect(bar.right - action.right, inset);
+        expect(bar.right - action.right, _insetOf(tester, compact));
       },
     );
   }
@@ -175,7 +189,7 @@ void main() {
       tester,
       view: _desktop,
       platform: TargetPlatform.android,
-      child: const CommonScaffold(
+      child: const Scaffold(
         title: 'Title',
         iconActions: [
           IconButtonData(glyph: AppGlyphs.sync, onPressed: _noop),
@@ -185,7 +199,7 @@ void main() {
       ),
     );
     final group = find.byType(TonalButtonGroup);
-    final leading = tester.getRect(_container(find.byType(BackButton)));
+    final leading = tester.getRect(_container(_back));
 
     expect(group, findsOneWidget);
     expect(
@@ -197,7 +211,7 @@ void main() {
       findsOneWidget,
     );
     expect(tester.getSize(group).height, leading.height);
-    expect(bar.right - tester.getRect(group).right, appBarActionInset(false));
+    expect(bar.right - tester.getRect(group).right, _insetOf(tester, false));
   });
 
   testWidgets('on glass a group is one pane, and a lone button its own', (
@@ -209,7 +223,7 @@ void main() {
       platform: TargetPlatform.android,
       child: const LiquidGlassScope(
         enabled: true,
-        child: CommonScaffold(
+        child: Scaffold(
           title: 'Title',
           iconActions: [
             IconButtonData(glyph: AppGlyphs.sync, onPressed: _noop),
@@ -220,19 +234,14 @@ void main() {
       ),
     );
 
-    for (final button in [
-      find.byType(TonalButtonGroup),
-      find.byType(BackButton),
-    ]) {
+    for (final button in [find.byType(TonalButtonGroup), _back]) {
       expect(
         find.descendant(of: button, matching: find.byType(LiquidGlass)),
         findsOneWidget,
       );
     }
 
-    final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(BackButton)),
-    );
+    final gesture = await tester.startGesture(tester.getCenter(_back));
     await tester.pumpAndSettle();
     await gesture.up();
     await tester.pumpAndSettle();
@@ -245,7 +254,7 @@ void main() {
       tester,
       view: _desktop,
       platform: TargetPlatform.android,
-      child: const CommonScaffold(
+      child: const Scaffold(
         title: 'Title',
         iconActions: [
           IconButtonData(glyph: AppGlyphs.sync, onPressed: _noop),
@@ -294,7 +303,7 @@ void main() {
     await tester.pumpWidget(
       TestApp(
         wrapInProviderScope: true,
-        child: CommonScaffold(
+        child: Scaffold(
           title: 'Title',
           searchState: AppBarSearchState(onSearch: (_) {}),
           iconActions: const [
@@ -337,7 +346,7 @@ void main() {
       tester,
       view: _desktop,
       platform: TargetPlatform.android,
-      child: const CommonScaffold(
+      child: const Scaffold(
         title: 'Title',
         actions: [
           IconButton(onPressed: _noop, icon: GlyphIcon(AppGlyphs.sync)),
@@ -350,7 +359,7 @@ void main() {
     final second = find.widgetWithGlyph(IconButton, AppGlyphs.sort);
 
     expect(find.byType(TonalButtonGroup), findsNothing);
-    for (final button in [first, second, find.byType(BackButton)]) {
+    for (final button in [first, second, _back]) {
       expect(
         find.ancestor(of: button, matching: find.byType(ElasticPress)),
         findsOneWidget,
@@ -374,7 +383,7 @@ void main() {
         platform: TargetPlatform.android,
         child: SheetProvider(
           type: type,
-          child: const CommonScaffold(
+          child: const Scaffold(
             title: 'Title',
             actions: [
               IconButton(onPressed: _noop, icon: GlyphIcon(AppGlyphs.sync)),
@@ -405,7 +414,7 @@ void main() {
     ('a phone bottom sheet', _mobile, SheetType.bottomSheet, true),
   ]) {
     testWidgets('$name keeps to its width class', (tester) async {
-      const scaffold = CommonScaffold(
+      const scaffold = Scaffold(
         title: 'Title',
         actions: [
           IconButton(onPressed: _noop, icon: GlyphIcon(AppGlyphs.sync)),
@@ -432,21 +441,21 @@ void main() {
       } else {
         expect(title.center.dx, lessThan(bar.center.dx));
       }
-      expect(bar.right - action.right, appBarActionInset(compact));
+      expect(bar.right - action.right, _insetOf(tester, compact));
     });
   }
 
   for (final (name, scaffold) in [
     (
       'nothing',
-      const CommonScaffold(
+      const Scaffold(
         title: 'Title',
         body: SizedBox(width: double.infinity, height: 200),
       ),
     ),
     (
       'a primary action',
-      const CommonScaffold(
+      const Scaffold(
         title: 'Title',
         primaryAction: IconButtonData(
           glyph: AppGlyphs.sync,
@@ -458,7 +467,7 @@ void main() {
     ),
     (
       'icon actions',
-      const CommonScaffold(
+      const Scaffold(
         title: 'Title',
         iconActions: [
           IconButtonData(glyph: AppGlyphs.sync, onPressed: _noop, tooltip: 'A'),
@@ -499,25 +508,25 @@ void main() {
       'a phone page',
       _mobile,
       true,
-      const CommonScaffold(title: 'Title', body: SizedBox()),
+      const Scaffold(title: 'Title', body: SizedBox()),
     ),
     (
       'a phone page with a title widget',
       _mobile,
       true,
-      const CommonScaffold(titleWidget: Text('Title'), body: SizedBox()),
+      const Scaffold(titleWidget: Text('Title'), body: SizedBox()),
     ),
     (
       'a desktop page with a title widget',
       _desktop,
       false,
-      const CommonScaffold(titleWidget: Text('Title'), body: SizedBox()),
+      const Scaffold(titleWidget: Text('Title'), body: SizedBox()),
     ),
     (
       'a desktop page',
       _desktop,
       false,
-      const CommonScaffold(title: 'Title', body: SizedBox()),
+      const Scaffold(title: 'Title', body: SizedBox()),
     ),
   ]) {
     testWidgets('$name sets its title a margin past the back button', (
@@ -529,12 +538,12 @@ void main() {
         platform: TargetPlatform.android,
         child: scaffold,
       );
-      final back = tester.getRect(_container(find.byType(BackButton)));
+      final back = tester.getRect(_container(_back));
       final title = tester.getRect(
         find.descendant(of: find.byType(AppBar), matching: find.text('Title')),
       );
 
-      expect(title.left - back.right, appBarActionInset(compact));
+      expect(title.left - back.right, _insetOf(tester, compact));
     });
   }
 
@@ -550,7 +559,7 @@ void main() {
         tester,
         view: view,
         platform: TargetPlatform.android,
-        child: CommonScaffold(
+        child: Scaffold(
           title: title,
           actions: const [
             IconButton(onPressed: _noop, icon: GlyphIcon(AppGlyphs.sync)),
@@ -559,13 +568,13 @@ void main() {
         ),
       );
       final rect = tester.getRect(find.text(title));
-      final back = tester.getRect(_container(find.byType(BackButton)));
+      final back = tester.getRect(_container(_back));
       final action = tester.getRect(
         _container(find.widgetWithGlyph(IconButton, AppGlyphs.sync)),
       );
 
-      expect(rect.left - back.right, appBarActionInset(compact));
-      expect(action.left - rect.right, appBarActionInset(compact));
+      expect(rect.left - back.right, _insetOf(tester, compact));
+      expect(action.left - rect.right, _insetOf(tester, compact));
     });
   }
 
@@ -579,7 +588,7 @@ void main() {
     await tester.pumpWidget(
       TestApp(
         overrides: [viewSizeProvider.overrideWithBuild((_, _) => _mobile)],
-        child: const CommonScaffold(title: 'Title', body: SizedBox()),
+        child: const Scaffold(title: 'Title', body: SizedBox()),
       ),
     );
     await tester.pumpAndSettle();
@@ -600,7 +609,7 @@ void main() {
     await tester.pumpWidget(
       TestApp(
         overrides: [viewSizeProvider.overrideWithBuild((_, _) => _mobile)],
-        child: CommonScaffold(
+        child: Scaffold(
           title: 'Title',
           searchState: AppBarSearchState(onSearch: (_) {}),
           body: const SizedBox(),
@@ -619,11 +628,11 @@ void main() {
     );
 
     expect(find.text('Title'), findsNothing);
-    expect(field.left, appBarActionInset(true));
+    expect(field.left, _insetOf(tester, true));
     expect(field.height, TonalButtonSize.bar.button);
     expect(field.center.dy, button.center.dy);
     expect(cancel.left - field.right, 12);
-    expect(cancel.right, _mobile.width - appBarActionInset(true));
+    expect(cancel.right, _mobile.width - _insetOf(tester, true));
     expect(cancel.center.dy, button.center.dy);
   });
 
@@ -634,7 +643,7 @@ void main() {
       tester,
       view: _desktop,
       platform: TargetPlatform.macOS,
-      child: CommonScaffold(
+      child: Scaffold(
         title: 'Title',
         searchState: AppBarSearchState(onSearch: (_) {}),
         body: const SizedBox(),

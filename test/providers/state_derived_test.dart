@@ -1,18 +1,20 @@
+import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/common/cidr.dart';
 import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/mitm_network.dart';
 import 'package:fl_clash/common/system.dart';
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/mitm.dart';
 import 'package:fl_clash/providers/state.dart';
-import 'package:fl_clash/ui/color.dart';
 import 'package:fl_clash/views/navigation.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:prism_ui/prism_ui.dart';
 import 'package:riverpod/riverpod.dart';
 
 import '../helpers/test_profiles.dart';
@@ -372,7 +374,7 @@ void main() {
     );
     expect(
       mobile.map((item) => item.label),
-      isNot(contains(PageLabel.connections)),
+      isNot(contains(PageLabel.requests)),
     );
 
     container
@@ -380,19 +382,71 @@ void main() {
         .update((_) => const Size(1200, 800));
     container
         .read(currentPageLabelProvider.notifier)
-        .toPage(PageLabel.connections);
+        .toPage(PageLabel.requests);
     final desktop = container.read(navigationStateProvider);
     expect(desktop.viewMode, ViewMode.desktop);
     expect(desktop.currentIndex, greaterThan(0));
     expect(
       desktop.navigationItems[desktop.currentIndex].label,
-      PageLabel.connections,
+      PageLabel.requests,
     );
 
     container
         .read(currentPageLabelProvider.notifier)
         .toPage(PageLabel.resources);
     expect(container.read(navigationStateProvider).currentIndex, 0);
+  });
+
+  test('requests joins the mobile bar only while HTTP is captured, and '
+      'stays in the desktop sidebar either way', () {
+    container
+        .read(currentPageLabelProvider.notifier)
+        .toPage(PageLabel.requests);
+    List<PageLabel> bar() => [
+      for (final item
+          in container.read(currentNavigationItemsStateProvider).value)
+        item.label,
+    ];
+    List<PageLabel> tools() => [
+      for (final item
+          in container.read(moreToolsSelectorStateProvider).navigationItems)
+        item.label,
+    ];
+
+    for (final enable in [false, true]) {
+      for (final capture in [false, true]) {
+        container
+            .read(patchClashConfigProvider.notifier)
+            .update(
+              (state) => state.copyWith(
+                mitm: state.mitm.copyWith(enable: enable, capture: capture),
+              ),
+            );
+        final reason = 'decrypting: $enable, capturing: $capture';
+        final joinsBar = rsFeature && enable && capture;
+
+        container
+            .read(viewSizeProvider.notifier)
+            .update((_) => Size(maxMobileWidth.toDouble(), 800));
+        expect(bar().contains(PageLabel.requests), joinsBar, reason: reason);
+        expect(tools().contains(PageLabel.requests), !joinsBar, reason: reason);
+        expect(
+          container.read(shownPageLabelProvider),
+          joinsBar ? PageLabel.requests : bar().first,
+          reason: reason,
+        );
+
+        container
+            .read(viewSizeProvider.notifier)
+            .update((_) => const Size(1200, 800));
+        expect(bar(), contains(PageLabel.requests), reason: reason);
+        expect(
+          container.read(shownPageLabelProvider),
+          PageLabel.requests,
+          reason: reason,
+        );
+      }
+    }
   });
 
   test('layout and page state providers compose their dependencies', () {
@@ -502,7 +556,7 @@ void main() {
     expect(container.read(filterGroupsStateProvider('hk jp')).value, isEmpty);
   });
 
-  test('runtime, VPN, tray, and DNS states follow live state', () async {
+  test('runtime, VPN, and tray states follow live state', () async {
     container
         .read(runTimeProvider.notifier)
         .update((_) => DateTime(2026).millisecondsSinceEpoch);
@@ -512,7 +566,6 @@ void main() {
           (state) => state.copyWith(
             systemProxy: false,
             bypassDomain: const ['localhost'],
-            autoSetSystemDns: true,
           ),
         );
     container
@@ -524,8 +577,6 @@ void main() {
             tun: state.tun.copyWith(enable: true),
           ),
         );
-    expect(container.read(shouldPatchSystemDnsProvider), isFalse);
-
     container
         .read(authorizedTunEnableProvider.notifier)
         .update((_) => TunAuthorizationState.authorized);
@@ -548,21 +599,6 @@ void main() {
     expect(vpn.port, 8899);
     expect(vpn.bypassDomain, ['localhost']);
 
-    expect(container.read(shouldPatchSystemDnsProvider), isTrue);
-
-    container
-        .read(networkSettingProvider.notifier)
-        .update((state) => state.copyWith(autoSetSystemDns: false));
-    expect(container.read(shouldPatchSystemDnsProvider), isFalse);
-    container
-        .read(networkSettingProvider.notifier)
-        .update((state) => state.copyWith(autoSetSystemDns: true));
-
-    container
-        .read(authorizedTunEnableProvider.notifier)
-        .update((_) => TunAuthorizationState.unauthorized);
-    expect(container.read(shouldPatchSystemDnsProvider), isFalse);
-
     container.read(excludeSSIDsProvider.notifier).update((_) => ['Office']);
     container.read(currentSSIDProvider.notifier).update((_) => 'Office');
     expect(container.read(suspendProvider), isTrue);
@@ -570,7 +606,7 @@ void main() {
   });
 
   test('safe mode keeps every host integration off', () async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     final scoped = ProviderContainer(
       overrides: [
         profilesProvider.overrideWith(TestProfiles.new),
@@ -582,9 +618,7 @@ void main() {
     scoped.read(runTimeProvider.notifier).update((_) => 1);
     scoped
         .read(networkSettingProvider.notifier)
-        .update(
-          (state) => state.copyWith(systemProxy: true, autoSetSystemDns: true),
-        );
+        .update((state) => state.copyWith(systemProxy: true));
     scoped
         .read(patchClashConfigProvider.notifier)
         .update(
@@ -618,11 +652,33 @@ void main() {
     expect(tray.showTrayTitle, isTrue);
     expect(tray.hotKeys.keys, [HotAction.view]);
     expect(scoped.read(trayTitleStateProvider).showTrayTitle, isTrue);
-    expect(scoped.read(shouldPatchSystemDnsProvider), isFalse);
     await scoped.read(vpnOptionsProvider.future);
     final vpnOptions = scoped.read(sharedStateProvider).vpnOptions!;
     expect(vpnOptions.enable, isFalse);
     expect(vpnOptions.systemProxy, isFalse);
+  });
+
+  test('the shared state tells the service whether MITM is on', () {
+    loadAppLocalizations(const Locale('en'));
+    final scoped = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        mitmModuleNetworkProvider.overrideWith(
+          (ref) async => const MitmNetwork(),
+        ),
+      ],
+    );
+    addTearDown(scoped.dispose);
+    scoped.listen(sharedStateProvider, (_, _) {});
+    expect(scoped.read(sharedStateProvider).mitm, isFalse);
+
+    scoped
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(mitm: state.mitm.copyWith(enable: true)),
+        );
+    expect(scoped.read(sharedStateProvider).mitm, isTrue);
+    expect(scoped.read(sharedStateProvider).toJson()['mitm'], isTrue);
   });
 
   test('selection and delay providers resolve groups and profile state', () {
@@ -740,7 +796,7 @@ void main() {
     );
     expect(fallback.brightness, Brightness.light);
     final explicit = container.read(
-      genColorSchemeProvider(Brightness.dark, color: Colors.purple),
+      genColorSchemeProvider(Brightness.dark, color: const Color(0xFF9C27B0)),
     );
     expect(explicit.brightness, Brightness.dark);
 
@@ -753,7 +809,7 @@ void main() {
   test('a color scheme outlives the provider that generated it', () {
     final provider = genColorSchemeProvider(
       Brightness.dark,
-      color: Colors.teal,
+      color: const Color(0xFF009688),
     );
     final first = container.read(provider);
     container.invalidate(provider);
@@ -779,11 +835,9 @@ void main() {
       HotAction.tun,
     );
 
-    final profile = Profile.normal().copyWith(extendType: ExtendType.script);
+    final profile = Profile.normal();
     _profiles(container).replace([profile]);
     expect(container.read(profileProvider(profile.id)), profile);
-    expect(container.read(extendTypeProvider(profile.id)), ExtendType.script);
-    expect(container.read(extendTypeProvider(-1)), ExtendType.standard);
 
     expect(
       container.read(accessControlStateProvider),
@@ -811,7 +865,7 @@ void main() {
   );
 
   test('shared state hands the VPN service the resolved route list', () async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     container.listen(sharedStateProvider, (_, _) {});
     container
         .read(networkSettingProvider.notifier)
@@ -841,6 +895,50 @@ void main() {
     expect(
       container.read(sharedStateProvider).vpnOptions?.routeAddress,
       subtractCidrs(const [], privateRouteAddress, wholeWhenEmpty: true),
+    );
+  });
+
+  test('modules add their routes and bypass domains to the VPN', () async {
+    final scoped = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
+        mitmModuleNetworkProvider.overrideWith(
+          (ref) async => const MitmNetwork(
+            routeAddress: ['172.16.0.0/12'],
+            routeExcludeAddress: MitmListEdit(
+              replace: true,
+              before: ['10.0.0.0/8'],
+            ),
+            bypassDomain: MitmListEdit(after: ['captive.test']),
+          ),
+        ),
+      ],
+    );
+    addTearDown(scoped.dispose);
+    scoped
+        .read(networkSettingProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            bypassPrivateRoute: false,
+            bypassDomain: const ['localhost'],
+          ),
+        );
+    var vpn = await scoped.read(vpnOptionsProvider.future);
+    expect(vpn.bypassDomain, ['localhost', 'captive.test']);
+    expect(vpn.routeAddress, isNot(contains('0.0.0.0/0')));
+    expect(vpn.routeAddress, contains('::/0'));
+
+    scoped
+        .read(patchClashConfigProvider.notifier)
+        .update(
+          (state) => state.copyWith(
+            tun: state.tun.copyWith(routeAddress: const ['192.168.0.0/16']),
+          ),
+        );
+    vpn = await scoped.read(vpnOptionsProvider.future);
+    expect(
+      vpn.routeAddress,
+      unorderedEquals(['192.168.0.0/16', '172.16.0.0/12', '::/0']),
     );
   });
 
@@ -880,7 +978,7 @@ void main() {
   });
 
   test('shared state keeps the last routes while new ones compute', () async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     container.listen(sharedStateProvider, (_, _) {});
     container
         .read(networkSettingProvider.notifier)
@@ -915,7 +1013,7 @@ void main() {
 
   // VpnService.setHttpProxy cannot carry credentials.
   test('local authentication withholds the VPN system proxy', () async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     container.listen(sharedStateProvider, (_, _) {});
     await container.read(vpnOptionsProvider.future);
     expect(container.read(sharedStateProvider).vpnOptions?.systemProxy, true);
@@ -946,6 +1044,23 @@ void main() {
     expect(container.read(sharedStateProvider).vpnOptions?.systemProxy, true);
     expect(container.read(updateParamsProvider).authentication, isEmpty);
   });
+
+  if (rsFeature) {
+    test('capture reaches the Core in its options, never by a re-apply', () {
+      container.listen(setupPatchProvider, (_, _) {});
+      container.listen(updateParamsProvider, (_, _) {});
+      final setup = container.read(setupPatchProvider);
+
+      container
+          .read(patchClashConfigProvider.notifier)
+          .update(
+            (state) => state.copyWith(mitm: state.mitm.copyWith(capture: true)),
+          );
+
+      expect(container.read(setupPatchProvider), setup);
+      expect(container.read(updateParamsProvider).options.mitmCapture, isTrue);
+    });
+  }
 
   test('the setup patch changes only with what a re-apply carries', () {
     container.listen(setupPatchProvider, (_, _) {});
@@ -989,7 +1104,7 @@ void main() {
   });
 
   test('shared state carries the notification stop action switch', () async {
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     container.listen(sharedStateProvider, (_, _) {});
     expect(container.read(sharedStateProvider).showStopAction, true);
 
@@ -1001,12 +1116,12 @@ void main() {
 
   test('shared state follows the locale whose messages are loaded', () async {
     container.listen(sharedStateProvider, (_, _) {});
-    await AppLocalizations.load(const Locale('en'));
+    loadAppLocalizations(const Locale('en'));
     container.read(loadedLocaleProvider.notifier).value = const Locale('en');
     final en = container.read(sharedStateProvider);
 
-    await AppLocalizations.load(const Locale('zh', 'CN'));
-    addTearDown(() => AppLocalizations.load(const Locale('en')));
+    loadAppLocalizations(const Locale('zh', 'CN'));
+    addTearDown(() => loadAppLocalizations(const Locale('en')));
     expect(container.read(sharedStateProvider).stopText, en.stopText);
 
     container.read(loadedLocaleProvider.notifier).value = const Locale(

@@ -1,11 +1,9 @@
 import 'package:fl_clash/common/app_localizations.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/app.dart';
-import 'package:fl_clash/ui/null_status.dart';
-import 'package:fl_clash/ui/paged_sheet.dart';
-import 'package:fl_clash/ui/sheet.dart';
+import 'package:fl_clash/ui/null_status_illustration.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:prism_ui/prism_ui.dart';
 
 import '../helpers/test_app.dart';
 
@@ -25,17 +23,17 @@ Widget _switcher({
     isSearching: isSearching,
     loadingStatus: loadingLabel == null
         ? null
-        : NullStatus(label: loadingLabel),
-    nullStatus: NullStatus(label: label),
+        : NullStatus(
+            label: loadingLabel,
+            illustration: NullStatusIllustration.data,
+          ),
+    nullStatus: NullStatus(
+      label: label,
+      illustration: NullStatusIllustration.data,
+    ),
     child: const Text('content', key: ValueKey('content')),
   );
-  return MaterialApp(
-    localizationsDelegates: const [
-      AppLocalizations.delegate,
-      AppUiLocalizations.delegate,
-      ...GlobalMaterialLocalizations.delegates,
-    ],
-    supportedLocales: AppLocalizations.delegate.supportedLocales,
+  return HostApp(
     home: mediaQuery == null
         ? switcher
         : MediaQuery(data: mediaQuery, child: switcher),
@@ -46,13 +44,13 @@ void main() {
   testWidgets('renders every semantic illustration', (tester) async {
     for (final illustration in NullStatusIllustration.values) {
       await tester.pumpWidget(
-        MaterialApp(
+        HostApp(
           home: NullStatus(label: 'Nothing here', illustration: illustration),
         ),
       );
       await tester.pumpAndSettle();
 
-      final background = find.byKey(ValueKey(illustration));
+      final background = find.byKey(ValueKey<Illustration>(illustration));
       expect(background, findsOneWidget);
       expect(tester.getSize(background), const Size.square(160));
       expect(tester.takeException(), isNull);
@@ -64,19 +62,26 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      const MaterialApp(home: NullStatus(label: 'Nothing here')),
+      const HostApp(
+        home: NullStatus(
+          label: 'Nothing here',
+          illustration: NullStatusIllustration.data,
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
     expect(
-      tester.getSize(find.byKey(const ValueKey(NullStatusIllustration.data))),
+      tester.getSize(
+        find.byKey(const ValueKey<Illustration>(NullStatusIllustration.data)),
+      ),
       const Size.square(120),
     );
   });
 
   testWidgets('scrolls instead of overflowing a short box', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: Center(
           child: SizedBox(
             width: 300,
@@ -88,6 +93,7 @@ void main() {
                 onPressed: () {},
                 child: const Text('Retry'),
               ),
+              illustration: NullStatusIllustration.data,
             ),
           ),
         ),
@@ -101,21 +107,14 @@ void main() {
     expect(find.text('Retry').hitTestable(), findsOneWidget);
   });
 
-  testWidgets('keeps data as the default illustration', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: NullStatus(label: 'Nothing here')),
-    );
-
-    expect(
-      find.byKey(const ValueKey(NullStatusIllustration.data)),
-      findsOneWidget,
-    );
-  });
-
   testWidgets('staggers its entrance when shown on its own', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: NullStatus(label: 'Nothing here', action: Text('Retry')),
+      const HostApp(
+        home: NullStatus(
+          label: 'Nothing here',
+          action: Text('Retry'),
+          illustration: NullStatusIllustration.data,
+        ),
       ),
     );
 
@@ -155,12 +154,15 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
+      HostApp(
         home: Builder(
           builder: (context) => TextButton(
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const NullStatus(label: 'Nothing here'),
+              HostPageRoute<void>(
+                builder: (_) => const NullStatus(
+                  label: 'Nothing here',
+                  illustration: NullStatusIllustration.data,
+                ),
               ),
             ),
             child: const Text('open'),
@@ -197,7 +199,10 @@ void main() {
               context: context,
               props: nestedPagedSheetProps,
               builder: (_) => NestedPagedSheet(
-                builder: (_) => const NullStatus(label: 'Nothing here'),
+                builder: (_) => const NullStatus(
+                  label: 'Nothing here',
+                  illustration: NullStatusIllustration.data,
+                ),
               ),
             ),
             child: const Text('open'),
@@ -223,10 +228,14 @@ void main() {
 
   testWidgets('skips the entrance fade under reduced motion', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      const HostApp(
         home: MediaQuery(
           data: _reducedMotion,
-          child: NullStatus(label: 'Nothing here', action: Text('Retry')),
+          child: NullStatus(
+            label: 'Nothing here',
+            action: Text('Retry'),
+            illustration: NullStatusIllustration.data,
+          ),
         ),
       ),
     );
@@ -252,7 +261,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text('Nothing here'), findsOneWidget);
     expect(find.byKey(const ValueKey('content')), findsOneWidget);
-    expect(find.byType(ScaleTransition), findsNWidgets(2));
+    expect(find.byType(ScaleTransition), findsOneWidget);
 
     await tester.pumpAndSettle();
     expect(find.text('Nothing here'), findsNothing);
@@ -260,33 +269,12 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a first load done within a route transition shows no status', (
-    tester,
-  ) async {
+  testWidgets('a first load shows its loading status at once', (tester) async {
     await tester.pumpWidget(
       _switcher(isEmpty: true, isLoading: true, loadingLabel: 'Loading'),
     );
-    await tester.pump(const Duration(milliseconds: 350));
-    expect(find.byType(NullStatus), findsNothing);
-
-    await tester.pumpWidget(_switcher(isEmpty: false, loadingLabel: 'Loading'));
-    await tester.pump(const Duration(seconds: 1));
-
-    expect(find.byType(NullStatus), findsNothing);
-    expect(find.byKey(const ValueKey('content')), findsOneWidget);
-  });
-
-  testWidgets('a first load that outlasts a route transition shows its '
-      'loading status until the content arrives', (tester) async {
-    await tester.pumpWidget(
-      _switcher(isEmpty: true, isLoading: true, loadingLabel: 'Loading'),
-    );
-    await tester.pump(const Duration(milliseconds: 350));
-    expect(find.text('Loading'), findsNothing);
-
-    await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Loading'), findsOneWidget);
-    expect(find.byKey(const ValueKey('content')), findsNothing);
+    expect(find.byType(ArrivalHold), findsNothing);
 
     await tester.pumpWidget(_switcher(isEmpty: false, loadingLabel: 'Loading'));
     await tester.pumpAndSettle();
@@ -314,9 +302,9 @@ void main() {
     await tester.pumpWidget(_switcher(isEmpty: true, isSearching: true));
     await tester.pumpAndSettle();
 
-    expect(find.text(AppLocalizations.current.noSearchResults), findsOneWidget);
+    expect(find.text(currentAppLocalizations.noSearchResults), findsOneWidget);
     expect(
-      find.byKey(const ValueKey(NullStatusIllustration.search)),
+      find.byKey(const ValueKey<Illustration>(Illustration.search)),
       findsOneWidget,
     );
     expect(find.text('Nothing here'), findsNothing);
@@ -343,12 +331,12 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('shows neither side while the first load is pending', (
-    tester,
-  ) async {
+  testWidgets('shows a spinner and neither side while the first load is '
+      'pending', (tester) async {
     await tester.pumpWidget(_switcher(isEmpty: true, isLoading: true));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
 
+    expect(find.byType(ActivityIndicator), findsOneWidget);
     expect(find.byType(NullStatus), findsNothing);
     expect(find.byKey(const ValueKey('content')), findsNothing);
   });
@@ -384,15 +372,21 @@ void main() {
 
   testWidgets('gives the content the full body size', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      const HostApp(
         home: Center(
           child: SizedBox(
             width: 300,
             height: 500,
             child: NullStatusSwitcher(
               isEmpty: false,
-              nullStatus: NullStatus(label: 'Nothing here'),
-              child: ColoredBox(key: ValueKey('content'), color: Colors.red),
+              nullStatus: NullStatus(
+                label: 'Nothing here',
+                illustration: NullStatusIllustration.data,
+              ),
+              child: ColoredBox(
+                key: ValueKey('content'),
+                color: Color(0xFFF44336),
+              ),
             ),
           ),
         ),
@@ -404,6 +398,22 @@ void main() {
       tester.getSize(find.byKey(const ValueKey('content'))),
       const Size(300, 500),
     );
+  });
+
+  testWidgets('defaults to immediate activity indicator without ArrivalHold', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const HostApp(
+        home: NullStatusSwitcher(
+          isLoading: true,
+          child: Text('content', key: ValueKey('content')),
+        ),
+      ),
+    );
+    expect(find.byType(ActivityIndicator), findsOneWidget);
+    expect(find.byType(ArrivalHold), findsNothing);
+    expect(find.byKey(const ValueKey('content')), findsNothing);
   });
 
   testWidgets('switches immediately under reduced motion', (tester) async {

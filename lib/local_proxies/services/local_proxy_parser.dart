@@ -523,9 +523,110 @@ class LocalProxyParser {
   }
 
   static const _nowhereMaxPoolSize = 256;
-  static const _nowhereDefaultAlpn = 'nw2';
+  static const _nowhereAlpnNw2 = 'nw2';
+  static const _nowhereAlpnNw3 = 'nw3';
+  static final _nowhereServiceKeyPattern = RegExp(r'^[0-9a-f]{32}$');
+  static final _nowhereCertificatePinPattern = RegExp(r'^[0-9a-f]{64}$');
+  static const _nowhereNw2QueryKeys = {
+    'up',
+    'down',
+    'mux',
+    'pool',
+    'ech',
+    'fp',
+  };
+  static const _nowhereNw3QueryKeys = {'net', 'cipher'};
+  static const _nowhereNw3AllowedKeys = {
+    'net',
+    'morph',
+    'cipher',
+    'sni',
+    'pin',
+    'insecure',
+    'alpn',
+  };
 
   bool _isNowhereCarrier(String value) => value == 'tcp' || value == 'udp';
+
+  String _rawQueryString(String raw) {
+    final hashIndex = raw.indexOf('#');
+    final withoutFragment = hashIndex == -1 ? raw : raw.substring(0, hashIndex);
+    final queryIndex = withoutFragment.indexOf('?');
+    if (queryIndex == -1) return '';
+    return withoutFragment.substring(queryIndex + 1);
+  }
+
+  bool _hasLiteralNowhereQuery(String rawQuery, Set<String> names) {
+    if (rawQuery.isEmpty) return false;
+    for (final pair in rawQuery.split('&')) {
+      final sep = pair.indexOf('=');
+      final rawKey = sep == -1 ? pair : pair.substring(0, sep);
+      if (names.contains(rawKey)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Mirrors Nowhere 3.4's literal-key first-value query parser: keys match
+  /// literally without percent-decoding, the first occurrence of a recognized
+  /// key wins (ignoring later duplicates), and values are strictly UTF-8
+  /// percent-decoded.
+  Map<String, String> _parseNowhereNw3Query(
+    String rawQuery,
+    Set<String> allowed,
+  ) {
+    final values = <String, String>{};
+    if (rawQuery.isEmpty) return values;
+    for (final pair in rawQuery.split('&')) {
+      final sep = pair.indexOf('=');
+      final rawKey = sep == -1 ? pair : pair.substring(0, sep);
+      if (!allowed.contains(rawKey) || values.containsKey(rawKey)) {
+        continue;
+      }
+      final rawValue = sep == -1 ? '' : pair.substring(sep + 1);
+      values[rawKey] = _decodeNowhereQueryComponent(rawValue);
+    }
+    return values;
+  }
+
+  String _decodeNowhereQueryComponent(String raw) {
+    final bytes = <int>[];
+    for (var i = 0; i < raw.length;) {
+      final unit = raw.codeUnitAt(i);
+      if (unit == 0x25 /* % */ ) {
+        if (i + 2 >= raw.length) {
+          throw const FormatException('Invalid percent encoding');
+        }
+        final hi = _hexDigit(raw.codeUnitAt(i + 1));
+        final lo = _hexDigit(raw.codeUnitAt(i + 2));
+        if (hi == null || lo == null) {
+          throw const FormatException('Invalid percent encoding');
+        }
+        bytes.add((hi << 4) | lo);
+        i += 3;
+      } else if (unit > 0x7F) {
+        bytes.addAll(utf8.encode(raw[i]));
+        i++;
+      } else {
+        bytes.add(unit);
+        i++;
+      }
+    }
+    return utf8.decode(bytes);
+  }
+
+  int? _hexDigit(int codeUnit) {
+    if (codeUnit >= 0x30 && codeUnit <= 0x39) return codeUnit - 0x30;
+    if (codeUnit >= 0x61 && codeUnit <= 0x66) return codeUnit - 0x61 + 10;
+    if (codeUnit >= 0x41 && codeUnit <= 0x46) return codeUnit - 0x41 + 10;
+    return null;
+  }
+
+  bool _parseGoBool(String raw) => switch (raw) {
+    '1' || 't' || 'T' || 'TRUE' || 'true' || 'True' => true,
+    _ => false,
+  };
 
   String? _validateNowhereUtf8Value(
     String field,
@@ -558,6 +659,58 @@ class LocalProxyParser {
     }
 
     final password = Uri.decodeComponent(rawUserInfo);
+    final server = uri.host;
+    if (server.isEmpty) {
+      return LocalProxyParseResult(raw: raw, error: 'Nowhere server is empty');
+    }
+    final port = _parsePortOrDefault(
+      uri.port == 0 ? null : uri.port.toString(),
+      443,
+    );
+    final rawQuery = _rawQueryString(raw);
+    final fragment = _decodeFragment(uri.fragment);
+    final name = _buildName(fragment, 'nowhere', server);
+
+    final hasNW2 = _hasLiteralNowhereQuery(rawQuery, _nowhereNw2QueryKeys);
+    final hasNW3 = _hasLiteralNowhereQuery(rawQuery, _nowhereNw3QueryKeys);
+    final alpnValues = _queryValuesPreservingPlus(rawQuery, 'alpn');
+    var alpnNW2 = false;
+    var alpnNW3 = false;
+    if (alpnValues.isNotEmpty) {
+      if (alpnValues.length != 1 ||
+          (alpnValues.first != _nowhereAlpnNw2 &&
+              alpnValues.first != _nowhereAlpnNw3)) {
+        return LocalProxyParseResult(
+          raw: raw,
+          error: 'Nowhere ALPN must be $_nowhereAlpnNw3 or $_nowhereAlpnNw2',
+        );
+      }
+      alpnNW2 = alpnValues.first == _nowhereAlpnNw2;
+      alpnNW3 = alpnValues.first == _nowhereAlpnNw3;
+    }
+    if ((hasNW2 || alpnNW2) && (hasNW3 || alpnNW3)) {
+      return LocalProxyParseResult(
+        raw: raw,
+        error: 'Nowhere 2 and Nowhere 3 options cannot be combined',
+      );
+    }
+
+    final isNW3 =
+        hasNW3 ||
+        alpnNW3 ||
+        (!hasNW2 && !alpnNW2 && _nowhereServiceKeyPattern.hasMatch(password));
+    if (isNW3) {
+      return _parseNowhere3(
+        raw: raw,
+        name: name,
+        server: server,
+        port: port,
+        password: password,
+        rawQuery: rawQuery,
+        alpnNW3: alpnNW3,
+      );
+    }
+
     final passwordError = _validateNowhereUtf8Value(
       'key',
       password,
@@ -567,16 +720,7 @@ class LocalProxyParser {
       return LocalProxyParseResult(raw: raw, error: passwordError);
     }
 
-    final server = uri.host;
-    if (server.isEmpty) {
-      return LocalProxyParseResult(raw: raw, error: 'Nowhere server is empty');
-    }
-    final port = _parsePortOrDefault(
-      uri.port == 0 ? null : uri.port.toString(),
-      443,
-    );
     final query = _parseFirstQueryParameters(uri.query);
-    final fragment = _decodeFragment(uri.fragment);
     final warnings = <String>[];
 
     final upValue = query['up'] ?? '';
@@ -622,32 +766,6 @@ class LocalProxyParser {
     }
     final dedicatedTcpTcp = up == 'tcp' && down == 'tcp' && mux == 0;
 
-    final alpnValues = _queryValuesPreservingPlus(uri.query, 'alpn');
-    if (alpnValues.isNotEmpty) {
-      if (alpnValues.length != 1 ||
-          alpnValues.first.isEmpty ||
-          alpnValues.first.contains(',')) {
-        return LocalProxyParseResult(
-          raw: raw,
-          error: 'Nowhere ALPN must contain exactly one value',
-        );
-      }
-      final alpnError = _validateNowhereUtf8Value('ALPN', alpnValues.first);
-      if (alpnError != null) {
-        return LocalProxyParseResult(raw: raw, error: alpnError);
-      }
-      // The nowhere:// share link is the Nowhere 2 matrix. An omitted ALPN
-      // would otherwise select Nowhere 3, which rejects up/down, so any
-      // explicit value must be nw2.
-      if (alpnValues.first != _nowhereDefaultAlpn) {
-        return LocalProxyParseResult(
-          raw: raw,
-          error: 'Nowhere share-link ALPN must be $_nowhereDefaultAlpn',
-        );
-      }
-    }
-
-    final name = _buildName(fragment, 'nowhere', server);
     final config = <String, dynamic>{
       'name': name,
       'type': 'nowhere',
@@ -661,10 +779,10 @@ class LocalProxyParser {
     };
 
     final sni = query['sni'];
-    if (sni != null && sni.isNotEmpty) {
+    if (sni != null && sni.isNotEmpty && sni != 'none') {
       config['sni'] = sni;
     }
-    config['alpn'] = [_nowhereDefaultAlpn];
+    config['alpn'] = [_nowhereAlpnNw2];
     if (mux == 1) {
       config['mux'] = 1;
     }
@@ -729,6 +847,126 @@ class LocalProxyParser {
         updatedAt: DateTime.now(),
       ),
       warnings: warnings,
+    );
+  }
+
+  LocalProxyParseResult _parseNowhere3({
+    required String raw,
+    required String name,
+    required String server,
+    required int port,
+    required String password,
+    required String rawQuery,
+    required bool alpnNW3,
+  }) {
+    if (!_nowhereServiceKeyPattern.hasMatch(password)) {
+      return LocalProxyParseResult(
+        raw: raw,
+        error: 'Nowhere 3 shared key must be 32 lowercase hex characters',
+      );
+    }
+
+    final Map<String, String> query;
+    try {
+      query = _parseNowhereNw3Query(rawQuery, _nowhereNw3AllowedKeys);
+    } on FormatException {
+      return LocalProxyParseResult(
+        raw: raw,
+        error: 'Nowhere query has invalid percent encoding or UTF-8',
+      );
+    }
+
+    var net = 'tcp';
+    if (query.containsKey('net')) {
+      final rawNet = query['net']!;
+      if (rawNet != 'tcp' && rawNet != 'udp') {
+        return LocalProxyParseResult(
+          raw: raw,
+          error: 'Nowhere net must be tcp or udp',
+        );
+      }
+      net = rawNet;
+    }
+
+    String? cipher;
+    if (query.containsKey('cipher')) {
+      final rawCipher = query['cipher']!;
+      if (rawCipher != 'chacha' && rawCipher != 'aes') {
+        return LocalProxyParseResult(
+          raw: raw,
+          error: 'Nowhere cipher must be chacha or aes',
+        );
+      }
+      cipher = rawCipher;
+    }
+
+    bool? morph;
+    if (query.containsKey('morph')) {
+      final rawMorph = query['morph']!;
+      if (rawMorph == '0') {
+        morph = false;
+      } else if (rawMorph == '1') {
+        morph = true;
+      } else {
+        return LocalProxyParseResult(
+          raw: raw,
+          error: 'Nowhere morph must be 0 or 1',
+        );
+      }
+    }
+
+    String? pin;
+    final rawPin = query['pin'];
+    if (rawPin != null && rawPin.isNotEmpty && rawPin != 'none') {
+      if (!_nowhereCertificatePinPattern.hasMatch(rawPin)) {
+        return LocalProxyParseResult(
+          raw: raw,
+          error: 'Nowhere pin must be 64 lowercase hex characters',
+        );
+      }
+      pin = rawPin;
+    }
+
+    final config = <String, dynamic>{
+      'name': name,
+      'type': 'nowhere',
+      'server': server,
+      'port': port,
+      'password': password,
+      'udp': true,
+      'net': net,
+    };
+    if (alpnNW3) {
+      config['alpn'] = [_nowhereAlpnNw3];
+    }
+    if (morph != null) {
+      config['morph'] = morph;
+    }
+    if (cipher != null) {
+      config['cipher'] = cipher;
+    }
+    final sni = query['sni'];
+    if (sni != null && sni.isNotEmpty && sni != 'none') {
+      config['sni'] = sni;
+    }
+    if (pin != null) {
+      config['pin'] = pin;
+    }
+    final rawInsecure = query['insecure'];
+    if (rawInsecure != null && _parseGoBool(rawInsecure)) {
+      config['skip-cert-verify'] = true;
+    }
+
+    return LocalProxyParseResult(
+      raw: raw,
+      proxy: LocalProxy(
+        id: -1,
+        name: name,
+        type: 'nowhere',
+        config: config,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
     );
   }
 

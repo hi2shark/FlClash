@@ -1,21 +1,31 @@
 # Commands
 
+`make` is the entry point on macOS and Linux: `make help` lists every target with its variables, generated from the
+`##` comments in the `Makefile`, and `test/tool/makefile_test.dart` keeps the two in step. Each target only calls the
+command this file documents, so the logic stays in `tool/`; `make doctor` names a missing toolchain, `make check` is
+CI's `dart` job, `make core-check` and `make core-test` the Go wrapper checks CI runs, and `make run` starts the safe mode
+build, the only kind a shared host may run.
+
 ## Building
 
-Update submodules first. The ClashMeta Go core lives in `core/Clash.Meta/`.
+Update submodules first. The ClashMeta Go core lives in `core/Clash.Meta/`, the UI library in `plugins/prism_ui/`.
 
 ```bash
 git submodule update --init --recursive
 ```
 
-Full package build, including Go core, Flutter, and packaging, runs through `setup.dart`:
+Full package build, including Go core, Flutter, and packaging, runs through `tool/package.dart` (`make package`,
+`make package-android`, with `ARCH=`, `FORM=` and `DRY=1`). Run it with `dart`, not `dart run`, which first runs
+every build hook for the host:
 
 ```bash
-dart setup.dart macos
-dart setup.dart linux
-dart setup.dart windows
-dart setup.dart android
+dart tool/package.dart                     # this host: dmg, exe + zip, or deb + AppImage + rpm
+dart tool/package.dart android             # every ABI; --arch arm64 for one
+dart tool/package.dart linux --dry-run --arch arm64   # names and steps only, any platform
 ```
+
+Artifacts land in `dist/` as `FlClash-<version>-<os>-<arch>[-<form>].<ext>`, with `manifest.json` and
+`FlClash-<version>-SHA256SUMS`; see Packaging in `architecture.md`.
 
 The desktop Go core and the Rust helper build automatically: Flutter runs
 `plugins/setup/hook/build.dart` on every `flutter build` and `flutter test`,
@@ -34,6 +44,15 @@ rm -rf .dart_tool/setup_build_cache
 Flutter hides the hook's output on success, so to see why the Core was or was
 not rebuilt read `.dart_tool/setup_build_cache/hook.log`; each invocation starts
 with a `===` line carrying its timestamp and target.
+
+Both Rust builds, the Helper and `rust_api`, pass `--remap-path-prefix` so no
+local path lands in a binary. With neither `RUSTFLAGS` nor
+`CARGO_ENCODED_RUSTFLAGS` set, the flags go into `CARGO_TARGET_<TRIPLE>_RUSTFLAGS`,
+which Cargo joins with `target.<triple>.rustflags` from a Cargo config but which
+leaves `build.rustflags` unread, so put custom flags under the target table.
+Either variable set, or a home, checkout or Cargo home path with a space, sends
+the flags through `CARGO_ENCODED_RUSTFLAGS` instead, and Cargo then reads no
+rustflags from its config.
 
 The hook runs for `flutter test` and for `dart run` of any root-package script
 too, so a pure Dart test run needs the Go toolchain, and on Linux and Windows
@@ -56,7 +75,7 @@ stays on there because the editor tests in `test/plugins/code_forge/` and the so
 test in `test/core/desktop/ipc_native_test.dart` load the Rust library the hook
 builds; the release-notes job, which runs no tests, flips both.
 Never commit `false`: a build with it set stages whatever `libclash/` already
-holds and bundles no Rust library, which is why `setup.dart` refuses to package
+holds and bundles no Rust library, which is why `tool/package.dart` refuses to package
 while it is set. Locally, `false` is worth setting for a Dart-only test loop,
 but the hook cache keys on the user-define, so the first build afterwards runs
 the hooks again. The editor and IPC socket tests still need the Rust library: keep `rust_api`
@@ -76,9 +95,9 @@ flutter test
 Use `flutter test`, not `dart test`, because models pull in Flutter types.
 
 A development build takes over the host exactly like a release: it creates the TUN device, sets the system proxy, on
-macOS rewrites the system DNS, registers itself as the login item, and on Windows and Linux starts its Core through the
-shared privileged Helper, which stops the Core an installed FlClash is running. Only the data directory is kept apart,
-and only for some builds: a macOS debug build is `com.hi2shark.flclash_nw.debug` and an Android debug build `com.hi2shark.flclash_nw.dev`,
+macOS registers the TUN as the system resolver, registers itself as the login item, and on Windows and Linux starts its
+Core through the shared privileged Helper, which stops the Core an installed FlClash is running. Only the data directory
+is kept apart, and only for some builds: a macOS debug build is `com.hi2shark.flclash_nw.debug` and an Android debug build `com.hi2shark.hi2nw.dev`,
 while profile and release builds, and every build on Windows and Linux, share the directory and preferences of the
 installed app. Safe mode keeps all of the host changes off and never opens the Core's listeners or external
 controller, so it does not compete with the installed app for the mixed, DNS, RESTful API and other loopback ports:
@@ -115,12 +134,18 @@ The Dart-Rust bindings in `plugins/rust_api` are generated by `flutter_rust_brid
 cd plugins/rust_api && flutter_rust_bridge_codegen generate
 ```
 
-Generated output paths, configured in `build.yaml`:
+Generated output paths, configured in each package's `build.yaml`:
 
 - `lib/models/generated/*.g.dart`, `*.freezed.dart`.
 - `lib/providers/generated/*.g.dart`.
 - `lib/database/generated/*.g.dart`.
-- `lib/ui/generated/*.freezed.dart`.
+
+Localizations in `lib/l10n/` come from the ARB files in `arb/` through Flutter's `gen-l10n`, configured in `l10n.yaml`.
+`flutter pub get` regenerates them, since `pubspec.yaml` sets `generate: true`; after editing an ARB file alone:
+
+```bash
+flutter gen-l10n
+```
 
 Tray and Windows app icons are generated, not hand-edited. `assets_source/images/icon/*.svg` is
 the source of truth; the script needs `rsvg-convert` (librsvg) on `PATH`:
@@ -154,7 +179,6 @@ flutter test test/common/
 flutter test test/database/
 flutter test test/widgets/
 flutter test test/setup_test.dart
-flutter test plugins/proxy/test/proxy_test.dart
 ```
 
 For the whole suite, or a directory of more than a few files, use `tool/test.dart`, which is also what CI runs:
@@ -166,16 +190,19 @@ dart run tool/test.dart -- --reporter expanded --coverage
 ```
 
 Plain `flutter test` compiles each file into its own program and starts an engine for it, one file after another, and
-that dominates a full run: 329 files took 128 s on a 12-core Mac with at most four running at once. `tool/test.dart`
-imports the files into 32 generated entrypoints under `.dart_tool/test_bundles/` and runs those with one worker per
-core: about 60 s for the same run, and 67 s instead of 180–213 s with `--coverage`. Files in one entrypoint share an
+that dominates a full run. `tool/test.dart` imports the files into 32 generated entrypoints under
+`.dart_tool/test_bundles/` and runs those with one worker per core, about half the time of a plain run, and less than
+a third with `--coverage`. Files in one entrypoint share an
 isolate, so a test can see state a file before it left behind; the script runs every file that failed there again on
 its own, lets that run decide, and names the files that only failed together. See the Shared Test Isolate section of
 `rules.md` before fixing one.
 
-`plugins/setup/setup_hooks/` is a pure Dart package and is tested with `dart test` from its own directory, which is
-also what CI runs; `tool/check_plugins.sh` does not descend into it. It must stay out of `flutter test`, because a test
-run of `plugins/setup` would execute the build hook itself.
+`plugins/setup/setup_hooks/` is a pure Dart package, checked with `dart analyze` and `dart test` from its own
+directory, which is also what CI runs; `tool/check_plugins.sh` does not descend into it. It must stay out of
+`flutter test`, because a test run of `plugins/setup` would execute the build hook itself.
+
+`.github/scripts/issue-gate.js` is tested with `node --test .github/scripts/`, against the forms in
+`.github/ISSUE_TEMPLATE/`; no workflow runs it, so run it after changing the script or a form.
 
 Native plugin code under `plugins/*/{linux,macos,windows}` is compiled by the CI `desktop` job, which runs
 `flutter build <platform> --debug` on every branch push, and by the release matrix on a tag; `tool/check_plugins.sh`
@@ -191,7 +218,7 @@ flutter test test/core/service_test.dart
 flutter test test/core/protocol_contract_test.dart
 flutter test test/manager/core_manager_test.dart
 flutter test test/providers/action_test.dart test/providers/system_action_test.dart
-flutter test test/widgets/core_status_button_test.dart
+flutter test test/views/dashboard/live_status_test.dart
 ```
 
 What those suites own:
@@ -203,18 +230,31 @@ What those suites own:
 - `test/core/protocol_contract_test.dart`: shared Dart/Go method and event-envelope compatibility, including event batches.
 - `test/providers/action_test.dart`: Core start/restart orchestration and overlapping restart requests.
 - `test/providers/system_action_test.dart`: ordered, idempotent exit cleanup and watchdog behavior.
-- `test/widgets/core_status_button_test.dart`: 600-millisecond connecting presentation hold, immediate failure display,
-  long-running connecting state, and disconnected restart.
+- `test/views/dashboard/live_status_test.dart`: 600-millisecond starting presentation hold, immediate failure display,
+  the order of the live status deck, where it sits, a list opening in place, and the confirmation before a force
+  restart.
 
 ## Native Component Verification
 
-The CI Go-wrapper checks can be reproduced without CGO, the Android files included:
+The CI Go-wrapper checks can be reproduced without CGO (`make core-check core-test`). They cover the Android files
+too, except the cgo one in `timezone/`, which only the gomobile build compiles:
 
 ```bash
 cd core
-CGO_ENABLED=0 go test .
+gofmt -l ./*.go ./cmd ./mobile ./platform ./timezone ./tun   # prints nothing when formatted
+CGO_ENABLED=0 go test -count=1 .
 CGO_ENABLED=0 go vet . ./cmd/...
-GOOS=android GOARCH=arm64 CGO_ENABLED=0 go vet -tags=with_gvisor . ./mobile ./tun ./platform
+CGO_ENABLED=0 GOOS=linux go vet ./platform
+GOOS=android GOARCH=arm64 CGO_ENABLED=0 go vet "-tags=$(sed -n 's/^tags: *//p' ../build_config.yaml)" \
+  . ./mobile ./tun ./platform
+```
+
+`plugins/rust_api/rust` is checked the same way as the Helper below; `make rust-check` runs both crates' format
+checks and tests as CI does. Tests under `cfg(target_os = "linux")` compile and run only on Linux:
+
+```bash
+cargo fmt --manifest-path plugins/rust_api/rust/Cargo.toml -- --check
+cargo test --manifest-path plugins/rust_api/rust/Cargo.toml
 ```
 
 The Windows Helper's loopback/session protocol tests are host-independent by default. Windows CI additionally enables its
@@ -236,6 +276,21 @@ export JAVA_HOME="$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home"
 ./gradlew :core:compileDebugKotlin -Ptarget-platform=android-arm64   # builds the gomobile AAR for one ABI
 ./gradlew :service:compileDebugKotlin
 ./gradlew :app:compileDebugKotlin
+```
+
+Run the JVM unit tests of `:common`, `:service` and `:app` as the CI `android` job does. No test loads the Core or
+the Flutter build, but `:core` compiles against the gomobile AAR, so Go and the NDK are needed and one ABI is built.
+`android/gradlew` and `android/local.properties` are ignored by git; CI copies the wrapper from Flutter's cache and
+writes the SDK paths, and a checkout without them needs the same:
+
+```bash
+cd android
+flutter_root="$(flutter --version --machine | jq -r .flutterRoot)"
+test -f gradlew || { cp -R "$flutter_root/bin/cache/artifacts/gradle_wrapper/." . && chmod +x gradlew; }
+test -f local.properties ||
+  printf 'flutter.sdk=%s\nsdk.dir=%s\n' "$flutter_root" "${ANDROID_HOME:?the Android SDK}" > local.properties
+./gradlew :common:testDebugUnitTest :service:testDebugUnitTest :app:testDebugUnitTest \
+  -Ptarget-platform=android-arm64 -x :app:compileFlutterBuildDebug -x :app:copyFlutterAssetsDebug
 ```
 
 Always-on VPN entry, system VPN revoke, actual permission UI, and rapid device start/stop still require Android device or
@@ -260,19 +315,31 @@ more.
 dart run tool/changelog.dart verify                  # local only; no CI runs it
 dart run tool/changelog.dart release --version 0.8.96
 dart run tool/changelog.dart build --unreleased      # changelog.json only, includes untagged work
+dart run tool/changelog.dart markdown                # CHANGELOG.md from changelog.json after a hand edit
 dart run tool/changelog.dart render release --out release.md
-dart run tool/changelog.dart render telegram --out telegram.md
 ```
 
 Releasing a stable version, in order:
 
 ```bash
-tool/bump_version.sh all
+tool/bump_version.sh major
 dart run tool/changelog.dart release --version 0.8.96
+# edit changelog.json, then:
+dart run tool/changelog.dart markdown
+dart run tool/changelog.dart verify
 git commit -am "chore(release): v0.8.96"
 git tag v0.8.96
 git push origin main && git push origin v0.8.96
 ```
+
+The tag decides the version, not a commit. A release tag is `vX.Y.Z`, `vX.Y.Z-pre.N`, or `vX.Y.Z-pre.N+M`, where `+M`
+rebuilds prerelease N after a fix; the `version` job rejects any other `v*` tag. It writes `X.Y.Z` from the tag into
+`pubspec.yaml` for the build and upload jobs, with a build number of the tag run's UTC `YYYYMMDDHH`, raised above the
+committed one when that is not already larger, because Android refuses an update with a lower versionCode. The app's
+version name stays `X.Y.Z` for a prerelease too, so the packager hands the build its tag as `RELEASE_TAG`, and the
+update check compares that tag, not the version name. The build number in
+`pubspec.yaml` stays fixed; a local build that must install over a CI one passes its own
+`--build-number`.
 
 Push the tag by name. Every release tag here is lightweight, and `--follow-tags` carries annotated tags only: it skips a
 lightweight one silently, so the branch lands, the tag does not, and the release workflow never fires.
@@ -286,58 +353,68 @@ the patch when pubspec still names an already tagged one), prints the notes the 
 `--push`:
 
 ```bash
-tool/release.sh pre --dry-run     # plan and notes, changes nothing
-tool/release.sh pre --push        # bump, tag vX.Y.Z-pre.N, push
-tool/release.sh stable --push     # changelog, chore(release) commit, tag, push
+tool/release.sh pre --dry-run            # plan and notes, changes nothing
+tool/release.sh pre --push               # tag vX.Y.Z-pre.N on HEAD, push; no commit
+tool/release.sh pre --rebuild --push     # tag vX.Y.Z-pre.N+M on HEAD after a fix
+tool/release.sh stable --push            # changelog, pause for edits, chore(release) commit, tag, push
 ```
 
+`--push` goes to `origin`; `--remote NAME` pushes to another remote instead, such as the public repository in a
+checkout whose `origin` is a private mirror.
+
 The release commit comes before the tag on purpose: the generated wording is reviewable in the diff before it ships.
-CI never touches the changelog. Wording in `changelog.json` may be edited by hand as long as no derivable entry
-disappears and every entry still points at a commit inside that version's range.
+CI never touches the changelog.
+
+The generated notes are a draft. `release.sh stable` stops after `release` so the new version in `changelog.json` can be
+edited, then rewrites `CHANGELOG.md` with `markdown` and runs `verify` before it commits; a failed `verify` stops
+again for another edit. `--yes` skips the stop and commits the generated notes. In the version being released:
+
+- Reword an entry's `text` or `scope`, or write an entry for a commit git would not collect, such as a `refactor`
+  users notice; its `id` is any commit in the range.
+- `"merges": ["<id>", …]` on an entry folds those commits into it, so they need no entry of their own.
+- `"omit": ["<id>", …]` on the version leaves commits out of its notes: internal fixes, or work behind a flag the
+  release ships off, such as MITM under `rsFeature`.
+
+`verify` holds every commit git derives to an entry in its group, a merge or an omission, and every id, merge and
+omission to the version's range. It also checks the newest version before its tag exists, so the release commit is
+checked before it is tagged. `release` and `build` keep every stable version `changelog.json` already records as
+written and derive only the new one, so an edit outlives later releases.
 
 Entries at or below `v0.8.96` are frozen: they predate the pipeline, live under the `<!-- changelog:frozen -->` marker
 in `CHANGELOG.md`, and are never regenerated.
 
 `verify` compares a version only when its tag is reachable from `HEAD`, because that is the same scope the builder walks
 (`git tag --merged`). A branch cut before the newest release cannot derive that version at all, so `verify` names it as
-skipped and moves on instead of reporting drift that does not exist. Checking mere tag existence is what made every such
-branch fail on an unrelated release.
+skipped and moves on instead of reporting drift that does not exist.
 
-Prerelease tags (`v0.8.96-pre.N`) skip the release commit and publish no GitHub release, so the update dialog never
-sees them. `build --unreleased` reads the version from `pubspec.yaml` rather than the tag, so a local run collects the
-`X.Y.Z` section after `tool/bump_version.sh` wrote it there. A tag whose base `vX.Y.Z` is already stable still
-refuses to collect anything, as it should.
-
-This repository publishes its own releases. `build` runs for both the upstream owner and `hi2shark`, so the download
-URLs resolve against whichever repository hosts the tag, while the Telegram, Homebrew and F-Droid pushes stay with
-`chen08209`, whose secrets and destination repositories they name. The `telegram-bot-api` service container exits when
-its credentials are absent, so the fork keeps it alive with placeholder values that only the gated upstream push step
-would ever talk to.
+This repository publishes its own releases. `version`, `build` and `upload` run for both `chen08209` and `hi2shark`,
+so download URLs resolve against whichever repository hosts the tag, while Telegram, Homebrew and F-Droid pushes stay
+gated on `chen08209/FlClash`.
 
 ### Fork Versioning
 
 This fork tags releases as `v0.9.000N` while upstream keeps the app version in `pubspec.yaml`. Tag builds therefore
-rewrite `pubspec.yaml` in the runner before packaging: `version: <tag without v>+<build number>`. The build job does it
-before `flutter pub get`; the upload job does it before publishing. The working tree is never written
-back.
+rewrite `pubspec.yaml` in the runner before packaging (`Apply the tag's version` and `Align version with tag`). The
+working tree is never written back. The upload job fails before publishing if no merged asset is named
+`FlClash-<tag version>-*`.
 
-Everything that reads the version follows the tag:
+When merging upstream, keep the tag-versioning steps and the `Verify asset names match the tag` guard in
+`.github/workflows/build.yaml`, and keep `Verify changelog` and `Generate release notes` out of the workflows.
 
-- `flutter_distributor` names artifacts `FlClash-<tag version>-...`, which is what `.github/release_template.md` links to.
-- Android `versionName`, macOS `CFBundleShortVersionString`, the Windows version resource and Linux `version.json` are
-  derived by Flutter from the rewritten pubspec.
-- `packageInfo.version` therefore matches the tag in the about page, the user agent and `checkForUpdate()`.
+### Release File Names
 
-The `+<build number>` suffix still comes from pubspec; run `tool/bump_version.sh` when a release needs a larger Android
-`versionCode`. The upload job fails before publishing if no downloaded asset is named `FlClash-<tag version>-*`.
+The site, the release notes, the Homebrew cask and the in-app updater each find a release's files by name, so a change
+to `releaseAssetName` or to the build matrix has to reach all of them:
 
-When merging upstream, keep both `Align version with tag` steps and the `Verify asset names match the tag` guard in
-`.github/workflows/build.yaml`. Upstream's flow assumes pubspec already names the release; dropping these steps
-publishes `FlClash-0.9.0-*` assets under a `v0.9.000N` tag and leaves the release download links broken.
+- `site/assets/app.js`: the ids in `buildsFor` and the checksum link.
+- `.github/release_template.md`: one link per file.
+- `.github/homebrew_cask_template.rb`: the disk image url.
+- `selfUpdateAssetFor` in `lib/common/release_asset.dart`: the APKs, Windows installers and macOS disk image the
+  updater downloads and verifies against `FlClash-<version>-SHA256SUMS`.
 
-Those are the steps to keep; the changelog steps are the ones to keep out. This fork removed `Verify changelog` from
-the `dart` job and `Generate release notes` from `upload`, and an upstream merge must not bring them back, in
-`build.yaml` or anywhere else in `.github/`.
+`dart run tool/package.dart check dist` reads the names out of those files and fails when the merged release lacks one
+or its checksum file misstates an installer; the upload job runs it before it publishes anything, and
+`test/tool/release_contract_test.dart` runs it against the names the packager plans for every row of the build matrix.
 
 ### Website
 
@@ -348,21 +425,45 @@ works as is for local previews. `tool/build_site.sh [dir]` assembles it with the
 It then runs `tool/render_site.mjs` (Node), which writes the English page and a `zh/` copy for search engines: page
 text, the first changelog releases, canonical and `hreflang` links, JSON-LD and `sitemap.xml`, all from the strings,
 changelog parser and release markup in `site/assets/shared.js`, plus the GitHub star count from `release.json` so the
-nav does not grow when the page loads. `SITE_URL` overrides the published URL these point at.
-On the built site each URL keeps its language: the language button links to the other page and carries the section in
-view, the chosen platform and the changelog search. Only the English root sends readers who chose or prefer Chinese on
-to `zh/`, unless its URL carries `?lang=en`: the button on `zh/` links there with it, so getting back to English never
-depends on browser storage. A project site cannot serve the `robots.txt` that would announce the sitemap, so submit
-`sitemap.xml` in Google Search Console and Bing Webmaster Tools once.
+bar does not grow when the page loads. `SITE_URL` overrides the published URL these point at.
+On the built site each URL keeps its language: the bar shows both languages, the current one selected, and the other
+links to its page carrying the section in view, the chosen platform and the changelog search. Only the English root
+sends readers who chose or prefer Chinese on to `zh/`, unless its URL carries `?lang=en`: the English link on `zh/`
+carries it, so getting back to English never depends on browser storage. A project site cannot serve the `robots.txt`
+that would announce the sitemap, so submit `sitemap.xml` in Google Search Console and Bing Webmaster Tools once.
 
 ```bash
 tool/build_site.sh && python3 -m http.server -d build/site
 ```
 
-The page's look is deliberate: low-saturation flat colour, no blur, glow, glass or soft shadow, and motion that follows
-the logo's 30° lattice. `site/assets/field.js` draws the hero's capsules on that lattice with the glyph's own
-proportions, and the slanted wipes, the dot-to-bar marks and the theme transition reuse the same angle. Text that sits
-inside the hero has to be listed in `wireField` in `app.js`, or the capsules run behind it.
+The page's look is deliberate: flat colour, no glow, glass or soft shadow, and the app icon only in the nav and the
+favicon. The one blur is the floating bar's backdrop; the bar hides as the page scrolls down and comes back on the way
+up. Controls take Material 3 Expressive shapes: pill buttons whose corners tighten on press, connected button groups
+for the platform, the architecture, the bar's links and languages and the footer's links, the downloads and install
+tips as segmented lists. Archivo, Instrument Sans and Martian Mono are
+self-hosted in `site/assets/fonts/` under the OFL. There is no colour picker: the page steps through the app's theme
+colours (`defaultPrimaryColors` without graphite) as it scrolls, one per emblem shape, by setting `data-accent` on the
+root, and the palette tokens are registered `@property` colours so the change eases. Dark mode follows the system only.
+
+Colours are the app's, not tuned for the page: every token is a role of the vivid `seededColorScheme` of a
+`defaultPrimaryColors` seed, used as `.agents/surfaces.md` uses it: page, card and block levels instead of borders, the
+floating level for the bar and the next level up for the boxes in it, `primary` for the chosen tab, the main download
+and the emblem, `success`, `warning` and `error` for the changelog's kinds, and dividers in `onSurface` at 14%.
+`test/tool/site_palette_test.dart` fails when the palette in `site/assets/style.css` drifts from the app, and
+`flutter test --update-goldens test/tool/site_palette_test.dart` rewrites it.
+
+The hero's emblem is the dashboard's start button: a circle with play that morphs into the nine-sided cookie with pause,
+on the curves `_StartToggle` uses, and a click toggles it. Past the hero, every half screen of scroll morphs it one step
+further through a cycle of Compose's `MaterialShapes` (sunny, clover, burst, flower and the rest), springing past each
+shape on `easeOutBack` and turning a ninth of a turn per step. `site/assets/shapes.js` holds those morphs as cubic
+pairs; `test/tool/site_shapes_test.dart` builds them, with Compose's values for the shapes prism_ui lacks, fails when
+the file drifts, and `--update-goldens` rewrites it. On a wide screen the emblem grows on scroll, crosses to a sticky
+left column, and the downloads, hidden until then, blur in at the line the docked column starts on. The column shows the
+section's number in the emblem and its name and summary underneath, swapping with a fade-through as the changelog
+arrives; the right column's own section heads stay only for screen readers. Below 960 px the emblem stays in the hero,
+under the copy, and the heads show as usual. `site/assets/scene.js` drives all of it from script, as CSS scroll
+timelines stuttered in Android WebView; the emblem starts on `#spot` in the hero and docks where its CSS box is, and
+`data-part` on the root tells the stylesheet which section the column names.
 
 `.github/workflows/pages.yaml` deploys it after every successful stable tag build and on pushes to `main` that touch the
 site, in the public repository only; its Pages source has to be set to GitHub Actions once. The file names come from the
@@ -377,8 +478,9 @@ The `dart` job performs these root-package checks in order:
 ```bash
 bash tool/hooks/test.sh
 flutter pub get
-dart format --output=none --set-exit-if-changed lib test tool plugins setup.dart
+dart format --output=none --set-exit-if-changed lib test tool plugins
 flutter analyze --no-fatal-infos
+bash tool/strip_check.sh              # make strip-check
 dart run tool/test.dart -- --reporter expanded --coverage
 dart run tool/check_coverage.dart coverage/lcov.info 75
 ```
@@ -403,16 +505,15 @@ only once every build and every check job passes.
 
 `bash tool/check_plugins.sh` is that plugin gate, and CI runs the same script.
 It discovers every `plugins/*/pubspec.yaml`, analyzes each package, and runs
-`flutter test` wherever `test/*_test.dart` exists. Adding a plugin package needs
-no workflow edit; enumerating packages by hand in the workflow is what
-previously left `plugins/tray` unanalyzed and untested.
+`flutter test` wherever a `*_test.dart` sits anywhere under its `test/`. Adding a
+plugin package needs no workflow edit.
 
 ### CI Caches
 
 A run restores only cache entries saved on its own branch or tag, or on the default branch (`main`), and the
 repository holds 10 GB before evicting the least recently used entries. Every release is a new tag that no later run
-reads from, so `BRANCH_CACHE` turns caching off in tag runs: one release used to write about 9 GB of such entries and
-evict everything `dev` had saved. Release builds therefore start cold; branch runs, chiefly `dev`, keep the caches.
+reads from, so `BRANCH_CACHE` turns caching off in tag runs, whose entries would evict what `dev` saved. Release
+builds therefore start cold; branch runs, chiefly `dev`, keep the caches.
 
 - setup-go keys its entry on the `cache-dependency-path` files alone and saves only on a miss, so jobs listing the
   same files share one entry holding the build cache of whichever finished first. `desktop` and `android` each add

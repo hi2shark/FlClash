@@ -3,7 +3,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 List<String> _visibleUserAgents(List<String> saved, String? selected) =>
@@ -99,17 +99,17 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
     }
   }
 
-  List<CommonPopupMenuItem> _buildMenuItems(String userAgent) {
+  List<PopupMenuItem> _buildMenuItems(String userAgent) {
     final appLocalizations = context.appLocalizations;
     return [
-      CommonPopupMenuItem(
+      PopupMenuItem(
         glyph: AppGlyphs.edit,
         label: appLocalizations.edit,
         onPressed: () {
           _handleEdit(userAgent);
         },
       ),
-      CommonPopupMenuItem(
+      PopupMenuItem(
         danger: true,
         glyph: AppGlyphs.delete,
         label: appLocalizations.delete,
@@ -159,7 +159,7 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
       patchClashConfigProvider.select((state) => state.globalUa),
     );
     final entries = _visibleUserAgents(userAgents, selected);
-    return CommonScaffold(
+    return Scaffold(
       canSort: entries.length > 1,
       title: appLocalizations.userAgent,
       actions: [
@@ -169,12 +169,13 @@ class _UserAgentsViewState extends ConsumerState<UserAgentsView> {
           icon: const GlyphIcon(AppGlyphs.addCircle),
         ),
       ],
-      body: ReorderableListView.builder(
-        padding: const EdgeInsets.all(16).copyWith(
-          top: context.contentTopPadding,
-          bottom: 16 + context.bottomInset,
-        ),
-        buildDefaultDragHandles: false,
+      body: PrismReorderableListView(
+        padding: context.listInsets
+            .page(top: 16, bottom: 16)
+            .copyWith(
+              top: context.contentTopPadding,
+              bottom: 16 + context.bottomInset,
+            ),
         header: ItemPositionProvider(
           position: ItemPosition.get(0, entries.length + 1),
           child: _UserAgentItem(
@@ -219,10 +220,11 @@ class _UserAgentItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecorationListItem(
       isSelected: isSelected,
-      horizontalTitleGap: 8,
-      contentPadding: EdgeInsets.only(
-        left: 14,
-        right: SortableItem.maybeOf(context) == null ? 16 : 0,
+      contentPadding: EdgeInsetsDirectional.only(
+        start: context.listInsets.leading,
+        end: SortableItem.maybeOf(context) == null
+            ? context.listInsets.trailing
+            : 0,
       ),
       leading: SizedBox.square(
         dimension: 24,

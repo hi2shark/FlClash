@@ -9,4 +9,5 @@ export 'profiles.dart';
 export 'proxy_groups.dart';
 export 'service_status.dart';
 export 'traffic.dart';
+export 'live_status.dart';
 export 'wifi_watch.dart';

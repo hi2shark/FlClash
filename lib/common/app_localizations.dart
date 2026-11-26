@@ -4,10 +4,43 @@ import 'package:fl_clash/common/network_error.dart';
 import 'package:fl_clash/core/desktop/launch_policy.dart';
 import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/ui/l10n.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
+import 'package:prism_ui/l10n.dart';
 
-final currentAppLocalizations = AppLocalizations.current;
+var _currentLocale = const Locale('en');
+
+AppLocalizations get currentAppLocalizations =>
+    lookupAppLocalizations(_currentLocale);
+
+AppLocalizations loadAppLocalizations(Locale locale) {
+  _currentLocale = AppLocalizations.delegate.isSupported(locale)
+      ? locale
+      : const Locale('en');
+  Intl.defaultLocale = Intl.canonicalizedLocale(_currentLocale.toString());
+  return lookupAppLocalizations(_currentLocale);
+}
+
+// AppLocalizations.delegate would not move currentAppLocalizations along.
+const LocalizationsDelegate<AppLocalizations> appLocalizationsDelegate =
+    _AppLocalizationsDelegate();
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  bool isSupported(Locale locale) =>
+      AppLocalizations.delegate.isSupported(locale);
+
+  @override
+  Future<AppLocalizations> load(Locale locale) =>
+      SynchronousFuture(loadAppLocalizations(locale));
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
 
 class AppUiLocalizations implements UiLocalizations {
   const AppUiLocalizations(this._localizations);
@@ -30,7 +63,16 @@ class AppUiLocalizations implements UiLocalizations {
   String get close => _localizations.close;
 
   @override
+  String get copy => _localizations.copy;
+
+  @override
+  String get cut => _localizations.cut;
+
+  @override
   String get hidePassword => _localizations.hidePassword;
+
+  @override
+  String get dialog => _localizations.dialog;
 
   @override
   String get more => _localizations.more;
@@ -39,10 +81,19 @@ class AppUiLocalizations implements UiLocalizations {
   String get noSearchResults => _localizations.noSearchResults;
 
   @override
+  String get paste => _localizations.paste;
+
+  @override
   String get reset => _localizations.reset;
 
   @override
   String get search => _localizations.search;
+
+  @override
+  String get select => _localizations.select;
+
+  @override
+  String get selectAll => _localizations.selectAll;
 
   @override
   String get showLess => _localizations.showLess;
@@ -70,7 +121,7 @@ class _AppUiLocalizationsDelegate
 
   @override
   Future<UiLocalizations> load(Locale locale) =>
-      AppLocalizations.load(locale).then(AppUiLocalizations.new);
+      SynchronousFuture(AppUiLocalizations(lookupAppLocalizations(locale)));
 
   @override
   bool shouldReload(_AppUiLocalizationsDelegate old) => false;
@@ -96,6 +147,8 @@ String userFacingErrorMessage(Object error, AppLocalizations appLocalizations) {
       switch (error) {
         AgeSecretKeyRequiredException() =>
           appLocalizations.ageSecretKeyRequiredTip,
+        ReleaseNotVerifiedException() => appLocalizations.updateNotVerified,
+        SystemDownloadException() => appLocalizations.updateDownloadFailed,
         CoreMethodException(code: 'rule_set_empty') =>
           appLocalizations.ruleSetEmptyTip,
         CoreMethodException(code: 'rule_set_mixed') =>
@@ -105,6 +158,18 @@ String userFacingErrorMessage(Object error, AppLocalizations appLocalizations) {
         CoreMethodException(:final message) => message,
         _ => error.toString(),
       };
+}
+
+String coreSessionLostMessage(
+  Object? cause,
+  AppLocalizations appLocalizations,
+) {
+  final reason = cause == null
+      ? ''
+      : userFacingErrorMessage(cause, appLocalizations);
+  return reason.isEmpty
+      ? appLocalizations.coreStoppedDesc
+      : appLocalizations.coreStoppedWithReason(reason);
 }
 
 String delayFailureText(int delay, AppLocalizations appLocalizations) {

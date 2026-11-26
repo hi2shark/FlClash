@@ -45,7 +45,7 @@ Get the latest build from [GitHub Releases](https://github.com/chen08209/FlClash
 
 | Platform | Packages | Notes |
 | --- | --- | --- |
-| Android | APK for `arm64-v8a`, `armeabi-v7a` and `x86_64` | Most phones use `arm64-v8a`. Also on the F-Droid repository below. |
+| Android | APK for `arm64` (arm64-v8a), `armv7` (armeabi-v7a) and `amd64` (x86_64) | Most phones use `arm64`. Also on the F-Droid repository below. |
 | Windows 10 and later | Installer (`.exe`) or portable `.zip`, for x64 and ARM64 | Pick ARM64 on Snapdragon and other ARM laptops. |
 | macOS 12 and later | DMG for Apple Silicon and Intel | Also on Homebrew. |
 | Linux | `.deb`, `.rpm` and AppImage, for x64 and ARM64 | See the tray note below. |
@@ -62,15 +62,16 @@ brew tap chen08209/tap
 brew install --cask flclash
 ```
 
+**macOS first launch**
+
+The app is not notarized, so macOS refuses to open it the first time. After dragging it to Applications, run
+`xattr -dr com.apple.quarantine /Applications/FlClash*.app`, or choose Open Anyway under System Settings > Privacy &
+Security. Later updates install from inside the app.
+
 **Linux tray icon**
 
-The `.deb` package installs its own dependencies. With the AppImage or the `.rpm`, install the AyatanaAppIndicator
-library so the tray icon can show:
-
-```bash
-sudo apt-get install libayatana-appindicator3-1   # Debian and Ubuntu
-sudo dnf install libayatana-appindicator-gtk3     # Fedora
-```
+The tray icon is a StatusNotifierItem. KDE Plasma, XFCE and most panels show it as is; GNOME needs the
+AppIndicator and KStatusNotifierItem Support extension.
 
 **Unattended desktop**
 
@@ -90,20 +91,20 @@ clash://install-config?url=<URL-encoded subscription link>
 activity with one of these actions:
 
 ```text
-com.hi2shark.flclash_nw.action.START
-com.hi2shark.flclash_nw.action.STOP
-com.hi2shark.flclash_nw.action.TOGGLE
+com.hi2shark.hi2nw.action.START
+com.hi2shark.hi2nw.action.STOP
+com.hi2shark.hi2nw.action.TOGGLE
 ```
 
 From a computer, the same works over adb:
 
 ```bash
-adb shell am start -a com.hi2shark.flclash_nw.action.TOGGLE
+adb shell am start -a com.hi2shark.hi2nw.action.TOGGLE
 ```
 
 ## Build from source
 
-You need [Flutter](https://docs.flutter.dev/get-started/install) 3.47 (release builds use 3.47.6),
+You need [Flutter](https://docs.flutter.dev/get-started/install) 3.50 (release builds use 3.50.1),
 [Go](https://go.dev/dl/) 1.27 and [Rust](https://rustup.rs/) installed through rustup. Each platform builds on its own
 host, except Android, which builds anywhere.
 
@@ -111,7 +112,7 @@ host, except Android, which builds anywhere.
 git clone --recursive https://github.com/chen08209/FlClash.git
 cd FlClash
 flutter pub get
-dart setup.dart android   # or windows, macos, linux
+dart run tool/package.dart android   # or windows, macos, linux
 ```
 
 Packages land in `dist/`. The Go core and the Rust libraries are compiled as part of the Flutter build.
@@ -123,7 +124,7 @@ Packages land in `dist/`. The Go core and the Rust libraries are compiled as par
 | macOS | Xcode and Node.js. The script installs `appdmg` through npm. |
 | Linux | Debian or Ubuntu. The script installs the build packages with apt and downloads `appimagetool`. |
 
-Run `dart setup.dart --help` for the remaining options, such as `--targets` to build only some package formats.
+Run `dart run tool/package.dart --help` for the remaining options, such as `--targets` to build only some package formats or `--dry-run` to list the files a run would write.
 
 ## Support
 
