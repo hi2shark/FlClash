@@ -1,0 +1,182 @@
+name: android-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      arch:
+        description: 'Target Android ABI'
+        type: choice
+        default: 'arm64'
+        options:
+          - arm64
+          - all
+          - armv7
+          - amd64
+          - universal
+      env:
+        description: 'Application environment'
+        type: choice
+        default: 'pre'
+        options:
+          - pre
+          - stable
+          - dev
+      tag:
+        description: 'Optional release tag (e.g. v0.9.208); leave empty for nightly naming'
+        type: string
+        required: false
+        default: ''
+      run_unit_tests:
+        description: 'Run Android JVM unit tests before packaging'
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.50.1'
+  GO_VERSION: '1.27.1'
+  NDK_VERSION: r28c
+
+jobs:
+  android:
+    name: Android APK (${{ inputs.arch }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Apply tag version
+        if: ${{ inputs.tag != '' }}
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          if [[ ! "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)(-pre\.[0-9]+(\+[0-9]+)?)?$ ]]; then
+            echo "::error::$TAG is neither vX.Y.Z nor vX.Y.Z-pre.N[+M]"
+            exit 1
+          fi
+          name="${BASH_REMATCH[1]}"
+          committed="$(sed -n 's/^version: .*+\([0-9]*\)$/\1/p' pubspec.yaml)"
+          build="$(date -u +%Y%m%d%H)"
+          if ((build <= ${committed:-0})); then
+            build=$((committed + 1))
+          fi
+          sed "s/^version: .*/version: $name+$build/" pubspec.yaml > pubspec.yaml.tmp
+          mv pubspec.yaml.tmp pubspec.yaml
+          grep '^version:' pubspec.yaml
+
+      - name: Setup Android Signing
+        shell: bash
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [[ -n "$KEYSTORE" && -n "$KEY_ALIAS" && -n "$STORE_PASSWORD" && -n "$KEY_PASSWORD" ]]; then
+            echo "$KEYSTORE" | base64 --decode > android/app/keystore.jks
+            {
+              echo "keyAlias=$KEY_ALIAS"
+              echo "storePassword=$STORE_PASSWORD"
+              echo "keyPassword=$KEY_PASSWORD"
+            } >> android/local.properties
+          else
+            echo "::notice::Signing secrets not configured; falling back to debug signing (.dev suffix)."
+          fi
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: |
+            core/go.sum
+            android/core/build.gradle.kts
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        id: build-ndk
+        with:
+          ndk-version: ${{ env.NDK_VERSION }}
+          add-to-path: true
+          link-to-sdk: true
+
+      - name: Get Flutter dependencies
+        run: |
+          flutter --version
+          flutter pub get
+
+      - name: Run Android unit tests
+        if: ${{ inputs.run_unit_tests }}
+        working-directory: android
+        env:
+          ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
+        run: |
+          {
+            echo "flutter.sdk=$FLUTTER_ROOT"
+            echo "sdk.dir=$ANDROID_HOME"
+          } >> local.properties
+          wrapper="$FLUTTER_ROOT/bin/cache/artifacts/gradle_wrapper"
+          test -d "$wrapper" || flutter precache
+          cp -R "$wrapper/." .
+          chmod +x gradlew
+          ./gradlew :common:testDebugUnitTest :service:testDebugUnitTest :app:testDebugUnitTest \
+            -Ptarget-platform=android-arm64 \
+            -x :app:compileFlutterBuildDebug -x :app:copyFlutterAssetsDebug
+
+      - name: Fetch CA certificates
+        shell: bash
+        env:
+          CA_BUNDLE: cacert-2026-09-25.pem
+          CA_BUNDLE_SHA256: a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505
+        run: |
+          bundle=core/Clash.Meta/component/ca/ca-certificates.crt
+          curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/$CA_BUNDLE"
+          echo "$CA_BUNDLE_SHA256  $bundle" | sha256sum -c -
+
+      - name: Build Android APKs
+        shell: bash
+        env:
+          ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
+          BUILD_ARCH: ${{ inputs.arch }}
+          BUILD_ENV: ${{ inputs.env }}
+          BUILD_TAG: ${{ inputs.tag }}
+        run: |
+          args=(android --env "$BUILD_ENV" -v)
+          if [[ "$BUILD_ARCH" != "all" ]]; then
+            args+=(--arch "$BUILD_ARCH")
+          fi
+          if [[ -n "$BUILD_TAG" ]]; then
+            args+=(--tag "$BUILD_TAG")
+          fi
+          dart tool/package.dart "${args[@]}"
+
+      - name: Upload Android APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-android-${{ inputs.arch }}-${{ inputs.env }}
+          path: ./dist
+          overwrite: true
