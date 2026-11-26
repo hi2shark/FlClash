@@ -4446,6 +4446,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get morph => 'Morph';
 
   @override
+  String get morphGrade => 'Morph グレード';
+
+  @override
   String get mtu => 'MTU';
 
   @override

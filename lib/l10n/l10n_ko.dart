@@ -4524,6 +4524,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get morph => 'Morph';
 
   @override
+  String get morphGrade => 'Morph 등급';
+
+  @override
   String get mtu => 'MTU';
 
   @override

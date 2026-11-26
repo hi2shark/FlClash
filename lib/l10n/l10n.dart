@@ -8220,6 +8220,12 @@ abstract class AppLocalizations {
   /// **'Morph'**
   String get morph;
 
+  /// No description provided for @morphGrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Morph Grade'**
+  String get morphGrade;
+
   /// No description provided for @mtu.
   ///
   /// In en, this message translates to:

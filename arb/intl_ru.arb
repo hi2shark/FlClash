@@ -1351,6 +1351,7 @@
   "minimizeOnExitDesc": "Изменить стандартное событие выхода из системы",
   "mixinSettings": "Настройки подмешивания",
   "morph": "Morph",
+  "morphGrade": "Уровень Morph",
   "mtu": "MTU",
   "mux": "TLS Mux",
   "networkTest": "Тест сети",

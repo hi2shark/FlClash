@@ -771,13 +771,14 @@ void main() {
     await _pumpFrames(tester);
     await _tapSave(tester);
     expect(localProxyStore.proxies.single.config['morph'], isFalse);
+    expect(localProxyStore.proxies.single.config.containsKey('grade'), isFalse);
     expect(
       localProxyStore.proxies.single.config.containsKey('cipher'),
       isFalse,
     );
   });
 
-  testWidgets('round-trips Nowhere 3 transport, cipher, and morph', (
+  testWidgets('round-trips Nowhere 3 transport, grade, cipher, and morph', (
     tester,
   ) async {
     final original = _proxy(
@@ -793,6 +794,7 @@ void main() {
         'udp': true,
         'alpn': ['nw3'],
         'net': 'udp',
+        'grade': 'core',
         'cipher': 'aes',
         'morph': false,
       },
@@ -807,6 +809,8 @@ void main() {
       _fieldController(tester, 'Share key (shared key)').text,
       '0123456789abcdef0123456789abcdef',
     );
+    expect(find.text('Morph Grade'), findsOneWidget);
+    expect(find.text('Core (core)'), findsOneWidget);
     expect(find.text('Cipher'), findsOneWidget);
     expect(find.text('AES-128-CTR (aes)'), findsOneWidget);
     expect(find.text('Morph'), findsOneWidget);
@@ -817,6 +821,7 @@ void main() {
     final saved = localProxyStore.proxies.single.config;
     expect(saved['alpn'], ['nw3']);
     expect(saved['net'], 'udp');
+    expect(saved['grade'], 'core');
     expect(saved['cipher'], 'aes');
     expect(saved['morph'], isFalse);
     expect(saved.containsKey('up'), isFalse);
@@ -824,7 +829,9 @@ void main() {
     expect(saved.containsKey('mux'), isFalse);
   });
 
-  testWidgets('defaults new Nowhere 3 nodes to chacha cipher', (tester) async {
+  testWidgets('defaults new Nowhere 3 nodes to full grade and chacha cipher', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _wrap(const LocalProxyEditPage(initialType: 'nowhere')),
     );
@@ -838,11 +845,13 @@ void main() {
       'Share key (shared key)',
       '0123456789abcdef0123456789abcdef',
     );
+    expect(find.text('Full (full)'), findsOneWidget);
     expect(find.text('ChaCha20 (chacha)'), findsOneWidget);
 
     await _tapSave(tester);
     final saved = localProxyStore.proxies.single.config;
     expect(saved['alpn'], ['nw3']);
+    expect(saved['grade'], 'full');
     expect(saved['cipher'], 'chacha');
   });
 

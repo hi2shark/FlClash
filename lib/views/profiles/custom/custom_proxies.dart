@@ -116,6 +116,7 @@ extension on ProxyField {
     ProxyField.echQueryServerName => l.echQueryServerName,
     ProxyField.cwnd => l.congestionWindow,
     ProxyField.morph => l.morph,
+    ProxyField.grade => l.morphGrade,
   };
 
   bool get isCredential => switch (this) {
@@ -163,6 +164,7 @@ extension on ProxyField {
     ProxyField.warmBackoffMax ||
     ProxyField.cwnd ||
     ProxyField.morph ||
+    ProxyField.grade ||
     ProxyField.mkcpSeed ||
     ProxyField.mkcpHeader ||
     ProxyField.mekyaUrl => _OptionSection.transport,

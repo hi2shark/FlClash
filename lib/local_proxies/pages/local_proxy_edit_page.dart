@@ -81,6 +81,7 @@ const _nowhereControlledFields = {
   'net',
   'mux',
   'morph',
+  'grade',
   'cipher',
   'pool',
   'prewarm-on-start',
@@ -107,6 +108,8 @@ const _nowhereControlledFields = {
 const _nowhereVersions = ['nw3', 'nw2'];
 
 const _nowhereCiphers = ['chacha', 'aes'];
+
+const _nowhereGrades = ['full', 'core'];
 
 const _sudokuAeadMethods = ['aes-128-gcm', 'chacha20-poly1305', 'none'];
 
@@ -409,6 +412,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
   late String _nowhereVersion;
   late String _nowhereNet;
   late String _nowhereCipher;
+  late String _nowhereGrade;
   late String _sudokuAeadMethod;
   late String _sudokuTableType;
   late String _sudokuMultiplex;
@@ -731,6 +735,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     _nowhereVersion = _nowhereVersionFromConfig(config);
     _nowhereNet = _nowhereNetFromConfig(config);
     _nowhereCipher = _nowhereCipherFromConfig(config);
+    _nowhereGrade = _nowhereGradeFromConfig(config);
     _sudokuAeadMethod = config['aead-method']?.toString() ?? '';
     if (!_sudokuAeadMethods.contains(_sudokuAeadMethod)) {
       _sudokuAeadMethod = _sudokuAeadMethods.first;
@@ -1142,6 +1147,7 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
         if (_isNowhere3) {
           base['net'] = _nowhereNet;
           base['morph'] = _morph;
+          base['grade'] = _nowhereGrade;
           base['cipher'] = _nowhereCipher;
           _applyNowhereDialerAndCongestion(base);
         } else {
@@ -1501,6 +1507,13 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
     final value = cipher is String ? cipher : '';
     if (_nowhereCiphers.contains(value)) return value;
     return 'chacha';
+  }
+
+  String _nowhereGradeFromConfig(Map<String, dynamic> config) {
+    final grade = config['grade'];
+    final value = grade is String ? grade : '';
+    if (_nowhereGrades.contains(value)) return value;
+    return 'full';
   }
 
   void _applyNowhereTlsOptions(Map<String, dynamic> base) {
@@ -2565,6 +2578,17 @@ class _LocalProxyEditPageState extends State<LocalProxyEditPage> {
             onChanged: (value) => setState(() => _morph = value),
           ),
           if (_isNowhere3) ...[
+            const SizedBox(height: 16),
+            _buildDropdown(
+              label: appLocalizations.morphGrade,
+              value: _nowhereGrade,
+              items: const [
+                (value: 'full', label: 'Full (full)'),
+                (value: 'core', label: 'Core (core)'),
+              ],
+              onChanged: (value) =>
+                  setState(() => _nowhereGrade = value ?? 'full'),
+            ),
             const SizedBox(height: 16),
             _buildDropdown(
               label: appLocalizations.cipher,

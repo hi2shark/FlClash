@@ -4397,6 +4397,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get morph => 'Morph';
 
   @override
+  String get morphGrade => 'Morph 伪装等级';
+
+  @override
   String get mtu => 'MTU';
 
   @override

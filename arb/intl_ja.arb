@@ -1351,6 +1351,7 @@
   "minimizeOnExitDesc": "システムの終了イベントを変更",
   "mixinSettings": "混入設定",
   "morph": "Morph",
+  "morphGrade": "Morph グレード",
   "mtu": "MTU",
   "mux": "TLS Mux",
   "networkTest": "ネットワークテスト",

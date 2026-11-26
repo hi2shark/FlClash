@@ -844,6 +844,7 @@ const _proxyVariants = <String, Map<String, YamlSchema>>{
     'down': YamlSchema.scalar(['tcp', 'udp']),
     'mux': _str,
     'morph': _bool,
+    'grade': YamlSchema.scalar(['full', 'core']),
     'cipher': YamlSchema.scalar(['chacha', 'aes']),
     'pool': _str,
     'prewarm-on-start': _bool,

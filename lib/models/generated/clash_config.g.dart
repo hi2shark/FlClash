@@ -229,6 +229,7 @@ const _$ProxyFieldEnumMap = {
   ProxyField.echQueryServerName: 'echQueryServerName',
   ProxyField.cwnd: 'cwnd',
   ProxyField.morph: 'morph',
+  ProxyField.grade: 'grade',
 };
 
 _Sniffer _$SnifferFromJson(Map<String, dynamic> json) => _Sniffer(

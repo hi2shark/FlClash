@@ -1351,6 +1351,7 @@
   "minimizeOnExitDesc": "Modifier l’événement de sortie par défaut du système",
   "mixinSettings": "Paramètres du mix-in",
   "morph": "Morph",
+  "morphGrade": "Niveau Morph",
   "mtu": "MTU",
   "mux": "Mux TLS",
   "networkTest": "Test réseau",

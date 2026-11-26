@@ -4666,6 +4666,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get morph => 'Morph';
 
   @override
+  String get morphGrade => 'Morph Grade';
+
+  @override
   String get mtu => 'MTU';
 
   @override

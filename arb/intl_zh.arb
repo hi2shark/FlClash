@@ -1351,6 +1351,7 @@
   "minimizeOnExitDesc": "修改系统默认退出事件",
   "mixinSettings": "混入设置",
   "morph": "Morph",
+  "morphGrade": "Morph 伪装等级",
   "mtu": "MTU",
   "mux": "TLS Mux",
   "networkTest": "网络测试",

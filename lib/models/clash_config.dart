@@ -640,6 +640,7 @@ extension CustomProxyExt on CustomProxy {
       ProxyField.warmBackoffMax ||
       ProxyField.cwnd ||
       ProxyField.morph ||
+      ProxyField.grade ||
       ProxyField.dial4 ||
       ProxyField.dial6 => type == 'nowhere',
       ProxyField.fingerprint ||
@@ -723,6 +724,10 @@ extension CustomProxyExt on CustomProxy {
         'zero',
       ],
       'nowhere' => const ['chacha', 'aes'],
+      _ => const [],
+    },
+    ProxyField.grade => switch (type) {
+      'nowhere' => const ['full', 'core'],
       _ => const [],
     },
     ProxyField.protocol => switch (type) {

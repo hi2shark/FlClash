@@ -131,6 +131,7 @@ class LocalProxyProviderGenerator {
     map['network'] = carriers.$1;
     map['alpn'] = ['nw2'];
     map.remove('net');
+    map.remove('grade');
     map.remove('cipher');
 
     _normalizeNowhereMorph(proxy, map);
@@ -194,6 +195,7 @@ class LocalProxyProviderGenerator {
     // select the Nowhere 3 stack in the core.
 
     _normalizeNowhereMorph(proxy, map);
+    _normalizeNowhereGrade(proxy, map);
     _normalizeNowhereCipher(proxy, map);
 
     _normalizeNonNegativeInteger(proxy, map, 'cwnd');
@@ -368,6 +370,16 @@ class LocalProxyProviderGenerator {
     // An explicit false is kept: Nowhere 3 turns Morph on by default, so
     // dropping it would silently re-enable the transform.
     map['morph'] = enabled;
+  }
+
+  void _normalizeNowhereGrade(LocalProxy proxy, Map<String, dynamic> map) {
+    final value = map['grade'];
+    if (value == null) {
+      return;
+    }
+    if (value is! String || (value != 'full' && value != 'core')) {
+      _invalidNowhere(proxy, 'grade must be "full" or "core"');
+    }
   }
 
   void _normalizeNowhereCipher(LocalProxy proxy, Map<String, dynamic> map) {

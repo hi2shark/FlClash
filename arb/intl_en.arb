@@ -1537,6 +1537,7 @@
   "minimizeOnExitDesc": "Modify the default system exit event",
   "mixinSettings": "Mixin Settings",
   "morph": "Morph",
+  "morphGrade": "Morph Grade",
   "mtu": "MTU",
   "mux": "TLS Mux",
   "networkTest": "Network Test",

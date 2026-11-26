@@ -388,53 +388,71 @@ void main() {
       expect(nw3BadKey.error, contains('32 lowercase hex'));
     });
 
-    test('parses Nowhere 3.4.0 share links with net, cipher, morph, pin', () {
-      const hexKey = '0123456789abcdef0123456789abcdef';
-      const pin =
-          '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    test(
+      'parses Nowhere 3.5.0 share links with net, grade, cipher, morph, pin',
+      () {
+        const hexKey = '0123456789abcdef0123456789abcdef';
+        const pin =
+            '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
-      final full = parser
-          .parseMany(
-            'nowhere://$hexKey@example.com:2077?net=udp&cipher=aes&morph=1&sni=cdn.example.com&pin=$pin&insecure=1#NW3%20Node',
-          )
-          .single;
-      expect(full.error, isNull);
-      final config = full.proxy!.config;
-      expect(full.proxy!.name, 'NW3 Node');
-      expect(config['password'], hexKey);
-      expect(config.containsKey('alpn'), isFalse);
-      expect(config['net'], 'udp');
-      expect(config['cipher'], 'aes');
-      expect(config['morph'], isTrue);
-      expect(config['sni'], 'cdn.example.com');
-      expect(config['pin'], pin);
-      expect(config['skip-cert-verify'], isTrue);
-      expect(config.containsKey('up'), isFalse);
-      expect(config.containsKey('down'), isFalse);
+        final full = parser
+            .parseMany(
+              'nowhere://$hexKey@example.com:2077?net=udp&grade=core&cipher=aes&morph=1&sni=cdn.example.com&pin=$pin&insecure=1#NW3%20Node',
+            )
+            .single;
+        expect(full.error, isNull);
+        final config = full.proxy!.config;
+        expect(full.proxy!.name, 'NW3 Node');
+        expect(config['password'], hexKey);
+        expect(config.containsKey('alpn'), isFalse);
+        expect(config['net'], 'udp');
+        expect(config['grade'], 'core');
+        expect(config['cipher'], 'aes');
+        expect(config['morph'], isTrue);
+        expect(config['sni'], 'cdn.example.com');
+        expect(config['pin'], pin);
+        expect(config['skip-cert-verify'], isTrue);
+        expect(config.containsKey('up'), isFalse);
+        expect(config.containsKey('down'), isFalse);
 
-      final autoDetected = parser
-          .parseMany('nowhere://$hexKey@example.com:2077?cipher=chacha#AutoNW3')
-          .single;
-      expect(autoDetected.error, isNull);
-      expect(autoDetected.proxy!.config.containsKey('alpn'), isFalse);
-      expect(autoDetected.proxy!.config['net'], 'tcp');
-      expect(autoDetected.proxy!.config['cipher'], 'chacha');
+        final autoDetected = parser
+            .parseMany(
+              'nowhere://$hexKey@example.com:2077?grade=full&cipher=chacha#AutoNW3',
+            )
+            .single;
+        expect(autoDetected.error, isNull);
+        expect(autoDetected.proxy!.config.containsKey('alpn'), isFalse);
+        expect(autoDetected.proxy!.config['net'], 'tcp');
+        expect(autoDetected.proxy!.config['grade'], 'full');
+        expect(autoDetected.proxy!.config['cipher'], 'chacha');
 
-      final morphZero = parser
-          .parseMany('nowhere://$hexKey@example.com:2077?morph=0#MorphOff')
-          .single;
-      expect(morphZero.error, isNull);
-      expect(morphZero.proxy!.config['morph'], isFalse);
-    });
+        final gradeOnly = parser
+            .parseMany('nowhere://$hexKey@example.com:2077?grade=core#GradeNW3')
+            .single;
+        expect(gradeOnly.error, isNull);
+        expect(gradeOnly.proxy!.config['net'], 'tcp');
+        expect(gradeOnly.proxy!.config['grade'], 'core');
 
-    test('rejects invalid Nowhere 3.4.0 parameters and NW2/NW3 mixes', () {
+        final morphZero = parser
+            .parseMany('nowhere://$hexKey@example.com:2077?morph=0#MorphOff')
+            .single;
+        expect(morphZero.error, isNull);
+        expect(morphZero.proxy!.config['morph'], isFalse);
+      },
+    );
+
+    test('rejects invalid Nowhere 3.5.0 parameters and NW2/NW3 mixes', () {
       const hexKey = '0123456789abcdef0123456789abcdef';
       for (final uri in [
         'nowhere://$hexKey@example.com?net=quic',
         'nowhere://$hexKey@example.com?net=TCP',
+        'nowhere://$hexKey@example.com?grade=CORE',
+        'nowhere://$hexKey@example.com?grade=light',
+        'nowhere://$hexKey@example.com?grade=',
         'nowhere://$hexKey@example.com?cipher=AES',
         'nowhere://$hexKey@example.com?cipher=aes-128-ctr',
         'nowhere://$hexKey@example.com?pin=abcd',
+        'nowhere://$hexKey@example.com?alpn=nw2&grade=core',
         'nowhere://$hexKey@example.com?alpn=nw2&cipher=aes',
         'nowhere://$hexKey@example.com?alpn=nw2&net=tcp',
         'nowhere://$hexKey@example.com?alpn=nw3&up=tcp&down=tcp',

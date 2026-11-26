@@ -4722,6 +4722,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get morph => 'Morph';
 
   @override
+  String get morphGrade => 'Niveau Morph';
+
+  @override
   String get mtu => 'MTU';
 
   @override

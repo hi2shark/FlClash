@@ -535,10 +535,11 @@ class LocalProxyParser {
     'ech',
     'fp',
   };
-  static const _nowhereNw3QueryKeys = {'net', 'cipher'};
+  static const _nowhereNw3QueryKeys = {'net', 'cipher', 'grade'};
   static const _nowhereNw3AllowedKeys = {
     'net',
     'morph',
+    'grade',
     'cipher',
     'sni',
     'pin',
@@ -568,7 +569,7 @@ class LocalProxyParser {
     return false;
   }
 
-  /// Mirrors Nowhere 3.4's literal-key first-value query parser: keys match
+  /// Mirrors Nowhere 3.5's literal-key first-value query parser: keys match
   /// literally without percent-decoding, the first occurrence of a recognized
   /// key wins (ignoring later duplicates), and values are strictly UTF-8
   /// percent-decoded.
@@ -888,6 +889,18 @@ class LocalProxyParser {
       net = rawNet;
     }
 
+    String? grade;
+    if (query.containsKey('grade')) {
+      final rawGrade = query['grade']!;
+      if (rawGrade != 'full' && rawGrade != 'core') {
+        return LocalProxyParseResult(
+          raw: raw,
+          error: 'Nowhere grade must be full or core',
+        );
+      }
+      grade = rawGrade;
+    }
+
     String? cipher;
     if (query.containsKey('cipher')) {
       final rawCipher = query['cipher']!;
@@ -941,6 +954,9 @@ class LocalProxyParser {
     }
     if (morph != null) {
       config['morph'] = morph;
+    }
+    if (grade != null) {
+      config['grade'] = grade;
     }
     if (cipher != null) {
       config['cipher'] = cipher;

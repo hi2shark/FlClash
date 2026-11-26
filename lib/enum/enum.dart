@@ -816,7 +816,8 @@ enum ProxyField {
   echConfig(['ech-opts', 'config']),
   echQueryServerName(['ech-opts', 'query-server-name']),
   cwnd(['cwnd'], ProxyFieldKind.number),
-  morph(['morph'], ProxyFieldKind.toggle);
+  morph(['morph'], ProxyFieldKind.toggle),
+  grade(['grade'], ProxyFieldKind.choice);
 
   final List<String> path;
   final ProxyFieldKind kind;
